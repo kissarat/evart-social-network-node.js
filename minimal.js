@@ -1,0 +1,244 @@
+function $$(selector) {
+    return document.querySelector(selector)
+}
+function $id(id) {
+    return document.getElementById(id)
+}
+function $all(selector) {
+    return document.querySelectorAll(selector)
+}
+function $class(name) {
+    return document.getElementsByClassName(name)
+}
+function $new(name, attributes, children) {
+    var tag = document.createElement(name);
+    if (attributes) {
+        for (var key in attributes) {
+            tag.setAttribute(key, attributes[key]);
+        }
+    }
+    if (children) {
+        if ('string' == typeof children) {
+            tag.innerHTML = children;
+        }
+        else {
+            for (var i in children) {
+                tag.appendChild(children[i]);
+            }
+        }
+    }
+    return tag;
+}
+
+function $add(parent) {
+    for (var i = 1; i < arguments.length; i++) {
+        parent.appendChild(arguments[i]);
+    }
+}
+
+function on(target, name, call) {
+    if (!call) {
+        call = name;
+        name = 'click';
+    }
+    if ('string' == typeof target) {
+        target = document.querySelectorAll(target);
+        for (var i = 0; i < target.length; i++)
+            target[i].addEventListener(name, call);
+    }
+    else
+        target.addEventListener(name, call);
+}
+
+function $a(label, url) {
+    var a = $new('a');
+    a.setAttribute('href', url);
+    a.innerHTML = label;
+    return a;
+}
+
+function $row() {
+    var row = $new('tr');
+    console.log(arguments);
+    for (var i = 0; i < arguments.length; i++) {
+        var cell = arguments[i];
+        if (cell instanceof HTMLTableCellElement) {
+            row.appendChild(cell);
+        }
+        else if (cell instanceof Element) {
+            row.insertCell(-1).appendChild(cell);
+        }
+        else if ('string' == typeof cell) {
+            row.insertCell(-1).innerHTML = cell;
+        }
+        else {
+            row.insertCell(-1).innerHTML = cell.toString();
+        }
+    }
+    return row;
+}
+
+function each(array, call) {
+    Array.prototype.forEach.call(array, call);
+}
+
+function array(a) {
+    return Array.prototype.slice.call(a);
+}
+
+function empty(object) {
+    for(var key in object) {
+        return false;
+    }
+    return true;
+}
+
+function $each(selector, call) {
+    if ('string' == typeof selector) {
+        selector = $all(selector);
+    }
+    return each(selector, call);
+}
+
+function fill_form(form, data) {
+    each(form.elements, function (element) {
+        if (element.getAttribute('name') in data) {
+            element.value = data[element.getAttribute('name')];
+        }
+    });
+}
+
+function fake() {
+    var form = this;
+    if (!(this instanceof HTMLFormElement && this.getAttribute('name'))) {
+        return;
+    }
+    query({
+        route: 'fake/' + this.getAttribute('name'), success: function (data) {
+            fill_form(form, data);
+        }
+    });
+}
+
+Object.defineProperty(Element.prototype, 'visible', {
+    get: function () {
+        return 'none' != this.style.display
+    },
+    set: function (value) {
+        if (value) {
+            this.style.removeProperty('display');
+        }
+        else {
+            this.style.display = 'none';
+        }
+    }
+});
+
+Element.prototype.on = function (name, call) {
+    if (!this._events) {
+        this._events = {};
+    }
+
+    if (!(name in this._events)) {
+        this._events[name] = [];
+    }
+
+    this._events[name].push(call);
+};
+
+Element.prototype.off = function (name, call) {
+    var i = this._events[name].indexOf(call);
+    this._events[name].splice(i, 1);
+    if (this._events[name].length == 0) {
+        delete this._events[name];
+    }
+};
+
+Element.prototype.once = function (name, call) {
+    function once(data) {
+        call.call(this, data);
+        this.off(name, once);
+    }
+
+    this.on(name, once);
+};
+
+Element.prototype.fire = function (name, data) {
+    if (this._events && (name in this._events)) {
+        var listeners = this._events[name];
+        for (var i = 0; i < listeners.length; i++) {
+            listeners[i].call(this, data);
+        }
+    }
+};
+
+function morozov(a) {
+    console.log(a);
+}
+
+HTMLFormElement.prototype.getData = function () {
+    var data = {};
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.getAttribute('name')) {
+            data[element.getAttribute('name')] = element.value;
+        }
+    }
+    return data;
+};
+
+function query(o) {
+    o.url = '/api/';
+    if (o.form) {
+        o.data = o.form.getData();
+        delete o.form;
+    }
+    if (o.data) {
+        o.data = JSON.stringify(o.data);
+    }
+    if (!o.method) {
+        o.method = o.data ? 'POST' : 'GET';
+    }
+
+    o.data = o.data || {};
+    o.params = o.params || {};
+    if (o.route instanceof Array) {
+        o.route = o.route.join('/');
+    }
+    if (localStorage.auth) {
+        o.params['auth'] = localStorage.auth;
+    }
+    var xhr = new XMLHttpRequest();
+
+    xhr.addEventListener('load', function () {
+        if (o.success) {
+            o.success(JSON.parse(this.responseText));
+        }
+    });
+
+    var url = o.url;
+    if (!empty(o.params)) {
+        url += '?' + $.param(o.params);
+    }
+    xhr.open(o.method, url);
+    var data;
+    if ('GET' != o.method) {
+        data = JSON.stringify(o.data);
+    }
+    xhr.send(data);
+    return xhr;
+}
+
+function bind_form(form, o) {
+    o.success = function (data) {
+        fill_form(form, data);
+    };
+    return query(o);
+}
+
+function $button(text, call) {
+    var button = $new('button', {type:'button'}, text);
+    button.onclick = call;
+    return button;
+}
+

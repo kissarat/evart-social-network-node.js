@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Socex</title>
+    <link rel="stylesheet" type="text/css" href="/style.css"/>
+    <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
+</head>
+<body>
+
+<nav>
+</nav>
+
+<div class="wrap">
+    <div class="container">
+        <div class="content">JavaScript is disabled</div>
+    </div>
+</div>
+
+<div id="lib">
+    <form id="user/login">
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" name="email"/>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input class="form-control" name="password" type="password"/>
+        </div>
+        <p>
+            <button data-action="submit" type="button">Login</button>
+        </p>
+    </form>
+
+    <form id="user/signup" name="user">
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" name="email" type="email"/>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input class="form-control" name="password" type="password"/>
+        </div>
+        <div class="form-group">
+            <label>Forename</label>
+            <input class="form-control" name="forename"/>
+        </div>
+        <div class="form-group">
+            <label>Surname</label>
+            <input class="form-control" name="surname"/>
+        </div>
+        <p>
+            <button data-action="fake" type="button">Fake</button>
+            <button data-action="submit" type="button">Signup</button>
+        </p>
+    </form>
+
+    <div id="chat">
+        <div data-id="messages">
+            <div data-widget="message">
+                <strong data-name="author"></strong>
+                <div data-name="text"></div>
+            </div>
+        </div>
+        <form>
+            <div class="form-group">
+                <textarea data-id="editor"></textarea>
+            </div>
+            <p>
+                <button data-action="send" type="button">Send</button>
+            </p>
+        </form>
+    </div>
+
+    <div id="user/index">
+        <div data-id="users">
+            <div data-widget="user">
+                <span data-name="forename"></span>
+                <span data-name="surname"></span>
+                <strong data-name="email"></strong>
+            </div>
+        </div>
+    </div>
+
+    <form id="user/view">
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" name="email" type="email"/>
+        </div>
+        <div class="form-group">
+            <label>Forename</label>
+            <input class="form-control" name="forename"/>
+        </div>
+        <div class="form-group">
+            <label>Surname</label>
+            <input class="form-control" name="surname"/>
+        </div>
+    </form>
+</div>
+
+<script src="/lib/jquery/dist/jquery.min.js"></script>
+<script src="/minimal.js"></script>
+<script src="/script.js"></script>
+<script src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="/lib/faker/dist/faker.js"></script>
+</body>
+</html>
