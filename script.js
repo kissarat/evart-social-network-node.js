@@ -96,7 +96,7 @@ var ui = {
                     form: this,
                     success: function (data) {
                         if (data.auth) {
-                            localStorage.auth = data.auth;
+                            document.cookie = 'auth=' + data.auth + '; path=/';
                             localStorage.user_id = data._id;
                         }
                         go('user/index')
@@ -117,7 +117,7 @@ var ui = {
                     }
                 });
             });
-            this.on('fake', function() {
+            this.on('fake', function () {
                 fake();
             });
             this.visible = true;
@@ -131,8 +131,11 @@ var ui = {
                 success: function (users) {
                     users.forEach(function (user) {
                         var w = self.widget('user', user);
-                        w.appendChild($button('View', function() {
-                            go('user/view', {id:this.parentNode.id});
+                        w.appendChild($button('View', function () {
+                            go('user/view', {id: this.parentNode.id});
+                        }));
+                        w.appendChild($button('Chat', function () {
+                            go('chat', {target_id: this.parentNode.id});
                         }));
                         self.users.appendChild(w);
                     });
@@ -141,7 +144,7 @@ var ui = {
             });
         },
 
-        view: function(params) {
+        view: function (params) {
             var self = this;
             if (!params.id) {
                 params.id = localStorage.user_id;
@@ -151,8 +154,8 @@ var ui = {
                 params: params,
                 success: function (doc) {
                     fill_form(self, doc);
-                    self.on('delete', function() {
-                        query.delete('user', params.id, function() {
+                    self.on('delete', function () {
+                        query.delete('user', params.id, function () {
                             go('user/index');
                         });
                     });
@@ -161,20 +164,68 @@ var ui = {
             });
         },
 
-        logout: function() {
+        logout: function () {
             localStorage.removeItem('auth');
             localStorage.removeItem('user_id');
             go('user/login');
         }
     },
 
-    chat: function () {
+    chat: function (params) {
         document.title = 'Chat';
-        //query({route:''})
-        this.messages.appendChild(this.widget('message', {author: 'a'}));
-        this.messages.appendChild(this.widget('message'));
-        this.visible = true;
+        var view = this;
+        query({
+            route: 'message/history', params: params, success: function (data) {
+                if (data.messages) {
+                    data.messages.forEach(function (message) {
+                        var user = data.users[message.source_id];
+                        view.messages.appendChild(view.widget('message', {
+                            author: user.surname + ' ' + user.forename,
+                            text: message.text
+                        }));
+                    })
+                }
+                view.visible = true;
+            }
+        });
     }
 };
 
 go(location.pathname.slice(1) || 'user/login');
+
+function User() {
+    this._cache = {};
+}
+
+/*
+ User.prototype = {
+ find: function (ids, call) {
+ if (!(ids instanceof Array)) {
+ ids = [ids];
+ }
+ var not_found = [];
+ for (var i = 0; i < ids.length; i++) {
+ var id = ids[i];
+ if (!(id in this._cache)) {
+ not_found.push(id);
+ }
+ }
+ var cache = this._cache;
+ if (not_found.length > 0) {
+ query({
+ route: 'user/many', params: {ids: not_found.join(',')},
+ success: function (data) {
+ for (var i = 0; i < data.length; i++) {
+ var user = data[i];
+ cache[user._id] = user;
+ }
+ call(cache);
+ }
+ });
+ }
+ else {
+ call(cache);
+ }
+ }
+ };
+ */

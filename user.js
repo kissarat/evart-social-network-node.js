@@ -1,5 +1,5 @@
 var crypto = require('crypto');
-var extend = require('util')._extend;
+var ObjectID = require('mongodb').ObjectID;
 
 function password_hash(data) {
     var hash = crypto.createHash('sha224');
@@ -25,11 +25,18 @@ module.exports = {
     },
 
     signup: function (_) {
-        var data = extend({auth: password_hash(_.body.password + _.body.email)}, _.body);
-        _.db.collection('user').insertOne(data, _.answer);
+        _.body.auth = password_hash(_.body.password + _.body.email);
+        _.db.collection('user').insertOne(_.body, _.answer);
     },
 
     me: function (_) {
         _.res.send(_.user);
+    },
+
+    many: function (_) {
+        var ids = _.req.url.query.ids.split(',').map(function (id) {
+            return ObjectID(id);
+        });
+        _.db.collection('user').find({_id: {$in: ids}}, {auth: 0, password: 0, email: 0}).toArray(_.answer);
     }
 };

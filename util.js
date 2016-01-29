@@ -221,11 +221,7 @@ function query(o) {
         url += '?' + $.param(o.params);
     }
     xhr.open(o.method, url);
-    var data;
-    if ('GET' != o.method) {
-        data = JSON.stringify(o.data);
-    }
-    xhr.send(data);
+    xhr.send(o.data);
     return xhr;
 }
 

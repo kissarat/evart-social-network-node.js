@@ -85,10 +85,30 @@ var server = http.createServer(function (req, res) {
         return;
     }
 
+    var auth;
     if (url.query.auth) {
         req.auth = url.query.auth;
         delete url.query.auth;
     }
+    else if (req.headers.authorization) {
+        req.auth = req.headers.authorization;
+    }
+    else if (req.headers && req.headers.cookie && (auth = /auth=(\w+)/.exec(req.headers.cookie))) {
+        req.auth = auth[1];
+    }
+        //res.send({
+        //    method: req.method,
+        //    headers: req.headers,
+        //    url: url
+        //});
+    //receive.call(req, function(data) {
+    //    res.send({
+    //        method: req.method,
+    //        url: url,
+    //        body: data
+    //    });
+    //});
+    //return;
 
     function answer(err, result) {
         if (err) {
@@ -163,9 +183,10 @@ var server = http.createServer(function (req, res) {
         }
         else {
             if (req.auth) {
-                db.collection('user').find({auth: req.auth}, wrap(function (user) {
+                db.collection('user').findOne({auth: req.auth}, wrap(function (user) {
                     if (user) {
                         context.user = user;
+                        //user._id = ObjectID(user._id);
                     }
                     exec(context, action);
                 }));
@@ -178,14 +199,7 @@ var server = http.createServer(function (req, res) {
 });
 
 function exec(_, action) {
-    if ('user/login' != _.req.url.route && 'user/signup' != _.req.url.route && !_.req.user) {
-        _.res.send(401, {
-            error: {
-                auth: 'required'
-            }
-        });
-    }
-    else {
+    if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {
         if ('POST' == _.req.method) {
             receive.call(_.req, function (data) {
                 _.body = data;
@@ -195,6 +209,13 @@ function exec(_, action) {
         else {
             action(_);
         }
+    }
+    else {
+        _.res.send(401, {
+            error: {
+                auth: 'required'
+            }
+        });
     }
 }
 
