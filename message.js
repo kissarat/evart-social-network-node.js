@@ -1,15 +1,24 @@
+var ObjectID = require('mongodb').ObjectID;
+
 module.exports = {
     post: function(_) {
-        _.body.source_id = _.user.id;
-        _.db.collection('message').insertOne(_.body, _.answer);
+        var data = {
+            source_id: _.user.id,
+            target_id: ObjectID(_.req.body.target_id),
+            text: _.req.body.text,
+            time: Date.now()
+        };
+        _.db.collection('message').insertOne(data, _.answer);
     },
 
     history: function(_) {
-        var q = _.req.query;
+        var q = _.req.url.query;
+        var source_id = q.source_id ? ObjectID(q.source_id) : _.user.id;
+        var target_id = ObjectID(q.target_id);
         _.db.collection('message').find({$or: [
-            {source_id: q.source_id, target_id: q.target_id},
-            {source_id: q.target_id, target_id: q.source_id},
-        ]},
-            _.answer)
+            {source_id: source_id, target_id: target_id},
+            {source_id: target_id, target_id: source_id}
+        ]})
+            .toArray(_.answer);
     }
 };

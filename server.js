@@ -89,19 +89,6 @@ var server = http.createServer(function (req, res) {
         req.auth = url.query.auth;
         delete url.query.auth;
     }
-    //    res.send({
-    //        method: req.method,
-    //        headers: req.headers,
-    //        url: url
-    //    });
-    //receive.call(req, function(data) {
-    //    res.send({
-    //        method: req.method,
-    //        url: url,
-    //        body: data
-    //    });
-    //});
-    //return;
 
     function answer(err, result) {
         if (err) {
@@ -180,25 +167,34 @@ var server = http.createServer(function (req, res) {
                     if (user) {
                         context.user = user;
                     }
-                    exec(action, context);
+                    exec(context, action);
                 }));
             }
             else {
-                exec(action, context);
+                exec(context, action);
             }
         }
     }
 });
 
-function exec(action, _) {
-    if ('POST' == _.req.method) {
-        receive.call(_.req, function (data) {
-            _.body = data;
-            action(_);
+function exec(_, action) {
+    if ('user/login' != _.req.url.route && 'user/signup' != _.req.url.route && !_.req.user) {
+        _.res.send(401, {
+            error: {
+                auth: 'required'
+            }
         });
     }
     else {
-        action(_);
+        if ('POST' == _.req.method) {
+            receive.call(_.req, function (data) {
+                _.body = data;
+                action(_);
+            });
+        }
+        else {
+            action(_);
+        }
     }
 }
 
