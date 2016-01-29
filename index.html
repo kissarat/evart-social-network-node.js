@@ -83,7 +83,7 @@
         </div>
     </div>
 
-    <form id="user/view">
+    <form id="user/view" data-entity="user">
         <div class="form-group">
             <label>Email</label>
             <input class="form-control" name="email" type="email"/>
@@ -96,11 +96,14 @@
             <label>Surname</label>
             <input class="form-control" name="surname"/>
         </div>
+        <p>
+            <button data-action="delete" type="button">Delete</button>
+        </p>
     </form>
 </div>
 
 <script src="/lib/jquery/dist/jquery.min.js"></script>
-<script src="/minimal.js"></script>
+<script src="/util.js"></script>
 <script src="/script.js"></script>
 <script src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/lib/faker/dist/faker.js"></script>

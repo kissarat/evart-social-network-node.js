@@ -87,7 +87,7 @@ function array(a) {
 }
 
 function empty(object) {
-    for(var key in object) {
+    for (var key in object) {
         return false;
     }
     return true;
@@ -188,7 +188,7 @@ HTMLFormElement.prototype.getData = function () {
 };
 
 function query(o) {
-    o.url = '/api/';
+    o.url = '/api';
     if (o.form) {
         o.data = o.form.getData();
         delete o.form;
@@ -216,7 +216,7 @@ function query(o) {
         }
     });
 
-    var url = o.url;
+    var url = o.url + '/' + o.route;
     if (!empty(o.params)) {
         url += '?' + $.param(o.params);
     }
@@ -229,15 +229,37 @@ function query(o) {
     return xhr;
 }
 
+query.delete = function(name, id, call) {
+    return query({
+        route:'entity/' + name,
+        params: {id:id},
+        method: 'DELETE',
+        success:call
+    });
+};
+
 function bind_form(form, o) {
     o.success = function (data) {
-        fill_form(form, data);
+        form.id = data._id;
+        each(form.elements, function (element) {
+            if (element.getAttribute('name') in data) {
+                element.value = data[element.getAttribute('name')];
+                if (form.dataset.entity) {
+                    element.addEventListener('change', function () {
+                        query({
+                            route:'entity/' + form.dataset.entity,
+                            method:'PATCH'
+                        });
+                    });
+                }
+            }
+        });
     };
     return query(o);
 }
 
 function $button(text, call) {
-    var button = $new('button', {type:'button'}, text);
+    var button = $new('button', {type: 'button'}, text);
     button.onclick = call;
     return button;
 }

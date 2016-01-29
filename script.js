@@ -132,7 +132,7 @@ var ui = {
                     users.forEach(function (user) {
                         var w = self.widget('user', user);
                         w.appendChild($button('View', function() {
-                            go('user/view', {_id:this.parentNode.id});
+                            go('user/view', {id:this.parentNode.id});
                         }));
                         self.users.appendChild(w);
                     });
@@ -143,19 +143,19 @@ var ui = {
 
         view: function(params) {
             var self = this;
-            if (!params._id) {
-                params._id = localStorage.user_id;
+            if (!params.id) {
+                params.id = localStorage.user_id;
             }
             query({
                 route: 'entity/user',
                 params: params,
-                success: function (users) {
-                    if (1 == users.length) {
-                        fill_form(self, users[0]);
-                    }
-                    else {
-                        self.innerHTML = users.length + ' users found';
-                    }
+                success: function (doc) {
+                    fill_form(self, doc);
+                    self.on('delete', function() {
+                        query.delete('user', params.id, function() {
+                            go('user/index');
+                        });
+                    });
                     self.visible = true;
                 }
             });

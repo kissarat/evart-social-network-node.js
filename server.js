@@ -1,10 +1,12 @@
 var MongoClient = require('mongodb').MongoClient;
+var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
 var controllers = {
     user: require('./user.js'),
-    fake: require('./fake.js')
+    fake: require('./fake.js'),
+    message: require('./message.js')
 };
 
 
@@ -71,6 +73,7 @@ function Context(req, res) {
 }
 
 var server = http.createServer(function (req, res) {
+    req.url = req.url.replace(/^\/api\//, '/');
     var url = parse(req.url);
     if ('OPTIONS' == req.method) {
         res.writeHead(200, {
@@ -124,26 +127,34 @@ var server = http.createServer(function (req, res) {
         }
     }
 
+    var id;
+    if (url.query.id) {
+        id = ObjectID(url.query.id);
+    }
+
     if ('entity' == url.route[0]) {
         var collectionName = url.route[1];
         switch (req.method) {
             case 'GET':
-                console.log(url.query);
-                db.collection(collectionName).find(url.query).toArray(answer);
+                if (id) {
+                    db.collection(collectionName).findOne(id, answer);
+                }
+                else {
+                    db.collection(collectionName).find(url.query).toArray(answer);
+                }
                 break;
             case 'PUT':
                 receive.call(req, function (data) {
-                    data._id = Date.now();
                     db.collection(collectionName).insertOne(data, answer);
                 });
                 break;
             case 'PATCH':
                 receive.call(req, function (data) {
-                    db.collection(collectionName).updateOne(url.query, {$set: data}, answer);
+                    db.collection(collectionName).updateOne(id, {$set: data}, answer);
                 });
                 break;
             case 'DELETE':
-                db.collection(collectionName).deleteOne(url.query, answer);
+                db.collection(collectionName).deleteOne({_id:id}, answer);
                 break;
             default:
                 res.writeHead(405);
