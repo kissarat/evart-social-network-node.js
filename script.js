@@ -193,24 +193,34 @@ var ui = {
                         data.messages.forEach(function (message) {
                             message.user = data.users[message.source_id];
                             add(message);
-                        })
-                    });
-                    socketSend({
-                        request: 'stream',
-                        target_id: params.target_id
+                        });
+                        createSocket(params.target_id);
                     });
                 }
             }
         });
 
+        mediaSource = new MediaSource();
+        view.video.src = URL.createObjectURL(mediaSource);
+        view.video.onerror = morozov;
+        var start = true;
+        var sourceBuffer;
+        mediaSource.addEventListener('sourceopen', function() {
+            sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.640029, mp4a.40.5"');
+        });
+        view.video.play();
+
+
         listen = function (message) {
-            if ('stream' == message.type) {
-                var videoSocket = new WebSocket(socketHost + message.port);
-                videoSocket.onopen = function() {
-                    videoStream(videoSocket);
-                    videoSocket.onmessage = function(e) {
-                        view.video.src = 'data:video/webm;base64,' + btoa(e.data);
-                    }
+            if ('video' == message.type) {
+                sourceBuffer.addEventListener('updateend', function() {
+                    mediaSource.endOfStream();
+                    sourceBuffer.appendBuffer(base64Buffer(message.data));
+                    view.video.play();
+                });
+                if (start) {
+                    sourceBuffer.appendBuffer(base64Buffer(message.data));
+                    start = false;
                 }
             }
             else if (message.source_id == params.target_id) {
@@ -234,6 +244,8 @@ var ui = {
         });
     }
 };
+
+var mediaSource;
 
 go(location.pathname.slice(1) || 'user/login');
 
@@ -297,30 +309,43 @@ addEventListener('unload', function () {
 });
 
 
-
 var listen = Function();
 
 var auth = /auth=(\w+)/.exec(document.cookie);
 auth = auth ? auth[1] : null;
-var socketHost = 'ws://192.168.0.22:';
-var socket = new WebSocket(socketHost + 8081);
-socket.onopen = function () {
-    socketSend({"auth": auth});
-    this.onmessage = function (e) {
-        listen(JSON.parse(e.data));
-    }
-};
+var socket;
+function createSocket(target_id) {
+    var socketHost = 'ws://192.168.0.20:';
+    socket = new WebSocket(socketHost + 8081);
+    socket.onopen = function () {
+        socketSend({"auth": auth});
+        videoStream(socket, target_id);
+        this.onmessage = function (e) {
+            listen(JSON.parse(e.data));
+        }
+    };
+    return socket;
+}
 
 var recorder;
 //var getUserMedia = window.getUserMedia || window.webkitGetUserMedia || window.mozGetUserMedia;
-function videoStream(socket) {
+function videoStream(socket, target_id) {
     navigator.getUserMedia({audio: true, video: true}, function (stream) {
             recorder = new MediaStreamRecorder(stream);
-            recorder.mimeType = 'video/webm';
-            recorder.ondataavailable = function(data) {
-                socket.send(data);
+            recorder.mimeType = 'video/mp4';
+            recorder.ondataavailable = function (data) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    socket.send(JSON.stringify({
+                        type: 'video',
+                        target_id: target_id,
+                        data: btoa(e.target.result)
+                    }));
+                };
+                reader.readAsBinaryString(data);
+
             };
-            recorder.start(300);
+            recorder.start(1000);
         },
         morozov);
 }

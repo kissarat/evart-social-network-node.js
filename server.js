@@ -3,6 +3,7 @@
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
+var fs = require('fs');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
 var WebSocketServer = require('ws').Server;
@@ -246,40 +247,17 @@ socketServer.on('connection', function (socket) {
                 }
             });
         }
-        switch (message.request) {
-            case 'stream':
-                var videoServer = video();
-                listeners[message.target_id].send(JSON.stringify({
-                    type: 'stream',
-                    port: videoServer.port
-                }));
+        switch (message.type) {
+            case 'video':
+                console.log(message.data.length);
+                fs.writeFile('video/' + Date.now() + '.webm', new Buffer(message.data, 'base64'));
+                if (message.target_id in listeners) {
+                    listeners[message.target_id].send(JSON.stringify(message));
+                }
                 break;
         }
     })
 });
 
-
-function video() {
-    var port = ++video.port;
-    var videoServer = new WebSocketServer({port: port});
-    videoServer.port = port;
-    videoServer.on('connection', function(socket) {
-        console.log(socket._socket.remoteAddress + ':' + socket._socket.remotePort);
-        if (videoServer.source) {
-            videoServer.target = socket;
-            videoServer.target.on('message', function(data) {
-                videoServer.source.send(data);
-            });
-            videoServer.source.on('message', function(data) {
-                videoServer.target.send(data);
-            });
-        }
-        else {
-            videoServer.source = socket;
-        }
-    });
-    return videoServer;
-}
-video.port = 10000;
 
 server.listen(8080);
