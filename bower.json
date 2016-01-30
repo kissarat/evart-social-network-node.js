@@ -1,0 +1,16 @@
+{
+  "name": "socex",
+  "description": "",
+  "main": "index.html",
+  "authors": [
+    "Taras Labiak <kissarat@gmail.com>"
+  ],
+  "license": "ISC",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "~3.3.6",
+    "faker": "~0.0.2"
+  }
+}
