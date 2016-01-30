@@ -210,7 +210,7 @@ function query(o) {
         o.data = o.form.getData();
         delete o.form;
     }
-    if (o.data) {
+    if (!(o.data instanceof ArrayBuffer)) {
         o.data = JSON.stringify(o.data);
     }
     if (!o.method) {

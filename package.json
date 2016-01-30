@@ -1,17 +1,31 @@
 {
-  "name": "web",
+  "name": "socex",
   "version": "1.0.0",
-  "description": "",
   "main": "minimal.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "",
+  "author": "Taras Labiak <kissarat@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "faker": "^3.0.1",
     "kerberos": "0.0.18",
     "mongodb": "^2.1.4",
-    "mongoose": "^4.3.7"
-  }
+    "mongoose": "^4.3.7",
+    "ws": "^1.0.1"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/kissarat/socex2.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/kissarat/socex2/issues"
+  },
+  "homepage": "https://gitlab.com/kissarat/socex2#README",
+  "description": ""
 }

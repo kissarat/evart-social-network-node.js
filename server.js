@@ -10,7 +10,8 @@ var WebSocketServer = require('ws').Server;
 var controllers = {
     user: require('./user.js'),
     fake: require('./fake.js'),
-    message: require('./message.js')
+    message: require('./message.js'),
+    media: require('./media.js')
 };
 
 
@@ -65,7 +66,12 @@ function receive(call) {
         data.push(chunk);
     });
     this.on('end', function () {
-        call(JSON.parse(data.join('')));
+        data = data.join('');
+        try {
+            data = JSON.parse(data);
+        }
+        catch (ex) {}
+        call(data);
     });
 }
 
@@ -134,71 +140,70 @@ var server = http.createServer(function (req, res) {
         id = ObjectID(url.query.id);
     }
 
-    if ('/listeners' == url.original) {
-        var online = {};
-        for (var user_id in listeners) {
-            online[user_id] = listeners[user_id].user;
-        }
-        res.send(online);
-        return;
+    switch (url.route[0]) {
+        case 'listeners':
+            var online = {};
+            for (var user_id in listeners) {
+                online[user_id] = listeners[user_id].user;
+            }
+            res.send(online);
+            return;
+        case 'entity':
+            var collectionName = url.route[1];
+            switch (req.method) {
+                case 'GET':
+                    if (id) {
+                        db.collection(collectionName).findOne(id, answer);
+                    }
+                    else {
+                        db.collection(collectionName).find(url.query).toArray(answer);
+                    }
+                    break;
+                case 'PUT':
+                    receive.call(req, function (data) {
+                        db.collection(collectionName).insertOne(data, answer);
+                    });
+                    break;
+                case 'PATCH':
+                    receive.call(req, function (data) {
+                        db.collection(collectionName).updateOne(id, {$set: data}, answer);
+                    });
+                    break;
+                case 'DELETE':
+                    db.collection(collectionName).deleteOne({_id: id}, answer);
+                    break;
+                default:
+                    res.writeHead(405);
+                    res.end();
+                    break;
+            }
+            return;
     }
 
-    if ('entity' == url.route[0]) {
-        var collectionName = url.route[1];
-        switch (req.method) {
-            case 'GET':
-                if (id) {
-                    db.collection(collectionName).findOne(id, answer);
-                }
-                else {
-                    db.collection(collectionName).find(url.query).toArray(answer);
-                }
-                break;
-            case 'PUT':
-                receive.call(req, function (data) {
-                    db.collection(collectionName).insertOne(data, answer);
-                });
-                break;
-            case 'PATCH':
-                receive.call(req, function (data) {
-                    db.collection(collectionName).updateOne(id, {$set: data}, answer);
-                });
-                break;
-            case 'DELETE':
-                db.collection(collectionName).deleteOne({_id: id}, answer);
-                break;
-            default:
-                res.writeHead(405);
-                res.end();
-                break;
-        }
+    req.url = url;
+    var context = new Context(req, res);
+    context.answer = answer;
+    context.wrap = wrap;
+    context.listeners = listeners;
+    var action;
+    if (url.route.length >= 1) {
+        action = controllers[url.route[0]][req.route.length >= 2 ? url.route[1] : req.method];
+    }
+    if (!action) {
+        res.send(404, url);
     }
     else {
-        req.url = url;
-        var context = new Context(req, res);
-        context.answer = answer;
-        context.wrap = wrap;
-        context.listeners = listeners;
-        var action;
-        if (url.route.length >= 2) {
-            action = controllers[url.route[0]][url.route[1]];
-        }
-        if (!action) {
-            res.send(404, url);
+        if (req.auth) {
+            db.collection('user').findOne({auth: req.auth}, wrap(function (user) {
+                if (user) {
+                    context.user = user;
+                    //user._id = ObjectID(user._id);
+                }
+                exec(context, action);
+            }));
         }
         else {
-            if (req.auth) {
-                db.collection('user').findOne({auth: req.auth}, wrap(function (user) {
-                    if (user) {
-                        context.user = user;
-                        //user._id = ObjectID(user._id);
-                    }
-                    exec(context, action);
-                }));
-            }
-            else {
-                exec(context, action);
-            }
+            exec(context, action);
         }
     }
 });
@@ -249,9 +254,8 @@ socketServer.on('connection', function (socket) {
         }
         switch (message.type) {
             case 'video':
-                console.log(message.data.length);
-                fs.writeFile('video/' + Date.now() + '.webm', new Buffer(message.data, 'base64'));
                 if (message.target_id in listeners) {
+                    message.source_id = socket.user._id;
                     listeners[message.target_id].send(JSON.stringify(message));
                 }
                 break;
