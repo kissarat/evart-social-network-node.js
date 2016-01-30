@@ -1,8 +1,11 @@
+"use strict";
+
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
+var WebSocketServer = require('ws').Server;
 var controllers = {
     user: require('./user.js'),
     fake: require('./fake.js'),
@@ -75,15 +78,6 @@ function Context(req, res) {
 var server = http.createServer(function (req, res) {
     req.url = req.url.replace(/^\/api\//, '/');
     var url = parse(req.url);
-    if ('OPTIONS' == req.method) {
-        res.writeHead(200, {
-            'Allow': 'GET, POST, PUT, PATCH, DELETE',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type'
-        });
-        res.end();
-        return;
-    }
 
     var auth;
     if (url.query.auth) {
@@ -96,11 +90,11 @@ var server = http.createServer(function (req, res) {
     else if (req.headers && req.headers.cookie && (auth = /auth=(\w+)/.exec(req.headers.cookie))) {
         req.auth = auth[1];
     }
-        //res.send({
-        //    method: req.method,
-        //    headers: req.headers,
-        //    url: url
-        //});
+    //res.send({
+    //    method: req.method,
+    //    headers: req.headers,
+    //    url: url
+    //});
     //receive.call(req, function(data) {
     //    res.send({
     //        method: req.method,
@@ -139,6 +133,15 @@ var server = http.createServer(function (req, res) {
         id = ObjectID(url.query.id);
     }
 
+    if ('/listeners' == url.original) {
+        var online = {};
+        for (var user_id in listeners) {
+            online[user_id] = listeners[user_id].user;
+        }
+        res.send(online);
+        return;
+    }
+
     if ('entity' == url.route[0]) {
         var collectionName = url.route[1];
         switch (req.method) {
@@ -161,7 +164,7 @@ var server = http.createServer(function (req, res) {
                 });
                 break;
             case 'DELETE':
-                db.collection(collectionName).deleteOne({_id:id}, answer);
+                db.collection(collectionName).deleteOne({_id: id}, answer);
                 break;
             default:
                 res.writeHead(405);
@@ -174,6 +177,7 @@ var server = http.createServer(function (req, res) {
         var context = new Context(req, res);
         context.answer = answer;
         context.wrap = wrap;
+        context.listeners = listeners;
         var action;
         if (url.route.length >= 2) {
             action = controllers[url.route[0]][url.route[1]];
@@ -218,5 +222,64 @@ function exec(_, action) {
         });
     }
 }
+
+var listeners = {};
+var socketServer = new WebSocketServer({port: 8081});
+socketServer.on('connection', function (socket) {
+    socket.on('message', function (message) {
+        message = JSON.parse(message);
+        if (message.auth) {
+            db.collection('user').findOne({auth: message.auth}, function (err, user) {
+                if (user) {
+                    socket.user = user;
+                    listeners[user._id] = socket;
+                    socket.on('close', function () {
+                        delete listeners[this.user._id];
+                    })
+                }
+                else {
+                    socket.send(JSON.stringify({
+                        error: 'Not authorized',
+                        user: user
+                    }));
+                    socket.close();
+                }
+            });
+        }
+        switch (message.request) {
+            case 'stream':
+                var videoServer = video();
+                listeners[message.target_id].send(JSON.stringify({
+                    type: 'stream',
+                    port: videoServer.port
+                }));
+                break;
+        }
+    })
+});
+
+
+function video() {
+    var port = ++video.port;
+    var videoServer = new WebSocketServer({port: port});
+    videoServer.port = port;
+    videoServer.on('connection', function(socket) {
+        console.log(socket._socket.remoteAddress + ':' + socket._socket.remotePort);
+        if (videoServer.source) {
+            videoServer.target = socket;
+            videoServer.target.on('message', function(data) {
+                videoServer.source.send(data);
+            });
+            videoServer.source.on('message', function(data) {
+                videoServer.target.send(data);
+            });
+        }
+        else {
+            videoServer.source = socket;
+        }
+    });
+    return videoServer;
+}
+video.port = 10000;
 
 server.listen(8080);

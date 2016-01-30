@@ -21,7 +21,14 @@ module.exports = {
             text: _.body.text,
             time: Date.now()
         };
-        _.db.collection('message').insertOne(data, _.answer);
+        _.db.collection('message').insertOne(data, _.wrap(function (result) {
+            var listener = _.listeners[data.target_id];
+            if (listener) {
+                console.log(data);
+                listener.send(JSON.stringify(data));
+            }
+            _.res.send(result);
+        }));
     },
 
     history: function (_) {
@@ -37,7 +44,7 @@ module.exports = {
                         ]
                     }
                 },
-                {$sort: {time: -1}}
+                {$sort: {time: 1}}
             ])
             .toArray(_.wrap(function (messages) {
                 var user_ids = new Set();

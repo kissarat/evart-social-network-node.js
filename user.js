@@ -34,7 +34,7 @@ module.exports = {
     },
 
     many: function (_) {
-        var ids = _.req.url.query.ids.split(',').map(function (id) {
+        var ids = _.req.url.query.ids.split('.').map(function (id) {
             return ObjectID(id);
         });
         _.db.collection('user').find({_id: {$in: ids}}, {auth: 0, password: 0, email: 0}).toArray(_.answer);

@@ -82,8 +82,25 @@ function each(array, call) {
     Array.prototype.forEach.call(array, call);
 }
 
+function keyed(array) {
+    var object = {};
+    for (var i = 0; i < array.length; i++) {
+        object[array[i]._id] = array[i];
+    }
+    return object;
+}
+
 function array(a) {
-    return Array.prototype.slice.call(a);
+    if (a.length) {
+        return Array.prototype.slice.call(a);
+    }
+    else {
+        var b = [];
+        for(var key in a) {
+            b.push(a[key]);
+        }
+        return b;
+    }
 }
 
 function empty(object) {

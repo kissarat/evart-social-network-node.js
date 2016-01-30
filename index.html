@@ -6,6 +6,17 @@
     <link rel="stylesheet" type="text/css" href="/style.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
+    <style>
+        [data-id="messages"] {
+            height: 400px;
+            overflow-y: scroll;
+        }
+
+        video {
+            width: 320px;
+            height: 240px;
+        }
+    </style>
 </head>
 <body>
 
@@ -57,6 +68,7 @@
     </form>
 
     <div id="chat">
+        <video data-id="video"></video>
         <div data-id="messages">
             <div data-widget="message">
                 <strong data-name="author"></strong>
@@ -104,6 +116,7 @@
 
 <script src="/lib/jquery/dist/jquery.min.js"></script>
 <script src="/util.js"></script>
+<script src="https://cdn.webrtc-experiment.com/MediaStreamRecorder.js"> </script>
 <script src="/script.js"></script>
 <script src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/lib/faker/dist/faker.js"></script>
