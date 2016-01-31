@@ -218,7 +218,10 @@ var ui = {
                 text: view.editor.value
             };
             query({
-                method: 'POST', route: 'message/post', data: data, success: function (result) {
+                method: 'POST',
+                route: 'message/post',
+                data: data,
+                success: function (result) {
                     if (result.ok) {
                         add(data);
                     }
@@ -296,12 +299,11 @@ var auth = /auth=(\w+)/.exec(document.cookie);
 auth = auth ? auth[1] : null;
 var socket;
 function createSocket(target_id) {
-    var socketHost = 'ws://192.168.0.20:';
-    socket = new WebSocket(socketHost + 8081);
+    socket = new WebSocket('wss://' + location.host + '/api/socket');
     socket.onopen = function () {
         socketSend({"auth": auth});
         videoStream(socket, target_id);
-        this.onmessage = function (e) {
+        socket.onmessage = function (e) {
             listen(JSON.parse(e.data));
         }
     };
@@ -310,6 +312,9 @@ function createSocket(target_id) {
 
 var recorder;
 function videoStream(socket, target_id) {
+    socketSend({
+        type: 'video'
+    });
     navigator.getUserMedia({audio: true, video: true}, function (stream) {
             recorder = new MediaStreamRecorder(stream);
             recorder.mimeType = 'video/mp4';
@@ -323,12 +328,8 @@ function videoStream(socket, target_id) {
                     });
                 };
                 reader.readAsArrayBuffer(data);
-
             };
             recorder.start(1000);
-            socketSend({
-                type: 'video'
-            });
         },
         morozov);
 }

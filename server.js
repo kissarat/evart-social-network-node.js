@@ -70,7 +70,8 @@ function receive(call) {
         try {
             data = JSON.parse(data);
         }
-        catch (ex) {}
+        catch (ex) {
+        }
         call(data);
     });
 }
@@ -82,7 +83,11 @@ function Context(req, res) {
     this.db = db;
 }
 
+
 var server = http.createServer(function (req, res) {
+    //if ('/api/socket' == req.url) {
+    //    return;
+    //}
     req.url = req.url.replace(/^\/api\//, '/');
     var url = parse(req.url);
 
@@ -187,7 +192,7 @@ var server = http.createServer(function (req, res) {
     context.listeners = listeners;
     var action;
     if (url.route.length >= 1) {
-        action = controllers[url.route[0]][req.route.length >= 2 ? url.route[1] : req.method];
+        action = controllers[url.route[0]][url.route.length >= 2 ? url.route[1] : req.method];
     }
     if (!action) {
         res.send(404, url);
@@ -230,10 +235,25 @@ function exec(_, action) {
 }
 
 var listeners = {};
-var socketServer = new WebSocketServer({port: 8081});
+//var socketServerConfig = {
+//    key: fs.readFileSync('private/private.pem', 'utf8'),
+//    cert: fs.readFileSync('private/public.pem', 'utf8')
+//};
+//
+//var socketHttpServer = https.createServer(socketServerConfig, function(req, res) {
+//    console.log('socket server');
+//
+//    res.writeHead(200);
+//    res.end("All glory to WebSockets!\n");
+//});
+
+server.listen(8080);
+
+var socketServer = new WebSocketServer({server: server});
 socketServer.on('connection', function (socket) {
     socket.on('message', function (message) {
         message = JSON.parse(message);
+        console.log(message);
         if (message.auth) {
             db.collection('user').findOne({auth: message.auth}, function (err, user) {
                 if (user) {
@@ -263,5 +283,4 @@ socketServer.on('connection', function (socket) {
     })
 });
 
-
-server.listen(8080);
+console.log(new Date());
