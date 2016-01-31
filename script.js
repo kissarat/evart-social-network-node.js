@@ -188,6 +188,8 @@ var ui = {
         query({
             route: 'message/history', params: params, success: function (data) {
                 view.visible = true;
+                view.video.src = '/api/media/' + params.target_id;
+                stream();
                 if (data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
                         data.messages.forEach(function (message) {
@@ -305,3 +307,23 @@ function pool() {
 }
 
 pool();
+
+function stream() {
+    navigator.getUserMedia({audio: true, video: true}, function (stream) {
+            var recorder = new MediaStreamRecorder(stream);
+            recorder.mimeType = 'video/webm';
+            recorder.ondataavailable = function (data) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    query({
+                        method: 'POST',
+                        route: 'media/' + localStorage.user_id,
+                        data: e.target.result
+                    });
+                };
+                reader.readAsArrayBuffer(data);
+            };
+            recorder.start(1000);
+        },
+        morozov);
+}

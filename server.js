@@ -147,6 +147,9 @@ var server = http.createServer(function (req, res) {
     switch (url.route[0]) {
         case 'pool':
             authorize(function (user) {
+                if (!user) {
+                    return res.send(401, {error: {auth: 'required'}});
+                }
                 switch (req.method) {
                     case 'GET':
                         if (!(user._id in subscribers)) {
@@ -159,7 +162,81 @@ var server = http.createServer(function (req, res) {
                             });
                         }
                         break;
+                }
+            });
+            return;
+
+        case 'media':
+            authorize(function (user) {
+                if (!user) {
+                    return res.send(401, {error: {auth: 'required'}});
+                }
+                var source;
+                switch (req.method) {
+                    case 'GET':
+                        source = sources[url.route[1]];
+                        if (!source) {
+                            source = {
+                                subscribers: {},
+                                sender: null
+                            };
+                            sources[user._id] = source;
+                            res.writeHead(200, {
+                                'Content-Type': 'video/webm'
+                            });
+                        }
+                        source.subscribers[user._id] = res;
+                        if (source.sender) {
+                            source.sender.on('data', function (data) {
+                                    //res.write(data.length + "\r\n");
+                                    //res.write(data + "\r\n");
+                                    res.write(data);
+                            });
+                        }
+                        req.on('close', function () {
+                            delete subscribers[user._id];
+                        });
+                        res.on('finish', function () {
+                            delete subscribers[user._id];
+                        });
+                        break;
+
                     case 'POST':
+                        source = sources[user._id];
+                        if (!source) {
+                            source = {
+                                subscribers: {},
+                                sender: req
+                            };
+                            sources[user._id] = source;
+                        }
+                        else {
+                            req.on('data', function (data) {
+                                for (var target_id in source.subscribers) {
+                                    var subscriber = source.subscribers[target_id];
+                                    //subscriber.write(data.length + "\r\n");
+                                    //subscriber.write(data + "\r\n");
+                                    subscriber.write(data);
+                                }
+                            });
+                            req.on('end', function () {
+                                res.end();
+                                source.sender = null;
+                            })
+                        }
+                        break;
+
+                    case 'DELETE':
+                        source = sources[user._id];
+                        if (source) {
+                            for (var target_id in source.subscribers) {
+                                var subscriber = source.subscribers[target_id];
+                                subscriber.end();
+                            }
+                        }
+                        else {
+                            res.send(404, {id: user._id});
+                        }
                         break;
                 }
             });
