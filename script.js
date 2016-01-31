@@ -194,22 +194,12 @@ var ui = {
                             message.user = data.users[message.source_id];
                             add(message);
                         });
-                        createSocket(params.target_id);
                     });
                 }
             }
         });
 
-        view.video.onerror = morozov;
-
-        listen = function (message) {
-            if ('video' == message.type) {
-                view.video.src = '/media/' + message.source_id;
-            }
-            else if (message.source_id == params.target_id) {
-                add(message);
-            }
-        };
+        server.on('message', add);
 
         this.on('send', function () {
             var data = {
@@ -297,43 +287,21 @@ var listen = Function();
 
 var auth = /auth=(\w+)/.exec(document.cookie);
 auth = auth ? auth[1] : null;
-var socket;
-function createSocket(target_id) {
-    socket = new WebSocket('wss://' + location.host + '/api/socket');
-    socket.onopen = function () {
-        socketSend({"auth": auth});
-        videoStream(socket, target_id);
-        socket.onmessage = function (e) {
-            listen(JSON.parse(e.data));
+
+var server = {};
+extend(server, EventEmitter);
+
+function pool() {
+    var xhr = query({
+        route: 'pool',
+        success: function (data) {
+            server.fire(data.type, data);
+            setTimeout(pool, 3000);
         }
-    };
-    return socket;
-}
-
-var recorder;
-function videoStream(socket, target_id) {
-    socketSend({
-        type: 'video'
     });
-    navigator.getUserMedia({audio: true, video: true}, function (stream) {
-            recorder = new MediaStreamRecorder(stream);
-            recorder.mimeType = 'video/mp4';
-            recorder.ondataavailable = function (data) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    query({
-                        method: 'POST',
-                        route: 'media/' + localStorage.user_id,
-                        data: e.target.result
-                    });
-                };
-                reader.readAsArrayBuffer(data);
-            };
-            recorder.start(1000);
-        },
-        morozov);
+    xhr.onerror = function () {
+        setTimeout(pool, 3000);
+    }
 }
 
-function socketSend(object) {
-    socket.send(JSON.stringify(object));
-}
+pool();

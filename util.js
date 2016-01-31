@@ -96,7 +96,7 @@ function array(a) {
     }
     else {
         var b = [];
-        for(var key in a) {
+        for (var key in a) {
             b.push(a[key]);
         }
         return b;
@@ -151,44 +151,6 @@ Object.defineProperty(Element.prototype, 'visible', {
     }
 });
 
-Element.prototype.on = function (name, call) {
-    if (!this._events) {
-        this._events = {};
-    }
-
-    if (!(name in this._events)) {
-        this._events[name] = [];
-    }
-
-    this._events[name].push(call);
-};
-
-Element.prototype.off = function (name, call) {
-    var i = this._events[name].indexOf(call);
-    this._events[name].splice(i, 1);
-    if (this._events[name].length == 0) {
-        delete this._events[name];
-    }
-};
-
-Element.prototype.once = function (name, call) {
-    function once(data) {
-        call.call(this, data);
-        this.off(name, once);
-    }
-
-    this.on(name, once);
-};
-
-Element.prototype.fire = function (name, data) {
-    if (this._events && (name in this._events)) {
-        var listeners = this._events[name];
-        for (var i = 0; i < listeners.length; i++) {
-            listeners[i].call(this, data);
-        }
-    }
-};
-
 function morozov(a) {
     console.log(a);
 }
@@ -242,12 +204,12 @@ function query(o) {
     return xhr;
 }
 
-query.delete = function(name, id, call) {
+query.delete = function (name, id, call) {
     return query({
-        route:'entity/' + name,
-        params: {id:id},
+        route: 'entity/' + name,
+        params: {id: id},
         method: 'DELETE',
-        success:call
+        success: call
     });
 };
 
@@ -260,8 +222,8 @@ function bind_form(form, o) {
                 if (form.dataset.entity) {
                     element.addEventListener('change', function () {
                         query({
-                            route:'entity/' + form.dataset.entity,
-                            method:'PATCH'
+                            route: 'entity/' + form.dataset.entity,
+                            method: 'PATCH'
                         });
                     });
                 }
@@ -278,11 +240,58 @@ function $button(text, call) {
 }
 
 function base64Buffer(base64) {
-    var binary_string =  window.atob(base64);
+    var binary_string = window.atob(base64);
     var len = binary_string.length;
-    var bytes = new Uint8Array( len );
-    for (var i = 0; i < len; i++)        {
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
         bytes[i] = binary_string.charCodeAt(i);
     }
     return bytes.buffer;
 }
+
+function extend(target, source) {
+    for (var key in source) {
+        target[key] = source[key];
+    }
+}
+
+var EventEmitter = {
+    on: function (name, call) {
+        if (!this._events) {
+            this._events = {};
+        }
+
+        if (!(name in this._events)) {
+            this._events[name] = [];
+        }
+
+        this._events[name].push(call);
+    },
+    off: function (name, call) {
+        var i = this._events[name].indexOf(call);
+        this._events[name].splice(i, 1);
+        if (this._events[name].length == 0) {
+            delete this._events[name];
+        }
+    },
+    once: function (name, call) {
+        function once(data) {
+            call.call(this, data);
+            this.off(name, once);
+        }
+
+        this.on(name, once);
+    },
+    fire: function (name, data) {
+        if (this._events && (name in this._events)) {
+            var listeners = this._events[name];
+            for (var i = 0; i < listeners.length; i++) {
+                if (false === listeners[i].call(this, data)) {
+                    return;
+                }
+            }
+        }
+    }
+};
+
+extend(Element.prototype, EventEmitter);

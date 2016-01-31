@@ -22,11 +22,8 @@ module.exports = {
             time: Date.now()
         };
         _.db.collection('message').insertOne(data, _.wrap(function (result) {
-            var listener = _.listeners[data.target_id];
-            if (listener) {
-                console.log(data);
-                listener.send(JSON.stringify(data));
-            }
+            data.type = 'message';
+            _.send(_.body.target_id, data);
             _.res.send(result);
         }));
     },

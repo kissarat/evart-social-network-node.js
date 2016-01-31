@@ -6,12 +6,10 @@ var http = require('http');
 var fs = require('fs');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
-var WebSocketServer = require('ws').Server;
 var controllers = {
     user: require('./user.js'),
     fake: require('./fake.js'),
-    message: require('./message.js'),
-    media: require('./media.js')
+    message: require('./message.js')
 };
 
 
@@ -85,9 +83,6 @@ function Context(req, res) {
 
 
 var server = http.createServer(function (req, res) {
-    //if ('/api/socket' == req.url) {
-    //    return;
-    //}
     req.url = req.url.replace(/^\/api\//, '/');
     var url = parse(req.url);
 
@@ -115,6 +110,10 @@ var server = http.createServer(function (req, res) {
     //    });
     //});
     //return;
+
+    function authorize(call) {
+        db.collection('user').findOne({auth: req.auth}, wrap(call));
+    }
 
     function answer(err, result) {
         if (err) {
@@ -146,13 +145,26 @@ var server = http.createServer(function (req, res) {
     }
 
     switch (url.route[0]) {
-        case 'listeners':
-            var online = {};
-            for (var user_id in listeners) {
-                online[user_id] = listeners[user_id].user;
-            }
-            res.send(online);
+        case 'pool':
+            authorize(function (user) {
+                switch (req.method) {
+                    case 'GET':
+                        if (!(user._id in subscribers)) {
+                            subscribers[user._id] = res;
+                            req.on('close', function () {
+                                delete subscribers[user._id];
+                            });
+                            res.on('finish', function () {
+                                delete subscribers[user._id];
+                            });
+                        }
+                        break;
+                    case 'POST':
+                        break;
+                }
+            });
             return;
+
         case 'entity':
             var collectionName = url.route[1];
             switch (req.method) {
@@ -189,7 +201,8 @@ var server = http.createServer(function (req, res) {
     var context = new Context(req, res);
     context.answer = answer;
     context.wrap = wrap;
-    context.listeners = listeners;
+    context.send = send;
+    context.subscribers = subscribers;
     var action;
     if (url.route.length >= 1) {
         action = controllers[url.route[0]][url.route.length >= 2 ? url.route[1] : req.method];
@@ -199,13 +212,13 @@ var server = http.createServer(function (req, res) {
     }
     else {
         if (req.auth) {
-            db.collection('user').findOne({auth: req.auth}, wrap(function (user) {
+            authorize(function (user) {
                 if (user) {
                     context.user = user;
                     //user._id = ObjectID(user._id);
                 }
                 exec(context, action);
-            }));
+            });
         }
         else {
             exec(context, action);
@@ -234,53 +247,17 @@ function exec(_, action) {
     }
 }
 
-var listeners = {};
-//var socketServerConfig = {
-//    key: fs.readFileSync('private/private.pem', 'utf8'),
-//    cert: fs.readFileSync('private/public.pem', 'utf8')
-//};
-//
-//var socketHttpServer = https.createServer(socketServerConfig, function(req, res) {
-//    console.log('socket server');
-//
-//    res.writeHead(200);
-//    res.end("All glory to WebSockets!\n");
-//});
+function send(target_id, data) {
+    var subscriber = subscribers[target_id];
+    if (subscriber) {
+        subscriber.send(data);
+    }
+}
+
+var subscribers = {};
+
+var sources = {};
 
 server.listen(8080);
-
-var socketServer = new WebSocketServer({server: server});
-socketServer.on('connection', function (socket) {
-    socket.on('message', function (message) {
-        message = JSON.parse(message);
-        console.log(message);
-        if (message.auth) {
-            db.collection('user').findOne({auth: message.auth}, function (err, user) {
-                if (user) {
-                    socket.user = user;
-                    listeners[user._id] = socket;
-                    socket.on('close', function () {
-                        delete listeners[this.user._id];
-                    })
-                }
-                else {
-                    socket.send(JSON.stringify({
-                        error: 'Not authorized',
-                        user: user
-                    }));
-                    socket.close();
-                }
-            });
-        }
-        switch (message.type) {
-            case 'video':
-                if (message.target_id in listeners) {
-                    message.source_id = socket.user._id;
-                    listeners[message.target_id].send(JSON.stringify(message));
-                }
-                break;
-        }
-    })
-});
 
 console.log(new Date());
