@@ -187,26 +187,12 @@ var ui = {
             });
         }
 
-        function loadVideo() {
-            query.media(params.target_id, function (data) {
-                try {
-                    console.log(data.byteLength);
-                    data = buffer2base64(data);
-                    console.log(data.length);
-                    view.video.src = 'data:video/mp4;base64,' + data;
-                }
-                catch (ex) {
-                }
-                view.video.play();
-                loadVideo();
-            });
-        }
-
         query({
             route: 'message/history', params: params, success: function (data) {
                 view.visible = true;
                 stream();
-                loadVideo();
+                view.video.src = '/api/media/' + params.target_id;
+                view.video.play();
                 if (data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
                         data.messages.forEach(function (message) {
@@ -302,42 +288,49 @@ addEventListener('unload', function () {
 });
 
 
-var listen = Function();
-
 var auth = /auth=(\w+)/.exec(document.cookie);
 auth = auth ? auth[1] : null;
 
-var server = {};
-extend(server, EventEmitter);
+var server = {
+    send: function (target_id, body) {
+        return query({
+            route: 'pool',
+            method: 'POST',
+            body: body
+        })
+    },
 
-function pool() {
-    var xhr = query({
-        route: 'pool',
-        success: function (data) {
-            server.fire(data.type, data);
-            setTimeout(pool, 3000);
+    pool: function () {
+        var xhr = query({
+            route: 'pool',
+            success: function (data) {
+                server.fire(data.type, data);
+                setTimeout(pool, 1000);
+            }
+        });
+        xhr.onerror = function () {
+            setTimeout(pool, 1000);
         }
-    });
-    xhr.onerror = function () {
-        setTimeout(pool, 3000);
     }
-}
+};
 
-pool();
+extend(server, EventEmitter);
+server.pool();
+
 
 function stream() {
     navigator.getUserMedia({audio: true, video: true}, function (stream) {
-            var recorder = new MediaStreamRecorder(stream);
-            recorder.mimeType = 'video/mp4';
-            recorder.ondataavailable = function (data) {
+            var recorder = new MediaRecorder(stream, 'video/vp8');
+            recorder.ondataavailable = function (e) {
                 query({
                     method: 'POST',
+                    responseType: 'blob',
                     route: 'media/' + localStorage.user_id,
                     mime: recorder.mimeType,
-                    data: data
+                    data: e.data
                 });
             };
-            recorder.start(1000);
+            recorder.start(700);
         },
         morozov);
 }

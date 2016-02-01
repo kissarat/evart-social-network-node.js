@@ -1,3 +1,42 @@
+var features = [
+    'navigator.getUserMedia',
+    'MediaDevices.getUserMedia',
+    'RTCPeerConnection',
+    'RTCDataChannel'
+];
+
+var prefixes = ['', 'webkit', 'moz'];
+var detected = {};
+
+for (var i = 0; i < features.length; i++) {
+    var parts = features[i].split('.');
+    var detected_parts = [];
+    var obj = window;
+    for (var j = 0; j < parts.length; j++) {
+        var part = parts[j];
+        for (var k = 0; k < prefixes.length; k++) {
+            var key = prefixes[k];
+            if (key) {
+                key += part[0].toUpperCase() + part.slice(1);
+            }
+            else {
+                key = part;
+            }
+            if (key in obj) {
+                if (key != part) {
+                    obj[part] = obj[key];
+                }
+                obj = obj[key];
+                detected_parts.push(key);
+                break
+            }
+        }
+    }
+    if (parts.length == detected_parts.length) {
+        detected[features[i]] = detected_parts.join('.');
+    }
+}
+
 function $$(selector) {
     return document.querySelector(selector)
 }
@@ -200,6 +239,9 @@ function query(o) {
     if (o.mime) {
         xhr.overrideMimeType(o.mime)
     }
+    if (o.responseType) {
+        xhr.responseType = o.responseType;
+    }
     xhr.send(o.body ? JSON.stringify(o.body) : o.data);
     return xhr;
 }
@@ -213,11 +255,11 @@ query.delete = function (name, id, call) {
     });
 };
 
-query.media = function(source_id, call) {
+query.media = function (source_id, call) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', '/api/media/' + source_id);
     xhr.responseType = "arraybuffer";
-    xhr.onloadend = function() {
+    xhr.onloadend = function () {
         call(xhr.response);
     };
     xhr.send(null);
@@ -260,9 +302,9 @@ function base64buffer(base64) {
     return bytes.buffer;
 }
 
-function buffer2base64( buffer ) {
+function buffer2base64(buffer) {
     var binary = [];
-    var bytes = new Uint8Array( buffer );
+    var bytes = new Uint8Array(buffer);
     var len = bytes.byteLength;
     for (var i = 0; i < len; i++) {
         binary.push(String.fromCharCode(bytes[i]));

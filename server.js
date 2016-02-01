@@ -17,6 +17,7 @@ var db;
 
 MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db) {
     db = _db;
+    server.listen(8080);
 });
 
 function morozov(err, results) {
@@ -95,213 +96,221 @@ function Context(req, res) {
 
 
 var server = http.createServer(function (req, res) {
-    req.url = req.url.replace(/^\/api\//, '/');
-    var url = parse(req.url);
+        req.url = req.url.replace(/^\/api\//, '/');
+        var url = parse(req.url);
 
-    var auth;
-    if (url.query.auth) {
-        req.auth = url.query.auth;
-        delete url.query.auth;
-    }
-    else if (req.headers.authorization) {
-        req.auth = req.headers.authorization;
-    }
-    else if (req.headers && req.headers.cookie && (auth = /auth=(\w+)/.exec(req.headers.cookie))) {
-        req.auth = auth[1];
-    }
-    //res.send({
-    //    method: req.method,
-    //    headers: req.headers,
-    //    url: url
-    //});
-    //receive.call(req, function(data) {
-    //    res.send({
-    //        method: req.method,
-    //        url: url,
-    //        body: data
-    //    });
-    //});
-    //return;
-
-    function authorize(call) {
-        db.collection('user').findOne({auth: req.auth}, wrap(call));
-    }
-
-    function answer(err, result) {
-        if (err) {
-            res.send(500, {
-                error: err
-            });
+        var auth;
+        if (url.query.auth) {
+            req.auth = url.query.auth;
+            delete url.query.auth;
         }
-        else {
-            res.send(result);
+        else if (req.headers.authorization) {
+            req.auth = req.headers.authorization;
         }
-    }
+        else if (req.headers && req.headers.cookie && (auth = /auth=(\w+)/.exec(req.headers.cookie))) {
+            req.auth = auth[1];
+        }
+        //res.send({
+        //    method: req.method,
+        //    headers: req.headers,
+        //    url: url
+        //});
+        //receive.call(req, function(data) {
+        //    res.send({
+        //        method: req.method,
+        //        url: url,
+        //        body: data
+        //    });
+        //});
+        //return;
 
-    function wrap(call) {
-        return function (err, result) {
+        function authorize(call) {
+            db.collection('user').findOne({auth: req.auth}, wrap(call));
+        }
+
+        function answer(err, result) {
             if (err) {
                 res.send(500, {
                     error: err
                 });
             }
             else {
-                call(result);
+                res.send(result);
             }
         }
-    }
 
-    var id;
-    if (url.query.id) {
-        id = ObjectID(url.query.id);
-    }
-
-    switch (url.route[0]) {
-        case 'pool':
-            authorize(function (user) {
-                if (!user) {
-                    return res.send(401, {error: {auth: 'required'}});
+        function wrap(call) {
+            return function (err, result) {
+                if (err) {
+                    res.send(500, {
+                        error: err
+                    });
                 }
-                switch (req.method) {
-                    case 'GET':
-                        if (!(user._id in subscribers)) {
-                            subscribers[user._id] = res;
-                            req.on('close', function () {
-                                delete subscribers[user._id];
+                else {
+                    call(result);
+                }
+            }
+        }
+
+        var id;
+        if (url.query.id) {
+            id = ObjectID(url.query.id);
+        }
+
+        switch (url.route[0]) {
+            case 'pool':
+                authorize(function (user) {
+                    if (!user) {
+                        return res.send(401, {error: {auth: 'required'}});
+                    }
+                    switch (req.method) {
+                        case 'GET':
+                            if (!(user._id in subscribers)) {
+                                subscribers[user._id] = res;
+                                var close = function () {
+                                    delete subscribers[user._id];
+                                };
+                                req.on('close', close);
+                                res.on('finish', close);
+                            }
+                            break;
+                        case 'POST':
+                            receive_buffer(req, function(data) {
+                                send(url.query.target_id, data);
                             });
-                            res.on('finish', function () {
-                                delete subscribers[user._id];
-                            });
-                        }
-                        break;
-                }
-            });
-            return;
+                            break;
+                    }
+                });
+                return;
 
-        case 'media':
-            authorize(function (user) {
-                if (!user) {
-                    return res.send(401, {error: {auth: 'required'}});
-                }
-                var source;
-                switch (req.method) {
-                    case 'GET':
-                        source = sources[url.route[1]];
-                        if (!source) {
-                            source = {
-                                subscribers: {}
-                            };
-                            sources[user._id] = source;
-                        }
-                        source.subscribers[user._id] = res;
-                        var close = function () {
-                            delete source.subscribers[user._id];
-                        };
-                        req.on('end', close);
-                        res.on('close', close);
-                        res.on('finish', close);
-                        break;
-
-                    case 'POST':
-                        receive_buffer(req, function (data) {
-                            source = sources[user._id];
+            case 'media':
+                authorize(function (user) {
+                    if (!user) {
+                        return res.send(401, {error: {auth: 'required'}});
+                    }
+                    var source;
+                    switch (req.method) {
+                        case 'GET':
+                            source = sources[url.route[1]];
                             if (!source) {
                                 source = {
                                     subscribers: {}
                                 };
                                 sources[user._id] = source;
                             }
-                            else {
+                            source.subscribers[user._id] = res;
+                            if (source.headers) {
+                                res.writeHead(200, source.headers);
+                            }
+                            var close = function () {
+                                delete source.subscribers[user._id];
+                            };
+                            req.on('end', close);
+                            res.on('close', close);
+                            res.on('finish', close);
+                            break;
+
+                        case 'POST':
+                            source = sources[user._id];
+                            if (!source) {
+                                source = {
+                                    subscribers: {},
+                                    headers: {
+                                        'content-type': req.headers['content-type']
+                                    }
+                                };
+                                for (var target_id in source.subscribers) {
+                                    source.subscribers[target_id].writeHead(200, source.headers);
+                                }
+                                sources[user._id] = source;
+                            }
+                            req.on('data', function (data) {
+                                for (var target_id in source.subscribers) {
+                                    source.subscribers[target_id].write(data);
+                                }
+                            });
+                            req.on('end', function () {
+                                res.end();
+                            });
+                            break;
+
+                        case 'DELETE':
+                            source = sources[user._id];
+                            if (source) {
                                 for (var target_id in source.subscribers) {
                                     var subscriber = source.subscribers[target_id];
-                                    subscriber.writeHead(200, {
-                                        'Content-Type': 'video/mp4'
-                                    });
-                                    console.log(data.length);
-                                    subscriber.end(data);
+                                    subscriber.end();
                                 }
                             }
-
-                            res.end();
-                        });
-                        break;
-
-                    case 'DELETE':
-                        source = sources[user._id];
-                        if (source) {
-                            for (var target_id in source.subscribers) {
-                                var subscriber = source.subscribers[target_id];
-                                subscriber.end();
+                            else {
+                                res.send(404, {id: user._id});
                             }
+                            break;
+                    }
+                });
+                return;
+
+            case 'entity':
+                var collectionName = url.route[1];
+                switch (req.method) {
+                    case 'GET':
+                        if (id) {
+                            db.collection(collectionName).findOne(id, answer);
                         }
                         else {
-                            res.send(404, {id: user._id});
+                            db.collection(collectionName).find(url.query).toArray(answer);
                         }
                         break;
+                    case 'PUT':
+                        receive.call(req, function (data) {
+                            db.collection(collectionName).insertOne(data, answer);
+                        });
+                        break;
+                    case 'PATCH':
+                        receive.call(req, function (data) {
+                            db.collection(collectionName).updateOne(id, {$set: data}, answer);
+                        });
+                        break;
+                    case 'DELETE':
+                        db.collection(collectionName).deleteOne({_id: id}, answer);
+                        break;
+                    default:
+                        res.writeHead(405);
+                        res.end();
+                        break;
                 }
-            });
-            return;
+                return;
+        }
 
-        case 'entity':
-            var collectionName = url.route[1];
-            switch (req.method) {
-                case 'GET':
-                    if (id) {
-                        db.collection(collectionName).findOne(id, answer);
-                    }
-                    else {
-                        db.collection(collectionName).find(url.query).toArray(answer);
-                    }
-                    break;
-                case 'PUT':
-                    receive.call(req, function (data) {
-                        db.collection(collectionName).insertOne(data, answer);
-                    });
-                    break;
-                case 'PATCH':
-                    receive.call(req, function (data) {
-                        db.collection(collectionName).updateOne(id, {$set: data}, answer);
-                    });
-                    break;
-                case 'DELETE':
-                    db.collection(collectionName).deleteOne({_id: id}, answer);
-                    break;
-                default:
-                    res.writeHead(405);
-                    res.end();
-                    break;
-            }
-            return;
-    }
-
-    req.url = url;
-    var context = new Context(req, res);
-    context.answer = answer;
-    context.wrap = wrap;
-    context.send = send;
-    context.subscribers = subscribers;
-    var action;
-    if (url.route.length >= 1) {
-        action = controllers[url.route[0]][url.route.length >= 2 ? url.route[1] : req.method];
-    }
-    if (!action) {
-        res.send(404, url);
-    }
-    else {
-        if (req.auth) {
-            authorize(function (user) {
-                if (user) {
-                    context.user = user;
-                    //user._id = ObjectID(user._id);
-                }
-                exec(context, action);
-            });
+        req.url = url;
+        var context = new Context(req, res);
+        context.answer = answer;
+        context.wrap = wrap;
+        context.send = send;
+        context.subscribers = subscribers;
+        var action;
+        if (url.route.length >= 1) {
+            action = controllers[url.route[0]][url.route.length >= 2 ? url.route[1] : req.method];
+        }
+        if (!action) {
+            res.send(404, url);
         }
         else {
-            exec(context, action);
+            if (req.auth) {
+                authorize(function (user) {
+                    if (user) {
+                        context.user = user;
+                        //user._id = ObjectID(user._id);
+                    }
+                    exec(context, action);
+                });
+            }
+            else {
+                exec(context, action);
+            }
         }
-    }
-});
+    })
+    ;
 
 function exec(_, action) {
     if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {
@@ -334,7 +343,5 @@ function send(target_id, data) {
 var subscribers = {};
 
 var sources = {};
-
-server.listen(8080);
 
 console.log(new Date());
