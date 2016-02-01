@@ -169,17 +169,14 @@ HTMLFormElement.prototype.getData = function () {
 function query(o) {
     o.url = '/api';
     if (o.form) {
-        o.data = o.form.getData();
+        o.body = o.form.getData();
         delete o.form;
     }
-    if (!(o.data instanceof ArrayBuffer)) {
-        o.data = JSON.stringify(o.data);
-    }
+
     if (!o.method) {
         o.method = o.data ? 'POST' : 'GET';
     }
 
-    o.data = o.data || {};
     o.params = o.params || {};
     if (o.route instanceof Array) {
         o.route = o.route.join('/');
@@ -189,7 +186,7 @@ function query(o) {
     }
     var xhr = new XMLHttpRequest();
 
-    xhr.addEventListener('load', function () {
+    xhr.addEventListener('loadend', function () {
         if (o.success) {
             o.success(JSON.parse(this.responseText));
         }
@@ -200,7 +197,10 @@ function query(o) {
         url += '?' + $.param(o.params);
     }
     xhr.open(o.method, url);
-    xhr.send(o.data);
+    if (o.mime) {
+        xhr.overrideMimeType(o.mime)
+    }
+    xhr.send(o.body ? JSON.stringify(o.body) : o.data);
     return xhr;
 }
 
@@ -211,6 +211,17 @@ query.delete = function (name, id, call) {
         method: 'DELETE',
         success: call
     });
+};
+
+query.media = function(source_id, call) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/media/' + source_id);
+    xhr.responseType = "arraybuffer";
+    xhr.onloadend = function() {
+        call(xhr.response);
+    };
+    xhr.send(null);
+    return xhr
 };
 
 function bind_form(form, o) {
@@ -239,7 +250,7 @@ function $button(text, call) {
     return button;
 }
 
-function base64Buffer(base64) {
+function base64buffer(base64) {
     var binary_string = window.atob(base64);
     var len = binary_string.length;
     var bytes = new Uint8Array(len);
@@ -247,6 +258,16 @@ function base64Buffer(base64) {
         bytes[i] = binary_string.charCodeAt(i);
     }
     return bytes.buffer;
+}
+
+function buffer2base64( buffer ) {
+    var binary = [];
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary.push(String.fromCharCode(bytes[i]));
+    }
+    return window.btoa(binary.join(''));
 }
 
 function extend(target, source) {

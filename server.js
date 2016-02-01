@@ -75,6 +75,18 @@ function receive(call) {
 }
 
 
+function receive_buffer(req, call) {
+    var data = [];
+    req.on('data', function (chunk) {
+        data.push(chunk);
+    });
+    req.on('end', function () {
+        data = Buffer.concat(data);
+        call(data);
+    });
+}
+
+
 function Context(req, res) {
     this.req = req;
     this.res = res;
@@ -177,53 +189,41 @@ var server = http.createServer(function (req, res) {
                         source = sources[url.route[1]];
                         if (!source) {
                             source = {
-                                subscribers: {},
-                                sender: null
+                                subscribers: {}
                             };
                             sources[user._id] = source;
-                            res.writeHead(200, {
-                                'Content-Type': 'video/webm'
-                            });
                         }
                         source.subscribers[user._id] = res;
-                        if (source.sender) {
-                            source.sender.on('data', function (data) {
-                                    //res.write(data.length + "\r\n");
-                                    //res.write(data + "\r\n");
-                                    res.write(data);
-                            });
-                        }
-                        req.on('close', function () {
-                            delete subscribers[user._id];
-                        });
-                        res.on('finish', function () {
-                            delete subscribers[user._id];
-                        });
+                        var close = function () {
+                            delete source.subscribers[user._id];
+                        };
+                        req.on('end', close);
+                        res.on('close', close);
+                        res.on('finish', close);
                         break;
 
                     case 'POST':
-                        source = sources[user._id];
-                        if (!source) {
-                            source = {
-                                subscribers: {},
-                                sender: req
-                            };
-                            sources[user._id] = source;
-                        }
-                        else {
-                            req.on('data', function (data) {
+                        receive_buffer(req, function (data) {
+                            source = sources[user._id];
+                            if (!source) {
+                                source = {
+                                    subscribers: {}
+                                };
+                                sources[user._id] = source;
+                            }
+                            else {
                                 for (var target_id in source.subscribers) {
                                     var subscriber = source.subscribers[target_id];
-                                    //subscriber.write(data.length + "\r\n");
-                                    //subscriber.write(data + "\r\n");
-                                    subscriber.write(data);
+                                    subscriber.writeHead(200, {
+                                        'Content-Type': 'video/mp4'
+                                    });
+                                    console.log(data.length);
+                                    subscriber.end(data);
                                 }
-                            });
-                            req.on('end', function () {
-                                res.end();
-                                source.sender = null;
-                            })
-                        }
+                            }
+
+                            res.end();
+                        });
                         break;
 
                     case 'DELETE':

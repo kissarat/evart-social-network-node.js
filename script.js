@@ -83,6 +83,7 @@ function go(route, params) {
         state.params = params;
         _url += '?' + $.param(params);
     }
+    console.log(_url);
     history.pushState(state, document.title, '/' + _url);
 }
 
@@ -96,7 +97,8 @@ var ui = {
                     form: this,
                     success: function (data) {
                         if (data.auth) {
-                            document.cookie = 'auth=' + data.auth + '; path=/';
+                            document.cookie = 'auth=' + data.auth + '; path=/; expires='
+                                + (new Date(Date.now() + 6 * 24 * 3600 * 1000).toUTCString());
                             localStorage.user_id = data._id;
                         }
                         go('user/index')
@@ -185,11 +187,26 @@ var ui = {
             });
         }
 
+        function loadVideo() {
+            query.media(params.target_id, function (data) {
+                try {
+                    console.log(data.byteLength);
+                    data = buffer2base64(data);
+                    console.log(data.length);
+                    view.video.src = 'data:video/mp4;base64,' + data;
+                }
+                catch (ex) {
+                }
+                view.video.play();
+                loadVideo();
+            });
+        }
+
         query({
             route: 'message/history', params: params, success: function (data) {
                 view.visible = true;
-                view.video.src = '/api/media/' + params.target_id;
                 stream();
+                loadVideo();
                 if (data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
                         data.messages.forEach(function (message) {
@@ -212,7 +229,7 @@ var ui = {
             query({
                 method: 'POST',
                 route: 'message/post',
-                data: data,
+                body: data,
                 success: function (result) {
                     if (result.ok) {
                         add(data);
@@ -311,17 +328,14 @@ pool();
 function stream() {
     navigator.getUserMedia({audio: true, video: true}, function (stream) {
             var recorder = new MediaStreamRecorder(stream);
-            recorder.mimeType = 'video/webm';
+            recorder.mimeType = 'video/mp4';
             recorder.ondataavailable = function (data) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    query({
-                        method: 'POST',
-                        route: 'media/' + localStorage.user_id,
-                        data: e.target.result
-                    });
-                };
-                reader.readAsArrayBuffer(data);
+                query({
+                    method: 'POST',
+                    route: 'media/' + localStorage.user_id,
+                    mime: recorder.mimeType,
+                    data: data
+                });
             };
             recorder.start(1000);
         },
