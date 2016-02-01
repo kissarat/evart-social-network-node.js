@@ -175,7 +175,7 @@ var server = http.createServer(function (req, res) {
                             }
                             break;
                         case 'POST':
-                            receive_buffer(req, function(data) {
+                            receive_buffer(req, function (data) {
                                 send(url.query.target_id, data);
                             });
                             break;
@@ -188,62 +188,45 @@ var server = http.createServer(function (req, res) {
                     if (!user) {
                         return res.send(401, {error: {auth: 'required'}});
                     }
-                    var source;
+                    var source = sources[url.route[1]];
+                    var found = function () {
+                        if (!source || !source[url.route[2]]) {
+                            res.send(404, {
+                                error: {
+                                    source_found: !!source,
+                                    media_found: !!source && !!source[url.route[2]]
+                                }
+                            });
+                            return false;
+                        }
+                        return source[url.route[2]];
+                    };
+                    var media;
                     switch (req.method) {
                         case 'GET':
-                            source = sources[url.route[1]];
-                            if (!source) {
-                                source = {
-                                    subscribers: {}
-                                };
-                                sources[user._id] = source;
+                            if (media = found()) {
+                                res.send(source[url.route[2]]);
                             }
-                            source.subscribers[user._id] = res;
-                            if (source.headers) {
-                                res.writeHead(200, source.headers);
-                            }
-                            var close = function () {
-                                delete source.subscribers[user._id];
-                            };
-                            req.on('end', close);
-                            res.on('close', close);
-                            res.on('finish', close);
                             break;
 
                         case 'POST':
-                            source = sources[user._id];
-                            if (!source) {
-                                source = {
-                                    subscribers: {},
-                                    headers: {
-                                        'content-type': req.headers['content-type']
-                                    }
-                                };
-                                for (var target_id in source.subscribers) {
-                                    source.subscribers[target_id].writeHead(200, source.headers);
+                            receive.call(req, function (media) {
+                                if (!source) {
+                                    source = {};
+                                    sources[user._id] = source;
                                 }
-                                sources[user._id] = source;
-                            }
-                            req.on('data', function (data) {
-                                for (var target_id in source.subscribers) {
-                                    source.subscribers[target_id].write(data);
-                                }
-                            });
-                            req.on('end', function () {
-                                res.end();
+
+                                var type = url.route[2] || 'info';
+                                source[type] = media;
                             });
                             break;
 
-                        case 'DELETE':
-                            source = sources[user._id];
-                            if (source) {
-                                for (var target_id in source.subscribers) {
-                                    var subscriber = source.subscribers[target_id];
-                                    subscriber.end();
+                        case 'PUT':
+                            if (media = found()) {
+                                if (!media.subscribers) {
+                                    media.subscribers = {};
                                 }
-                            }
-                            else {
-                                res.send(404, {id: user._id});
+                                media.subscribers[user._id] = user.email;
                             }
                             break;
                     }

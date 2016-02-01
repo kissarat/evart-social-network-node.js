@@ -100,6 +100,7 @@ var ui = {
                             document.cookie = 'auth=' + data.auth + '; path=/; expires='
                                 + (new Date(Date.now() + 6 * 24 * 3600 * 1000).toUTCString());
                             localStorage.user_id = data._id;
+                            server.fire('login');
                         }
                         go('user/index')
                     }
@@ -305,16 +306,40 @@ var server = {
             route: 'pool',
             success: function (data) {
                 server.fire(data.type, data);
-                setTimeout(pool, 1000);
+                setTimeout(server.pool, 1000);
             }
         });
         xhr.onerror = function () {
-            setTimeout(pool, 1000);
+            setTimeout(server.pool, 1000);
         }
+    },
+
+    setMedia: function(target_id, media_id, body, call) {
+        return query({
+            method: 'POST',
+            route: ['media', target_id, media_id].join('/'),
+            body: body,
+            success: call
+        })
+    },
+
+    getMedia: function(target_id, media_id, call) {
+        return query({
+            method: 'GET',
+            route: ['media', target_id, media_id].join('/'),
+            success: call
+        })
     }
 };
 
 extend(server, EventEmitter);
+
+if (localStorage.user_id && auth) {
+    addEventListener('load', function() {
+        server.fire('login');
+    });
+}
+
 server.pool();
 
 

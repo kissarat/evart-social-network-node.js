@@ -37,5 +37,21 @@ Peer.prototype = {
     }
 };
 
-var peer = new Peer();
-peer.offer(morozov);
+var peer;
+server.on('login', function () {
+    peer = new Peer();
+    server.getMedia(localStorage.user_id, 'offer', function (offer) {
+        if (offer.error && !offer.error.media_found) {
+            peer.offer(function (offer) {
+                server.setMedia(localStorage.user_id, 'offer', {
+                    type: 'offer',
+                    sdp: offer.sdp
+                });
+                peer.connection.setLocalDescription(offer, morozov, morozov);
+            })
+        }
+        else {
+            peer.connection.setRemoteDescription(offer, morozov, morozov);
+        }
+    });
+});
