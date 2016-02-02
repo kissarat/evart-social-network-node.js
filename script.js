@@ -93,6 +93,7 @@ var ui = {
             document.title = 'Login';
             this.on('submit', function () {
                 query({
+                    method: 'POST',
                     route: 'user/login',
                     form: this,
                     success: function (data) {
@@ -113,6 +114,7 @@ var ui = {
             document.title = 'Singup';
             this.on('submit', function () {
                 query({
+                    method: 'POST',
                     route: 'user/signup',
                     form: this,
                     success: function () {
@@ -191,9 +193,8 @@ var ui = {
         query({
             route: 'message/history', params: params, success: function (data) {
                 view.visible = true;
-                stream();
-                view.video.src = '/api/media/' + params.target_id;
-                view.video.play();
+                peer.offer(params.target_id);
+                peer.answer(params.target_id);
                 if (data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
                         data.messages.forEach(function (message) {
@@ -295,7 +296,7 @@ auth = auth ? auth[1] : null;
 var server = {
     send: function (target_id, body) {
         return query({
-            route: 'pool',
+            route: 'pool/' + target_id,
             method: 'POST',
             body: body
         })
@@ -314,7 +315,7 @@ var server = {
         }
     },
 
-    setMedia: function(target_id, media_id, body, call) {
+    setMedia: function (target_id, media_id, body, call) {
         return query({
             method: 'POST',
             route: ['media', target_id, media_id].join('/'),
@@ -323,7 +324,7 @@ var server = {
         })
     },
 
-    getMedia: function(target_id, media_id, call) {
+    getMedia: function (target_id, media_id, call) {
         return query({
             method: 'GET',
             route: ['media', target_id, media_id].join('/'),
@@ -335,7 +336,7 @@ var server = {
 extend(server, EventEmitter);
 
 if (localStorage.user_id && auth) {
-    addEventListener('load', function() {
+    addEventListener('load', function () {
         server.fire('login');
     });
 }

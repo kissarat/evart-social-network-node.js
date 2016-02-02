@@ -175,8 +175,9 @@ var server = http.createServer(function (req, res) {
                             }
                             break;
                         case 'POST':
-                            receive_buffer(req, function (data) {
-                                send(url.query.target_id, data);
+                            receive.call(req, function (data) {
+                                send(url.query.target_id || url.route[1], data);
+                                res.end();
                             });
                             break;
                     }
@@ -317,6 +318,7 @@ function exec(_, action) {
 }
 
 function send(target_id, data) {
+    console.log(target_id, data);
     var subscriber = subscribers[target_id];
     if (subscriber) {
         subscriber.send(data);

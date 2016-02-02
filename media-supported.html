@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="util.js"></script>
     <script>
-        window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-
         function testTypes(types) {
             var h1 = document.querySelector('h1');
             if (!window.MediaSource) {
@@ -19,7 +18,12 @@
             output.innerHTML = tests.join("\n");
         }
 
-        function onLoad() {
+        addEventListener('load', function() {
+            var table = $id('features-list');
+            for (var key in detected) {
+                table.appendChild($row(key, detected[key]));
+            }
+
             console.log("Testing valid type strings.");
             var validTypes = [
 
@@ -58,16 +62,15 @@
                 'application/x-mpegurl',                         // HLS, AVC, AAC
                 'application/vnd.apple.mpegurl',                 // HLS, AVC, AAC
                 'application/vnd.ms-ss',                         // SmoothStreaming
-                'application/vnd.ms-sstr+xml',                   // SmoothStreaming
-
+                'application/vnd.ms-sstr+xml'                    // SmoothStreaming
             ];
 
             testTypes(validTypes);
-
-        }
+        });
     </script>
 </head>
-<body onload="onLoad()">
+<body>
+<table id="features-list"></table>
 <h1 style="display: none">Tests MediaSource.isTypeSupported().</h1>
 <pre id="output"></pre>
 </body>
