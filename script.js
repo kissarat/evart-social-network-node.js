@@ -21,8 +21,8 @@ function go(route, params) {
     var k = route.indexOf('?');
     var i;
     if (k >= 0) {
-        var _params = route.slice(k + 1);
-        route = route.slice(0, k);
+        var _params = _url.slice(k + 1);
+        route = _url.slice(0, k);
         _params = _params.split('&');
         params = {};
         for (i = 0; i < _params.length; i++) {
@@ -83,10 +83,10 @@ function go(route, params) {
     var state = {_: route};
     if (!empty(params)) {
         state.params = params;
-        _url += '?' + $.param(params);
+        _url = '/' + state._ + '?' + $.param(params);
     }
     console.log(_url);
-    history.pushState(state, document.title, '/' + _url);
+    history.pushState(state, document.title, _url);
 }
 
 var ui = {
@@ -198,13 +198,23 @@ var ui = {
                 peer.target_id = params.target_id;
                 peer.init();
                 peer.connection.addEventListener('addstream', function (e) {
+                    view.video.visible = true;
                     view.video.srcObject = e.stream;
-                });
-                peer.capture(function (mediaStream) {
-                    view.localVideo.srcObject = mediaStream;
+                    view.video.srcObject.trace();
                 });
 
-                if (data.messages) {
+                view.on('capture', function () {
+                    peer.capture(function () {
+                        peer.offer();
+                        $$('[data-action=capture]').visible = false;
+                    });
+                });
+
+                //peer.capture(function (mediaStream) {
+                //view.localVideo.srcObject = mediaStream;
+                //});
+
+                if (data && data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
                         data.messages.forEach(function (message) {
                             message.user = data.users[message.source_id];
@@ -236,10 +246,6 @@ var ui = {
         });
     }
 };
-
-var offer;
-
-go(location.pathname.slice(1) || 'user/login');
 
 var User = {
     //_cache: localStorage.users ? keyed(JSON.parse(localStorage.users)) : {},
@@ -318,7 +324,14 @@ var server = {
             route: 'pool',
             success: function (data) {
                 if (data) {
-                    server.fire(data.type, data);
+                    if ('queue' == data.type) {
+                        data.queue.forEach(function (e) {
+                            server.fire(e.type, e);
+                        });
+                    }
+                    else {
+                        server.fire(data.type, data);
+                    }
                 }
                 if (this.status < 400) {
                     server.pool();
@@ -364,6 +377,8 @@ if (localStorage.user_id && auth) {
 
 server.pool();
 
+go((location.pathname.slice(1) + location.search) || 'user/login');
+
 
 function stream() {
     navigator.getUserMedia({audio: true, video: true}, function (stream) {
@@ -381,3 +396,10 @@ function stream() {
         },
         morozov);
 }
+
+
+//if (navigator.userAgent.indexOf('Windows') >= 0) {
+//    setTimeout(function () {
+//        location.reload();
+//    }, 60000);
+//}

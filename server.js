@@ -169,10 +169,10 @@ var server = http.createServer(function (req, res) {
                             var subscriber = subscribers[user._id];
                             if (subscriber && 'queue' == subscriber.type) {
                                 delete subscribers[user._id];
-                                send(target_id, data);
+                                send(target_id, subscriber.queue);
                             }
                             else {
-                                if (!subscriber) {
+                                if (subscriber) {
                                     subscriber.end();
                                 }
                                 subscribers[user._id] = res;
@@ -284,7 +284,11 @@ var server = http.createServer(function (req, res) {
         context.subscribers = subscribers;
         var action;
         if (url.route.length >= 1) {
-            action = controllers[url.route[0]][url.route.length >= 2 ? url.route[1] : req.method];
+            if (url.route.length < 2) {
+                url.route[1] = req.method;
+                console.log(url.route);
+            }
+            action = controllers[url.route[0]][url.route[1]];
         }
         if (!action) {
             res.send(404, url);
