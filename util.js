@@ -272,6 +272,9 @@ function query(o) {
     }
 
     xhr.open(o.method, url);
+    if (o.body) {
+        xhr.overrideMimeType('application/json');
+    }
     if (o.mime) {
         xhr.overrideMimeType(o.mime)
     }

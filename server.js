@@ -169,7 +169,7 @@ var server = http.createServer(function (req, res) {
                             var subscriber = subscribers[user._id];
                             if (subscriber && 'queue' == subscriber.type) {
                                 delete subscribers[user._id];
-                                send(target_id, subscriber.queue);
+                                res.send(subscriber);
                             }
                             else {
                                 if (subscriber) {
@@ -189,56 +189,6 @@ var server = http.createServer(function (req, res) {
                                 send(target_id, data);
                                 res.end();
                             });
-                            break;
-                    }
-                });
-                return;
-
-            case 'media':
-                authorize(function (user) {
-                    if (!user) {
-                        return res.send(401, {error: {auth: 'required'}});
-                    }
-                    var source = sources[url.route[1]];
-                    var found = function () {
-                        if (!source || !source[url.route[2]]) {
-                            res.send(404, {
-                                error: {
-                                    source_found: !!source,
-                                    media_found: !!source && !!source[url.route[2]]
-                                }
-                            });
-                            return false;
-                        }
-                        return source[url.route[2]];
-                    };
-                    var media;
-                    switch (req.method) {
-                        case 'GET':
-                            if (media = found()) {
-                                res.send(source[url.route[2]]);
-                            }
-                            break;
-
-                        case 'POST':
-                            receive.call(req, function (media) {
-                                if (!source) {
-                                    source = {};
-                                    sources[user._id] = source;
-                                }
-
-                                var type = url.route[2] || 'info';
-                                source[type] = media;
-                            });
-                            break;
-
-                        case 'PUT':
-                            if (media = found()) {
-                                if (!media.subscribers) {
-                                    media.subscribers = {};
-                                }
-                                media.subscribers[user._id] = user.email;
-                            }
                             break;
                     }
                 });
@@ -332,7 +282,6 @@ function exec(_, action) {
 }
 
 function send(target_id, data) {
-    console.log(target_id, data);
     var subscriber = subscribers[target_id];
     if (subscriber) {
         if ('queue' == subscriber.type) {

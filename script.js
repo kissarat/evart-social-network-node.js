@@ -323,6 +323,7 @@ var server = {
         var xhr = query({
             route: 'pool',
             success: function (data) {
+                console.log(data);
                 if (data) {
                     if ('queue' == data.type) {
                         data.queue.forEach(function (e) {
