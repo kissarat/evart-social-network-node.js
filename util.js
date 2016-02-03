@@ -1,3 +1,5 @@
+'use strict';
+
     // Opera 8.0+
 var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
     // Firefox 1.0+
@@ -20,7 +22,7 @@ var features = [
     'RTCPeerConnection',
     'RTCSessionDescription',
     'RTCIceCandidate',
-    'AudioContext',
+    'AudioContext'
 ];
 
 var prefixes = ['', 'webkit', 'moz'];
@@ -245,7 +247,14 @@ function query(o) {
 
     xhr.addEventListener('loadend', function () {
         if (o.success) {
-            o.success(JSON.parse(this.responseText));
+            var response;
+            try {
+                response = JSON.parse(this.responseText);
+            }
+            catch (ex) {
+
+            }
+            o.success.call(xhr, response);
         }
     });
 

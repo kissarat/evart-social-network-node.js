@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
@@ -163,9 +163,18 @@ var server = http.createServer(function (req, res) {
                     if (!user) {
                         return res.send(401, {error: {auth: 'required'}});
                     }
+                    var target_id = url.query.target_id || url.route[1];
                     switch (req.method) {
                         case 'GET':
-                            if (!(user._id in subscribers)) {
+                            var subscriber = subscribers[user._id];
+                            if (subscriber && 'queue' == subscriber.type) {
+                                delete subscribers[user._id];
+                                send(target_id, data);
+                            }
+                            else {
+                                if (!subscriber) {
+                                    subscriber.end();
+                                }
                                 subscribers[user._id] = res;
                                 var close = function () {
                                     delete subscribers[user._id];
@@ -176,7 +185,8 @@ var server = http.createServer(function (req, res) {
                             break;
                         case 'POST':
                             receive.call(req, function (data) {
-                                send(url.query.target_id || url.route[1], data);
+                                data.source_id = user._id;
+                                send(target_id, data);
                                 res.end();
                             });
                             break;
@@ -321,7 +331,19 @@ function send(target_id, data) {
     console.log(target_id, data);
     var subscriber = subscribers[target_id];
     if (subscriber) {
-        subscriber.send(data);
+        if ('queue' == subscriber.type) {
+            subscriber.queue.push(data);
+        }
+        else {
+            subscriber.send(data);
+        }
+    }
+    else {
+        subscriber = {
+            type: 'queue',
+            queue: [data]
+        };
+        subscribers[target_id] = subscriber;
     }
 }
 

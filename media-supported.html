@@ -18,7 +18,7 @@
             output.innerHTML = tests.join("\n");
         }
 
-        addEventListener('load', function() {
+        addEventListener('load', function () {
             var table = $id('features-list');
             for (var key in detected) {
                 table.appendChild($row(key, detected[key]));
@@ -73,5 +73,16 @@
 <table id="features-list"></table>
 <h1 style="display: none">Tests MediaSource.isTypeSupported().</h1>
 <pre id="output"></pre>
+
+<video id="video" autoplay></video>
+<button type="button" id="start">Start</button>
+<script src="lib/webrtc-adapter/adapter.js"></script>
+<script>
+    start.onclick = function () {
+        navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(function (mediaStream) {
+            video.srcObject = mediaStream;
+        });
+    }
+</script>
 </body>
 </html>

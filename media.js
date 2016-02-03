@@ -35,17 +35,22 @@ var iceServerConfig = {
 function Peer(source_id, servers) {
     this.source_id = source_id || localStorage.user_id || Math.round(Math.random() * 100);
     this.connection = new RTCPeerConnection(servers, {optional: []});
-    this.connection.addEventListener('icecandidate', this.onicecandidate.bind(this));
-    this.connection.addEventListener('addstream', this.onaddstream.bind(this));
-    this.connection.addEventListener('iceconnectionstatechange', morozov);
-    this.trace('constructed')
 }
 
 Peer.prototype = {
-    onicecandidate: function (e) {
-        console.log(this.source_id, e);
-        if (e.candidate) {
+    init: function () {
+        this.connection.addEventListener('icecandidate', this.onicecandidate.bind(this));
+        this.connection.addEventListener('iceconnectionstatechange', morozov);
+        this.trace('constructed');
+    },
 
+    onicecandidate: function (e) {
+        console.log(this.target_id, e);
+        if (e.candidate) {
+            server.send(this.target_id, {
+                type: 'candidate',
+                candidate: e.candidate
+            });
         }
         else {
             this.trace('No candidate', 'error');
@@ -59,16 +64,13 @@ Peer.prototype = {
         console[type](this.source_id + ': ' + message);
     },
 
-    onaddstream: function (stream) {
-        this.stream = stream;
-    },
-
-    offer: function (target_id) {
+    offer: function () {
         var self = this;
         this.connection.createOffer(function (offer) {
             self.connection.setLocalDescription(offer, function () {
-                server.send(target_id, {
+                server.send(self.target_id, {
                     type: 'offer',
+                    source_id: self.source_id,
                     sdp: offer.sdp
                 })
             }, morozov);
@@ -76,37 +78,20 @@ Peer.prototype = {
             offerToReceiveAudio: 1,
             offerToReceiveVideo: 1
         });
-
-        this.connection.addEventListener('icecandidate', function (e) {
-            server.send(target_id, e.candidate);
-        });
     },
 
-    answer: function (source_id) {
+    capture: function (call) {
         var self = this;
-        server.on('offer', function (offer) {
-            offer = new RTCSessionDescription(offer);
-            self.connection.setRemoteDescription(offer, morozov, morozov);
-            self.connection.createAnswer(function (answer) {
-                self.connection.setLocalDescription(answer, function () {
-                        server.send(source_id, {
-                            type: 'answer',
-                            sdp: offer.sdp
-                        })
-                    },
-                    morozov);
-            });
-        });
-        this.connection.addEventListener('icecandidate', function (e) {
-            server.send(source_id, e.candidate);
-        });
+        var constraints = {audio: true, video: true};
+        navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
+            self.stream = mediaStream;
+            call(mediaStream);
+        })
+            .catch(morozov);
     },
 
-    addMediaStream: function () {
-        var connection = this.connection;
-        navigator.getUserMedia({audio: true, video: true}, function (mediaStream) {
-            connection.addStream(mediaStream);
-        }, morozov);
+    shareVideo: function() {
+        this.connection.addStream(this.stream);
     }
 };
 
@@ -114,22 +99,30 @@ var peer;
 
 server.on('login', function () {
     peer = new Peer(null, iceServerConfig);
-    server.on('candidate', function (data) {
-        var candidate = new RTCIceCandidate(data);
+    server.on('candidate', function (e) {
+        var candidate = new RTCIceCandidate(e.candidate);
         peer.connection.addIceCandidate(candidate);
     });
-    //server.getMedia(localStorage.user_id, 'offer', function (offer) {
-    //    if (offer.error && !offer.error.media_found) {
-    //        peer.offer(function (offer) {
-    //            server.setMedia(localStorage.user_id, 'offer', {
-    //                type: 'offer',
-    //                sdp: offer.sdp
-    //            });
-    //            peer.connection.setLocalDescription(offer, morozov, morozov);
-    //        })
-    //    }
-    //    else {
-    //        peer.connection.setRemoteDescription(offer, morozov, morozov);
-    //    }
-    //});
+
+    server.on('offer', function (offer) {
+        peer.target_id = offer.source_id;
+        offer = new RTCSessionDescription({type: 'offer', sdp: offer.sdp});
+        peer.connection.setRemoteDescription(offer, morozov, morozov);
+        peer.connection.createAnswer(function (answer) {
+            peer.connection.setLocalDescription(answer, function () {
+                    server.send(peer.target_id, {
+                        type: 'answer',
+                        sdp: offer.sdp
+                    })
+                },
+                morozov);
+        });
+    });
+
+    server.on('answer', function (desc) {
+        desc = new RTCSessionDescription({type: 'answer', sdp:desc.sdp});
+        peer.connection.setRemoteDescription(desc, morozov, function(e) {
+            console.error(e);
+        });
+    })
 });

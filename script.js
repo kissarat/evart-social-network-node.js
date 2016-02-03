@@ -1,3 +1,5 @@
+'use strict';
+
 var content = $$('.wrap > .container > .content');
 var action;
 var view;
@@ -193,8 +195,15 @@ var ui = {
         query({
             route: 'message/history', params: params, success: function (data) {
                 view.visible = true;
-                peer.offer(params.target_id);
-                peer.answer(params.target_id);
+                peer.target_id = params.target_id;
+                peer.init();
+                peer.connection.addEventListener('addstream', function (e) {
+                    view.video.srcObject = e.stream;
+                });
+                peer.capture(function (mediaStream) {
+                    view.localVideo.srcObject = mediaStream;
+                });
+
                 if (data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
                         data.messages.forEach(function (message) {
@@ -227,6 +236,8 @@ var ui = {
         });
     }
 };
+
+var offer;
 
 go(location.pathname.slice(1) || 'user/login');
 
@@ -306,8 +317,18 @@ var server = {
         var xhr = query({
             route: 'pool',
             success: function (data) {
-                server.fire(data.type, data);
-                setTimeout(server.pool, 1000);
+                if (data) {
+                    server.fire(data.type, data);
+                }
+                if (this.status < 400) {
+                    server.pool();
+                }
+                else if (401 == this.status) {
+                    server.on('login', server.pool);
+                }
+                else {
+                    setTimeout(server.pool, 1000);
+                }
             }
         });
         xhr.onerror = function () {

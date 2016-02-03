@@ -1,3 +1,5 @@
+'use strict';
+
 var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
 
