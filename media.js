@@ -8,6 +8,11 @@ stun.sort(shuffle);
 var iceServerConfig = {
     iceServers: [
         {
+            url: 'turn:game-of-business.com:3478',
+            credential: 'one',
+            username: 'one'
+        },
+        {
             url: 'turn:numb.viagenie.ca',
             credential: 'muazkh',
             username: 'webrtc@live.com'
@@ -89,7 +94,7 @@ Peer.prototype = {
         var self = this;
         var constraints = {audio: true, video: true};
         navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
-                self.connection.addStream(mediaStream);
+                self.stream = mediaStream;
                 call(mediaStream);
             })
             .catch(morozov);
@@ -103,6 +108,10 @@ Peer.prototype = {
         channel.addEventListener('message', morozov);
         channel.addEventListener('close', morozov);
         return channel;
+    },
+
+    shareVideo: function () {
+        this.connection.addStream(this.stream);
     }
 };
 

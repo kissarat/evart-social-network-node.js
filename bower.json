@@ -12,6 +12,7 @@
   "dependencies": {
     "bootstrap": "~3.3.6",
     "faker": "~0.0.2",
-    "webrtc-adapter": "~0.2.9"
+    "webrtc-adapter": "~0.2.9",
+    "jquery-ui": "~1.11.4"
   }
 }

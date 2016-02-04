@@ -6,22 +6,92 @@
     <link rel="stylesheet" type="text/css" href="/style.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
+    <link type="text/css" rel="stylesheet" href="/lib/jquery-ui/themes/smoothness/jquery-ui.min.css"/>
     <style>
         [data-id="messages"] {
-            height: 200px;
             overflow-y: scroll;
         }
 
-        video {
-            width: 320px;
-            height: 240px;
+        #chat > .video {
+            text-align: center;
+            position: relative;
+            min-height: 480px;
+        }
+
+        #chat > .video > .buttons {
+            position: absolute;
+            left: 200px;
+            top: 10px;
+        }
+
+        #chat > form {
+            width: inherit;
+        }
+
+        [data-id="video"] {
+            height: 360px;
+            background: url("/images/no-video-call.jpg") no-repeat center;
+            background-size: cover;
         }
 
         [data-id="localVideo"] {
-            -moz-transform: scaleX(-1); /* Gecko */
-            -o-transform: scaleX(-1); /* Opera */
-            -webkit-transform: scaleX(-1); /* Webkit */
-            transform: scaleX(-1); /* Standard */
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 160px;
+            height: 120px;
+        }
+
+        video.bigger {
+            height: 600px;
+        }
+
+        #chat .messages {
+            height: 300px;
+            position: fixed;
+            display: block;
+            bottom: 10px;
+            left: 4%;
+            right: 4%;
+            width: 92%;
+        }
+
+        #chat textarea {
+            width: 88%;
+        }
+
+        .table-block {
+            display: table;
+        }
+
+        .table-block > div {
+            display: table-row;
+        }
+
+        .table-block > div > div {
+            display: table-cell;
+        }
+
+        .floating {
+            position: absolute;
+            cursor: move;
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Chrome/Safari/Opera */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE/Edge */
+            user-select: none;
+        }
+
+        #emoji {
+            font-size: 20px;
+            background-color: white;
+            border: 1px solid black;
+            padding: 6px;
+        }
+
+        #emoji > div > div {
+            line-height: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -75,23 +145,27 @@
     </form>
 
     <div id="chat">
-        <video data-id="video" controls autoplay></video>
-        <!--<video data-id="localVideo" controls autoplay></video>-->
-        <button data-action="capture" type="button">Video</button>
-        <div data-id="messages">
-            <div data-widget="message">
-                <strong data-name="author"></strong>
-                <div data-name="text"></div>
+        <div class="video">
+            <video data-id="video" controls autoplay></video>
+            <div class="buttons">
+                <button data-action="call" type="button">Call</button>
+                <button data-action="bigger" type="button">800x600</button>
             </div>
         </div>
-        <form>
-            <div class="form-group">
-                <textarea data-id="editor"></textarea>
+        <video data-id="localVideo" autoplay muted></video>
+        <div class="messages">
+            <div data-id="messages">
+                <div data-widget="message">
+                    <strong data-name="author"></strong>
+                    <div data-name="text"></div>
+                </div>
             </div>
-            <p>
-                <button data-action="send" type="button">Send</button>
-            </p>
-        </form>
+            <form>
+                <textarea data-id="editor" cols="2"></textarea>
+                <button data-action="emoji">Emoji</button>
+                <button data-action="send">Send</button>
+            </form>
+        </div>
     </div>
 
     <div id="user/index">
@@ -124,11 +198,29 @@
 </div>
 
 <script src="/lib/jquery/dist/jquery.min.js"></script>
+<script src="/lib/jquery-ui/jquery-ui.min.js"></script>
 <script src="/util.js"></script>
 <script src="/lib/webrtc-adapter/adapter.js"></script>
 <script src="/script.js"></script>
 <script src="/media.js"></script>
 <script src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/lib/faker/dist/faker.js"></script>
+
+<div id="emoji" class="table-block" style="display: none">
+</div>
+
+<script class="autoremove">
+    for (var i = 0; i < 8; i++) {
+        var row = document.createElement('div');
+        for (var j = 0; j < 9; j++) {
+            var char = String.fromCodePoint(0xd83d, 0xde00 + i * 10 + j);
+            var cell = document.createElement('div');
+            cell.innerHTML = char;
+            row.appendChild(cell);
+        }
+        emoji.appendChild(row);
+    }
+</script>
+<script src="/ui.js"></script>
 </body>
 </html>

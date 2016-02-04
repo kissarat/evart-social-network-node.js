@@ -51,9 +51,12 @@ function go(route, params) {
             view[el.dataset.id] = el;
         });
         each(view.querySelectorAll('[data-action]'), function (el) {
-            if ('fake' == el.dataset.action) {
-                el.addEventListener('click', fake.bind(view));
+            for (var action in command) {
+                if (action == el.dataset.action) {
+                    el.addEventListener('click', command[action].bind(view));
+                }
             }
+            el.setAttribute('type', 'button');
             el.addEventListener('click', function (e) {
                 view.fire(this.dataset.action, e);
             });
@@ -83,10 +86,10 @@ function go(route, params) {
     var state = {_: route};
     if (!empty(params)) {
         state.params = params;
-        _url = '/' + state._ + '?' + $.param(params);
+        _url = state._ + '?' + $.param(params);
     }
     console.log(_url);
-    history.pushState(state, document.title, _url);
+    history.pushState(state, document.title, '/' + _url);
 }
 
 var ui = {
@@ -203,16 +206,18 @@ var ui = {
                     view.video.srcObject.trace();
                 });
 
-                view.on('capture', function () {
-                    peer.capture(function () {
-                        peer.offer();
-                        $$('[data-action=capture]').visible = false;
-                    });
+                view.on('call', function () {
+                    peer.shareVideo();
+                    peer.offer();
                 });
 
-                //peer.capture(function (mediaStream) {
-                //view.localVideo.srcObject = mediaStream;
-                //});
+                view.on('bigger', function () {
+                    view.video.classList.add('bigger');
+                });
+
+                peer.capture(function (mediaStream) {
+                    view.localVideo.srcObject = mediaStream;
+                });
 
                 if (data && data.messages) {
                     User.find(Message.getUserIds(data.messages), function () {
@@ -378,8 +383,9 @@ if (localStorage.user_id && auth) {
 
 server.pool();
 
-go((location.pathname.slice(1) + location.search) || 'user/login');
-
+addEventListener('load', function () {
+    go((location.pathname.slice(1) + location.search) || 'user/login');
+});
 
 function stream() {
     navigator.getUserMedia({audio: true, video: true}, function (stream) {
