@@ -175,6 +175,7 @@
         <nav style="display: none">
             <div data-go="user/view">Profile</div>
             <div data-go="user/index">Friends</div>
+            <div data-go="video/index">Video</div>
         </nav>
         <div class="content">JavaScript is disabled</div>
     </div>
@@ -192,6 +193,7 @@
         </div>
         <p>
             <button data-action="submit" type="button">Login</button>
+            <span data-go="user/signup">Signup</span>
         </p>
     </form>
 
@@ -269,6 +271,32 @@
             <button data-action="delete" type="button">Delete</button>
         </p>
     </form>
+
+    <form id="video/create" data-entity="media">
+        <div class="fields">
+            <div class="form-group">
+                <label>Title</label>
+                <input class="form-control" name="title"/>
+            </div>
+
+            <input type="file" name="video" accept="video/*"/>
+            <input type="hidden" name="MAX_FILE_SIZE" value="1073741824"/>
+            <input type="hidden" name="filename"/>
+
+            <p>
+                <button data-action="submit" type="button">Upload</button>
+            </p>
+        </div>
+        <div data-id="progress">
+            <span data-id="loaded">0</span> / <span data-id="total">0</span>
+            <progress style="display: none"></progress>
+        </div>
+    </form>
+
+    <div id="video/index">
+        <div data-go="video/create">Upload</div>
+        <div data-id="videos"></div>
+    </div>
 </div>
 
 <script src="/lib/jquery/dist/jquery.min.js"></script>

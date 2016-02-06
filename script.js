@@ -209,7 +209,8 @@ var ui = {
         }
     },
 
-    chat: 'chat.js'
+    chat: 'chat.js',
+    video: 'video.js'
 };
 
 var User = {

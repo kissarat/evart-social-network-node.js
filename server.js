@@ -9,7 +9,8 @@ var querystring_parse = require('querystring').parse;
 var controllers = {
     user: require('./user.js'),
     fake: require('./fake.js'),
-    message: require('./message.js')
+    message: require('./message.js'),
+    video: require('./server-video.js')
 };
 
 
