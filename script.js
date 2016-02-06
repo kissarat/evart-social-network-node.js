@@ -1,6 +1,6 @@
 'use strict';
 
-var content = $$('.wrap > .container > .content');
+var content = $$('.root .content');
 var action;
 var view;
 
@@ -31,65 +31,93 @@ function go(route, params) {
         }
     }
     var parts = route.split('/');
-    action = ui;
-    for (i = 0; i < parts.length; i++) {
-        action = action[parts[i]];
+
+    function action_get() {
+        var action = ui;
+        for (i = 0; i < parts.length; i++) {
+            action = action[parts[i]];
+        }
+        return action;
     }
+
+    var action = action_get();
+
     if (!action) {
         content.innerHTML = 'Route: ' + route + ' not found';
         return;
     }
 
     params = params || {};
-    view = $id(route);
-    if (view) {
-        view = view.cloneNode(true);
-        view.visible = false;
-        content.innerHTML = '';
-        content.appendChild(view);
-        each(view.querySelectorAll('[data-id]'), function (el) {
-            view[el.dataset.id] = el;
-        });
-        each(view.querySelectorAll('[data-action]'), function (el) {
-            for (var action in command) {
-                if (action == el.dataset.action) {
-                    el.addEventListener('click', command[action].bind(view));
-                }
-            }
-            el.setAttribute('type', 'button');
-            el.addEventListener('click', function (e) {
-                view.fire(this.dataset.action, e);
+
+    function load(action) {
+        view = $id(route);
+        if (view) {
+            view = view.cloneNode(true);
+            view.visible = false;
+            content.innerHTML = '';
+            content.appendChild(view);
+            each(view.querySelectorAll('[data-id]'), function (el) {
+                view[el.dataset.id] = el;
             });
-        });
-        view.templates = {};
-        each(view.querySelectorAll('[data-widget]'), function (widget) {
-            widget.remove();
-            view.templates[widget.dataset.widget] = widget;
-        });
-        view.widget = function (name, data) {
-            var w = this.templates[name].cloneNode(true);
-            w.id = data._id;
-            if (data) {
-                each(w.querySelectorAll('[data-name]'), function (el) {
-                    if (data[el.dataset.name]) {
-                        el.innerHTML = data[el.dataset.name];
+            each(view.querySelectorAll('[data-action]'), function (el) {
+                for (var action in command) {
+                    if (action == el.dataset.action) {
+                        el.addEventListener('click', command[action].bind(view));
                     }
+                }
+                el.setAttribute('type', 'button');
+                el.addEventListener('click', function (e) {
+                    view.fire(this.dataset.action, e);
                 });
+            });
+            view.templates = {};
+            each(view.querySelectorAll('[data-widget]'), function (widget) {
+                widget.remove();
+                view.templates[widget.dataset.widget] = widget;
+            });
+            view.widget = function (name, data) {
+                var w = this.templates[name].cloneNode(true);
+                w.id = data._id;
+                if (data) {
+                    each(w.querySelectorAll('[data-name]'), function (el) {
+                        if (data[el.dataset.name]) {
+                            el.innerHTML = data[el.dataset.name];
+                        }
+                    });
+                }
+                return w;
             }
-            return w;
         }
+        else {
+            view = window;
+        }
+        location.route = parts;
+        location.controller = parts[0];
+        if (parts.length >= 2) {
+            location.action = parts[1];
+        }
+        else {
+            delete location.action;
+        }
+        location.params = params;
+        action.call(view, params);
+        var state = {_: route};
+        if (!empty(params)) {
+            state.params = params;
+            _url = state._ + '?' + $.param(params);
+        }
+        console.log(_url);
+        history.pushState(state, document.title, '/' + _url);
+    }
+
+    if ('string' == typeof action) {
+        $script(action, function() {
+            load(action_get());
+        });
     }
     else {
-        view = window;
+        load(action);
     }
-    action.call(view, params);
-    var state = {_: route};
-    if (!empty(params)) {
-        state.params = params;
-        _url = state._ + '?' + $.param(params);
-    }
-    console.log(_url);
-    history.pushState(state, document.title, '/' + _url);
 }
 
 var ui = {
@@ -181,75 +209,7 @@ var ui = {
         }
     },
 
-    chat: function (params) {
-        document.title = 'Chat';
-        var view = this;
-
-        function add(message) {
-            User.findOne(message.source_id, function (user) {
-                view.messages.appendChild(view.widget('message', {
-                    author: user.surname + ' ' + user.forename,
-                    text: message.text
-                }));
-                view.messages.scrollTop = view.messages.scrollHeight;
-            });
-        }
-
-        query({
-            route: 'message/history', params: params, success: function (data) {
-                view.visible = true;
-                peer.target_id = params.target_id;
-                peer.init();
-                peer.connection.addEventListener('addstream', function (e) {
-                    view.video.visible = true;
-                    view.video.srcObject = e.stream;
-                    view.video.srcObject.trace();
-                });
-
-                view.on('call', function () {
-                    peer.shareVideo();
-                    peer.offer();
-                });
-
-                view.on('bigger', function () {
-                    view.video.classList.add('bigger');
-                });
-
-                peer.capture(function (mediaStream) {
-                    view.localVideo.srcObject = mediaStream;
-                });
-
-                if (data && data.messages) {
-                    User.find(Message.getUserIds(data.messages), function () {
-                        data.messages.forEach(function (message) {
-                            message.user = data.users[message.source_id];
-                            add(message);
-                        });
-                    });
-                }
-            }
-        });
-
-        server.on('message', add);
-
-        this.on('send', function () {
-            var data = {
-                source_id: localStorage.user_id,
-                target_id: params.target_id,
-                text: view.editor.value
-            };
-            query({
-                method: 'POST',
-                route: 'message/post',
-                body: data,
-                success: function (result) {
-                    if (result.ok) {
-                        add(data);
-                    }
-                }
-            });
-        });
-    }
+    chat: 'chat.js'
 };
 
 var User = {
@@ -318,15 +278,15 @@ auth = auth ? auth[1] : null;
 var server = {
     send: function (target_id, body) {
         return query({
-            route: 'pool/' + target_id,
+            route: 'poll/' + target_id,
             method: 'POST',
             body: body
         })
     },
 
-    pool: function () {
+    poll: function () {
         var xhr = query({
-            route: 'pool',
+            route: 'poll',
             success: function (data) {
                 console.log(data);
                 if (data) {
@@ -335,23 +295,23 @@ var server = {
                             server.fire(e.type, e);
                         });
                     }
-                    else {
+                    else if (data.type) {
                         server.fire(data.type, data);
                     }
                 }
                 if (this.status < 400) {
-                    server.pool();
+                    server.poll();
                 }
                 else if (401 == this.status) {
-                    server.on('login', server.pool);
+                    server.on('login', server.poll);
                 }
                 else {
-                    setTimeout(server.pool, 1000);
+                    setTimeout(server.poll, 1000);
                 }
             }
         });
         xhr.onerror = function () {
-            setTimeout(server.pool, 1000);
+            setTimeout(server.poll, 1000);
         }
     },
 
@@ -381,10 +341,9 @@ if (localStorage.user_id && auth) {
     });
 }
 
-server.pool();
-
 addEventListener('load', function () {
     go((location.pathname.slice(1) + location.search) || 'user/login');
+    server.poll();
 });
 
 function stream() {

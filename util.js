@@ -90,9 +90,6 @@ function $new(name, attributes, children) {
     return tag;
 }
 
-//function random_choice(a) {
-//}
-
 function $add(parent) {
     for (var i = 1; i < arguments.length; i++) {
         parent.appendChild(arguments[i]);
@@ -118,6 +115,13 @@ function $a(label, url) {
     a.setAttribute('href', url);
     a.innerHTML = label;
     return a;
+}
+
+function $script(url, load) {
+    var script = $new('script', {src: '/' + url});
+    script.addEventListener('load', load);
+    document.head.appendChild(script);
+    return script;
 }
 
 function $row() {
@@ -397,3 +401,19 @@ var EventEmitter = {
 };
 
 extend(Element.prototype, EventEmitter);
+
+Node.prototype.findParent = function(call) {
+    var parent = this.parentNode;
+    if (call(parent)) {
+        return parent;
+    }
+};
+
+
+function bounding(tag) {
+    var rect = tag.getBoundingClientRect();
+    tag.setAttribute('width', rect.width);
+    tag.setAttribute('height', rect.height);
+    tag.start = rect;
+    return tag;
+}

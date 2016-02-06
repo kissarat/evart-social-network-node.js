@@ -158,7 +158,7 @@ var server = http.createServer(function (req, res) {
         }
 
         switch (url.route[0]) {
-            case 'pool':
+            case 'poll':
                 authorize(function (user) {
                     if (!user) {
                         return res.send(401, {error: {auth: 'required'}});
@@ -257,8 +257,7 @@ var server = http.createServer(function (req, res) {
                 exec(context, action);
             }
         }
-    })
-    ;
+    });
 
 function exec(_, action) {
     if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {

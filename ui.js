@@ -1,3 +1,7 @@
+server.on('login', function () {
+    document.querySelector('nav').visible = true;
+});
+
 function floating(o) {
     o = movable(o);
     o.tag.classList.add('floating');
@@ -24,10 +28,20 @@ function movable(o) {
         document.documentElement.addEventListener('mousemove', o.onmousemove);
         document.documentElement.addEventListener('mouseup', o.onmouseup);
     };
+    var p = bounding(o.tag.previousElementSibling);
+    var n = bounding(o.tag.nextElementSibling);
 
     o.onmousemove = function (e) {
-        o.tag.style.left = (o.start.left + (e.clientX - o.start.x)) + 'px';
-        o.tag.style.top = (o.start.top + (e.clientY - o.start.y)) + 'px';
+        var offset;
+        if ('x' != o.fixed) {
+            offset = o.start.left + (e.clientX - o.start.x);
+        }
+
+        if ('y' != o.fixed) {
+            offset = (o.start.top + (e.clientY - o.start.y));
+            p.setAttribute('height', p.start.height + offset);
+            n.setAttribute('height', n.start.height - offset);
+        }
     };
 
     o.onmouseup = function () {
@@ -49,4 +63,21 @@ document.addEventListener('DOMContentLoaded', function () {
     $each('autoremove', function (tag) {
         tag.remove();
     });
+
+    $each('movable', function (tag) {
+        movable({
+            tag: tag,
+            fixed: tag.dataset.fixed
+        });
+    });
+
+    $each('[data-go]', function (tag) {
+        tag.addEventListener('click', function () {
+            go(tag.dataset.go);
+        });
+    });
+
+    
 });
+
+
