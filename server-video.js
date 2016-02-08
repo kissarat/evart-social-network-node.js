@@ -5,10 +5,10 @@ var ObjectID = require('mongodb').ObjectID;
 
 module.exports = {
     index: function(_) {
-        _.db.collection('message').aggregate([
+        _.db.collection('media').aggregate([
             {
                 $match: {
-                    owner_id: _.url.query.owner_id ? ObjectID(_.url.query.owner_id) : _.user._id
+                    owner_id: _.req.url.query.owner_id ? ObjectID(_.req.url.query.owner_id) : _.user._id
                 }
             },
             {$sort: {time: 1}}
@@ -16,38 +16,40 @@ module.exports = {
             .toArray(_.anwser);
     },
 
-    create: function(_) {
+    PUT: function(_) {
         var data = {
-            _id: new ObjectId(),
+            _id: Date.now(),
             owner_id: _.user._id,
-            title: _.body.title,
-            type: 'video',
-            created: Date.now()
+            //title: _.body.title,
+            type: 'video'
         };
         _.db.collection('media').insertOne(data, _.wrap(function(result) {
-            result.id = data._id;
-            result.created = data.created;
-            res.send(result);
+            _.res.send({
+                id: data._id,
+                result: result
+            });
         }));
     },
 
     upload: function(_) {
-        var id = _.url.query.id;
+        var id = _.req.url.route[1];
         var filename = 'upload/' + id;
-        fs.open(filename, _.wrap(function(fd) {
+        fs.open(filename, 'w', _.wrap(function(fd) {
             _.req.on('data', function(data) {
-                _.write(fd, data, _.wrap(function(written, string) {
-                    if (written.length != data.byteLength) {
-                        _.res.json(502, {
-                            received: data.byteLength,
-                            written: written
-                        });
-                    }
+                console.log('length: ' + data.byteLength);
+                fs.write(fd, data, 0, data.byteLength, _.wrap(function(written, string) {
+                    //if (written.length != data.byteLength) {
+                    //    _.res.send(502, {
+                    //        received: data.byteLength,
+                    //        written: written
+                    //    });
+                    //}
                 }))
             });
 
             _.req.on('end', function() {
-                _.collection('media').update(ObjectID(id), {$set: {uploaded: Date.now()}}, _.wrap(function(result) {
+                fs.closeSync(fd);
+                _.db.collection('media').update({_id: id}, {$set: {uploaded: Date.now()}}, _.wrap(function(result) {
                     ffmpeg(filename)
                         .audioBitrate('96k')
                         .audioFrequency(22050)
@@ -61,7 +63,7 @@ module.exports = {
                         .output('video/' + id + '.mp4')
                         .on('end', function() {
                             fs.unlink(filename, function() {
-                                _.collection('media').update(ObjectID(id), {$set: {converted: Date.now()}}, _.answer);
+                                _.db.collection('media').update({_id: id}, {$set: {converted: Date.now()}}, _.answer);
                             });
                         })
                         .run();

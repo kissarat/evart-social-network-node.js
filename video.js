@@ -1,14 +1,19 @@
 ui.video = {
     create: function() {
         var form = this;
+        this.video.addEventListener('change', function() {
+            form.title.value = this.files[0].name.replace(/\.\w+$/, '').replace(/\./g, ' ');
+        });
         this.on('submit', function() {
             query({
-                route: 'video/create',
+                route: 'video',
+                method: 'PUT',
                 form: form,
                 success: function(data) {
                     var file = form.video.files[0];
                     var xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'upload/' + data.id);
+                    xhr.open('POST', '/api/video/' + data.id);
+                    xhr.responseType = "blob";
                     var MB = 1024 * 1024;
                     xhr.upload.addEventListener('loadstart', function(e) {
                         form.progress.setAttribute('max', e.total);
@@ -28,9 +33,17 @@ ui.video = {
                 }
             })
         });
+        form.visible = true;
     },
 
 
     index: function(params) {
+        query({
+            route: 'video/index',
+            params: params,
+            success: function(data) {
+                console.log(data);
+            }
+        })
     }
 };

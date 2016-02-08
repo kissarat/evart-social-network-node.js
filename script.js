@@ -36,6 +36,9 @@ function go(route, params) {
         var action = ui;
         for (i = 0; i < parts.length; i++) {
             action = action[parts[i]];
+            if ('string' == typeof action) {
+                return action;
+            }
         }
         return action;
     }

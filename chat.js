@@ -46,6 +46,11 @@ ui.chat = function (params) {
                 view.localVideo.srcObject = mediaStream;
             });
 
+            view.localVideo.onclick = function(e) {
+                console.log(e);
+              this.webkitRequestFullscreen();
+            };
+
             if (data && data.messages) {
                 User.find(Message.getUserIds(data.messages), function () {
                     data.messages.forEach(function (message) {

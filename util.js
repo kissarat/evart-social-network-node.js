@@ -235,13 +235,14 @@ HTMLFormElement.prototype.getData = function () {
 
 function query(o) {
     o.url = '/api';
+
+    if (!o.method) {
+        o.method = (o.data || o.body) ? 'POST' : 'GET';
+    }
+
     if (o.form) {
         o.body = o.form.getData();
         delete o.form;
-    }
-
-    if (!o.method) {
-        o.method = o.data ? 'POST' : 'GET';
     }
 
     o.params = o.params || {};

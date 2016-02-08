@@ -27,7 +27,7 @@
             width: inherit;
         }
 
-        [data-id="video"] {
+        #chat [data-id="video"] {
             height: 360px;
             background: url("/images/rotary.jpg") no-repeat center;
             background-size: 40%;
@@ -279,7 +279,7 @@
                 <input class="form-control" name="title"/>
             </div>
 
-            <input type="file" name="video" accept="video/*"/>
+            <input type="file" data-id="video" />
             <input type="hidden" name="MAX_FILE_SIZE" value="1073741824"/>
             <input type="hidden" name="filename"/>
 
