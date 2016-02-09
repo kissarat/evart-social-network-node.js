@@ -71,13 +71,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    $each('[data-go]', function (tag) {
+
+    $each('nav [data-go]', function (tag) {
         tag.addEventListener('click', function () {
             go(tag.dataset.go);
         });
     });
-
-    
 });
 
 

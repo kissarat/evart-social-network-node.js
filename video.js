@@ -38,11 +38,13 @@ ui.video = {
 
 
     index: function(params) {
+        var view = this;
         query({
             route: 'video/index',
             params: params,
             success: function(data) {
                 console.log(data);
+                view.visible = true;
             }
         })
     }

@@ -265,7 +265,7 @@ var server = http.createServer(function (req, res) {
 
 function exec(_, action) {
     if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {
-        if ('POST' == _.req.method) {
+        if ('PUT' == _.req.method || 'POST' == _.req.method) {
             receive.call(_.req, function (data) {
                 _.body = data;
                 action(_);

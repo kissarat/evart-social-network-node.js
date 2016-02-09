@@ -78,6 +78,14 @@ function go(route, params) {
                 widget.remove();
                 view.templates[widget.dataset.widget] = widget;
             });
+
+
+            each(view.querySelectorAll('[data-go]'), function (tag) {
+                tag.addEventListener('click', function () {
+                    go(tag.dataset.go);
+                });
+            });
+
             view.widget = function (name, data) {
                 var w = this.templates[name].cloneNode(true);
                 w.id = data._id;

@@ -280,7 +280,7 @@ function query(o) {
     if (o.body) {
         xhr.overrideMimeType('application/json');
     }
-    if (o.mime) {
+    else if (o.mime) {
         xhr.overrideMimeType(o.mime)
     }
     if (o.responseType) {
