@@ -40,5 +40,24 @@ module.exports = {
             return ObjectID(id);
         });
         _.db.collection('user').find({_id: {$in: ids}}, {auth: 0, password: 0, email: 0}).toArray(_.answer);
+    },
+
+    add: function(_) {
+        var source_id = ObjectID(_.req.url.query.source_id);
+        var target_id = ObjectID(_.req.url.query.target_id);
+        if (source_id == target_id) {
+            _.res.send(400, {error: "cannot add himself"});
+        }
+        else {
+            _.db.collection('user').updateOne({_id: source_id}, {$addToSet: {friend: target_id}}, _.answer);
+        }
+    },
+
+    friends: function(_) {
+        _.db.collection('user').findOne(ObjectID(_.req.url.query.id), _.wrap(function(user) {
+            _.db.collection('user')
+                .find({_id: {$in: user.friend}}, {auth: 0, password: 0, email: 0})
+                .toArray(_.answer);
+        }))
     }
 };

@@ -6,12 +6,14 @@ var http = require('http');
 var fs = require('fs');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
-var controllers = {
-    user: require('./user.js'),
-    fake: require('./fake.js'),
-    message: require('./message.js'),
-    video: require('./server-video.js')
-};
+var controllers_dir = fs.readdirSync('controllers');
+var controllers = {};
+controllers_dir.forEach(function(file) {
+    var match = /^(\w+)\.js$/.exec(file);
+    if (match) {
+        controllers[match[1]] = require('./controllers/' + match[0]);
+    }
+});
 
 
 var db;

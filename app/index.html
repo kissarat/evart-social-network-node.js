@@ -7,180 +7,6 @@
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/jquery-ui/themes/smoothness/jquery-ui.min.css"/>
-    <style>
-        [data-id="messages"] {
-            overflow-y: scroll;
-        }
-
-        #chat > .video {
-            text-align: center;
-            position: relative;
-            min-height: 480px;
-        }
-
-        #chat > .video > .buttons {
-            left: 200px;
-            top: 10px;
-        }
-
-        #chat > form {
-            width: inherit;
-        }
-
-        #chat [data-id="video"] {
-            height: 360px;
-            background: url("/images/rotary.jpg") no-repeat center;
-            background-size: 40%;
-        }
-
-        [data-id="localVideo"] {
-            left: 0;
-            top: 0;
-            width: 160px;
-            height: 120px;
-        }
-
-        video.bigger {
-            height: 600px;
-        }
-
-        #chat .messages {
-            background-color: white;;
-        }
-
-        [data-id="messages"] {
-            min-height: 6em;
-        }
-
-        #chat textarea {
-            width: 88%;
-        }
-
-        .table-block {
-            display: table;
-        }
-
-        .table-block > div {
-            display: table-row;
-        }
-
-        .table-block > div > div {
-            display: table-cell;
-        }
-
-        .floating {
-            position: absolute;
-            cursor: move;
-            -webkit-touch-callout: none; /* iOS Safari */
-            -webkit-user-select: none; /* Chrome/Safari/Opera */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE/Edge */
-            user-select: none;
-        }
-
-        #emoji {
-            font-size: 20px;
-            background-color: white;
-            border: 1px solid black;
-            padding: 6px;
-        }
-
-        #emoji > div > div {
-            line-height: 20px;
-            cursor: pointer;
-        }
-
-        .fixed {
-            position: fixed;
-        }
-
-        .absolute {
-            position: absolute;
-        }
-
-        .relative {
-            position: relative;
-        }
-
-        .fill {
-            width: 100%;
-            height: 100%;
-        }
-
-        .splitter {
-            min-width: 10px;
-            min-height: 10px;
-            color: grey;
-        }
-
-        .splitter[data-fixed="x"] {
-            cursor: ns-resize;
-            background: #ffffff;
-            background: -moz-linear-gradient(top, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
-            background: -webkit-linear-gradient(top, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
-            background: linear-gradient(to bottom, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
-            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6', GradientType=0);
-        }
-
-        .splitter[data-fixed="y"] {
-            cursor: ew-resize;
-            background: #ffffff;
-            background: -moz-linear-gradient(left, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
-            background: -webkit-linear-gradient(left, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
-            background: linear-gradient(to right, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
-            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6', GradientType=1);
-        }
-
-        .top {
-            top: 10px;
-        }
-
-        .bottom {
-            bottom: 10px;
-        }
-
-        .top, .bottom {
-            left: 4vw;
-            right: 4vw;
-            width: 92vw;
-            height: calc(50vh - 5px);
-        }
-
-        .hide {
-            display: none;
-        }
-
-        .wrap > .container {
-            width: 600px;
-        }
-
-        [data-go] {
-            color: blue;
-            cursor: pointer;
-        }
-
-        .root {
-            margin: auto;
-        }
-
-        .root > * > .content {
-            padding-left: 30px;
-            width: 600px;
-        }
-
-        [data-widget="video"] video {
-            width: 480px;
-        }
-
-        [data-widget="video-in-processing"] {
-            background-color: black;
-            color: white;
-            width: 480px;
-            line-height: 280px;
-            text-align: center;
-            vertical-align: middle;
-        }
-    </style>
 </head>
 <body>
 <div class="table-block root">
@@ -337,9 +163,9 @@
 <script src="/lib/jquery/dist/jquery.min.js"></script>
 <script src="/lib/jquery-ui/jquery-ui.min.js"></script>
 <script src="/lib/webrtc-adapter/adapter.js"></script>
-<script src="/util.js"></script>
-<script src="/script.js"></script>
-<script src="/media.js"></script>
+<script src="/js/util.js"></script>
+<script src="/js/script.js"></script>
+<script src="/js/media.js"></script>
 <script src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/lib/faker/dist/faker.js"></script>
 
@@ -358,6 +184,6 @@
         emoji.appendChild(row);
     }
 </script>
-<script src="/ui.js"></script>
+<script src="/js/ui.js"></script>
 </body>
 </html>

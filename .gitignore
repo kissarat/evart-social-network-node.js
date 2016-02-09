@@ -1,10 +1,6 @@
 .DS_Store
-video/
-upload/
-.gitignore
 .idea/
-lib/
-node_modules/
-samples/
-images/
-
+app/lib/
+app/video
+static/
+server/node_modules/

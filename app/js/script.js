@@ -122,7 +122,7 @@ function go(route, params) {
     }
 
     if ('string' == typeof action) {
-        $script(action, function() {
+        $script('js/' + action, function() {
             load(action_get());
         });
     }
