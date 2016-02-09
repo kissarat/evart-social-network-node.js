@@ -198,19 +198,26 @@ var ui = {
             if (!params.id) {
                 params.id = localStorage.user_id;
             }
-            query({
+            bind_form(self, {
                 route: 'entity/user',
-                params: params,
-                success: function (doc) {
-                    fill_form(self, doc);
-                    self.on('delete', function () {
-                        query.delete('user', params.id, function () {
-                            go('user/index');
-                        });
-                    });
+                params: params
+            })
+                .addEventListener('load', function() {
                     self.visible = true;
-                }
-            });
+                });
+            //query({
+            //    route: 'entity/user',
+            //    params: params,
+            //    success: function (doc) {
+            //        fill_form(self, doc);
+            //        self.on('delete', function () {
+            //            query.delete('user', params.id, function () {
+            //                go('user/index');
+            //            });
+            //        });
+            //        self.visible = true;
+            //    }
+            //});
         },
 
         logout: function () {

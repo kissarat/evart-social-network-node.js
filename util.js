@@ -312,18 +312,21 @@ query.media = function (source_id, call) {
 
 function bind_form(form, o) {
     o.success = function (data) {
-        form.id = data._id;
         each(form.elements, function (element) {
             if (element.getAttribute('name') in data) {
                 element.value = data[element.getAttribute('name')];
-                if (form.dataset.entity) {
-                    element.addEventListener('change', function () {
-                        query({
-                            route: 'entity/' + form.dataset.entity,
-                            method: 'PATCH'
-                        });
+            }
+            if (form.dataset.entity) {
+                element.addEventListener('change', function () {
+                    var body = {};
+                    body[this.getAttribute('name')] = this.value;
+                    query({
+                        route: 'entity/' + form.dataset.entity,
+                        params: o.params,
+                        method: 'PATCH',
+                        body: body
                     });
-                }
+                });
             }
         });
     };

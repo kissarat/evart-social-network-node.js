@@ -196,6 +196,7 @@
 
 <div id="lib">
     <form id="user/login">
+        <h1>Login</h1>
         <div class="form-group">
             <label>Email</label>
             <input class="form-control" name="email"/>
@@ -211,6 +212,7 @@
     </form>
 
     <form id="user/signup" name="user">
+        <h1>Signup</h1>
         <div class="form-group">
             <label>Email</label>
             <input class="form-control" name="email" type="email"/>
@@ -258,6 +260,7 @@
     </div>
 
     <div id="user/index">
+        <h1>Users</h1>
         <div data-id="users">
             <div data-widget="user">
                 <span data-name="forename"></span>
@@ -268,6 +271,7 @@
     </div>
 
     <form id="user/view" data-entity="user">
+        <h1>Profile</h1>
         <div class="form-group">
             <label>Email</label>
             <input class="form-control" name="email" type="email"/>
@@ -280,12 +284,21 @@
             <label>Surname</label>
             <input class="form-control" name="surname"/>
         </div>
-        <p>
+        <div class="form-group">
+            <label>Country</label>
+            <input class="form-control" name="country"/>
+        </div>
+        <div class="form-group">
+            <label>City</label>
+            <input class="form-control" name="city"/>
+        </div>
+        <!--p>
             <button data-action="delete" type="button">Delete</button>
-        </p>
+        </p-->
     </form>
 
     <form id="video/create" data-entity="media">
+        <h1>Upload Video</h1>
         <div data-id="fields">
             <div class="form-group">
                 <label>Title</label>
@@ -307,6 +320,7 @@
     </form>
 
     <div id="video/index">
+        <h1>Videos</h1>
         <div data-go="video/create">Upload</div>
         <div data-id="videos">
             <div data-widget="video">

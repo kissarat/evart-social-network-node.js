@@ -220,7 +220,7 @@ var server = http.createServer(function (req, res) {
                     break;
                 case 'PATCH':
                     receive.call(req, function (data) {
-                        db.collection(collectionName).updateOne(id, {$set: data}, answer);
+                        db.collection(collectionName).updateOne({_id: id}, {$set: data}, answer);
                     });
                     break;
                 case 'DELETE':

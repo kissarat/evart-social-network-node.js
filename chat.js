@@ -76,7 +76,8 @@ ui.chat = function (params) {
             body: data,
             success: function (result) {
                 if (result.ok) {
-                    add(data);
+                    //add(data);
+                    view.editor.value = '';
                 }
             }
         });
