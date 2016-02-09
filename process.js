@@ -2,6 +2,7 @@
 
 var MongoClient = require('mongodb').MongoClient;
 var ffmpeg = require('fluent-ffmpeg');
+var fs = require('fs');
 var db;
 
 MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db, done) {
@@ -13,8 +14,8 @@ MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db, done)
         if (!result) {
             return db.close();
         }
-        console.log(new Date() + ': ' + result.id + '. ' + result.title);
-        var id = result.id;
+        console.log(new Date() + ': ' + result._id + '. ' + result.title);
+        var id = result._id;
         var filename = 'upload/' + id;
         ffmpeg(filename)
             .audioBitrate('96k')
@@ -29,13 +30,13 @@ MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db, done)
             .output('video/' + id + '.mp4')
             .on('end', function () {
                 fs.unlink(filename, function () {
-                    _.db.collection('media')
+                    db.collection('media')
                         .update({_id: id}, {$set: {converted: Date.now(), status: 'done'}}, function(err, r) {
                             if (err) {
                                 console.log(err);
                             }
                             else {
-                                console.log('done ' + new Date() + ': ' + result.id + '. ' + result.title);
+                                console.log('done ' + new Date() + ': ' + id + '. ' + result.title);
                             }
                             db.close();
                         });

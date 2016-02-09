@@ -88,8 +88,8 @@ function go(route, params) {
 
             view.widget = function (name, data) {
                 var w = this.templates[name].cloneNode(true);
-                w.id = data._id;
                 if (data) {
+                    w.id = data._id;
                     each(w.querySelectorAll('[data-name]'), function (el) {
                         if (data[el.dataset.name]) {
                             el.innerHTML = data[el.dataset.name];

@@ -27,6 +27,9 @@ ui.video = {
                     });
                     xhr.upload.addEventListener('abort', morozov);
                     xhr.upload.addEventListener('error', morozov);
+                    xhr.onload = function() {
+                        go('video/index');
+                    };
                     xhr.send(file);
                     form.progress.visible = true;
                     form.fields.visible = false;
@@ -42,8 +45,19 @@ ui.video = {
         query({
             route: 'video/index',
             params: params,
-            success: function(data) {
-                console.log(data);
+            success: function(videos) {
+                videos.forEach(function(info) {
+                    var video = view.widget('video', info);
+                    var tag = video.querySelector('video');
+                    if ('done' == info.status) {
+                        tag.src = '/video/' + info._id + '.mp4';
+                    }
+                    else {
+                        tag.remove();
+                        video.appendChild(view.widget('video-in-processing'));
+                    }
+                    view.videos.appendChild(video);
+                });
                 view.visible = true;
             }
         })
