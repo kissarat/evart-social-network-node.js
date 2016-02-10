@@ -2,5 +2,6 @@
 .idea/
 app/lib/
 app/video
+app/photo
 static/
 server/node_modules/

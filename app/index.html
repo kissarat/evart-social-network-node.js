@@ -15,6 +15,8 @@
             <div data-go="user/view">Profile</div>
             <div data-go="user/index">Friends</div>
             <div data-go="video/index">Video</div>
+            <div data-go="photo/index">Photo</div>
+            <div data-go="user/logout">Logout</div>
         </nav>
         <div class="content">JavaScript is disabled</div>
     </div>
@@ -157,6 +159,18 @@
                 Video in processing
             </div>
         </div>
+    </div>
+
+    <form id="photo/create">
+        <h1>Upload Photos</h1>
+        <input type="file" data-id="fileInput" multiple>
+        <button type="button" data-action="submit">Upload</button>
+    </form>
+
+    <div id="photo/index">
+        <h1>Photos</h1>
+        <div data-go="photo/create">Upload</div>
+        <div data-id="photos"></div>
     </div>
 </div>
 

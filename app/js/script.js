@@ -223,12 +223,13 @@ var ui = {
         logout: function () {
             localStorage.removeItem('auth');
             localStorage.removeItem('user_id');
-            go('user/login');
+            location.href = '/user/login';
         }
     },
 
     chat: 'chat.js',
-    video: 'video.js'
+    video: 'video.js',
+    photo: 'photo.js'
 };
 
 var User = {

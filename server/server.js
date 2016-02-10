@@ -8,7 +8,7 @@ var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
 var controllers_dir = fs.readdirSync('controllers');
 var controllers = {};
-controllers_dir.forEach(function(file) {
+controllers_dir.forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
     if (match) {
         controllers[match[1]] = require('./controllers/' + match[0]);
@@ -162,6 +162,11 @@ var server = http.createServer(function (req, res) {
     var context;
 
     switch (url.route[0]) {
+        case 'photo':
+            if ('POST' == req.method) {
+                return controllers.photo.POST(create_context());
+            }
+            break;
         case 'video':
             if ('POST' == req.method) {
                 return controllers.video.upload(create_context());
