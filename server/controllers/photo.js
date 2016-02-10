@@ -27,7 +27,8 @@ module.exports = {
 
             _.req.on('end', function () {
                 _.res.send({
-                    filename: filename
+                    filename: filename,
+                    url: '/photo/' + _.req.url.query.target_id + '/' + _.req.headers.name
                 });
             });
         }));

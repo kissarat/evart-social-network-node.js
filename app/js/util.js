@@ -319,10 +319,11 @@ query.media = function (source_id, call) {
 function bind_form(form, o) {
     o.success = function (data) {
         each(form.elements, function (element) {
-            if (element.getAttribute('name') in data) {
+            if (element.getAttribute('name') && element.getAttribute('name') in data) {
                 element.value = data[element.getAttribute('name')];
+                element.change();
             }
-            if (form.dataset.entity) {
+            if (form.dataset.entity && 'file' != element.getAttribute('type')) {
                 element.addEventListener('change', function () {
                     var body = {};
                     body[this.getAttribute('name')] = this.value;
@@ -419,7 +420,6 @@ Node.prototype.findParent = function(call) {
     }
 };
 
-
 function bounding(tag) {
     var rect = tag.getBoundingClientRect();
     tag.setAttribute('width', rect.width);
@@ -427,3 +427,34 @@ function bounding(tag) {
     tag.start = rect;
     return tag;
 }
+
+Object.defineProperty(HTMLElement.prototype, 'background', {
+    get: function() {
+        var source = /"([^"]+)"/.exec(this.style.backgroundImage);
+        return source ? source[1] : null;
+    },
+
+    set: function(value) {
+        if (value instanceof File) {
+            var self = this;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                self.style.backgroundImage = 'url("' + e.target.result + '")';
+            };
+            reader.readAsDataURL(value);
+        }
+        else {
+            this.style.backgroundImage = 'url("' + value + '")';
+        }
+    }
+});
+
+Object.defineProperty(XMLHttpRequest.prototype, 'responseJSON', {
+    get: function() {
+        return JSON.parse(this.responseText);
+    }
+});
+
+Element.prototype.change = function() {
+  this.dispatchEvent(new Event('change'));
+};

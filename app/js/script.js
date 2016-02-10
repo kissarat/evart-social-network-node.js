@@ -194,16 +194,30 @@ var ui = {
         },
 
         view: function (params) {
-            var self = this;
+            var view = this;
             if (!params.id) {
                 params.id = localStorage.user_id;
             }
-            bind_form(self, {
+
+            view.avatar.addEventListener('change', function() {
+                view.thumbnail.background = view.avatar.value;
+            });
+            bind_form(view, {
                 route: 'entity/user',
                 params: params
             })
                 .addEventListener('load', function() {
-                    self.visible = true;
+                    view.thumbnail.onclick = function() {
+                        view.avatarfile.click();
+                    };
+                    view.avatarfile.onchange = function() {
+                        upload_photo(array(this.files), function() {
+                            view.avatar.value = this.responseJSON.url;
+                            view.avatar.change();
+                        });
+                    };
+                    view.avatarfile.visible = false;
+                    view.visible = true;
                 });
             //query({
             //    route: 'entity/user',

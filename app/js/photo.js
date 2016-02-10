@@ -38,25 +38,12 @@ ui.photo = {
     create: function (params) {
         var view = this;
         this.on('submit', function () {
-            var files = array(view.fileInput.files);
-            files.reverse();
-            function upload() {
-                var file = files.pop();
-                if (!file) {
-                    return go('photo/index');
+            upload_photo(array(view.fileInput.files), function(file, files) {
+                view.uploaded.appendChild($content(file.name));
+                if (files.length == 0) {
+                    go('photo/index');
                 }
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/api/photo?target_id=' + localStorage.user_id);
-                xhr.responseType = "blob";
-                xhr.setRequestHeader('Name', file.name);
-                xhr.onload = function () {
-                    view.uploaded.appendChild($content(file.name));
-                    upload();
-                };
-                xhr.send(file);
-            }
-
-            upload();
+            });
         });
         this.visible = true;
     },

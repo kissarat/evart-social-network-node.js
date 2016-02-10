@@ -79,4 +79,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-
+function upload_photo(files, call) {
+    var file = files[0];
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/photo?target_id=' + localStorage.user_id);
+    xhr.setRequestHeader('Name', file.name);
+    xhr.onload = function () {
+        var remain = files.slice(1);
+        if (call) {
+            call.call(xhr, file, remain);
+        }
+        if (remain.length > 0) {
+            upload_photo(remain, call);
+        }
+    };
+    xhr.send(file);
+}

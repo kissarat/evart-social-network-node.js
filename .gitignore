@@ -3,5 +3,6 @@
 app/lib/
 app/video
 app/photo
+app/images
 static/
 server/node_modules/
