@@ -9,6 +9,10 @@
     <link type="text/css" rel="stylesheet" href="/lib/jquery-ui/themes/smoothness/jquery-ui.min.css"/>
 </head>
 <body>
+<div id="preview" style="display: none">
+    <img />
+</div>
+
 <div class="table-block root">
     <div>
         <nav style="display: none">
@@ -163,8 +167,9 @@
 
     <form id="photo/create">
         <h1>Upload Photos</h1>
-        <input type="file" data-id="fileInput" multiple>
+        <input type="file" data-id="fileInput" multiple />
         <button type="button" data-action="submit">Upload</button>
+        <div data-id="uploaded"></div>
     </form>
 
     <div id="photo/index">

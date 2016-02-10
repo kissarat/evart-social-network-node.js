@@ -53,7 +53,7 @@ function go(route, params) {
     params = params || {};
 
     function load(action) {
-        view = $id(route);
+        view = $$('#lib #' + route.replace('/', '\\/'));
         if (view) {
             view = view.cloneNode(true);
             view.visible = false;

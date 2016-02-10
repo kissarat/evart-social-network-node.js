@@ -90,6 +90,12 @@ function $new(name, attributes, children) {
     return tag;
 }
 
+function $content(text) {
+    var tag = document.createElement('div');
+    tag.innerHTML = text;
+    return tag;
+}
+
 function $add(parent) {
     for (var i = 1; i < arguments.length; i++) {
         parent.appendChild(arguments[i]);
