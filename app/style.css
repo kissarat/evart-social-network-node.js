@@ -67,6 +67,14 @@ video.bigger {
     display: table-cell;
 }
 
+.table-row {
+    display: table-row;
+}
+
+.table-row > div {
+    display: table-cell;
+}
+
 .floating {
     position: absolute;
     cursor: move;
@@ -210,4 +218,22 @@ video.bigger {
     cursor: pointer;
     max-height: 90vh;
     max-width: 90vw;
+}
+
+.avatar-xs {
+    width: 50px;
+    height: 50px;
+    background: no-repeat;
+    background-size: cover;
+    cursor: pointer;
+    background-image: url("/images/devil.png");
+}
+
+[data-widget="comment"] > div {
+    padding-bottom: 8px;
+}
+
+[data-widget="comment"] > div:last-child {
+    vertical-align: top;
+    padding-left: 8px;
 }

@@ -13,7 +13,7 @@ addEventListener('popstate', function (e) {
     }
 });
 
-function go(route, params) {
+function append_content(route, params, push) {
     if ('/' == route[0]) {
         route = route.slice(1);
     }
@@ -57,7 +57,6 @@ function go(route, params) {
         if (view) {
             view = view.cloneNode(true);
             view.visible = false;
-            content.innerHTML = '';
             content.appendChild(view);
             each(view.querySelectorAll('[data-id]'), function (el) {
                 view[el.dataset.id] = el;
@@ -79,7 +78,6 @@ function go(route, params) {
                 view.templates[widget.dataset.widget] = widget;
             });
 
-
             each(view.querySelectorAll('[data-go]'), function (tag) {
                 tag.addEventListener('click', function () {
                     go(tag.dataset.go);
@@ -89,7 +87,9 @@ function go(route, params) {
             view.widget = function (name, data) {
                 var w = this.templates[name].cloneNode(true);
                 if (data) {
-                    w.id = data._id;
+                    if (data._id) {
+                        w.id = data._id;
+                    }
                     each(w.querySelectorAll('[data-name]'), function (el) {
                         if (data[el.dataset.name]) {
                             el.innerHTML = data[el.dataset.name];
@@ -102,23 +102,27 @@ function go(route, params) {
         else {
             view = window;
         }
-        location.route = parts;
-        location.controller = parts[0];
-        if (parts.length >= 2) {
-            location.action = parts[1];
-        }
-        else {
-            delete location.action;
-        }
-        location.params = params;
+
         action.call(view, params);
-        var state = {_: route};
-        if (!empty(params)) {
-            state.params = params;
-            _url = state._ + '?' + $.param(params);
+
+        if (true === push) {
+            location.route = parts;
+            location.controller = parts[0];
+            if (parts.length >= 2) {
+                location.action = parts[1];
+            }
+            else {
+                delete location.action;
+            }
+            location.params = params;
+            var state = {_: route};
+            if (!empty(params)) {
+                state.params = params;
+                _url = state._ + '?' + $.param(params);
+            }
+            console.log(_url);
+            history.pushState(state, document.title, '/' + _url);
         }
-        console.log(_url);
-        history.pushState(state, document.title, '/' + _url);
     }
 
     if ('string' == typeof action) {
@@ -131,116 +135,13 @@ function go(route, params) {
     }
 }
 
+function go(route, params) {
+    content.innerHTML = '';
+    append_content(route, params, true);
+}
+
 var ui = {
-    user: {
-        login: function () {
-            document.title = 'Login';
-            this.on('submit', function () {
-                query({
-                    method: 'POST',
-                    route: 'user/login',
-                    form: this,
-                    success: function (data) {
-                        if (data.auth) {
-                            document.cookie = 'auth=' + data.auth + '; path=/; expires='
-                                + (new Date(Date.now() + 6 * 24 * 3600 * 1000).toUTCString());
-                            localStorage.user_id = data._id;
-                            server.fire('login');
-                        }
-                        go('user/index')
-                    }
-                });
-            });
-            this.visible = true;
-        },
-
-        signup: function () {
-            document.title = 'Singup';
-            this.on('submit', function () {
-                query({
-                    method: 'POST',
-                    route: 'user/signup',
-                    form: this,
-                    success: function () {
-                        go('user/login')
-                    }
-                });
-            });
-            this.on('fake', function () {
-                fake();
-            });
-            this.visible = true;
-        },
-
-        index: function () {
-            document.title = 'Users';
-            var self = this;
-            query({
-                route: 'entity/user',
-                success: function (users) {
-                    users.forEach(function (user) {
-                        var w = self.widget('user', user);
-                        w.appendChild($button('View', function () {
-                            go('user/view', {id: this.parentNode.id});
-                        }));
-                        w.appendChild($button('Chat', function () {
-                            go('chat', {target_id: this.parentNode.id});
-                        }));
-                        self.users.appendChild(w);
-                    });
-                    self.visible = true;
-                }
-            });
-        },
-
-        view: function (params) {
-            var view = this;
-            if (!params.id) {
-                params.id = localStorage.user_id;
-            }
-
-            view.avatar.addEventListener('change', function() {
-                view.thumbnail.background = view.avatar.value;
-            });
-            bind_form(view, {
-                route: 'entity/user',
-                params: params
-            })
-                .addEventListener('load', function() {
-                    view.thumbnail.onclick = function() {
-                        view.avatarfile.click();
-                    };
-                    view.avatarfile.onchange = function() {
-                        upload_photo(array(this.files), function() {
-                            view.avatar.value = this.responseJSON.url;
-                            view.avatar.change();
-                        });
-                    };
-                    view.avatarfile.visible = false;
-                    view.visible = true;
-                });
-            //query({
-            //    route: 'entity/user',
-            //    params: params,
-            //    success: function (doc) {
-            //        fill_form(self, doc);
-            //        self.on('delete', function () {
-            //            query.delete('user', params.id, function () {
-            //                go('user/index');
-            //            });
-            //        });
-            //        self.visible = true;
-            //    }
-            //});
-        },
-
-        logout: function () {
-            localStorage.removeItem('auth');
-            localStorage.removeItem('user_id');
-            location.href = '/user/login';
-        }
-    },
-
+    user: 'user.js',
     chat: 'chat.js',
     video: 'video.js',
     photo: 'photo.js'
@@ -257,7 +158,7 @@ var User = {
         var not_found = [];
         for (var i = 0; i < ids.length; i++) {
             var id = ids[i];
-            if (!(id in User._cache)) {
+            if (id && !(id in User._cache)) {
                 not_found.push(id);
             }
         }
@@ -287,7 +188,7 @@ var User = {
 
 var Message = {
     getUserIds: function (messages) {
-        var ids = [];
+        var ids = [localStorage.user_id];
         messages.forEach(function (message) {
             if (ids.indexOf(message.source_id) < 0) {
                 ids.push(message.source_id);
@@ -347,23 +248,6 @@ var server = {
         xhr.onerror = function () {
             setTimeout(server.poll, 1000);
         }
-    },
-
-    setMedia: function (target_id, media_id, body, call) {
-        return query({
-            method: 'POST',
-            route: ['media', target_id, media_id].join('/'),
-            body: body,
-            success: call
-        })
-    },
-
-    getMedia: function (target_id, media_id, call) {
-        return query({
-            method: 'GET',
-            route: ['media', target_id, media_id].join('/'),
-            success: call
-        })
     }
 };
 
@@ -376,7 +260,8 @@ if (localStorage.user_id && auth) {
 }
 
 addEventListener('load', function () {
-    go((location.pathname.slice(1) + location.search) || 'user/login');
+    go((location.pathname.slice(1) + location.search)
+        || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
     server.poll();
 });
 
@@ -396,10 +281,3 @@ function stream() {
         },
         morozov);
 }
-
-
-//if (navigator.userAgent.indexOf('Windows') >= 0) {
-//    setTimeout(function () {
-//        location.reload();
-//    }, 60000);
-//}

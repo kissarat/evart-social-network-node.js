@@ -312,6 +312,4 @@ function send(target_id, data) {
 
 var subscribers = {};
 
-var sources = {};
-
 console.log(new Date());

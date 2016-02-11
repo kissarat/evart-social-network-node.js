@@ -10,7 +10,7 @@
 </head>
 <body>
 <div id="preview" style="display: none">
-    <img />
+    <img/>
 </div>
 
 <div class="table-block root">
@@ -102,35 +102,55 @@
         </div>
     </div>
 
-    <form id="user/view" data-entity="user">
-        <h1>Profile</h1>
-        <input type="file" data-id="avatarfile" />
-        <div class="thumbnail" data-id="thumbnail" style="background-image: url('/images/devil.png')"></div>
-        <input type="hidden" name="avatar" />
-        <div class="form-group">
-            <label>Email</label>
-            <input class="form-control" name="email" type="email"/>
+    <form id="user/view" data-entity="user" class="table-row">
+        <div>
+            <h1>Profile</h1>
+            <input type="file" data-id="avatarfile"/>
+            <div class="thumbnail" data-id="thumbnail" style="background-image: url('/images/devil.png')"></div>
+            <input type="hidden" name="avatar"/>
         </div>
-        <div class="form-group">
-            <label>Forename</label>
-            <input class="form-control" name="forename"/>
+        <div>
+            <div class="form-group">
+                <label>Email</label>
+                <input class="form-control" name="email" type="email"/>
+            </div>
+            <div class="form-group">
+                <label>Forename</label>
+                <input class="form-control" name="forename"/>
+            </div>
+            <div class="form-group">
+                <label>Surname</label>
+                <input class="form-control" name="surname"/>
+            </div>
+            <div class="form-group">
+                <label>Country</label>
+                <input class="form-control" name="country"/>
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input class="form-control" name="city"/>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Surname</label>
-            <input class="form-control" name="surname"/>
-        </div>
-        <div class="form-group">
-            <label>Country</label>
-            <input class="form-control" name="country"/>
-        </div>
-        <div class="form-group">
-            <label>City</label>
-            <input class="form-control" name="city"/>
-        </div>
-        <!--p>
-            <button data-action="delete" type="button">Delete</button>
-        </p-->
     </form>
+
+    <div id="user/wall">
+        <form>
+            <textarea data-id="editor"></textarea>
+            <button data-action="send">Send</button>
+        </form>
+        <div data-id="comments" class="table-block">
+            <div data-widget="comment">
+                <div>
+                    <div class="avatar-xs"></div>
+                </div>
+                <div>
+                    <strong data-name="author"></strong>
+                    <div data-name="text"></div>
+                </div>
+            </div>
+            <div></div>
+        </div>
+    </div>
 
     <form id="video/create" data-entity="media">
         <h1>Upload Video</h1>
@@ -140,7 +160,7 @@
                 <input class="form-control" name="title"/>
             </div>
 
-            <input type="file" data-id="video" />
+            <input type="file" data-id="video"/>
             <input type="hidden" name="MAX_FILE_SIZE" value="1073741824"/>
             <input type="hidden" name="filename"/>
 
@@ -170,7 +190,7 @@
 
     <form id="photo/create">
         <h1>Upload Photos</h1>
-        <input type="file" data-id="fileInput" multiple />
+        <input type="file" data-id="fileInput" multiple/>
         <button type="button" data-action="submit">Upload</button>
         <div data-id="uploaded"></div>
     </form>
