@@ -1,3 +1,5 @@
+'use strict';
+
 ui.user = {
     login: function () {
         document.title = 'Login';
@@ -13,7 +15,7 @@ ui.user = {
                         localStorage.user_id = data._id;
                         server.fire('login');
                     }
-                    go('user/index')
+                    go('user/index');
                 }
             });
         });
@@ -89,65 +91,8 @@ ui.user = {
                     });
                 };
                 view.avatarfile.visible = false;
-                append_content('user/wall', {type: 'wall', owner_id: params.id});
+                append_content('wall', {type: 'wall', owner_id: params.id});
                 view.visible = true;
             });
-    },
-
-    wall: function(params) {
-        var view = this;
-        function add(comment) {
-            User.findOne(comment.source_id, function (user) {
-                var post = view.widget('comment', {
-                    _id: comment._id,
-                    author: user.surname + ' ' + user.forename,
-                    text: comment.text
-                });
-                var avatar = post.querySelector('.avatar-xs');
-                avatar.addEventListener('click', function() {
-                    go('user/view', {id: params.owner_id});
-                });
-                if (user.avatar) {
-                    avatar.background = user.avatar;
-                }
-                view.comments.prependChild(post);
-            });
-        }
-
-        query({
-            route: 'comment/history', params: params, success: function (comments) {
-                if (comments.length > 0) {
-                    User.find(Message.getUserIds(comments), function (users) {
-                        comments.forEach(function (comment) {
-                            comment.user = users[comment.source_id];
-                            add(comment);
-                        });
-                    });
-                }
-            }
-        });
-
-        server.on('wall', add);
-
-        this.on('send', function () {
-            var data = {
-                source_id: localStorage.user_id,
-                owner_id: params.owner_id,
-                type: 'wall',
-                text: view.editor.value
-            };
-            query({
-                method: 'POST',
-                route: 'comment/post',
-                body: data,
-                success: function (result) {
-                    if (result.ok) {
-                        view.editor.value = '';
-                    }
-                }
-            });
-        });
-
-        this.visible = true;
     }
 };

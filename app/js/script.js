@@ -126,7 +126,7 @@ function append_content(route, params, push) {
     }
 
     if ('string' == typeof action) {
-        $script('js/' + action, function() {
+        $script('js/' + action, function () {
             load(action_get());
         });
     }
@@ -137,10 +137,14 @@ function append_content(route, params, push) {
 
 function go(route, params) {
     content.innerHTML = '';
+    hook = {};
     append_content(route, params, true);
 }
 
+var hook = {};
+
 var ui = {
+    wall: 'wall.js',
     user: 'user.js',
     chat: 'chat.js',
     video: 'video.js',
@@ -223,7 +227,7 @@ var server = {
         var xhr = query({
             route: 'poll',
             success: function (data) {
-                console.log(data);
+                console.log('poll', this.status, data);
                 if (data) {
                     if ('queue' == data.type) {
                         data.queue.forEach(function (e) {
@@ -281,3 +285,36 @@ function stream() {
         },
         morozov);
 }
+
+function Notify(comment) {
+    var user = comment.user;
+    var title = user.surname + ' ' + user.forename;
+    var self = this;
+    var options = {
+        body: comment.text
+    };
+    if (isFirefox) {
+        options.sticky = true;
+    }
+    var n = new Notification(title, options);
+    n.addEventListener('click', function () {
+        go('wall', {
+            type: comment.type,
+            owner_id: comment.owner_id
+        });
+        Notify.close();
+    });
+    self.notification = n;
+    if (!Notify._list) {
+        Notify._list = {};
+    }
+    Notify._list[comment._id] = n;
+}
+
+Notify.close = function () {
+    var list = Notify._list;
+    for (var id in list) {
+        list[id].close();
+        delete list[id];
+    }
+};

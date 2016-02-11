@@ -36,12 +36,15 @@ module.exports = {
 
     history: function (_) {
         var q = _.req.url.query;
-        var owner_id = ObjectID(q.owner_id);
+        var match = {
+            type: q.type,
+            owner_id: ObjectID(q.owner_id)
+        };
+        if ('video' == q.type) {
+            match.video_id = ObjectID(q.video_id);
+        }
         _.db.collection('comment').aggregate([
-                {$match: {
-                    type: q.type,
-                    owner_id: owner_id
-                }},
+                {$match: match},
                 {$sort: {time: 1}}
             ])
             .toArray(_.answer);

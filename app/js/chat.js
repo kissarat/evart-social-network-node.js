@@ -1,12 +1,4 @@
-//Notification.requestPermission(function(permission) {
-//    if ('granted' == permission) {
-//        var n = new Notification('Notification enabled');
-//    }
-//    else {
-//
-//    }
-//});
-
+'use strict';
 
 ui.chat = function (params) {
     document.title = 'Chat';
