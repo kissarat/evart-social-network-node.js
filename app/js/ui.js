@@ -1,9 +1,31 @@
+'use strict';
+
+var deviceEvents = {
+    Orientation: function(e) {
+        deviceEvents.Orientation = {
+            a: e.absolute,
+            o: [e.beta, e.gamma]
+        };
+        if (e.alpha) {
+            deviceEvents.Orientation.o.push(e.alpha);
+        }
+    },
+
+    Light: function (e) {
+        deviceInfo.Light = e.value;
+    },
+
+    Proximity: function(e) {
+        deviceInfo.Proximity = e.value;
+    }
+};
+
 server.on('login', function () {
     document.querySelector('nav').visible = true;
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(function(p) {
             var c = p.coords;
-            geo = {
+            var geo = {
                 ts: p.timestamp,
                 p: [c.latitude, c.longitude]
             };
@@ -23,29 +45,8 @@ server.on('login', function () {
         });
     }
 
-    var deviceEvents = {
-        Orientation: function(e) {
-            deviceEvents.Orientation = {
-                a: e.absolute,
-                o: [e.beta, e.gamma]
-            };
-            if (e.alpha) {
-                deviceEvents.Orientation.o.push(e.alpha);
-            }
-        },
-
-        Light: function (e) {
-            deviceInfo.Light = e.value;
-        },
-
-        Proximity: function(e) {
-            deviceInfo.Proximity = e.value;
-        }
-    };
-
     for(var name in deviceEvents) {
         if ('Device' + name + 'Event' in window) {
-            //deviceInfo[name] = null;
             addEventListener('device' + name.toLocaleLowerCase(), deviceEvents[name]);
         }
     }
@@ -53,6 +54,12 @@ server.on('login', function () {
     if ('getBattery' in navigator) {
         navigator.getBattery().then(function(battery) {
             window.battery = battery;
+        })
+    }
+
+    if (navigator.onLine) {
+        $each('script[data-src]', function(script) {
+            script.setAttribute('src', script.dataset.src);
         })
     }
 });

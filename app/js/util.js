@@ -44,7 +44,10 @@ var features = [
     'GamepadEvent',
     'ClipboardEvent',
     'PushManager',
-    'Worker'
+    'Worker',
+    'requestAnimationFrame',
+    'requestFileSystem',
+    'SpeechRecognition'
 ];
 
 var prefixes = ['', 'webkit', 'moz'];
@@ -64,7 +67,6 @@ for (var i = 0; i < features.length; i++) {
             else {
                 key = part;
             }
-            console.log(key);
             if (key in obj) {
                 if (key != part) {
                     obj[part] = obj[key];

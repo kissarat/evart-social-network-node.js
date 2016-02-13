@@ -23,6 +23,11 @@ module.exports = {
             text: _.body.text,
             time: Date.now()
         };
+
+        if (_.req.headers.geo) {
+            data.geo = JSON.parse(_.req.headers.geo);
+        }
+
         _.db.collection('message').insertOne(data, _.wrap(function (result) {
             data.type = 'message';
             _.send(_.body.target_id, data);

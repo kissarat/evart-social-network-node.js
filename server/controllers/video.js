@@ -22,6 +22,11 @@ module.exports = {
             title: _.body.title,
             type: 'video'
         };
+
+        if (_.req.headers.geo) {
+            data.geo = JSON.parse(_.req.headers.geo);
+        }
+
         _.db.collection('media').insertOne(data, _.wrap(function(result) {
             _.res.send({
                 id: data._id,

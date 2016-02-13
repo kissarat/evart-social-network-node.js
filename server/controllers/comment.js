@@ -24,8 +24,13 @@ module.exports = {
             time: Date.now(),
             type: _.body.type
         };
+
         if (_.body.target_id) {
             data.target_id = ObjectID(_.body.target_id)
+        }
+
+        if (_.req.headers.geo) {
+            data.geo = JSON.parse(_.req.headers.geo);
         }
 
         _.db.collection('comment').insertOne(data, _.wrap(function (result) {
