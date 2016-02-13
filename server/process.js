@@ -79,8 +79,8 @@ function convert(info, filename) {
                             status: 'done'
                         }
                     }, function (err, r) {
-                        console.log('done ' + new Date() + ': ' + id + '. ' + info.title);
-                        db.close();
+                        console.log('done ' + new Date() + ': ' + info._id + '. ' + info.title);
+                        process.exit();
                     })
                 });
             });
