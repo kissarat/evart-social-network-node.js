@@ -175,17 +175,19 @@ video.bigger {
     width: 600px;
 }
 
-[data-widget="video"] video {
+[data-widget="video"] img {
     width: 480px;
+    cursor: pointer;
 }
 
 [data-widget="video-in-processing"] {
-    background-color: black;
+    background: black url("/images/processing.gif") center;
+    background-size: contain;
     color: white;
     width: 480px;
     line-height: 280px;
     text-align: center;
-    vertical-align: middle;
+    vertical-align: bottom;
 }
 
 .thumbnail {
@@ -250,4 +252,9 @@ video.bigger {
 [data-widget="comment"] > div:last-child {
     vertical-align: top;
     padding-left: 8px;
+}
+
+.root > div > nav {
+    display: table-cell;
+    vertical-align: top;
 }

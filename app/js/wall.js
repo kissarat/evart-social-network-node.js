@@ -68,9 +68,14 @@ ui.wall = function(params) {
         var data = {
             source_id: localStorage.user_id,
             owner_id: params.owner_id,
-            type: 'wall',
+            type: params.type,
             text: view.editor.value
         };
+
+        if ('video' == params.type && params.video_id) {
+            data.video_id = params.video_id;
+        }
+
         query({
             method: 'POST',
             route: 'comment/post',

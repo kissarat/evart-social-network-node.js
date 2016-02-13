@@ -42,24 +42,37 @@ ui.video = {
 
     index: function(params) {
         var view = this;
+
         query({
             route: 'video/index',
             params: params,
             success: function(videos) {
                 videos.forEach(function(info) {
+                    function open() {
+                        go('video/view', {id: info._id, owner_id: params.owner_id || localStorage.user_id})
+                    }
+
                     var video = view.widget('video', info);
-                    var tag = video.querySelector('video');
+                    var tag = video.querySelector('img');
                     if ('done' == info.status) {
-                        tag.src = '/video/' + info._id + '.mp4';
+                        tag.src = '/video/thumbnail/' + info._id + '.jpg';
                     }
                     else {
                         tag.remove();
-                        video.appendChild(view.widget('video-in-processing'));
+                        tag = view.widget('video-in-processing');
+                        video.appendChild(tag);
                     }
+                    tag.addEventListener('click', open);
                     view.videos.appendChild(video);
                 });
                 view.visible = true;
             }
         })
+    },
+
+    view: function(params) {
+        this.querySelector('video').setAttribute('src', '/video/' + params.id + '.mp4');
+        append_content('wall', {video_id: params.id, owner_id: params.owner_id});
+        this.visible = true;
     }
 };
