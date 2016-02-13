@@ -3,10 +3,9 @@ function preview() {
     var source = /"([^"]+)"/.exec(this.style.backgroundImage);
     if (source) {
         div.querySelector('img').src = source[1];
-        //location.hash = this.id;
     }
     div.thumbnail = this;
-    div.visible = true;
+    div.classList.add('active');
 }
 
 (function () {
@@ -16,22 +15,9 @@ function preview() {
             div.thumbnail.nextElementSibling.click();
         }
         else {
-            //location.hash = '';
-            div.visible = false;
+            div.classList.remove('active');
         }
     };
-
-    addEventListener('keydown', function (e) {
-        if (27 == e.keyCode) {
-            div.visible = false;
-        }
-    });
-    //if (location.hash) {
-    //    var thumbnail = $id(location.hash.slice(1));
-    //    if (thumbnail) {
-    //        thumbnail.click();
-    //    }
-    //}
 })();
 
 ui.photo = {

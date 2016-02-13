@@ -151,6 +151,8 @@ var ui = {
     photo: 'photo.js'
 };
 
+extend(ui, EventEmitter);
+
 var User = {
     //_cache: localStorage.users ? keyed(JSON.parse(localStorage.users)) : {},
     _cache: {},
@@ -277,6 +279,12 @@ if (localStorage.user_id && auth) {
 }
 
 addEventListener('load', function () {
+    //if (navigator.onLine) {
+    //    $each('script[data-src]', function (script) {
+    //        script.setAttribute('src', script.dataset.src);
+    //        delete script.dataset.src;
+    //    })
+    //}
     go((location.pathname.slice(1) + location.search)
         || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
     server.poll();

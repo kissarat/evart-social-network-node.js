@@ -1,7 +1,7 @@
 'use strict';
 
 var deviceEvents = {
-    Orientation: function(e) {
+    Orientation: function (e) {
         deviceEvents.Orientation = {
             a: e.absolute,
             o: [e.beta, e.gamma]
@@ -15,7 +15,7 @@ var deviceEvents = {
         deviceInfo.Light = e.value;
     },
 
-    Proximity: function(e) {
+    Proximity: function (e) {
         deviceInfo.Proximity = e.value;
     }
 };
@@ -23,7 +23,7 @@ var deviceEvents = {
 server.on('login', function () {
     document.querySelector('nav').visible = true;
     if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(function(p) {
+        navigator.geolocation.watchPosition(function (p) {
             var c = p.coords;
             var geo = {
                 ts: p.timestamp,
@@ -31,35 +31,29 @@ server.on('login', function () {
             };
 
             if (c.altitude) {
-              geo.p.push(c.altitude);
+                geo.p.push(c.altitude);
             }
 
             if (c.speed) {
-              geo.s = c.speed;
+                geo.s = c.speed;
             }
 
             if (c.heading) {
-              geo.h = c.heading;
+                geo.h = c.heading;
             }
             deviceInfo.Geo = geo;
         });
     }
 
-    for(var name in deviceEvents) {
+    for (var name in deviceEvents) {
         if ('Device' + name + 'Event' in window) {
             addEventListener('device' + name.toLocaleLowerCase(), deviceEvents[name]);
         }
     }
 
     if ('getBattery' in navigator) {
-        navigator.getBattery().then(function(battery) {
+        navigator.getBattery().then(function (battery) {
             window.battery = battery;
-        })
-    }
-
-    if (navigator.onLine) {
-        $each('script[data-src]', function(script) {
-            script.setAttribute('src', script.dataset.src);
         })
     }
 });
@@ -160,3 +154,13 @@ function upload_photo(files, call) {
     };
     xhr.send(file);
 }
+
+
+addEventListener('keydown', function (e) {
+    if (27 == e.keyCode) {
+        var fullscreen = $$('.fullscreen.active');
+        if (fullscreen) {
+            fullscreen.classList.remove('active');
+        }
+    }
+});

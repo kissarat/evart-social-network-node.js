@@ -42,6 +42,10 @@ ui.wall = function(params) {
             if (user.avatar) {
                 avatar.background = user.avatar;
             }
+            if (comment.geo) {
+                post.dataset.geo = comment.geo.p.join('x');
+            }
+            ui.fire('after render', post);
             view.comments.prependChild(post);
             return true;
         }
