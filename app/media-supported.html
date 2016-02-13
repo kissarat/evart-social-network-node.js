@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="util.js"></script>
+    <script src="/js/util.js"></script>
     <script>
         function testTypes(types) {
             var h1 = document.querySelector('h1');
@@ -76,7 +76,7 @@
 
 <video id="video" autoplay></video>
 <button type="button" id="start">Start</button>
-<script src="lib/webrtc-adapter/adapter.js"></script>
+<script src="/lib/webrtc-adapter/adapter.js"></script>
 <script>
     start.onclick = function () {
         navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(function (mediaStream) {

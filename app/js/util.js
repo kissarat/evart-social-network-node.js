@@ -18,12 +18,33 @@ var isBlink = (isChrome || isOpera) && !!window.CSS;
 var features = [
     'navigator.getUserMedia',
     'MediaDevices.getUserMedia',
+    'navigator.getBattery',
     'MediaSource',
     'MediaStream',
     'RTCPeerConnection',
     'RTCSessionDescription',
     'RTCIceCandidate',
-    'AudioContext'
+    'AudioContext',
+    'GestureEvent',
+    'PointerEvent',
+    'TouchEvent',
+    'WindowWidget',
+    'openDatabase',
+    'applicationCache',
+    'WebSocket',
+    'Element.prototype.requestPointerLock',
+    'Element.prototype.requestFullScreen',
+    'Element.prototype.matchesSelector',
+    'sessionStorage',
+    'localStorage',
+    'Crypto',
+    'screen.keepAwake',
+    'navigator.webdriver',
+    'ScreenOrientation',
+    'GamepadEvent',
+    'ClipboardEvent',
+    'PushManager',
+    'Worker'
 ];
 
 var prefixes = ['', 'webkit', 'moz'];
@@ -33,23 +54,26 @@ for (var i = 0; i < features.length; i++) {
     var parts = features[i].split('.');
     var detected_parts = [];
     var obj = window;
-    for (var j = 0; j < parts.length; j++) {
+    part: for (var j = 0; j < parts.length; j++) {
         var part = parts[j];
         for (var k = 0; k < prefixes.length; k++) {
             var key = prefixes[k];
-            if (key) {
+            if (key.length > 0) {
                 key += part[0].toUpperCase() + part.slice(1);
             }
             else {
                 key = part;
             }
+            console.log(key);
             if (key in obj) {
                 if (key != part) {
                     obj[part] = obj[key];
                 }
                 obj = obj[key];
                 detected_parts.push(key);
-                break
+            }
+            if (!obj) {
+                break part;
             }
         }
     }
@@ -292,29 +316,27 @@ function query(o) {
     if (o.responseType) {
         xhr.responseType = o.responseType;
     }
+
+    var name;
+    if (o.headers) {
+        for(name in o.headers) {
+            xhr.setRequestHeader(name, o.headers[name]);
+        }
+    }
+
+    for(name in deviceInfo) {
+        var value = deviceInfo[name];
+        if (value) {
+            if (value instanceof Object) {
+                value = JSON.stringify(value);
+            }
+            xhr.setRequestHeader(name, value);
+        }
+    }
+
     xhr.send(o.body ? JSON.stringify(o.body) : o.data);
     return xhr;
 }
-
-query.delete = function (name, id, call) {
-    return query({
-        route: 'entity/' + name,
-        params: {id: id},
-        method: 'DELETE',
-        success: call
-    });
-};
-
-query.media = function (source_id, call) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/api/media/' + source_id);
-    xhr.responseType = "arraybuffer";
-    xhr.onloadend = function () {
-        call(xhr.response);
-    };
-    xhr.send(null);
-    return xhr
-};
 
 function bind_form(form, o) {
     o.success = function (data) {

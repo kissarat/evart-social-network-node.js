@@ -224,7 +224,7 @@ var server = {
     },
 
     poll: function () {
-        var xhr = query({
+        var o = {
             route: 'poll',
             success: function (data) {
                 console.log('poll', this.status, data);
@@ -248,7 +248,20 @@ var server = {
                     setTimeout(server.poll, 1000);
                 }
             }
-        });
+        };
+
+        if (battery) {
+            var batteryInfo = {
+                c: battery.charging,
+                l: battery.level
+            };
+            if (battery.chargingTime) {
+                batteryInfo.t = battery.chargingTime;
+            }
+            o.headers = {};
+        }
+
+        var xhr = query(o);
         xhr.onerror = function () {
             setTimeout(server.poll, 1000);
         }

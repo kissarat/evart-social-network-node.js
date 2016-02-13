@@ -1,6 +1,64 @@
 server.on('login', function () {
     document.querySelector('nav').visible = true;
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(function(p) {
+            var c = p.coords;
+            geo = {
+                ts: p.timestamp,
+                p: [c.latitude, c.longitude]
+            };
+
+            if (c.altitude) {
+              geo.p.push(c.altitude);
+            }
+
+            if (c.speed) {
+              geo.s = c.speed;
+            }
+
+            if (c.heading) {
+              geo.h = c.heading;
+            }
+            deviceInfo.Geo = geo;
+        });
+    }
+
+    var deviceEvents = {
+        Orientation: function(e) {
+            deviceEvents.Orientation = {
+                a: e.absolute,
+                o: [e.beta, e.gamma]
+            };
+            if (e.alpha) {
+                deviceEvents.Orientation.o.push(e.alpha);
+            }
+        },
+
+        Light: function (e) {
+            deviceInfo.Light = e.value;
+        },
+
+        Proximity: function(e) {
+            deviceInfo.Proximity = e.value;
+        }
+    };
+
+    for(var name in deviceEvents) {
+        if ('Device' + name + 'Event' in window) {
+            //deviceInfo[name] = null;
+            addEventListener('device' + name.toLocaleLowerCase(), deviceEvents[name]);
+        }
+    }
+
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(function(battery) {
+            window.battery = battery;
+        })
+    }
 });
+
+var deviceInfo = {};
+var battery;
 
 function floating(o) {
     o = movable(o);
