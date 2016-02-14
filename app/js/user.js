@@ -54,10 +54,11 @@ ui.user = {
             success: function (users) {
                 users.forEach(function (user) {
                     var w = self.widget('user', user);
-                    w.appendChild($button('View', function () {
+                    var buttons = w.querySelector('.buttons');
+                    buttons.appendChild($button('View', function () {
                         go('user/view', {id: this.parentNode.id});
                     }));
-                    w.appendChild($button('Chat', function () {
+                    buttons.appendChild($button('Chat', function () {
                         go('chat', {target_id: this.parentNode.id});
                     }));
                     self.users.appendChild(w);

@@ -272,6 +272,15 @@ video.bigger {
     background-image: url("/images/devil.png");
 }
 
+.avatar-sm {
+    width: 100px;
+    height: 100px;
+    background: no-repeat;
+    background-size: cover;
+    cursor: pointer;
+    background-image: url("/images/devil.png");
+}
+
 [data-widget="comment"] > div {
     padding-bottom: 8px;
 }
@@ -279,6 +288,30 @@ video.bigger {
 [data-widget="comment"] > div:last-child {
     vertical-align: top;
     padding-left: 8px;
+}
+
+[id="user/index"] [data-widget="user"] > .user > div {
+    display: inline-block;
+}
+
+[id="user/index"] [data-widget="user"] hr {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+[id="user/index"] [data-widget="user"] > .user > div:nth-child(2) {
+    vertical-align: top;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+[id="user/index"] .buttons {
+    float: right;
+}
+
+[id="user/index"] .buttons button {
+    display: block;
+    margin-top: 4px;
 }
 
 [id="video/view"] video {
@@ -361,16 +394,16 @@ button:hover {
     background-color: rgb(130, 175, 201);
 }
 
-#wall textarea {
+input, textarea {
     padding: 4px 6px;
     width: 100%;
-    border: 2px solid #ededed;
+    border: 2px solid #ededed !important;
     border-radius: 4px;
 }
 
-#wall textarea:focus {
+input:focus, textarea:focus {
     outline: none !important;
-    border-color: #6fdbe8
+    border-color: #6fdbe8 !important;
 }
 
 #wall hr {

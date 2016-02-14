@@ -98,9 +98,15 @@
         <h1>Users</h1>
         <div data-id="users">
             <div data-widget="user">
-                <span data-name="forename"></span>
-                <span data-name="surname"></span>
-                <strong data-name="email"></strong>
+                <hr/>
+                <div class="user">
+                    <div class="buttons"></div>
+                    <div class="avatar-sm"></div>
+                    <div>
+                        <span data-name="forename"></span>
+                        <span data-name="surname"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -113,7 +119,8 @@
                     <div class="buttons"></div>
                     <div class="avatar">
                         <input type="file" data-id="avatarfile"/>
-                        <div class="thumbnail" data-id="thumbnail" style="background-image: url('/images/devil.png')"></div>
+                        <div class="thumbnail" data-id="thumbnail"
+                             style="background-image: url('/images/devil.png')"></div>
                     </div>
                     <div class="name"></div>
                 </div>
