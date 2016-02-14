@@ -258,3 +258,57 @@ video.bigger {
     display: table-cell;
     vertical-align: top;
 }
+
+[id="video/view"] video {
+    max-height: 360px;
+}
+
+[id="user/view"] > div {
+    vertical-align: top;
+}
+
+[id="user/view"] h1 {
+    color: rgb(69, 104, 142);
+    font-size: 12px;
+}
+
+[id="user/view"] > .fields > div {
+    font-size: 11px;
+}
+
+[id="user/view"] > div > .fields > div > div:first-child {
+    color: rgb(119, 119, 119);
+    padding-right: 40px;
+}
+
+[id="user/view"] > div > .fields > div > div:first-child:after {
+    content: ":";
+}
+
+[id="user/view"] > div > .fields > div > div:last-child {
+    color: rgb(69, 104, 142);
+}
+
+[id="user/view"] .left {
+    text-align: center;
+    width: 118px;
+    padding-right: 10px;
+}
+
+[id="user/view"] .left .thumbnail {
+    margin: auto;
+}
+
+[id="user/view"] .left .buttons button {
+    width: 100%;
+}
+
+button {
+    background-color: rgb(31, 143, 201);
+    border: none;
+    color: white !important;
+}
+
+button:hover {
+    background-color: rgb(130, 175, 201);
+}

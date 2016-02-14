@@ -275,20 +275,21 @@ function exec(_, action) {
         if ('PUT' == _.req.method || 'POST' == _.req.method) {
             receive.call(_.req, function (data) {
                 _.body = data;
-                try {
+                //try {
                     action(_);
-                }
-                catch (ex) {
-                    _.res.send(500, {error: ex})
-                }
+                //}
+                //catch (ex) {
+                //    _.res.send(500, {error: ex})
+                //}
             });
         }
-        else try {
+        else
+            //try {
             action(_);
-        }
-        catch (ex) {
-            _.res.send(500, {error: ex})
-        }
+        //}
+        //catch (ex) {
+        //    _.res.send(500, {error: ex})
+        //}
     }
     else {
         _.res.send(401, {

@@ -141,6 +141,10 @@ function go(route, params) {
     append_content(route, params, true);
 }
 
+function reload() {
+    go(location.route.join('/'), location.params);
+}
+
 var hook = {};
 
 var ui = {
@@ -188,6 +192,23 @@ var User = {
     findOne: function (id, call) {
         User.find(id, function (users) {
             call(users[id]);
+        });
+    },
+
+    loadOne: function(id, call) {
+        query({
+            route: 'user/view',
+            params: {id: id},
+            success: call
+        });
+    },
+
+    loadMe: function(call) {
+        User.loadOne(localStorage.user_id, function(data) {
+            user = data;
+            if (call) {
+                call();
+            }
         });
     }
 };
@@ -272,10 +293,16 @@ var server = {
 
 extend(server, EventEmitter);
 
-if (localStorage.user_id && auth) {
-    addEventListener('load', function () {
+var user;
+
+function login() {
+    User.loadMe(function() {
         server.fire('login');
     });
+}
+
+if (localStorage.user_id && auth) {
+    addEventListener('load', login);
 }
 
 addEventListener('load', function () {
@@ -339,3 +366,4 @@ Notify.close = function () {
         delete list[id];
     }
 };
+

@@ -42,25 +42,49 @@ module.exports = {
             .map(function (id) {
             return ObjectID(id);
         });
-        _.db.collection('user').find({_id: {$in: ids}}, {auth: 0, password: 0, email: 0}).toArray(_.answer);
+        _.db.collection('user').find({_id: {$in: ids}}, {auth: 0, password: 0, email: 0, friends: 0, blacks: 0}).toArray(_.answer);
     },
 
-    add: function(_) {
-        var source_id = ObjectID(_.req.url.query.source_id);
+    view: function(_) {
+        _.db.collection('user')
+            .findOne(
+                {_id: ObjectID(_.req.url.query.id)},
+                {auth: 0, password: 0, email: 0},
+                _.wrap(function(user) {
+                    console.log(user.blacks, _.user._id);
+                    if (user.blacks && user.blacks.indexOf(_.user._id) >= 0) {
+                        _.res.send(403, {
+                            surname: user.surname,
+                            forename: user.forename,
+                            avatar: user.avatar,
+                            error: "You blocked"
+                        });
+                    }
+                    else {
+                        _.res.send(user);
+                    }
+                }));
+    },
+
+    list: function(_) {
+        var source_id = _.user._id; //ObjectID(_.req.url.query.source_id);
         var target_id = ObjectID(_.req.url.query.target_id);
+        var l = _.req.url.query.l;
+        var o = 'add' == _.req.url.query.do ? '$push' : '$pull';
+        var _set = {};
+        _set[o] = {};
+        _set[o][l] = target_id;
         if (source_id == target_id) {
-            _.res.send(400, {error: "cannot add himself"});
+            _.res.send(400, {error: "cannot himself"});
         }
         else {
-            _.db.collection('user').updateOne({_id: source_id}, {$addToSet: {friend: target_id}}, _.answer);
+            _.db.collection('user').updateOne({_id: source_id}, _set, _.answer);
         }
     },
 
-    friends: function(_) {
-        _.db.collection('user').findOne(ObjectID(_.req.url.query.id), _.wrap(function(user) {
-            _.db.collection('user')
-                .find({_id: {$in: user.friend}}, {auth: 0, password: 0, email: 0})
-                .toArray(_.answer);
-        }))
+    unset: function(_) {
+        var _set = {};
+        _set[_.req.url.query.field] = 1;
+        _.db.collection('user').updateOne({_id: _.user._id}, {$unset: _set}, _.answer);
     }
 };

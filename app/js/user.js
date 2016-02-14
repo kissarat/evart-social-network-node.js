@@ -13,7 +13,7 @@ ui.user = {
                         document.cookie = 'auth=' + data.auth + '; path=/; expires='
                             + (new Date(Date.now() + 6 * 24 * 3600 * 1000).toUTCString());
                         localStorage.user_id = data._id;
-                        server.fire('login');
+                        login();
                     }
                     go('user/index');
                 }
@@ -73,26 +73,94 @@ ui.user = {
             params.id = localStorage.user_id;
         }
 
-        view.avatar.addEventListener('change', function() {
-            view.thumbnail.background = view.avatar.value;
-        });
-        bind_form(view, {
-            route: 'entity/user',
-            params: params
-        })
-            .addEventListener('load', function() {
-                view.thumbnail.onclick = function() {
-                    view.avatarfile.click();
+        query({
+            route: 'user/view',
+            params: params,
+            success: function (data) {
+                if (403 == this.status) {
+                    view.innerHTML = $id('#user/blocked');
+                }
+                view.querySelector('h1').innerHTML = data.forename + ' ' + data.surname;
+                if (403 == this.status) {
+                    view.querySelector('.thumbnail').style.backgroundImage = data.avatar;
+                    view.visible = true;
+                    return;
+                }
+                var labels = {
+                    //forename: 'Forename',
+                    //surname: 'Surname',
+                    country: 'Country',
+                    city: 'City'
                 };
-                view.avatarfile.onchange = function() {
-                    upload_photo(array(this.files), function() {
-                        view.avatar.value = this.responseJSON.url;
-                        view.avatar.change();
+                var fields = view.querySelector('.fields');
+                for (var key in labels) {
+                    if (data[key]) {
+                        fields.appendChild(view.widget('field', {
+                            label: labels[key],
+                            value: data[key]
+                        }));
+                    }
+                }
+
+                if (params.id == localStorage.user_id) {
+                    view.thumbnail.onclick = function () {
+                        view.avatarfile.click();
+                    };
+
+                    view.avatarfile.onchange = function () {
+                        upload_photo(array(this.files), function () {
+                            view.avatar.value = this.responseJSON.url;
+                            view.avatar.change();
+                        });
+                    };
+
+                    view.avatar.addEventListener('change', function () {
+                        view.thumbnail.background = view.avatar.value;
                     });
-                };
+                }
+
                 view.avatarfile.visible = false;
                 append_content('wall', {type: 'wall', owner_id: params.id});
+
+                var buttons = view.querySelector('.left .buttons');
+                if (params.id != localStorage.user_id) {
+                    var is_friend = user.friends && user.friends.indexOf(params.id) >= 0;
+                    var is_black = user.blacks && user.blacks.indexOf(params.id) >= 0;
+                    if (!is_black) {
+                        buttons.appendChild($button(is_friend ? 'Remove Friend' : 'Add Friend', function () {
+                            query({
+                                route: 'user/list',
+                                params: {
+                                    l: 'friends',
+                                    'do': is_friend ? 'remove' : 'add',
+                                    target_id: params.id
+                                },
+                                success: function () {
+                                    User.loadMe(reload);
+                                }
+                            })
+                        }));
+                    }
+                    if (!is_friend) {
+                        buttons.appendChild($button(is_black ? 'Unblock' : 'Block', function () {
+                            query({
+                                route: 'user/list',
+                                params: {
+                                    l: 'blacks',
+                                    'do': is_black ? 'remove' : 'add',
+                                    target_id: params.id
+                                },
+                                success: function () {
+                                    User.loadMe(reload);
+                                }
+                            })
+                        }));
+                    }
+                }
+
                 view.visible = true;
-            });
+            }
+        });
+
     }
 };
