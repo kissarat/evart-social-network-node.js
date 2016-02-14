@@ -106,12 +106,31 @@
     </div>
 
     <div id="user/view" data-entity="user">
-        <div class="table-row">
+        <div>
+            <div class="background"></div>
+            <div>
+                <div class="title">
+                    <div class="buttons"></div>
+                    <div class="avatar">
+                        <input type="file" data-id="avatarfile"/>
+                        <div class="thumbnail" data-id="thumbnail" style="background-image: url('/images/devil.png')"></div>
+                    </div>
+                    <div class="name"></div>
+                </div>
+                <div class="subscribers">
+                    <div class="friends">
+                        <div data-id="friends_count"></div>
+                        <div>Friends</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+
+        </div>
+        <!--div class="table-row">
             <div class="left">
-                <input type="file" data-id="avatarfile"/>
-                <div class="thumbnail" data-id="thumbnail" style="background-image: url('/images/devil.png')"></div>
                 <input type="hidden" data-id="avatar"/>
-                <div class="buttons"></div>
             </div>
             <div class="right">
                 <h1>Profile</h1>
@@ -122,7 +141,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div-->
     </div>
 
     <div id="user/blocked">
@@ -134,7 +153,8 @@
     <div id="wall">
         <form>
             <textarea data-id="editor"></textarea>
-            <button data-action="send">Send</button>
+            <hr/>
+            <button data-action="send" class="light-blue">Send</button>
         </form>
         <div data-id="comments" class="table-block">
             <div data-widget="comment">

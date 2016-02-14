@@ -311,26 +311,73 @@ video.bigger {
     color: rgb(69, 104, 142);
 }
 
-[id="user/view"] .left {
-    text-align: center;
-    width: 118px;
-    padding-right: 10px;
+[id="user/view"] .buttons {
+    float: right;
+    margin-top: 70px;
 }
 
-[id="user/view"] .left .thumbnail {
-    margin: auto;
+[id="user/view"] .buttons > button {
+    margin-right: 5px;
 }
 
-[id="user/view"] .left .buttons button {
-    width: 100%;
+[id="user/view"] .background {
+    background-color: #073451;
+    min-height: 80px;
+    border-radius: 4px;
+}
+
+[id="user/view"] .title {
+    margin-top: -60px;
+    margin-left: 16px;
+}
+
+[id="user/view"] .title > div {
+    display: inline-block;
+}
+
+[id="user/view"] .name {
+    vertical-align: top;
+    color: white;
+    padding-top: 10px;
+}
+
+[id="user/view"] .thumbnail {
+    border: 3px solid white;
+}
+
+[id="user/view"] .friends > div {
+    display: inline-block;
 }
 
 button {
-    background-color: rgb(31, 143, 201);
+    background-color: #708fa0;
+    border-radius: 3px;
+    padding: 2px 8px;
     border: none;
     color: white !important;
 }
 
 button:hover {
     background-color: rgb(130, 175, 201);
+}
+
+#wall textarea {
+    padding: 4px 6px;
+    width: 100%;
+    border: 2px solid #ededed;
+    border-radius: 4px;
+}
+
+#wall textarea:focus {
+    outline: none !important;
+    border-color: #6fdbe8
+}
+
+#wall hr {
+    margin-top: 5px;
+    margin-bottom: 8px;
+}
+
+.light-blue {
+    background-color: #6fdbe8;
 }

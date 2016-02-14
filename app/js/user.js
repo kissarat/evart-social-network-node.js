@@ -80,12 +80,14 @@ ui.user = {
                 if (403 == this.status) {
                     view.innerHTML = $id('#user/blocked');
                 }
-                view.querySelector('h1').innerHTML = data.forename + ' ' + data.surname;
+                view.querySelector('.name').innerHTML = data.forename + ' ' + data.surname;
                 if (403 == this.status) {
                     view.querySelector('.thumbnail').style.backgroundImage = data.avatar;
                     view.visible = true;
                     return;
                 }
+
+                /*
                 var labels = {
                     //forename: 'Forename',
                     //surname: 'Surname',
@@ -118,14 +120,23 @@ ui.user = {
                         view.thumbnail.background = view.avatar.value;
                     });
                 }
+                */
 
                 view.avatarfile.visible = false;
                 append_content('wall', {type: 'wall', owner_id: params.id});
 
-                var buttons = view.querySelector('.left .buttons');
+                if (!user.friends) {
+                    user.friends = [];
+                }
+                if (!user.blacks) {
+                    user.blacks = [];
+                }
+
+                var buttons = view.querySelector('.buttons');
+                view.friends_count.innerHTML = user.friends.length;
                 if (params.id != localStorage.user_id) {
-                    var is_friend = user.friends && user.friends.indexOf(params.id) >= 0;
-                    var is_black = user.blacks && user.blacks.indexOf(params.id) >= 0;
+                    var is_friend = user.friends.indexOf(params.id) >= 0;
+                    var is_black = user.blacks.indexOf(params.id) >= 0;
                     if (!is_black) {
                         buttons.appendChild($button(is_friend ? 'Remove Friend' : 'Add Friend', function () {
                             query({
