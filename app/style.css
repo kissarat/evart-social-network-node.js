@@ -1,11 +1,39 @@
 body {
-    font-family: Tahoma, Geneva, sans-serif;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #ededed !important;
+    padding: 6px;
+}
+
+nav, .content > * {
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.175);
+    background-color: white;
+}
+
+.content > * {
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+nav {
+    padding: 6px 0;
+}
+
+nav > * {
+    padding: 2px 16px 2px 8px;
+    border-left: 3px solid transparent;
+    color: #555;
+}
+
+nav > *:hover {
+    border-left-color: #6fdbe8;
+    background-color: #f7f7f7;
 }
 
 #lib {
     display: none;
 }
-
 
 [data-id="messages"] {
     overflow-y: scroll;
@@ -162,7 +190,6 @@ video.bigger {
 }
 
 [data-go] {
-    color: blue;
     cursor: pointer;
 }
 
@@ -252,11 +279,6 @@ video.bigger {
 [data-widget="comment"] > div:last-child {
     vertical-align: top;
     padding-left: 8px;
-}
-
-.root > div > nav {
-    display: table-cell;
-    vertical-align: top;
 }
 
 [id="video/view"] video {
