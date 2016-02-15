@@ -42,9 +42,49 @@ ui.wall = function(params) {
             if (user.avatar) {
                 avatar.background = user.avatar;
             }
-            if (comment.geo) {
-                post.dataset.geo = comment.geo.p.join('x');
+            //if (comment.geo) {
+            //    post.dataset.geo = comment.geo.p.join('x');
+            //}
+
+            var like = post.querySelector('[data-name="like"]');
+            if (!comment.likes) {
+                comment.likes = [];
             }
+            like.innerHTML = comment.likes.length || '';
+            like.addEventListener('click', function() {
+                var i = comment.likes.indexOf(localStorage.user_id);
+                if (i < 0) {
+                    query({
+                        route: 'common/add_like',
+                        params: {
+                            entity: 'comment',
+                            target_id: comment._id
+                        },
+                        success: function (data) {
+                            if (data.nModified > 0) {
+                                comment.likes.push(localStorage.user_id);
+                                like.innerHTML = comment.likes.length;
+                            }
+                        }
+                    });
+                }
+                else {
+                    query({
+                        route: 'common/remove_like',
+                        params: {
+                            entity: 'comment',
+                            target_id: comment._id
+                        },
+                        success: function (data) {
+                            if (data.nModified > 0) {
+                                comment.likes.splice(comment.likes.indexOf(i), 1);
+                                like.innerHTML = comment.likes.length || '';
+                            }
+                        }
+                    });
+                }
+            });
+
             ui.fire('after render', post);
             view.comments.prependChild(post);
             return true;

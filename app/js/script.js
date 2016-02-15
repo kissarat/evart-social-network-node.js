@@ -84,6 +84,8 @@ function append_content(route, params, push) {
                 });
             });
 
+            $each('.tabs', tabs);
+
             view.widget = function (name, data) {
                 var w = this.templates[name].cloneNode(true);
                 if (data) {

@@ -82,6 +82,10 @@ module.exports = {
         }
     },
 
+    subme: function(_) {
+        _.db.collection('user').find({friends: _.user._id}, {_id: 1, surname: 1, forename: 1, avatar: 1}, _.answer);
+    },
+
     unset: function(_) {
         var _set = {};
         _set[_.req.url.query.field] = 1;

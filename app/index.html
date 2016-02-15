@@ -7,6 +7,7 @@
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/jquery-ui/themes/smoothness/jquery-ui.min.css"/>
+    <link type="text/css" rel="stylesheet" href="/lib/components-font-awesome/css/font-awesome.min.css"/>
 </head>
 <body>
 <div id="preview" class="fullscreen">
@@ -16,17 +17,15 @@
     <div></div>
 </div>
 
-<div class="table-block root">
-    <div>
-        <nav style="display: none">
-            <div data-go="user/view">Profile</div>
-            <div data-go="user/index">Friends</div>
-            <div data-go="video/index">Video</div>
-            <div data-go="photo/index">Photo</div>
-            <div data-go="user/logout">Logout</div>
-        </nav>
-        <div class="content">JavaScript is disabled</div>
-    </div>
+<div class="root row">
+    <nav style="display: none" class="col-sm-2">
+        <div data-go="user/view">Profile</div>
+        <div data-go="user/index">Friends</div>
+        <div data-go="video/index">Video</div>
+        <div data-go="photo/index">Photo</div>
+        <div data-go="user/logout">Logout</div>
+    </nav>
+    <div class="content col-sm-10">JavaScript is disabled</div>
 </div>
 
 <div id="lib">
@@ -132,23 +131,53 @@
                 </div>
             </div>
         </div>
-        <div>
-
-        </div>
-        <!--div class="table-row">
-            <div class="left">
-                <input type="hidden" data-id="avatar"/>
-            </div>
-            <div class="right">
-                <h1>Profile</h1>
-                <div class="fields table-block">
-                    <div data-widget="field">
-                        <div data-name="label"></div>
-                        <div data-name="value"></div>
+        <div data-id="profile" class="tabs" style="display: none">
+            <div class="view tabs">
+                <div class="menu table-row">
+                    <div data-open="view">View</div>
+                    <div data-open="edit">Edit</div>
+                </div>
+                <div class="container">
+                    <div data-tab="view">
+                        <div class="table-block">
+                            <div data-widget="field">
+                                <label data-name="label"></label>
+                                <div data-name="value"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-tab="edit">
+                        <form data-id="edit" class="table-block">
+                            <div>
+                                <label>Forename</label>
+                                <input name="forename"/>
+                            </div>
+                            <div>
+                                <label>Surname</label>
+                                <input name="surname"/>
+                            </div>
+                            <div>
+                                <label>Birthday</label>
+                                <input name="birthday" type="date"/>
+                            </div>
+                            <div>
+                                <label>Languages</label>
+                                <input name="languages"/>
+                            </div>
+                            <div>
+                                <label class="vertop">Activities</label>
+                                <textarea name="languages"></textarea>
+                            </div>
+                            <div>
+                                <label class="vertop">Interests</label>
+                                <textarea name="interests"></textarea>
+                            </div>
+                        </form>
+                        <button type="button" data-id="save">Save</button>
                     </div>
                 </div>
             </div>
-        </div-->
+        </div>
     </div>
 
     <div id="user/blocked">
@@ -171,6 +200,10 @@
                 <div>
                     <strong data-name="author"></strong>
                     <div data-name="text"></div>
+                </div>
+                <div class="buttons">
+                    <div data-name="geo" class="fa fa-globe" style="display: none"></div>
+                    <div data-name="like" class="fa fa-heart"></div>
                 </div>
             </div>
             <div></div>

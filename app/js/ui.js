@@ -164,3 +164,21 @@ addEventListener('keydown', function (e) {
         }
     }
 });
+
+function tabs(root) {
+    root.querySelector('[data-open]:first-child').classList.add('active');
+    root.querySelector('[data-tab]:first-child').classList.add('active');
+
+    each(root.querySelectorAll('[data-open]'), function(item) {
+        item.addEventListener('click', function() {
+            if (item.classList.contains('active')) {
+                return;
+            }
+            each(root.querySelectorAll('.active'), function(active) {
+                active.classList.remove('active');
+            });
+            item.classList.add('active');
+            root.querySelector('[data-tab="' + item.dataset.open + '"]').classList.add('active');
+        });
+    })
+}

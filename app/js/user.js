@@ -88,14 +88,15 @@ ui.user = {
                     return;
                 }
 
-                /*
                 var labels = {
-                    //forename: 'Forename',
-                    //surname: 'Surname',
-                    country: 'Country',
-                    city: 'City'
+                    forename: 'Forename',
+                    surname: 'Surname',
+                    birthday: 'Birthday',
+                    languages: 'Languages',
+                    activities: 'Languages',
+                    interests: 'Interests'
                 };
-                var fields = view.querySelector('.fields');
+                var fields = view.querySelector('[data-tab="view"] .table-block');
                 for (var key in labels) {
                     if (data[key]) {
                         fields.appendChild(view.widget('field', {
@@ -104,6 +105,8 @@ ui.user = {
                         }));
                     }
                 }
+
+                /*
 
                 if (params.id == localStorage.user_id) {
                     view.thumbnail.onclick = function () {
@@ -126,6 +129,8 @@ ui.user = {
                 view.avatarfile.visible = false;
                 append_content('wall', {type: 'wall', owner_id: params.id});
 
+                view.friends_count.innerHTML = user.friends.length;
+
                 if (!user.friends) {
                     user.friends = [];
                 }
@@ -134,7 +139,6 @@ ui.user = {
                 }
 
                 var buttons = view.querySelector('.buttons');
-                view.friends_count.innerHTML = user.friends.length;
                 if (params.id != localStorage.user_id) {
                     var is_friend = user.friends.indexOf(params.id) >= 0;
                     var is_black = user.blacks.indexOf(params.id) >= 0;
@@ -169,6 +173,25 @@ ui.user = {
                         }));
                     }
                 }
+
+                buttons.appendChild($button('Profile', function() {
+                    view.profile.visible = !view.profile.visible;
+                    if (!view.profile.visible) {
+
+                    }
+                }));
+
+                fill_form(view.edit, data);
+
+                view.save.addEventListener('click', function() {
+                    query({
+                        route: 'entity/user',
+                        method: 'PATCH',
+                        params: {id: params.id},
+                        form: view.edit,
+                        success: reload
+                    })
+                });
 
                 view.visible = true;
             }
