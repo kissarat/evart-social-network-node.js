@@ -2,6 +2,7 @@
 
 var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
+var user_list_fields = {_id: 1, surname: 1, forename: 1, avatar: 1};
 
 function password_hash(data) {
     var hash = crypto.createHash('sha224');
@@ -83,7 +84,18 @@ module.exports = {
     },
 
     subme: function(_) {
-        _.db.collection('user').find({friends: _.user._id}, {_id: 1, surname: 1, forename: 1, avatar: 1}, _.answer);
+        _.db.collection('user').find({friends: [_.user._id]}, user_list_fields).toArray(_.answer);
+    },
+
+    subto: function(_) {
+        _.db.collection('user').findOne({_id: ObjectID(_.req.url.query.id)}, {friends: 1}, _.wrap(function(user) {
+            if (user.friends && user.friends.length > 0) {
+                _.db.collection('user').find({_id: {$in: user.friends}}, user_list_fields).toArray(_.answer);
+            }
+            else {
+                _.res.send([]);
+            }
+        }));
     },
 
     unset: function(_) {

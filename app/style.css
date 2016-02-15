@@ -438,3 +438,7 @@ input:focus, textarea:focus {
 .vertop {
     vertical-align: top;
 }
+
+.tabs .container {
+    padding-top: 16px;
+}

@@ -121,7 +121,7 @@ var server = http.createServer(function (req, res) {
     function answer(err, result) {
         if (err) {
             res.send(500, {
-                error: err
+                error: err.message
             });
         }
         else {

@@ -48,22 +48,43 @@ ui.user = {
 
     index: function () {
         document.title = 'Users';
-        var self = this;
+        var view = this;
+
+        function add_users(users, parent) {
+            users.forEach(function (user) {
+                var w = view.widget('user', user);
+                var buttons = w.querySelector('.buttons');
+                buttons.appendChild($button('View', function () {
+                    go('user/view', {id: user._id});
+                }));
+                buttons.appendChild($button('Chat', function () {
+                    go('chat', {target_id: user._id});
+                }));
+                parent.appendChild(w);
+            });
+        }
+
+        query({
+            route: 'user/subto',
+            params: {id: localStorage.user_id},
+            success: function (users) {
+                add_users(users, view.querySelector('[data-tab="subto"]'));
+                view.visible = true;
+            }
+        });
+
+        query({
+            route: 'user/subme',
+            params: {id: localStorage.user_id},
+            success: function (users) {
+                add_users(users, view.querySelector('[data-tab="subme"]'));
+            }
+        });
+
         query({
             route: 'entity/user',
             success: function (users) {
-                users.forEach(function (user) {
-                    var w = self.widget('user', user);
-                    var buttons = w.querySelector('.buttons');
-                    buttons.appendChild($button('View', function () {
-                        go('user/view', {id: this.parentNode.id});
-                    }));
-                    buttons.appendChild($button('Chat', function () {
-                        go('chat', {target_id: this.parentNode.id});
-                    }));
-                    self.users.appendChild(w);
-                });
-                self.visible = true;
+                add_users(users, view.querySelector('[data-tab="users"]'));
             }
         });
     },
@@ -129,14 +150,14 @@ ui.user = {
                 view.avatarfile.visible = false;
                 append_content('wall', {type: 'wall', owner_id: params.id});
 
-                view.friends_count.innerHTML = user.friends.length;
-
                 if (!user.friends) {
                     user.friends = [];
                 }
                 if (!user.blacks) {
                     user.blacks = [];
                 }
+
+                view.friends_count.innerHTML = user.friends.length;
 
                 var buttons = view.querySelector('.buttons');
                 if (params.id != localStorage.user_id) {
