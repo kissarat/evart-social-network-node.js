@@ -68,7 +68,7 @@ ui.user = {
             route: 'user/subto',
             params: {id: localStorage.user_id},
             success: function (users) {
-                add_users(users, view.querySelector('[data-tab="subto"]'));
+                add_users(users, view.querySelector('[data-tab="subto"] .table-block'));
                 view.visible = true;
             }
         });
@@ -77,14 +77,14 @@ ui.user = {
             route: 'user/subme',
             params: {id: localStorage.user_id},
             success: function (users) {
-                add_users(users, view.querySelector('[data-tab="subme"]'));
+                add_users(users, view.querySelector('[data-tab="subme"] .table-block'));
             }
         });
 
         query({
             route: 'entity/user',
             success: function (users) {
-                add_users(users, view.querySelector('[data-tab="users"]'));
+                add_users(users, view.querySelector('[data-tab="users"] .table-block'));
             }
         });
     },
