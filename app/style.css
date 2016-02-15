@@ -295,12 +295,14 @@ video.bigger {
     margin-top: 4px;
 }
 
-[id="video/view"] video {
-    max-height: 360px;
+[id="video/view"] {
+    text-align: center;
+    vertical-align: top;
 }
 
-[id="user/view"] > div {
-    vertical-align: top;
+[id="video/view"] > * {
+    max-height: 360px;
+    max-width: 480px;
 }
 
 [id="user/view"] h1 {

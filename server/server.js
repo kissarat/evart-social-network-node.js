@@ -147,7 +147,6 @@ var server = http.createServer(function (req, res) {
         id = ObjectID(url.query.id);
     }
 
-
     req.url = url;
 
     function create_context() {

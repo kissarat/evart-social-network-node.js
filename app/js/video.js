@@ -1,6 +1,7 @@
 ui.video = {
     create: function() {
         var form = this;
+        var view = this;
         this.video.addEventListener('change', function() {
             form.title.value = this.files[0].name.replace(/\.\w+$/, '').replace(/\./g, ' ');
         });
@@ -36,6 +37,30 @@ ui.video = {
                 }
             })
         });
+
+        this.url.addEventListener('change', function() {
+            query({
+                route: 'video/oembed',
+                params: {url: view.url.value},
+                success: function(data) {
+                    view.paste.innerHTML = data.html;
+                }
+            });
+        });
+
+        view.on('save', function() {
+            query({
+                method: 'PUT',
+                route: 'video/oembed',
+                params: {url: view.url.value},
+                success: function(data) {
+                    if (data.n > 0) {
+                        go('video/index');
+                    }
+                }
+            });
+        });
+
         form.visible = true;
     },
 
@@ -54,7 +79,10 @@ ui.video = {
 
                     var video = view.widget('video', info);
                     var tag = video.querySelector('img');
-                    if ('done' == info.status) {
+                    if (info.thumbnail_url) {
+                        tag.src = info.thumbnail_url;
+                    }
+                    else if ('done' == info.status) {
                         tag.src = '/video/thumbnail/' + info._id + '.jpg';
                     }
                     else {
@@ -71,8 +99,25 @@ ui.video = {
     },
 
     view: function(params) {
-        this.querySelector('video').setAttribute('src', '/video/' + params.id + '.mp4');
-        append_content('wall', {video_id: params.id, owner_id: params.owner_id});
-        this.visible = true;
+        var view = this;
+        query({
+            route: 'video/view',
+            params: params,
+            success: function(data) {
+                var video = view.querySelector('video');
+                if (data.html) {
+                    view.innerHTML = data.html;
+                }
+                else {
+                    video.setAttribute('src', '/video/' + params.id + '.mp4');
+                }
+                append_content('wall', {
+                    type: 'video',
+                    video_id: params.id,
+                    owner_id: params.owner_id
+                });
+                view.visible = true;
+            }
+        });
     }
 };

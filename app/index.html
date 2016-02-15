@@ -225,24 +225,43 @@
     </div>
 
     <form id="video/create" data-entity="media">
-        <h1>Upload Video</h1>
-        <div data-id="fields">
-            <div class="form-group">
-                <label>Title</label>
-                <input class="form-control" name="title"/>
+        <div class="tabs">
+            <div class="menu">
+                <div data-open="upload">Upload</div>
+                <div data-open="internet">From Internet</div>
             </div>
+            <div class="container">
+                <div data-tab="upload">
+                    <div data-id="fields">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input class="form-control" name="title"/>
+                        </div>
 
-            <input type="file" data-id="video"/>
-            <input type="hidden" name="MAX_FILE_SIZE" value="1073741824"/>
-            <input type="hidden" name="filename"/>
+                        <input type="file" data-id="video"/>
+                        <input type="hidden" name="MAX_FILE_SIZE" value="1073741824"/>
+                        <input type="hidden" name="filename"/>
 
-            <p>
-                <button data-action="submit" type="button">Upload</button>
-            </p>
-        </div>
-        <div data-id="progress">
-            <span data-id="loaded">0</span> / <span data-id="total">0</span>
-            <progress style="display: none"></progress>
+                        <p>
+                            <button data-action="submit" type="button">Upload</button>
+                        </p>
+                    </div>
+                    <div data-id="progress">
+                        <span data-id="loaded">0</span> / <span data-id="total">0</span>
+                        <progress style="display: none"></progress>
+                    </div>
+                </div>
+                <div data-tab="internet">
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input data-id="url" class="form-control" />
+                    </div>
+                    <div data-id="paste"></div>
+                    <p>
+                        <button data-action="save" type="button">Save</button>
+                    </p>
+                </div>
+            </div>
         </div>
     </form>
 
