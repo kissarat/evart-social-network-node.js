@@ -129,39 +129,55 @@ document.addEventListener('DOMContentLoaded', function () {
             fixed: tag.dataset.fixed
         });
     });
-
-
-    $each('nav [data-go]', function (tag) {
-        tag.addEventListener('click', function () {
-            go(tag.dataset.go);
-        });
-    });
 });
 
-function upload_photo(files, call) {
-    var file = files[0];
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/photo?target_id=' + localStorage.user_id);
-    xhr.setRequestHeader('Name', file.name);
-    xhr.onload = function () {
-        var remain = files.slice(1);
-        if (call) {
-            call.call(xhr, file, remain);
+function ajax_queue(arr, call) {
+    if (!(arr instanceof Array)) {
+        arr = array(arr);
+    }
+    arr.reverse();
+
+    function ajax() {
+        var el = arr.pop();
+        if (el) {
+            var xhr = new XMLHttpRequest();
+            call.call(xhr, el);
+            xhr.addEventListener('load', ajax);
         }
-        if (remain.length > 0) {
-            upload_photo(remain, call);
+        else {
+            call();
         }
-    };
-    xhr.send(file);
+    }
+
+    ajax();
 }
 
+function upload_photo(album_id, files, call) {
+    ajax_queue(files, function (file) {
+        if (!file) {
+            return call();
+        }
+        this.open('PUT', '/api/photo');
+        this.setRequestHeader('Name', file.name);
+        this.setRequestHeader('Album', album_id);
+        if (localStorage.delay) {
+            this.setRequestHeader('Delay', localStorage.delay);
+        }
+        call.call(this, file);
+        this.send(file);
+    });
+}
 
 addEventListener('keydown', function (e) {
-    if (27 == e.keyCode) {
+    if (KeyCode.ESCAPE == e.keyCode) {
         var fullscreen = $$('.fullscreen.active');
         if (fullscreen) {
             fullscreen.classList.remove('active');
         }
+    }
+
+    if (hook.delete && KeyCode.DELETE == e.keyCode) {
+        hook.delete();
     }
 });
 
@@ -169,12 +185,12 @@ function tabs(root) {
     root.querySelector('[data-open]:first-child').classList.add('active');
     root.querySelector('[data-tab]:first-child').classList.add('active');
 
-    each(root.querySelectorAll('[data-open]'), function(item) {
-        item.addEventListener('click', function() {
+    each(root.querySelectorAll('[data-open]'), function (item) {
+        item.addEventListener('click', function () {
             if (item.classList.contains('active')) {
                 return;
             }
-            each(root.querySelectorAll('.active'), function(active) {
+            each(root.querySelectorAll('.active'), function (active) {
                 active.classList.remove('active');
             });
             item.classList.add('active');

@@ -79,8 +79,22 @@ function append_content(route, params, push) {
             });
 
             each(view.querySelectorAll('[data-go]'), function (tag) {
+                tag.params = {};
                 tag.addEventListener('click', function () {
-                    go(tag.dataset.go);
+                    var params = {};
+                    if (tag.dataset.params) {
+                        tag.dataset.params.split(',').forEach(function(param) {
+                            param = param.split('=');
+                            if (1 == param.length && location.params[param[0]]) {
+                                param.push(location.params[param[0]]);
+                            }
+                            params[param[0]] = param[1];
+                        });
+                        go(tag.dataset.go, merge(params, tag.params));
+                    }
+                    else {
+                        go(tag.dataset.go, tag.params);
+                    }
                 });
             });
 
@@ -313,6 +327,18 @@ var user;
 
 function login() {
     User.loadMe(function() {
+        $each('nav [data-go]', function (tag) {
+            tag.addEventListener('click', function () {
+                if (tag.dataset.idparam) {
+                    var params = {};
+                    params[tag.dataset.idparam] = localStorage.user_id;
+                    go(tag.dataset.go, params);
+                }
+                else {
+                    go(tag.dataset.go);
+                }
+            });
+        });
         server.fire('login');
     });
 }
@@ -330,7 +356,9 @@ addEventListener('load', function () {
     //}
     go((location.pathname.slice(1) + location.search)
         || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
-    server.poll();
+    if ('0' != localStorage.poll) {
+        server.poll();
+    }
 });
 
 function stream() {

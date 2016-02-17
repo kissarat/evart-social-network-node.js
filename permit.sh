@@ -3,8 +3,8 @@ mkdir static
 mkdir static/photo
 mkdir -p static/video/thumbnail
 mkdir -p static/upload/video
-ln -s static/video app/video
-ln -s static/photo app/photo
+ln -s $PWD/static/video app/video
+ln -s $PWD/static/photo app/photo
 mkdir server/nginx/logs
 chmod 777 server/nginx/logs
 if [ -f /usr/local/bin/mongod ]

@@ -1,6 +1,15 @@
 function preview() {
+    var id = this.id;
     var div = $id('preview');
     var source = /"([^"]+)"/.exec(this.style.backgroundImage);
+    hook.delete = function() {
+        query({
+            method: 'DELETE',
+            route: 'photo',
+            params: {id: id},
+            success: div.next
+        });
+    };
     if (source) {
         div.querySelector('img').src = source[1];
     }
@@ -8,45 +17,56 @@ function preview() {
     div.classList.add('active');
 }
 
+function $thumbnail(id) {
+    var thumbnail = $new('div', {
+        id: id,
+        class: 'thumbnail',
+        style: 'background-image: url("/photo/' + id + '.jpg")'
+    });
+    thumbnail.onclick = preview;
+    return thumbnail;
+}
+
 (function () {
     var div = $id('preview');
-    div.onclick = function () {
+    div.next = function () {
         if (div.thumbnail && div.thumbnail.nextElementSibling) {
             div.thumbnail.nextElementSibling.click();
         }
         else {
             div.classList.remove('active');
+            reload();
         }
     };
+    div.addEventListener('click', div.next);
 })();
 
 ui.photo = {
     create: function (params) {
         var view = this;
         this.on('submit', function () {
-            upload_photo(array(view.fileInput.files), function (file, files) {
-                view.uploaded.appendChild($content(file.name));
-                if (files.length == 0) {
-                    go('photo/index');
+            upload_photo(params.album_id, view.fileInput.files, function (file) {
+                if (file) {
+                    this.addEventListener('load', function() {
+                        view.uploaded.appendChild($thumbnail(this.responseJSON.id));
+                    });
+                }
+                else {
+                    go('photo/index', params.album_id ? params : {owner_id: localStorage.user_id});
                 }
             });
         });
         this.visible = true;
     },
 
-    index: function () {
+    index: function (params) {
         var view = this;
         query({
-            route: 'photo/index',
+            route: 'photo',
+            params: params,
             success: function (result) {
-                result.photos.forEach(function (photo) {
-                    var thumbnail = $new('div', {
-                        class: 'thumbnail',
-                        style: 'background-image: url("' + result.path + '/' + photo + '")',
-                        id: photo
-                    });
-                    thumbnail.onclick = preview;
-                    view.photos.appendChild(thumbnail);
+                result.forEach(function (photo) {
+                    view.photos.appendChild($thumbnail(photo._id));
                 });
                 view.visible = true;
             }
@@ -54,7 +74,7 @@ ui.photo = {
     },
 
     album: {
-        create: function () {
+        create: function (params) {
             var view = this;
             view.on('create', function () {
                 query({
@@ -63,7 +83,10 @@ ui.photo = {
                     form: view,
                     success: function (data) {
                         if (data.n > 0) {
-                            go('photo/album/index', {owner_id: localStorage.user_id});
+                            if (!params.owner_id) {
+                                params.owner_id = localStorage.user_id;
+                            }
+                            go('photo/album/index', params);
                         }
                     }
                 });
@@ -73,6 +96,7 @@ ui.photo = {
 
         index: function (params) {
             var view = this;
+            view.all_photos.params.owner_id = localStorage.user_id;
             query({
                 route: 'album',
                 params: params,

@@ -336,10 +336,8 @@ function query(o) {
     }
 
     xhr.open(o.method, url);
-    if (o.body) {
-        xhr.overrideMimeType('application/json');
-    }
-    else if (o.mime) {
+
+    if (o.mime) {
         xhr.overrideMimeType(o.mime)
     }
     if (o.responseType) {
@@ -363,7 +361,13 @@ function query(o) {
         }
     }
 
-    xhr.send(o.body ? JSON.stringify(o.body) : o.data);
+    if (o.body) {
+        o.data = JSON.stringify(o.body);
+        //xhr.overrideMimeType('application/json');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+    }
+
+    xhr.send(o.data);
     return xhr;
 }
 
@@ -522,3 +526,14 @@ Element.prototype.change = function () {
 Element.prototype.prependChild = function (child) {
     this.insertBefore(child, this.firstChild);
 };
+
+function merge() {
+    var o = {};
+    for(var i = 0; i < arguments.length; i++) {
+        var a = arguments[i];
+        for(var j in a) {
+            o[j] = a[j];
+        }
+    }
+    return o;
+}

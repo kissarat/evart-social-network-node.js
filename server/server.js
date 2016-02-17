@@ -90,22 +90,155 @@ function receive_buffer(req, call) {
     });
 }
 
+function process(_) {
+    Object.defineProperty(_, 'id', {
+        get: function() {
+            return ObjectID(_.req.url.query.id);
+        }
+    });
 
-function Context(req, res) {
-    this.req = req;
-    this.res = res;
-    this.db = db;
+    switch (_.req.url.route[0]) {
+        case 'poll':
+            if (!user) {
+                return _.res.send(401, {error: {auth: 'required'}});
+            }
+            var target_id = _.req.url.query.target_id || _.req.url.route[1];
+            switch (_.req.method) {
+                case 'GET':
+                    var subscriber = subscribers[_.user._id];
+                    if (subscriber && 'queue' == subscriber.type) {
+                        delete subscribers[_.user._id];
+                        _.res.send(subscriber);
+                    }
+                    else {
+                        if (subscriber) {
+                            subscriber.end();
+                        }
+                        subscribers[_.user._id] = _.res;
+                        var close = function () {
+                            delete subscribers[_.user._id];
+                        };
+                        _.req.on('close', close);
+                        _.res.on('finish', close);
+                    }
+                    break;
+                case 'POST':
+                    receive.call(_.req, function (data) {
+                        data.source_id = _.user._id;
+                        send(target_id, data);
+                        _.res.end();
+                    });
+                    break;
+            }
+            return;
+
+        case 'entity':
+            var collectionName = _.req.url.route[1];
+            switch (_.req.method) {
+                case 'GET':
+                    if (id) {
+                        db.collection(collectionName).findOne(_.id, _.answer);
+                    }
+                    else {
+                        db.collection(collectionName).find(_.req.url.query).toArray(_.answer);
+                    }
+                    break;
+                case 'PUT':
+                    receive.call(_.req, function (data) {
+                        db.collection(collectionName).insertOne(data, _.answer);
+                    });
+                    break;
+                case 'PATCH':
+                    receive.call(_.req, function (data) {
+                        db.collection(collectionName).updateOne({_id: _.id}, {$set: data}, _.answer);
+                    });
+                    break;
+                case 'DELETE':
+                    db.collection(collectionName).deleteOne({_id: _.id}, _.answer);
+                    break;
+                default:
+                    _.res.writeHead(405);
+                    _.res.end();
+                    break;
+            }
+            return;
+    }
+
+    var action;
+    if (_.req.url.route.length >= 1) {
+        if (_.req.url.route.length < 2) {
+            _.req.url.route[1] = _.req.method;
+        }
+        action = controllers[_.req.url.route[0]][_.req.url.route[1]];
+    }
+    if (!action) {
+        _.res.send(404, _.req.url);
+    }
+    else {
+        exec(_, action);
+    }
 }
 
+// -------------------------------------------------------------------------------
 
 var server = http.createServer(function (req, res) {
-    req.url = req.url.replace(/^\/api\//, '/');
-    var url = parse(req.url);
+    var raw_url = req.url.replace(/^\/api\//, '/');
+    req.url = parse(raw_url);
+
+    var _ = {
+        req: req,
+        res: res,
+
+        wrap: function (call) {
+            return function (err, result) {
+                if (err) {
+                    res.send(500, {
+                        error: err
+                    });
+                }
+                else {
+                    call(result);
+                }
+            }
+        },
+
+        answer: function (err, result) {
+            if (err) {
+                res.send(500, {
+                    error: err.message
+                });
+            }
+            else {
+                res.send(result);
+            }
+        },
+
+        send: function (target_id, data) {
+            var subscriber = subscribers[target_id];
+            if (subscriber) {
+                if ('queue' == subscriber.type) {
+                    subscriber.queue.push(data);
+                }
+                else {
+                    subscriber.send(data);
+                }
+            }
+            else {
+                subscriber = {
+                    type: 'queue',
+                    queue: [data]
+                };
+                subscribers[target_id] = subscriber;
+            }
+        },
+
+        db: db
+    };
 
     var auth;
-    if (url.query.auth) {
-        req.auth = url.query.auth;
-        delete url.query.auth;
+    if (req.url.query.auth) {
+        req.auth = req.url.query.auth;
+        delete req.url.query.auth;
     }
     else if (req.headers.authorization) {
         req.auth = req.headers.authorization;
@@ -114,167 +247,24 @@ var server = http.createServer(function (req, res) {
         req.auth = auth[1];
     }
 
-    function authorize(call) {
-        db.collection('user').findOne({auth: req.auth}, wrap(call));
-    }
-
-    function answer(err, result) {
-        if (err) {
-            res.send(500, {
-                error: err.message
-            });
-        }
-        else {
-            res.send(result);
-        }
-    }
-
-    function wrap(call) {
-        return function (err, result) {
-            if (err) {
-                res.send(500, {
-                    error: err
-                });
-            }
-            else {
-                call(result);
-            }
-        }
-    }
-
-    var id;
-    if (url.query.id) {
-        id = ObjectID(url.query.id);
-    }
-
-    req.url = url;
-
-    function create_context() {
-        var context = new Context(req, res);
-        context.answer = answer;
-        context.wrap = wrap;
-        context.send = send;
-        context.subscribers = subscribers;
-        return context;
-    }
-
-    var context;
-
-    switch (url.route[0]) {
-        case 'photo':
-            if ('POST' == req.method) {
-                return controllers.photo.POST(create_context());
-            }
-            break;
-        case 'video':
-            if ('POST' == req.method) {
-                return controllers.video.upload(create_context());
-            }
-            break;
-
-        case 'poll':
-            authorize(function (user) {
-                if (!user) {
-                    return res.send(401, {error: {auth: 'required'}});
-                }
-                var target_id = url.query.target_id || url.route[1];
-                switch (req.method) {
-                    case 'GET':
-                        var subscriber = subscribers[user._id];
-                        if (subscriber && 'queue' == subscriber.type) {
-                            delete subscribers[user._id];
-                            res.send(subscriber);
-                        }
-                        else {
-                            if (subscriber) {
-                                subscriber.end();
-                            }
-                            subscribers[user._id] = res;
-                            var close = function () {
-                                delete subscribers[user._id];
-                            };
-                            req.on('close', close);
-                            res.on('finish', close);
-                        }
-                        break;
-                    case 'POST':
-                        receive.call(req, function (data) {
-                            data.source_id = user._id;
-                            send(target_id, data);
-                            res.end();
-                        });
-                        break;
-                }
-            });
-            return;
-
-        case 'entity':
-            var collectionName = url.route[1];
-            switch (req.method) {
-                case 'GET':
-                    if (id) {
-                        db.collection(collectionName).findOne(id, answer);
-                    }
-                    else {
-                        db.collection(collectionName).find(url.query).toArray(answer);
-                    }
-                    break;
-                case 'PUT':
-                    receive.call(req, function (data) {
-                        db.collection(collectionName).insertOne(data, answer);
-                    });
-                    break;
-                case 'PATCH':
-                    receive.call(req, function (data) {
-                        db.collection(collectionName).updateOne({_id: id}, {$set: data}, answer);
-                    });
-                    break;
-                case 'DELETE':
-                    db.collection(collectionName).deleteOne({_id: id}, answer);
-                    break;
-                default:
-                    res.writeHead(405);
-                    res.end();
-                    break;
-            }
-            return;
-    }
-
-    context = create_context();
-
-    var action;
-    if (url.route.length >= 1) {
-        if (url.route.length < 2) {
-            url.route[1] = req.method;
-        }
-        action = controllers[url.route[0]][url.route[1]];
-    }
-    if (!action) {
-        res.send(404, url);
+    if (req.auth) {
+        db.collection('user').findOne({auth: req.auth}, _.wrap(function (user) {
+            _.user = user;
+            process(_);
+        }));
     }
     else {
-        if (req.auth) {
-            authorize(function (user) {
-                if (user) {
-                    context.user = user;
-                    //user._id = ObjectID(user._id);
-                }
-                exec(context, action);
-            });
-        }
-        else {
-            exec(context, action);
-        }
+        process(_);
     }
 });
 
 function exec(_, action) {
     if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {
-        if ('PUT' == _.req.method || 'POST' == _.req.method) {
+        if (_.req.headers['content-type'] && _.req.headers['content-type'].indexOf('json') >= 0) {
             receive.call(_.req, function (data) {
                 _.body = data;
                 //try {
-                    action(_);
+                action(_);
                 //}
                 //catch (ex) {
                 //    _.res.send(500, {error: ex})
@@ -282,7 +272,7 @@ function exec(_, action) {
             });
         }
         else
-            //try {
+        //try {
             action(_);
         //}
         //catch (ex) {
@@ -295,25 +285,6 @@ function exec(_, action) {
                 auth: 'required'
             }
         });
-    }
-}
-
-function send(target_id, data) {
-    var subscriber = subscribers[target_id];
-    if (subscriber) {
-        if ('queue' == subscriber.type) {
-            subscriber.queue.push(data);
-        }
-        else {
-            subscriber.send(data);
-        }
-    }
-    else {
-        subscriber = {
-            type: 'queue',
-            queue: [data]
-        };
-        subscribers[target_id] = subscriber;
     }
 }
 

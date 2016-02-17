@@ -19,11 +19,11 @@
 
 <div class="root row">
     <nav style="display: none" class="col-sm-2">
-        <div data-go="user/view">Profile</div>
-        <div data-go="user/index">Friends</div>
-        <div data-go="video/index">Video</div>
-        <div data-go="photo/index">Photo</div>
-        <div data-go="user/logout">Logout</div>
+        <div data-go="user/view" data-idparam="id">Profile</div>
+        <div data-go="user/index" data-idparam="id">Friends</div>
+        <div data-go="video/index" data-idparam="owner_id">Video</div>
+        <div data-go="photo/album/index" data-idparam="owner_id">Photo</div>
+        <div data-go="user/logout" data-idparam="id">Logout</div>
     </nav>
     <div class="content col-sm-10">JavaScript is disabled</div>
 </div>
@@ -257,7 +257,7 @@
                 <div data-tab="internet">
                     <div class="form-group">
                         <label>URL</label>
-                        <input data-id="url" class="form-control" />
+                        <input data-id="url" class="form-control"/>
                     </div>
                     <div data-id="paste"></div>
                     <p>
@@ -295,13 +295,14 @@
 
     <div id="photo/index">
         <h1>Photos</h1>
-        <div data-go="photo/create">Upload</div>
+        <div data-go="photo/create" data-params="album_id">Upload</div>
         <div data-id="photos"></div>
     </div>
 
     <div id="photo/album/index">
         <div>
-            <button type="button" data-go="album/create">Create Album</button>
+            <button type="button" data-go="photo/album/create">Create Album</button>
+            <button type="button" data-go="photo/index" data-id="all_photos">All Photos</button>
         </div>
         <div data-id="list"></div>
     </div>
@@ -309,7 +310,7 @@
     <form id="photo/album/create">
         <div class="form-group">
             <label>Title</label>
-            <input name="title" class="form-control" />
+            <input name="title" class="form-control"/>
         </div>
         <p>
             <button data-action="create">Create</button>
@@ -320,6 +321,7 @@
 <script src="/lib/jquery/dist/jquery.min.js"></script>
 <script src="/lib/jquery-ui/jquery-ui.min.js"></script>
 <script src="/lib/webrtc-adapter/adapter.js"></script>
+<script src="/js/data.js"></script>
 <script src="/js/util.js"></script>
 <script src="/js/script.js"></script>
 <script src="/js/media.js"></script>
