@@ -1,5 +1,11 @@
 function preview() {
     var id = this.id;
+    if (hook.select) {
+        return hook.select({
+            id: id,
+            type: 'photo'
+        });
+    }
     var div = $id('preview');
     var source = /"([^"]+)"/.exec(this.style.backgroundImage);
     hook.delete = function () {

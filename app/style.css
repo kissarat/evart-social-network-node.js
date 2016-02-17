@@ -285,11 +285,11 @@ video.bigger {
     background-image: url("/images/devil.png");
 }
 
-[data-widget="comment"] > div {
+[data-widget="comment"] .table-row {
     padding-top: 8px;
 }
 
-[data-widget="comment"] > div:nth-child(2) {
+[data-widget="comment"] .table-row > div:nth-child(2) {
     vertical-align: top;
     padding-left: 8px;
 }

@@ -85,6 +85,13 @@ ui.wall = function(params) {
                 }
             });
 
+            if (comment.medias) {
+                var mediasDiv = post.querySelector('.medias');
+                comment.medias.forEach(function(media) {
+                    mediasDiv.appendChild($thumbnail(media.id));
+                });
+            }
+
             ui.fire('after render', post);
             view.comments.prependChild(post);
             return true;
@@ -104,13 +111,25 @@ ui.wall = function(params) {
         }
     });
 
-    this.on('send', function () {
+    view.on('send', function () {
         var data = {
             source_id: localStorage.user_id,
             owner_id: params.owner_id,
             type: params.type,
             text: view.editor.value
         };
+
+        var medias = [];
+        var mediasDiv = view.querySelectorAll('[data-id="attachements"] > div');
+        each(mediasDiv, function(attachement) {
+            medias.push({
+                type: 'photo',
+                id: attachement.id
+            })
+        });
+        if (medias.length > 0) {
+            data.medias = medias;
+        }
 
         if ('video' == params.type && params.video_id) {
             data.video_id = params.video_id;
@@ -122,6 +141,8 @@ ui.wall = function(params) {
             body: data,
             success: function (result) {
                 if (result.ok) {
+                    view.frame.visible = false;
+                    view.attachements.innerHTML = '';
                     view.editor.value = '';
                 }
             }
@@ -136,10 +157,13 @@ ui.wall = function(params) {
 
     iframe.addEventListener('load', function() {
         view.frame.querySelector('.loading').visible = false;
+        iframe.contentWindow.hook.select = function(attachement) {
+            view.attachements.appendChild($thumbnail(attachement.id));
+        };
         iframe.visible = true;
     });
 
-    function attachment(path) {
+    function add_attachment_type(path) {
         view.on(path, function() {
             iframe.visible = false;
             view.frame.querySelector('.loading').visible = true;
@@ -148,8 +172,8 @@ ui.wall = function(params) {
         });
     }
 
-    attachment('/video/index');
-    attachment('/photo/index');
+    add_attachment_type('/video/index');
+    add_attachment_type('/photo/index');
 
     this.visible = true;
 };

@@ -203,6 +203,7 @@
     <div id="wall">
         <form>
             <textarea data-id="editor"></textarea>
+            <div data-id="attachements"></div>
             <p>
                 <button data-action="send" class="light-blue">Send</button>
                 <span data-action="/video/index" class="fa fa-youtube-play"></span>
@@ -215,56 +216,37 @@
                 </div>
                 <iframe style="display: none"></iframe>
                 <div class="loading">
-                    <img src="/images/attachements-loading.gif" />
+                    <img src="/images/attachements-loading.gif"/>
                 </div>
             </div>
             <hr/>
         </form>
-        <div data-id="comments" class="table-block">
+        <div data-id="comments">
             <div data-widget="comment">
-                <div>
-                    <div class="avatar-xs"></div>
+                <div class="table-row">
+                    <div>
+                        <div class="avatar-xs"></div>
+                    </div>
+                    <div>
+                        <strong data-name="author"></strong>
+                        <div data-name="text"></div>
+                    </div>
+                    <div class="buttons">
+                        <div data-name="geo" class="fa fa-globe" style="display: none"></div>
+                        <div data-name="like" class="fa fa-heart"></div>
+                    </div>
                 </div>
-                <div>
-                    <strong data-name="author"></strong>
-                    <div data-name="text"></div>
-                </div>
-                <div class="buttons">
-                    <div data-name="geo" class="fa fa-globe" style="display: none"></div>
-                    <div data-name="like" class="fa fa-heart"></div>
-                </div>
+                <div class="medias"></div>
             </div>
-            <div></div>
         </div>
     </div>
 
     <form id="video/create" data-entity="media">
         <div class="tabs">
             <div class="menu">
-                <div data-open="upload">Upload</div>
                 <div data-open="internet">From Internet</div>
             </div>
             <div class="container">
-                <div data-tab="upload">
-                    <div data-id="fields">
-                        <div class="form-group">
-                            <label>Title</label>
-                            <input class="form-control" name="title"/>
-                        </div>
-
-                        <input type="file" data-id="video"/>
-                        <input type="hidden" name="MAX_FILE_SIZE" value="1073741824"/>
-                        <input type="hidden" name="filename"/>
-
-                        <p>
-                            <button data-action="submit" type="button">Upload</button>
-                        </p>
-                    </div>
-                    <div data-id="progress">
-                        <span data-id="loaded">0</span> / <span data-id="total">0</span>
-                        <progress style="display: none"></progress>
-                    </div>
-                </div>
                 <div data-tab="internet">
                     <div class="form-group">
                         <label>URL</label>
@@ -359,6 +341,7 @@
 </script>
 <script src="/js/ui.js"></script>
 <script src="/js/wall.js"></script>
+<script src="/js/photo.js"></script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCM7MsXD01AOK5Otr5H7MCZjYl5Uqi4k0M"></script>
 <script src="/js/online.js"></script>

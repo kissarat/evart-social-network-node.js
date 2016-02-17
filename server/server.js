@@ -99,7 +99,7 @@ function process(_) {
 
     switch (_.req.url.route[0]) {
         case 'poll':
-            if (!user) {
+            if (!_.user) {
                 return _.res.send(401, {error: {auth: 'required'}});
             }
             var target_id = _.req.url.query.target_id || _.req.url.route[1];
