@@ -78,18 +78,6 @@ function receive(call) {
     });
 }
 
-
-function receive_buffer(req, call) {
-    var data = [];
-    req.on('data', function (chunk) {
-        data.push(chunk);
-    });
-    req.on('end', function () {
-        data = Buffer.concat(data);
-        call(data);
-    });
-}
-
 function process(_) {
     Object.defineProperty(_, 'id', {
         get: function() {
@@ -136,7 +124,7 @@ function process(_) {
             var collectionName = _.req.url.route[1];
             switch (_.req.method) {
                 case 'GET':
-                    if (id) {
+                    if (_.req.url.query.id) {
                         db.collection(collectionName).findOne(_.id, _.answer);
                     }
                     else {
