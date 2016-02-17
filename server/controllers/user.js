@@ -52,7 +52,6 @@ module.exports = {
                 {_id: ObjectID(_.req.url.query.id)},
                 {auth: 0, password: 0, email: 0},
                 _.wrap(function(user) {
-                    console.log(user.blacks, _.user._id);
                     if (user.blacks && user.blacks.indexOf(_.user._id) >= 0) {
                         _.res.send(403, {
                             surname: user.surname,

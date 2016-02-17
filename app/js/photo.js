@@ -24,7 +24,7 @@ ui.photo = {
     create: function (params) {
         var view = this;
         this.on('submit', function () {
-            upload_photo(array(view.fileInput.files), function(file, files) {
+            upload_photo(array(view.fileInput.files), function (file, files) {
                 view.uploaded.appendChild($content(file.name));
                 if (files.length == 0) {
                     go('photo/index');
@@ -51,5 +51,51 @@ ui.photo = {
                 view.visible = true;
             }
         });
+    },
+
+    album: {
+        create: function () {
+            var view = this;
+            view.on('create', function () {
+                query({
+                    route: 'album',
+                    method: 'PUT',
+                    form: view,
+                    success: function (data) {
+                        if (data.n > 0) {
+                            go('photo/album/index', {owner_id: localStorage.user_id});
+                        }
+                    }
+                });
+            });
+            view.visible = true;
+        },
+
+        index: function (params) {
+            var view = this;
+            query({
+                route: 'album',
+                params: params,
+                success: function (data) {
+                    data.forEach(function (album) {
+                        view.list.appendChild(
+                            $add($new('div'),
+                                $new('div', {class: 'button'}, album.title, function () {
+                                    go('photo/index', {album_id: album._id});
+                                }),
+                                $fa('times', null, function() {
+                                    query({
+                                        route: 'album',
+                                        method: 'DELETE',
+                                        params: {id: album._id},
+                                        success: reload
+                                    });
+                                })
+                            ));
+                    });
+                    view.visible = true;
+                }
+            });
+        }
     }
 };

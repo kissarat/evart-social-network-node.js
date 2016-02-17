@@ -444,3 +444,23 @@ input:focus, textarea:focus {
 .tabs .container {
     padding-top: 16px;
 }
+
+[id="wall"] button {
+    margin-right: 10px;
+}
+
+[id="wall"] {
+    color: #6fdbe8;
+}
+
+[data-id="list"] > div > div {
+    display: inline-block;
+}
+
+[data-id="list"] .fa {
+    margin-left: 2px;
+}
+
+.button {
+    cursor: pointer;
+}

@@ -96,16 +96,24 @@ function $all(selector) {
 function $class(name) {
     return document.getElementsByClassName(name)
 }
-function $new(name, attributes, children) {
+function $new(name, attributes, children, click) {
     var tag = document.createElement(name);
     if (attributes) {
-        for (var key in attributes) {
-            tag.setAttribute(key, attributes[key]);
+        if ('string' == typeof attributes) {
+            tag.innerHTML = attributes;
+        }
+        else {
+            for (var key in attributes) {
+                tag.setAttribute(key, attributes[key]);
+            }
         }
     }
     if (children) {
         if ('string' == typeof children) {
             tag.innerHTML = children;
+        }
+        else if (children instanceof Function) {
+            tag.addEventListener('click', children);
         }
         else {
             for (var i in children) {
@@ -113,7 +121,24 @@ function $new(name, attributes, children) {
             }
         }
     }
+
+    if (click) {
+        tag.addEventListener('click', click);
+    }
     return tag;
+}
+
+function $fa(name, confirm_text, call) {
+    if (call) {
+        var _call = call;
+        call = function() {
+            Dialog.confirm(confirm_text, _call);
+        }
+    }
+    else {
+        call = confirm_text;
+    }
+    return $new('div', {class: 'button fa fa-' + name}, call);
 }
 
 function $content(text) {
@@ -126,6 +151,7 @@ function $add(parent) {
     for (var i = 1; i < arguments.length; i++) {
         parent.appendChild(arguments[i]);
     }
+    return parent;
 }
 
 function on(target, name, call) {
@@ -138,8 +164,9 @@ function on(target, name, call) {
         for (var i = 0; i < target.length; i++)
             target[i].addEventListener(name, call);
     }
-    else
+    else {
         target.addEventListener(name, call);
+    }
 }
 
 function $a(label, url) {
@@ -321,12 +348,12 @@ function query(o) {
 
     var name;
     if (o.headers) {
-        for(name in o.headers) {
+        for (name in o.headers) {
             xhr.setRequestHeader(name, o.headers[name]);
         }
     }
 
-    for(name in deviceInfo) {
+    for (name in deviceInfo) {
         var value = deviceInfo[name];
         if (value) {
             if (value instanceof Object) {
@@ -409,14 +436,14 @@ var EventEmitter = {
         this._events[name].push(call);
     },
     /*
-    single: function (name, call) {
-        if (!this._events) {
-            this._events = {};
-        }
+     single: function (name, call) {
+     if (!this._events) {
+     this._events = {};
+     }
 
-        this._events[name] = [call];
-    },
-    */
+     this._events[name] = [call];
+     },
+     */
     off: function (name, call) {
         var i = this._events[name].indexOf(call);
         this._events[name].splice(i, 1);
@@ -446,7 +473,7 @@ var EventEmitter = {
 
 extend(Element.prototype, EventEmitter);
 
-Node.prototype.findParent = function(call) {
+Node.prototype.findParent = function (call) {
     var parent = this.parentNode;
     if (call(parent)) {
         return parent;
@@ -462,16 +489,16 @@ function bounding(tag) {
 }
 
 Object.defineProperty(HTMLElement.prototype, 'background', {
-    get: function() {
+    get: function () {
         var source = /"([^"]+)"/.exec(this.style.backgroundImage);
         return source ? source[1] : null;
     },
 
-    set: function(value) {
+    set: function (value) {
         if (value instanceof File) {
             var self = this;
             var reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 self.style.backgroundImage = 'url("' + e.target.result + '")';
             };
             reader.readAsDataURL(value);
@@ -483,15 +510,15 @@ Object.defineProperty(HTMLElement.prototype, 'background', {
 });
 
 Object.defineProperty(XMLHttpRequest.prototype, 'responseJSON', {
-    get: function() {
+    get: function () {
         return JSON.parse(this.responseText);
     }
 });
 
-Element.prototype.change = function() {
-  this.dispatchEvent(new Event('change'));
+Element.prototype.change = function () {
+    this.dispatchEvent(new Event('change'));
 };
 
-Element.prototype.prependChild = function(child) {
+Element.prototype.prependChild = function (child) {
     this.insertBefore(child, this.firstChild);
 };

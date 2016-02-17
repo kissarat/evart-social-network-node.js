@@ -246,7 +246,6 @@ var server = http.createServer(function (req, res) {
     if (url.route.length >= 1) {
         if (url.route.length < 2) {
             url.route[1] = req.method;
-            console.log(url.route);
         }
         action = controllers[url.route[0]][url.route[1]];
     }

@@ -53,7 +53,7 @@ function append_content(route, params, push) {
     params = params || {};
 
     function load(action) {
-        view = $$('#lib #' + route.replace('/', '\\/'));
+        view = $$('#lib #' + route.replace(/\//g, '\\/'));
         if (view) {
             view = view.cloneNode(true);
             view.visible = false;
@@ -143,9 +143,23 @@ function go(route, params) {
     append_content(route, params, true);
 }
 
-function reload() {
+function reload(data) {
+    if (data && !data.n) {
+        alert('Not found');
+    }
     go(location.route.join('/'), location.params);
 }
+
+var Dialog = {
+    confirm: function(text, call) {
+        if (!text) {
+            text = 'Are you sure?';
+        }
+        if (confirm(text)) {
+            call();
+        }
+    }
+};
 
 var hook = {};
 

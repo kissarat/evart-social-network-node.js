@@ -205,6 +205,9 @@
             <textarea data-id="editor"></textarea>
             <hr/>
             <button data-action="send" class="light-blue">Send</button>
+            <div data-action="video" class="fa fa-youtube-play"></div>
+            <div data-action="picture" class="fa fa-picture-o"></div>
+            <div data-action="picture" class="fa fa-cloud-upload"></div>
         </form>
         <div data-id="comments" class="table-block">
             <div data-widget="comment">
@@ -295,6 +298,23 @@
         <div data-go="photo/create">Upload</div>
         <div data-id="photos"></div>
     </div>
+
+    <div id="photo/album/index">
+        <div>
+            <button type="button" data-go="album/create">Create Album</button>
+        </div>
+        <div data-id="list"></div>
+    </div>
+
+    <form id="photo/album/create">
+        <div class="form-group">
+            <label>Title</label>
+            <input name="title" class="form-control" />
+        </div>
+        <p>
+            <button data-action="create">Create</button>
+        </p>
+    </form>
 </div>
 
 <script src="/lib/jquery/dist/jquery.min.js"></script>
