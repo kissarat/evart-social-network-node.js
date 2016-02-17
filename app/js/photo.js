@@ -27,6 +27,25 @@ function $thumbnail(id) {
     return thumbnail;
 }
 
+
+var Album = {
+    _albums: {},
+    getUser: function(owner_id, call) {
+        if (Album._albums[owner_id]) {
+            call(Album._albums[owner_id]);
+        }
+        else {
+            query({
+                route: 'album',
+                params: {owner_id: owner_id},
+                success: function(data) {
+                    call(Album._albums[owner_id] = keyed(data));
+                }
+            });
+        }
+    }
+};
+
 (function () {
     var div = $id('preview');
     div.next = function () {
@@ -68,7 +87,13 @@ ui.photo = {
                 result.forEach(function (photo) {
                     view.photos.appendChild($thumbnail(photo._id));
                 });
-                view.visible = true;
+                Album.getUser(localStorage.user_id, function(albums) {
+                    var album = albums[params.album_id];
+                    if (album) {
+                        view.querySelector('h1').innerHTML = album.title;
+                    }
+                    view.visible = true;
+                });
             }
         });
     },
@@ -96,29 +121,27 @@ ui.photo = {
 
         index: function (params) {
             var view = this;
-            view.all_photos.params.owner_id = localStorage.user_id;
-            query({
-                route: 'album',
-                params: params,
-                success: function (data) {
-                    data.forEach(function (album) {
-                        view.list.appendChild(
-                            $add($new('div'),
-                                $new('div', {class: 'button'}, album.title, function () {
-                                    go('photo/index', {album_id: album._id});
-                                }),
-                                $fa('times', null, function() {
-                                    query({
-                                        route: 'album',
-                                        method: 'DELETE',
-                                        params: {id: album._id},
-                                        success: reload
-                                    });
-                                })
-                            ));
-                    });
-                    view.visible = true;
+            var owner_id = params.owner_id || localStorage.user_id;
+            view.all_photos.params.owner_id = owner_id;
+            Album.getUser(owner_id, function (albums) {
+                for(var id in albums) {
+                    var album = albums[id];
+                    view.list.appendChild(
+                        $add($new('div'),
+                            $new('div', {class: 'button'}, album.title, function () {
+                                go('photo/index', {album_id: id});
+                            }),
+                            $fa('times', null, function () {
+                                query({
+                                    route: 'album',
+                                    method: 'DELETE',
+                                    params: {id: id},
+                                    success: reload
+                                });
+                            })
+                        ));
                 }
+                view.visible = true;
             });
         }
     }
