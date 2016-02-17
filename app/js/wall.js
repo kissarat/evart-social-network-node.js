@@ -1,7 +1,7 @@
 'use strict';
 
 var wall = {
-    add: function(comment) {
+    add: function (comment) {
         User.findOne(comment.source_id, function (user) {
             comment.user = user;
             var notify = true;
@@ -15,7 +15,7 @@ var wall = {
     }
 };
 
-Notification.requestPermission(function(permission) {
+Notification.requestPermission(function (permission) {
     Notify.permission = permission;
     if ('granted' != permission) {
         console.warn('Notification: ' + permission);
@@ -24,10 +24,10 @@ Notification.requestPermission(function(permission) {
 
 server.on('wall', wall.add);
 
-ui.wall = function(params) {
+ui.wall = function (params) {
     var view = this;
 
-    hook.wall = function(comment) {
+    hook.wall = function (comment) {
         if (params.owner_id == comment.owner_id) {
             var user = comment.user;
             var post = view.widget('comment', {
@@ -51,7 +51,7 @@ ui.wall = function(params) {
                 comment.likes = [];
             }
             like.innerHTML = comment.likes.length || '';
-            like.addEventListener('click', function() {
+            like.addEventListener('click', function () {
                 var i = comment.likes.indexOf(localStorage.user_id);
                 if (i < 0) {
                     query({
@@ -87,8 +87,9 @@ ui.wall = function(params) {
 
             if (comment.medias) {
                 var mediasDiv = post.querySelector('.medias');
-                comment.medias.forEach(function(media) {
-                    mediasDiv.appendChild($thumbnail(media.id));
+                comment.medias.forEach(function (media) {
+                    var thumbnail = 'photo' == media.type ? $thumbnail : $video_thumbnail;
+                    mediasDiv.appendChild(thumbnail(media));
                 });
             }
 
@@ -121,11 +122,8 @@ ui.wall = function(params) {
 
         var medias = [];
         var mediasDiv = view.querySelectorAll('[data-id="attachements"] > div');
-        each(mediasDiv, function(attachement) {
-            medias.push({
-                type: 'photo',
-                id: attachement.id
-            })
+        each(mediasDiv, function (attachement) {
+            medias.push(JSON.parse(attachement.dataset.media))
         });
         if (medias.length > 0) {
             data.medias = medias;
@@ -151,20 +149,21 @@ ui.wall = function(params) {
 
     var iframe = view.frame.querySelector('iframe');
 
-    view.on('close', function() {
+    view.on('close', function () {
         view.frame.visible = false;
     });
 
-    iframe.addEventListener('load', function() {
+    iframe.addEventListener('load', function () {
         view.frame.querySelector('.loading').visible = false;
-        iframe.contentWindow.hook.select = function(attachement) {
-            view.attachements.appendChild($thumbnail(attachement.id));
+        iframe.contentWindow.hook.select = function (attachement) {
+            var thumbnail = 'photo' == attachement.type ? $thumbnail : $video_thumbnail;
+            view.attachements.appendChild(thumbnail(attachement));
         };
         iframe.visible = true;
     });
 
     function add_attachment_type(path) {
-        view.on(path, function() {
+        view.on(path, function () {
             iframe.visible = false;
             view.frame.querySelector('.loading').visible = true;
             iframe.setAttribute('src', path);

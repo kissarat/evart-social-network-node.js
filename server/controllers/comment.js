@@ -36,7 +36,6 @@ module.exports = {
         if (_.body.medias && _.body.medias.length > 0) {
             data.medias = _.body.medias;
         }
-        console.log(data);
 
         _.db.collection('comment').insertOne(data, _.wrap(function (result) {
             _.send(_.body.owner_id, data);

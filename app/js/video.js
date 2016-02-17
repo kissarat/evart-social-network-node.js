@@ -37,7 +37,16 @@ ui.video = {
             success: function(videos) {
                 videos.forEach(function(info) {
                     function open() {
-                        go('video/view', {id: info._id, owner_id: params.owner_id || localStorage.user_id})
+                        if (hook.select) {
+                            hook.select({
+                                type: 'video',
+                                id: info._id,
+                                url: info.thumbnail_url
+                            });
+                        }
+                        else {
+                            go('video/view', {id: info._id, owner_id: params.owner_id || localStorage.user_id});
+                        }
                     }
 
                     var video = view.widget('video', info);

@@ -24,13 +24,28 @@ function preview() {
 }
 
 function $thumbnail(id) {
-    var thumbnail = $new('div', {
-        id: id,
-        class: 'thumbnail',
-        style: 'background-image: url("/photo/' + id + '.jpg")'
-    });
+    var attributes = {class: 'thumbnail'};
+    if (!('string' == typeof id)) {
+        attributes['data-media'] = JSON.stringify(id);
+        id = id.id;
+    }
+    attributes.id = id;
+    attributes.style = 'background-image: url("/photo/' + id + '.jpg")';
+    var thumbnail = $new('div', attributes);
     thumbnail.onclick = preview;
     return thumbnail;
+}
+
+function $video_thumbnail(video) {
+    return $new('div', {
+        id: video.id,
+        class: 'video_thumbnail fa fa-play-circle-o',
+        'data-url': video.url,
+        style: 'background-image: url("' + video.url + '")',
+        'data-media': JSON.stringify(video)
+    }, null, function() {
+        go('video/view', {id: video.id});
+    });
 }
 
 var Album = {
@@ -64,7 +79,14 @@ ui.photo = {
             upload_photo(params.album_id, view.fileInput.files, function (file) {
                 if (file) {
                     this.addEventListener('load', function () {
-                        view.uploaded.appendChild($thumbnail(this.responseJSON.id));
+                        var id = this.responseJSON.id;
+                        view.uploaded.appendChild($thumbnail(id));
+                        if (hook.select) {
+                            hook.select({
+                                type: 'photo',
+                                id: id
+                            });
+                        }
                     });
                 }
                 else {
@@ -99,7 +121,7 @@ ui.photo = {
         create: function (params) {
             var view = this;
             view.on('create', function () {
-                query({
+                var q = {
                     route: 'album',
                     method: 'PUT',
                     form: view,
@@ -111,7 +133,11 @@ ui.photo = {
                             go('photo/album/index', params);
                         }
                     }
-                });
+                };
+                if (params.album_id) {
+                    q.headers = {album: params.album_id};
+                }
+                query(q);
             });
             view.visible = true;
         },
