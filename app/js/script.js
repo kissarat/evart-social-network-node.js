@@ -356,7 +356,7 @@ addEventListener('load', function () {
     //}
     go((location.pathname.slice(1) + location.search)
         || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
-    if ('0' != localStorage.poll) {
+    if (isTopFrame() && '0' != localStorage.poll) {
         server.poll();
     }
 });

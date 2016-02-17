@@ -128,5 +128,28 @@ ui.wall = function(params) {
         });
     });
 
+    var iframe = view.frame.querySelector('iframe');
+
+    view.on('close', function() {
+        view.frame.visible = false;
+    });
+
+    iframe.addEventListener('load', function() {
+        view.frame.querySelector('.loading').visible = false;
+        iframe.visible = true;
+    });
+
+    function attachment(path) {
+        view.on(path, function() {
+            iframe.visible = false;
+            view.frame.querySelector('.loading').visible = true;
+            iframe.setAttribute('src', path);
+            view.frame.visible = true;
+        });
+    }
+
+    attachment('/video/index');
+    attachment('/photo/index');
+
     this.visible = true;
 };

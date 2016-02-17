@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Socex</title>
-    <link rel="stylesheet" type="text/css" href="/style.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/jquery-ui/themes/smoothness/jquery-ui.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/components-font-awesome/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/style.css"/>
 </head>
-<body>
+<body class="z">
 <div id="preview" class="fullscreen">
     <img/>
 </div>
@@ -17,7 +17,7 @@
     <div></div>
 </div>
 
-<div class="root row">
+<div class="root">
     <nav style="display: none" class="col-sm-2">
         <div data-go="user/view" data-idparam="id">Profile</div>
         <div data-go="user/index" data-idparam="id">Friends</div>
@@ -203,11 +203,22 @@
     <div id="wall">
         <form>
             <textarea data-id="editor"></textarea>
+            <p>
+                <button data-action="send" class="light-blue">Send</button>
+                <span data-action="/video/index" class="fa fa-youtube-play"></span>
+                <span data-action="/photo/index" class="fa fa-picture-o"></span>
+                <span data-action="file_upload" class="fa fa-cloud-upload"></span>
+            </p>
+            <div data-id="frame" style="display: none">
+                <div class="buttons">
+                    <div data-action="close" class="fa fa-close"></div>
+                </div>
+                <iframe style="display: none"></iframe>
+                <div class="loading">
+                    <img src="/images/attachements-loading.gif" />
+                </div>
+            </div>
             <hr/>
-            <button data-action="send" class="light-blue">Send</button>
-            <div data-action="video" class="fa fa-youtube-play"></div>
-            <div data-action="picture" class="fa fa-picture-o"></div>
-            <div data-action="picture" class="fa fa-cloud-upload"></div>
         </form>
         <div data-id="comments" class="table-block">
             <div data-widget="comment">
@@ -288,7 +299,8 @@
 
     <form id="photo/create">
         <h1>Upload Photos</h1>
-        <input type="file" data-id="fileInput" multiple/>
+        <input type="file" data-id="fileInput" accept="image/jpeg" multiple/>
+        <input type="hidden" name="MAX_FILE_SIZE" value="2097152"/>
         <button type="button" data-action="submit">Upload</button>
         <div data-id="uploaded"></div>
     </form>

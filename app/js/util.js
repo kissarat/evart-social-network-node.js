@@ -84,6 +84,10 @@ for (var i = 0; i < features.length; i++) {
     }
 }
 
+function isTopFrame() {
+    return self == top;
+}
+
 function $$(selector) {
     return document.querySelector(selector)
 }

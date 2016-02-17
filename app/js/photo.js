@@ -2,7 +2,7 @@ function preview() {
     var id = this.id;
     var div = $id('preview');
     var source = /"([^"]+)"/.exec(this.style.backgroundImage);
-    hook.delete = function() {
+    hook.delete = function () {
         query({
             method: 'DELETE',
             route: 'photo',
@@ -27,22 +27,13 @@ function $thumbnail(id) {
     return thumbnail;
 }
 
-
 var Album = {
-    _albums: {},
-    getUser: function(owner_id, call) {
-        if (Album._albums[owner_id]) {
-            call(Album._albums[owner_id]);
-        }
-        else {
-            query({
-                route: 'album',
-                params: {owner_id: owner_id},
-                success: function(data) {
-                    call(Album._albums[owner_id] = keyed(data));
-                }
-            });
-        }
+    getUser: function (owner_id, call) {
+        query({
+            route: 'album',
+            params: {owner_id: owner_id},
+            success: call
+        });
     }
 };
 
@@ -66,7 +57,7 @@ ui.photo = {
         this.on('submit', function () {
             upload_photo(params.album_id, view.fileInput.files, function (file) {
                 if (file) {
-                    this.addEventListener('load', function() {
+                    this.addEventListener('load', function () {
                         view.uploaded.appendChild($thumbnail(this.responseJSON.id));
                     });
                 }
@@ -87,7 +78,7 @@ ui.photo = {
                 result.forEach(function (photo) {
                     view.photos.appendChild($thumbnail(photo._id));
                 });
-                Album.getUser(localStorage.user_id, function(albums) {
+                Album.getUser(localStorage.user_id, function (albums) {
                     var album = albums[params.album_id];
                     if (album) {
                         view.querySelector('h1').innerHTML = album.title;
@@ -124,23 +115,22 @@ ui.photo = {
             var owner_id = params.owner_id || localStorage.user_id;
             view.all_photos.params.owner_id = owner_id;
             Album.getUser(owner_id, function (albums) {
-                for(var id in albums) {
-                    var album = albums[id];
+                albums.forEach(function (album) {
                     view.list.appendChild(
                         $add($new('div'),
                             $new('div', {class: 'button'}, album.title, function () {
-                                go('photo/index', {album_id: id});
+                                go('photo/index', {album_id: album._id});
                             }),
                             $fa('times', null, function () {
                                 query({
                                     route: 'album',
                                     method: 'DELETE',
-                                    params: {id: id},
+                                    params: {id: album._id},
                                     success: reload
                                 });
                             })
                         ));
-                }
+                });
                 view.visible = true;
             });
         }

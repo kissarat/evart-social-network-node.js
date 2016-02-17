@@ -1,5 +1,10 @@
 'use strict';
 
+if (!isTopFrame()) {
+    $$('.root .content').classList.remove('col-sm-10');
+    document.body.classList.remove('z');
+}
+
 var deviceEvents = {
     Orientation: function (e) {
         deviceEvents.Orientation = {
@@ -21,6 +26,9 @@ var deviceEvents = {
 };
 
 server.on('login', function () {
+    if (!isTopFrame()) {
+        return;
+    }
     document.querySelector('nav').visible = true;
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(function (p) {
