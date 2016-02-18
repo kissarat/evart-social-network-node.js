@@ -4,6 +4,13 @@ var content = $$('.root .content');
 var action;
 var view;
 
+var config = {
+    delay: {
+        active: 100,
+        passive: 2000
+    }
+};
+
 addEventListener('popstate', function (e) {
     if (e.state) {
         go(e.state._, e.state.params);
@@ -83,7 +90,7 @@ function append_content(route, params, push) {
                 tag.addEventListener('click', function () {
                     var params = {};
                     if (tag.dataset.params) {
-                        tag.dataset.params.split(',').forEach(function(param) {
+                        tag.dataset.params.split(',').forEach(function (param) {
                             param = param.split('=');
                             if (1 == param.length && location.params[param[0]]) {
                                 param.push(location.params[param[0]]);
@@ -165,7 +172,7 @@ function reload(data) {
 }
 
 var Dialog = {
-    confirm: function(text, call) {
+    confirm: function (text, call) {
         if (!text) {
             text = 'Are you sure?';
         }
@@ -225,7 +232,7 @@ var User = {
         });
     },
 
-    loadOne: function(id, call) {
+    loadOne: function (id, call) {
         query({
             route: 'user/view',
             params: {id: id},
@@ -233,8 +240,8 @@ var User = {
         });
     },
 
-    loadMe: function(call) {
-        User.loadOne(localStorage.user_id, function(data) {
+    loadMe: function (call) {
+        User.loadOne(localStorage.user_id, function (data) {
             user = data;
             if (call) {
                 call();
@@ -277,6 +284,9 @@ var server = {
     },
 
     poll: function () {
+        if (server._poll && 1 == server._poll.readyState) {
+            return;
+        }
         var o = {
             route: 'poll',
             success: function (data) {
@@ -292,13 +302,13 @@ var server = {
                     }
                 }
                 if (this.status < 400) {
-                    server.poll();
+                    schedule_poll();
                 }
                 else if (401 == this.status) {
-                    server.on('login', server.poll);
+                    server.on('login', schedule_poll);
                 }
                 else {
-                    setTimeout(server.poll, 1000);
+                    schedule_poll();
                 }
             }
         };
@@ -316,8 +326,9 @@ var server = {
 
         var xhr = query(o);
         xhr.onerror = function () {
-            setTimeout(server.poll, 1000);
-        }
+            schedule_poll();
+        };
+        server._poll = xhr;
     }
 };
 
@@ -326,7 +337,7 @@ extend(server, EventEmitter);
 var user;
 
 function login() {
-    User.loadMe(function() {
+    User.loadMe(function () {
         $each('nav [data-go]', function (tag) {
             tag.addEventListener('click', function () {
                 if (tag.dataset.idparam) {
@@ -356,9 +367,9 @@ addEventListener('load', function () {
     //}
     go((location.pathname.slice(1) + location.search)
         || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
-    if (isTopFrame() && '0' != localStorage.poll) {
-        server.poll();
-    }
+    //if (isTopFrame() && '0' != localStorage.poll) {
+    //    server.poll();
+    //}
 });
 
 function stream() {
@@ -411,3 +422,71 @@ Notify.close = function () {
     }
 };
 
+var worker;
+
+if (isTopFrame() && window.SharedWorker) {
+    worker = new SharedWorker('/js/worker.js');
+    worker.addEventListener('error', function (e) {
+        console.error(e);
+    });
+    worker.port.addEventListener('message', function (e) {
+        var message = JSON.parse(e.data);
+
+        if (window_id == message.window_id) {
+            switch (message.type) {
+                case 'poll':
+                    server.poll();
+                    console.log(e.data);
+                    break;
+            }
+        }
+
+        if ('list' == message.type) {
+            console.log(e.data);
+        }
+        //else if (server._poll) {
+        //    server._poll.abort();
+        //}
+        //if ('fullscreen' == message.type && message.window_id != window_id) {
+        //    location.href = 'https://google.com/';
+        //}
+        //console.log('Worker ' + e.data);
+    });
+    worker.port.start();
+    worker.post = function (data) {
+        if ('string' == typeof data) {
+            data = {type: data};
+        }
+        data.window_id = window_id;
+        this.port.postMessage(JSON.stringify(data));
+    };
+    worker.post('open');
+
+    addEventListener('beforeunload', function () {
+        worker.post('close');
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        worker.post({type: 'focus', visible: 'visible' == document.visibilityState});
+    });
+
+    //document.addEventListener(prefix + 'fullscreenchange', function () {
+    //    worker.post({type: 'fullscreen', state: isFullscreen()});
+    //});
+
+    worker.list = function () {
+        worker.post('list');
+    }
+}
+
+function schedule_poll() {
+    var f = server.poll;
+    if (worker) {
+        f = function() {
+            worker.post('poll');
+        };
+    }
+    setTimeout(f, 'visible' == document.visibilityState
+        ? config.delay.active : config.delay.passive);
+    server._poll = null;
+}

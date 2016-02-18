@@ -19,6 +19,7 @@ var features = [
     'navigator.getUserMedia',
     'MediaDevices.getUserMedia',
     'navigator.getBattery',
+    'navigator.serviceWorker',
     'MediaSource',
     'MediaStream',
     'RTCPeerConnection',
@@ -33,7 +34,7 @@ var features = [
     'applicationCache',
     'WebSocket',
     'Element.prototype.requestPointerLock',
-    'Element.prototype.requestFullScreen',
+    'Element.prototype.requestFullscreen',
     'Element.prototype.matchesSelector',
     'sessionStorage',
     'localStorage',
@@ -49,6 +50,16 @@ var features = [
     'requestFileSystem',
     'SpeechRecognition'
 ];
+
+var prefix = '';
+
+if (isFirefox) {
+    prefix = 'moz';
+}
+
+if (isChrome) {
+    prefix = 'webkit';
+}
 
 var prefixes = ['', 'webkit', 'moz'];
 var detected = {};
@@ -87,6 +98,19 @@ for (var i = 0; i < features.length; i++) {
 function isTopFrame() {
     return self == top;
 }
+
+function isFullscreen() {
+    return (0 == screenLeft)
+        && (0 == screenTop);
+        //&& (screen.width == innerWidth)
+        //&& (screen.height == innerHeight);
+}
+
+function unsafe_uid() {
+    return Math.round(Math.random() * 1679615).toString(36);
+}
+
+var window_id = unsafe_uid();
 
 function $$(selector) {
     return document.querySelector(selector)
@@ -135,7 +159,7 @@ function $new(name, attributes, children, click) {
 function $fa(name, confirm_text, call) {
     if (call) {
         var _call = call;
-        call = function() {
+        call = function () {
             Dialog.confirm(confirm_text, _call);
         }
     }
@@ -318,6 +342,10 @@ function query(o) {
     var xhr = new XMLHttpRequest();
 
     xhr.addEventListener('loadend', function () {
+        var delay = xhr.getResponseHeader('delay');
+        if (delay) {
+            config.delay = JSON.parse(delay);
+        }
         if (o.success) {
             var response;
             try {
@@ -533,9 +561,9 @@ Element.prototype.prependChild = function (child) {
 
 function merge() {
     var o = {};
-    for(var i = 0; i < arguments.length; i++) {
+    for (var i = 0; i < arguments.length; i++) {
         var a = arguments[i];
-        for(var j in a) {
+        for (var j in a) {
             o[j] = a[j];
         }
     }
