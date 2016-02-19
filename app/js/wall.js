@@ -28,6 +28,7 @@ ui.wall = function (params) {
     var view = this;
 
     hook.wall = function (comment) {
+        comment = Comment.resolve(comment);
         if (params.owner_id == comment.owner_id) {
             var user = comment.user;
             var post = view.widget('comment', {
@@ -47,42 +48,10 @@ ui.wall = function (params) {
             //}
 
             var like = post.querySelector('[data-name="like"]');
-            if (!comment.likes) {
-                comment.likes = [];
-            }
+            like.addEventListener('click', comment.handler('like'));
             like.innerHTML = comment.likes.length || '';
-            like.addEventListener('click', function () {
-                var i = comment.likes.indexOf(localStorage.user_id);
-                if (i < 0) {
-                    query({
-                        route: 'common/add_like',
-                        params: {
-                            entity: 'comment',
-                            target_id: comment._id
-                        },
-                        success: function (data) {
-                            if (data.nModified > 0) {
-                                comment.likes.push(localStorage.user_id);
-                                like.innerHTML = comment.likes.length;
-                            }
-                        }
-                    });
-                }
-                else {
-                    query({
-                        route: 'common/remove_like',
-                        params: {
-                            entity: 'comment',
-                            target_id: comment._id
-                        },
-                        success: function (data) {
-                            if (data.nModified > 0) {
-                                comment.likes.splice(comment.likes.indexOf(i), 1);
-                                like.innerHTML = comment.likes.length || '';
-                            }
-                        }
-                    });
-                }
+            comment.on('like', function () {
+                like.innerHTML = comment.likes.length || '';
             });
 
             if (comment.medias) {

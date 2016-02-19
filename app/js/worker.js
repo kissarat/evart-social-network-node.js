@@ -1,11 +1,17 @@
 function Client(port) {
     this.port = port;
-    var client = this;
+    this.last = {};
+    var self = this;
     port.addEventListener('message', function (e) {
         var message = JSON.parse(e.data);
-        message.time = Date.now();
-        client.last = message;
-        var c;
+        if (message.time && message.time == self.last.time) {
+            return;
+        }
+        else if (!message.time) {
+            message.time = Date.now();
+        }
+        self.last = message;
+        var client;
         var id;
 
         function poll() {
@@ -13,18 +19,18 @@ function Client(port) {
             var focus = function () {
                 Client.broadcast({
                     type: 'poll',
-                    window_id: c.id,
-                    visible: 'visible' == c.last.state
+                    window_id: client.id,
+                    visible: 'visible' == client.last.state
                 });
             };
             for (id in Client._all) {
-                c = Client._all[id];
-                if ('focus' == c.last.type && 'visible' == c.last.state) {
+                client = Client._all[id];
+                if ('focus' == client.last.type && 'visible' == client.last.state) {
                     focus();
                     return;
                 }
-                if (!found || c.last.time > found.last.time) {
-                    found = c;
+                if (!found || client.last.time > found.last.time) {
+                    found = client;
                 }
             }
             focus();
@@ -32,8 +38,8 @@ function Client(port) {
 
         switch (message.type) {
             case 'open':
-                client.id = message.window_id;
-                Client._all[client.id] = client;
+                self.id = message.window_id;
+                Client._all[self.id] = self;
                 var i = 0;
                 for (id in Client._all) {
                     i++;
@@ -46,8 +52,8 @@ function Client(port) {
             case 'list':
                 var activities = {};
                 for (id in Client._all) {
-                    c = Client._all[id];
-                    activities[id] = c.last;
+                    client = Client._all[id];
+                    activities[id] = client.last;
                 }
                 port.postMessage(JSON.stringify({
                     type: 'list',
@@ -56,7 +62,7 @@ function Client(port) {
                 break;
 
             case 'close':
-                delete Client._all[client.id];
+                delete Client._all[self.id];
                 poll();
                 break;
 

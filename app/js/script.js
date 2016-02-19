@@ -4,6 +4,16 @@ var content = $$('.root .content');
 var action;
 var view;
 
+var client_id = /cid=(\w+)/.exec(document.cookie);
+if (client_id) {
+    client_id = client_id[0];
+}
+else {
+    client_id = base62rand(16);
+    document.cookie = 'cid=' + client_id + '; path=/; expires='
+        + new Date(Date.now() + 1000 * 3600 * 24 * 365 * 10).toUTCString();
+}
+
 var config = {
     delay: {
         active: 100,
@@ -287,18 +297,28 @@ var server = {
         if (server._poll && 1 == server._poll.readyState) {
             return;
         }
+        var now = new Date();
         var o = {
             route: 'poll',
+            headers: {
+                'if-modified-since': now.toUTCString()
+            },
             success: function (data) {
+                function fire(e) {
+                    if (worker) {
+                        worker.post(e);
+                    }
+                    else {
+                        server.fire(e.type, e);
+                    }
+                }
                 console.log('poll', this.status, data);
                 if (data) {
                     if ('queue' == data.type) {
-                        data.queue.forEach(function (e) {
-                            server.fire(e.type, e);
-                        });
+                        data.queue.forEach(fire);
                     }
                     else if (data.type) {
-                        server.fire(data.type, data);
+                        fire(data);
                     }
                 }
                 if (this.status < 400) {
@@ -441,16 +461,16 @@ if (isTopFrame() && window.SharedWorker) {
             }
         }
 
-        if ('list' == message.type) {
-            console.log(e.data);
+        switch (message.type) {
+            case 'list':
+                console.log(e.data);
+            case 'poll':
+            case 'focus':
+                break;
+            default:
+                server.fire(message.type, message);
+                break;
         }
-        //else if (server._poll) {
-        //    server._poll.abort();
-        //}
-        //if ('fullscreen' == message.type && message.window_id != window_id) {
-        //    location.href = 'https://google.com/';
-        //}
-        //console.log('Worker ' + e.data);
     });
     worker.port.start();
     worker.post = function (data) {

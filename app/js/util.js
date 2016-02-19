@@ -403,28 +403,19 @@ function query(o) {
     return xhr;
 }
 
-function bind_form(form, o) {
-    o.success = function (data) {
-        each(form.elements, function (element) {
-            if (element.getAttribute('name') && element.getAttribute('name') in data) {
-                element.value = data[element.getAttribute('name')];
-                element.change();
-            }
-            if (form.dataset.entity && 'file' != element.getAttribute('type')) {
-                element.addEventListener('change', function () {
-                    var body = {};
-                    body[this.getAttribute('name')] = this.value;
-                    query({
-                        route: 'entity/' + form.dataset.entity,
-                        params: o.params,
-                        method: 'PATCH',
-                        body: body
-                    });
-                });
-            }
-        });
+function api(route, method, params, success) {
+    var o = {
+        route: route,
+        method: method,
+        success: success
     };
-    return query(o);
+    if ('GET' == method) {
+        o.params = params;
+    }
+    else {
+        o.body = params;
+    }
+    query(o);
 }
 
 function $button(text, call) {
@@ -443,14 +434,23 @@ function base64buffer(base64) {
     return bytes.buffer;
 }
 
-function buffer2base64(buffer) {
+function bytes2base64(bytes) {
     var binary = [];
-    var bytes = new Uint8Array(buffer);
     var len = bytes.byteLength;
     for (var i = 0; i < len; i++) {
         binary.push(String.fromCharCode(bytes[i]));
     }
     return window.btoa(binary.join(''));
+}
+
+function base62rand(length) {
+    var bytes = new Uint8Array(length);
+    crypto.getRandomValues(bytes);
+    var str = bytes2base64(bytes);
+    str = str.slice(0, -2);
+    str = str.replace(/\+/g, 'z');
+    str = str.replace(/\//g, 'Z');
+    return str;
 }
 
 function extend(target, source) {

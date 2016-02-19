@@ -43,19 +43,14 @@ module.exports = {
         }));
     },
 
-    history: function (_) {
-        var q = _.req.url.query;
+    history: function ($) {
         var match = {
-            type: q.type,
-            owner_id: ObjectID(q.owner_id)
+            type: $('type'),
+            owner_id: $('owner_id')
         };
-        if ('video' == q.type) {
-            match.video_id = ObjectID(q.video_id);
+        if ('video' == match.type) {
+            match.video_id = $('video_id');
         }
-        _.db.collection('comment').aggregate([
-                {$match: match},
-                {$sort: {time: 1}}
-            ])
-            .toArray(_.answer);
+        $.data.find('comment', match);
     }
 };

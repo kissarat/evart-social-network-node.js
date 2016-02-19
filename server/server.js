@@ -4,6 +4,8 @@ var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var fs = require('fs');
+var schema = require('../app/schema.json');
+var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
 var controllers_dir = fs.readdirSync('controllers');
@@ -80,46 +82,12 @@ function receive(call) {
 
 function process(_) {
     Object.defineProperty(_, 'id', {
-        get: function() {
+        get: function () {
             return ObjectID(_.req.url.query.id);
         }
     });
 
     switch (_.req.url.route[0]) {
-        case 'poll':
-            if (!_.user) {
-                return _.res.send(401, {error: {auth: 'required'}});
-            }
-            var target_id = _.req.url.query.target_id || _.req.url.route[1];
-            switch (_.req.method) {
-                case 'GET':
-                    var subscriber = subscribers[_.user._id];
-                    if (subscriber && 'queue' == subscriber.type) {
-                        delete subscribers[_.user._id];
-                        _.res.send(subscriber);
-                    }
-                    else {
-                        if (subscriber) {
-                            subscriber.end();
-                        }
-                        subscribers[_.user._id] = _.res;
-                        var close = function () {
-                            delete subscribers[_.user._id];
-                        };
-                        _.req.on('close', close);
-                        _.res.on('finish', close);
-                    }
-                    break;
-                case 'POST':
-                    receive.call(_.req, function (data) {
-                        data.source_id = _.user._id;
-                        send(target_id, data);
-                        _.res.end();
-                    });
-                    break;
-            }
-            return;
-
         case 'entity':
             var collectionName = _.req.url.route[1];
             switch (_.req.method) {
@@ -173,9 +141,36 @@ var server = http.createServer(function (req, res) {
     var raw_url = req.url.replace(/^\/api\//, '/');
     req.url = parse(raw_url);
 
-    var _ = {
+    function invalid(name, value) {
+        var obj = {};
+        obj[name] = value;
+        throw {
+            invalid: obj
+        };
+    }
+
+    function _get(object, name) {
+        if (name in object) {
+            var value = object[name];
+            if (name.indexOf('id') === name.length - 2) {
+                if (!/[0-9a-z]{24}/.test(value)) {
+                    invalid(name, 'ObjectID');
+                }
+                value = ObjectID(value);
+            }
+            return value;
+        }
+        invalid(name, 'required');
+    }
+
+    var _ = function(name) {
+        return _get(_.params, name);
+    };
+
+    _.__proto__ = {
         req: req,
         res: res,
+        subscribers: subscribers,
 
         wrap: function (call) {
             return function (err, result) {
@@ -202,7 +197,11 @@ var server = http.createServer(function (req, res) {
         },
 
         send: function (target_id, data) {
+            var cid = _.req.client_id;
             var subscriber = subscribers[target_id];
+            if (subscriber) {
+                subscriber = subscriber[cid];
+            }
             if (subscriber) {
                 if ('queue' == subscriber.type) {
                     subscriber.queue.push(data);
@@ -216,23 +215,82 @@ var server = http.createServer(function (req, res) {
                     type: 'queue',
                     queue: [data]
                 };
-                subscribers[target_id] = subscriber;
+                if (!subscriber[target_id]) {
+                    subscriber[target_id] = {};
+                }
+                subscribers[target_id][cid] = subscriber;
             }
         },
 
-        db: db
+        sendStatus: function (code) {
+            res.writeHead(code);
+            res.end();
+        },
+
+        get: function(name) {
+            return _get(req.url.query, name);
+        },
+
+        post: function(name) {
+            return _get(req.body, name);
+        },
+
+        has: function (name) {
+            return name in req.params;
+        },
+
+        merge: function () {
+            var o = {};
+            for (var i = 0; i < arguments.length; i++) {
+                var a = arguments[i];
+                for (var j in a) {
+                    o[j] = a[j];
+                }
+            }
+            return o;
+        },
+
+        validate: function(object) {
+            return schema_validator.validate(object, schema);
+        },
+
+        invalid: invalid,
+        db: db,
+        params: req.url.query,
+
+        data: function(name) {
+            return db.collection(name);
+        }
     };
 
-    var auth;
+    function resolve_callback(cb) {
+        return cb ? _.wrap(cb) : _.answer;
+    }
+
+    _.data.updateOne = function(entity, id, mods, cb) {
+        db.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
+    };
+
+    _.data.find = function(entity, match, cb) {
+        db.collection(entity).aggregate(
+            {$match: match},
+            {$sort: {time: 1}}
+        )
+            .toArray(resolve_callback(cb));
+    };
+
+    req.cookies = querystring_parse(req.headers.cookie, /;\s+/);
+
     if (req.url.query.auth) {
         req.auth = req.url.query.auth;
         delete req.url.query.auth;
     }
-    else if (req.headers.authorization) {
-        req.auth = req.headers.authorization;
+    else if (req.cookies.auth) {
+        req.auth = req.cookies.auth;
     }
-    else if (req.headers && req.headers.cookie && (auth = /auth=(\w+)/.exec(req.headers.cookie))) {
-        req.auth = auth[1];
+
+    if (req.cookies.cid) {
+        req.client_id = req.cookies.cid;
     }
 
     if (req.auth) {
@@ -247,25 +305,40 @@ var server = http.createServer(function (req, res) {
 });
 
 function exec(_, action) {
+    function call_action() {
+        try {
+            var valid = _.validate(_.req.params);
+            if (valid) {
+                action(_);
+            }
+            else {
+                _.res.send(400, {
+                    invalid: valid
+                });
+            }
+        }
+        catch (ex) {
+            if (ex.invalid) {
+                _.res.send(400, ex);
+            }
+            else {
+                throw ex;
+            }
+        }
+    }
+
     if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {
         if (_.req.headers['content-type'] && _.req.headers['content-type'].indexOf('json') >= 0) {
             receive.call(_.req, function (data) {
                 _.body = data;
-                //try {
-                action(_);
-                //}
-                //catch (ex) {
-                //    _.res.send(500, {error: ex})
-                //}
+                _.params = _.merge(_.params, data);
+                //console.log(_.params);
+                call_action();
             });
         }
-        else
-        //try {
-            action(_);
-        //}
-        //catch (ex) {
-        //    _.res.send(500, {error: ex})
-        //}
+        else {
+            call_action();
+        }
     }
     else {
         _.res.send(401, {
