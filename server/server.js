@@ -1,5 +1,6 @@
 'use strict';
 
+require('colors');
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
@@ -17,68 +18,305 @@ controllers_dir.forEach(function (file) {
     }
 });
 
-
 var db;
+var subscribers = {};
+var server;
+var start;
 
 MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db) {
+    if (err) {
+        console.error(err);
+        process.exit();
+    }
     db = _db;
-    server.listen(8080);
-});
 
-function morozov(err, results) {
-    console.log(results);
-}
-
-function parse(url) {
-    var a = url_parse(url);
-    a.original = url;
-    if (a.query) {
-        a.query = querystring_parse(a.query);
-        for (var i in a.query) {
-            if (/^\d+$/.test(a.query[i])) {
-                a.query[i] = parseFloat(a.query[i]);
-            }
-        }
-    }
-    else {
-        a.query = {};
-    }
-    a.route = a.pathname.split('/').slice(1);
-    return a;
-}
-
-http.ServerResponse.prototype.send = function () {
-    var object;
-    var code = 200;
-    if (1 == arguments.length) {
-        object = arguments[0];
-    }
-    else if (2 == arguments.length) {
-        code = arguments[0];
-        object = arguments[1];
-    }
-    this.writeHead(code, {
-        'Content-Type': 'text/json',
-        'Access-Control-Allow-Origin': '*'
-    });
-    this.end(JSON.stringify(object));
-};
-
-function receive(call) {
-    var data = [];
-    this.on('data', function (chunk) {
-        data.push(chunk);
-    });
-    this.on('end', function () {
-        data = data.join('');
+    server = http.createServer(function(req, res) {
         try {
-            data = JSON.parse(data);
+            service(req, res);
         }
         catch (ex) {
+            if (ex.invalid) {
+                res.writeHead(400);
+                res.end(JSON.stringify(ex));
+            }
+            throw ex;
         }
-        call(data);
     });
+
+    server.listen(8080);
+    start = new Date();
+    var startMessage = 'Started:\t' + start;
+    console.log(startMessage.bgBlue.black);
+});
+
+
+function service(req, res) {
+    var raw_url = req.url.replace(/^\/api\//, '/');
+    req.url = parse(raw_url);
+
+    function invalid(name, value) {
+        if (!value) {
+            value = 'invalid';
+        }
+        var obj = {};
+        obj[name] = value;
+        throw {
+            invalid: obj
+        };
+    }
+
+    function _get(object, name) {
+        if (name in object) {
+            var value = object[name];
+            if (name.indexOf('id') === name.length - 2) {
+                if (!/[0-9a-z]{24}/.test(value)) {
+                    invalid(name, 'ObjectID');
+                }
+                value = ObjectID(value);
+            }
+            return value;
+        }
+        invalid(name, 'required');
+    }
+
+    var $ = function (name) {
+        return _get($.params, name);
+    };
+
+    function insertOne(entity, mods, cb) {
+        db.collection(entity).insertOne(mods, resolve_callback(cb));
+    }
+
+    $.__proto__ = {
+        req: req,
+        res: res,
+        subscribers: subscribers,
+
+        wrap: function (call) {
+            return function (err, result) {
+                if (err) {
+                    _.send(500, {
+                        error: err
+                    });
+                }
+                else {
+                    call(result);
+                }
+            }
+        },
+
+        answer: function (err, result) {
+            if (err) {
+                $.send(500, {
+                    error: err.message
+                });
+            }
+            else {
+                $.send(result);
+            }
+        },
+
+        notify: function (target_id, event) {
+            var data = {};
+            for (var key in event) {
+                data[key] = event[key];
+            }
+            data.target_id = target_id;
+            if (data._id) {
+                data.object_id = data._id;
+                delete data._id;
+            }
+            if (!data.time) {
+                data.time = Date.now();
+            }
+            var subscriber = subscribers[target_id];
+            if (subscriber) {
+                for (var cid in subscriber) {
+                    subscriber[cid].send(data);
+                }
+            }
+            insertOne('queue', data, Function());
+        },
+
+        sendStatus: function (code) {
+            res.writeHead(code);
+            res.end();
+        },
+
+        get: function (name) {
+            return _get(req.url.query, name);
+        },
+
+        post: function (name) {
+            return _get(req.body, name);
+        },
+
+        has: function (name) {
+            if (name in $.params) {
+                var value = $.params[name];
+                if (value instanceof Array) {
+                    return value.length > 0;
+                }
+                return true;
+            }
+            return false;
+        },
+
+        merge: function () {
+            var o = {};
+            for (var i = 0; i < arguments.length; i++) {
+                var a = arguments[i];
+                for (var j in a) {
+                    o[j] = a[j];
+                }
+            }
+            return o;
+        },
+
+        validate: function (object) {
+            return schema_validator.validate(object, schema);
+        },
+
+        invalid: invalid,
+        db: db,
+        params: req.url.query,
+
+        data: function (name) {
+            return db.collection(name);
+        },
+
+        getUserAgent: function() {
+            var agent = {
+                ip: req.connection.remoteAddress
+            };
+            if (req.headers['user-agent']) {
+                agent.agent = req.headers['user-agent'];
+            }
+            if (req.geo) {
+                agent.geo = req.geo;
+            }
+            return agent;
+        },
+
+        setCookie: function(name, value, age, path) {
+            if (!path) {
+                path = '/';
+            }
+            res.setHeader('set-cookie', name + '=' + value + '; path=' + path + '; expires='
+            + new Date(Date.now() + age).toUTCString());
+        },
+
+        send: function() {
+            var object;
+            var code = 200;
+            if (1 == arguments.length) {
+                object = arguments[0];
+            }
+            else if (2 == arguments.length) {
+                code = arguments[0];
+                object = arguments[1];
+            }
+            res.writeHead(code, {
+                'Content-Type': 'text/json',
+                'Access-Control-Allow-Origin': '*'
+            });
+
+            function log() {
+                var record = {
+                    client_id: req.client_id,
+                    user_id: $.user._id,
+                    route: req.url.route.length > 1 ? req.url.route : req.url.route[0],
+                    method: req.method,
+                    code: code,
+                    result: object.result,
+                    time: Date.now()
+                };
+                for(var i in req.url.query) {
+                    record.params = req.url.query;
+                    break;
+                }
+                if ($.body) {
+                    record.body = $.body;
+                }
+                db.collection('log').insertOne(record, Function());
+            }
+
+            res.end(JSON.stringify(object));
+            if ('GET' != req.method || ('poll' == req.url.route[0] && code < 400)) {
+                log();
+            }
+        }
+    };
+
+    function resolve_callback(cb) {
+        return cb ? $.wrap(cb) : $.answer;
+    }
+
+    $.data.updateOne = function (entity, id, mods, cb) {
+        db.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
+    };
+
+    $.data.find = function (entity, match, cb) {
+        var aggr = [
+            {$sort: {time: -1}}
+        ];
+        if (match instanceof Array) {
+            aggr = $.merge(match, aggr)
+        }
+        else {
+            aggr.unshift({$match: match});
+        }
+        db.collection(entity).aggregate(aggr)
+            .toArray(resolve_callback(cb));
+    };
+
+    $.data.insertOne = insertOne;
+
+    req.cookies = querystring_parse(req.headers.cookie, /;\s+/);
+
+    if (req.url.query.auth) {
+        req.auth = req.url.query.auth;
+        delete req.url.query.auth;
+    }
+    else if (req.cookies.auth) {
+        req.auth = req.cookies.auth;
+    }
+
+    if (req.cookies.cid) {
+        req.client_id = ObjectID(req.cookies.cid);
+    }
+
+    var since = req.headers['if-modified-since'];
+    if (since) {
+        since = new Date(since);
+        if (isNaN(since)) {
+            invalid('if-modified-since');
+        }
+        else {
+            req.since = since;
+        }
+    }
+
+    var geo = req.headers.geo;
+    if (geo) try {
+        req.geo = JSON.parse(geo);
+    }
+    catch (ex) {
+        invalid('geo');
+    }
+
+    if (req.auth) {
+        db.collection('user').findOne({auth: req.auth}, $.wrap(function (user) {
+            $.user = user;
+            process($);
+        }));
+    }
+    else {
+        process($);
+    }
 }
+
+// -------------------------------------------------------------------------------
 
 function process(_) {
     Object.defineProperty(_, 'id', {
@@ -122,218 +360,29 @@ function process(_) {
 
     var action;
     if (_.req.url.route.length >= 1) {
-        if (_.req.url.route.length < 2) {
-            _.req.url.route[1] = _.req.method;
-        }
-        action = controllers[_.req.url.route[0]][_.req.url.route[1]];
+        action = controllers[_.req.url.route[0]][_.req.url.route.length < 2 ? _.req.method : _.req.url.route[1]];
     }
     if (!action) {
-        _.res.send(404, _.req.url);
+        $.send(404, _.req.url);
     }
     else {
-        exec(_, action);
+        if (_.req.client_id || 'poll' == _.req.url.route[0]) {
+            exec(_, action);
+        }
+        else {
+            var agent = _.getUserAgent();
+            _.data.insertOne('client', agent, function(result) {
+                //if (result.insertedCount > 0) {
+                    _.req.client_id = agent._id;
+                    _.setCookie('cid', agent._id, 1000 * 3600 * 24 * 365 * 10);
+                    exec(_, action);
+                //}
+            });
+        }
     }
 }
 
 // -------------------------------------------------------------------------------
-
-function service(req, res) {
-    var raw_url = req.url.replace(/^\/api\//, '/');
-    req.url = parse(raw_url);
-
-    function invalid(name, value) {
-        if (!value) {
-            value = 'invalid';
-        }
-        var obj = {};
-        obj[name] = value;
-        throw {
-            invalid: obj
-        };
-    }
-
-    function _get(object, name) {
-        if (name in object) {
-            var value = object[name];
-            if (name.indexOf('id') === name.length - 2) {
-                if (!/[0-9a-z]{24}/.test(value)) {
-                    invalid(name, 'ObjectID');
-                }
-                value = ObjectID(value);
-            }
-            return value;
-        }
-        invalid(name, 'required');
-    }
-
-    var _ = function (name) {
-        return _get(_.params, name);
-    };
-
-    function insertOne(entity, mods, cb) {
-        db.collection(entity).insertOne(mods, resolve_callback(cb));
-    }
-
-    _.__proto__ = {
-        req: req,
-        res: res,
-        subscribers: subscribers,
-
-        wrap: function (call) {
-            return function (err, result) {
-                if (err) {
-                    res.send(500, {
-                        error: err
-                    });
-                }
-                else {
-                    call(result);
-                }
-            }
-        },
-
-        answer: function (err, result) {
-            if (err) {
-                res.send(500, {
-                    error: err.message
-                });
-            }
-            else {
-                res.send(result);
-            }
-        },
-
-        notify: function (target_id, event) {
-            var data = {};
-            for (var key in event) {
-                data[key] = event[key];
-            }
-            data.target_id = target_id;
-            if (data._id) {
-                data.object_id = data._id;
-                delete data._id;
-            }
-            if (!data.time) {
-                data.time = Date.now();
-            }
-            var subscriber = subscribers[target_id];
-            if (subscriber) {
-                for (var cid in subscriber) {
-                    subscriber[cid].send(data);
-                }
-            }
-            insertOne('queue', data, Function());
-        },
-
-        sendStatus: function (code) {
-            res.writeHead(code);
-            res.end();
-        },
-
-        get: function (name) {
-            return _get(req.url.query, name);
-        },
-
-        post: function (name) {
-            return _get(req.body, name);
-        },
-
-        has: function (name) {
-            if (name in _.params) {
-                var value = _.params[name];
-                if (value instanceof Array) {
-                    return value.length > 0;
-                }
-                return true;
-            }
-            return false;
-        },
-
-        merge: function () {
-            var o = {};
-            for (var i = 0; i < arguments.length; i++) {
-                var a = arguments[i];
-                for (var j in a) {
-                    o[j] = a[j];
-                }
-            }
-            return o;
-        },
-
-        validate: function (object) {
-            return schema_validator.validate(object, schema);
-        },
-
-        invalid: invalid,
-        db: db,
-        params: req.url.query,
-
-        data: function (name) {
-            return db.collection(name);
-        }
-    };
-
-    function resolve_callback(cb) {
-        return cb ? _.wrap(cb) : _.answer;
-    }
-
-    _.data.updateOne = function (entity, id, mods, cb) {
-        db.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
-    };
-
-    _.data.find = function (entity, match, cb) {
-        db.collection(entity).aggregate(
-            {$match: match},
-            {$sort: {time: 1}}
-            )
-            .toArray(resolve_callback(cb));
-    };
-
-    _.data.insertOne = insertOne;
-
-    req.cookies = querystring_parse(req.headers.cookie, /;\s+/);
-
-    if (req.url.query.auth) {
-        req.auth = req.url.query.auth;
-        delete req.url.query.auth;
-    }
-    else if (req.cookies.auth) {
-        req.auth = req.cookies.auth;
-    }
-
-    if (req.cookies.cid) {
-        req.client_id = req.cookies.cid;
-    }
-
-    var since = req.headers['if-modified-since'];
-    if (since) {
-        since = new Date(since);
-        if (isNaN(since)) {
-            invalid('if-modified-since');
-        }
-        else {
-            req.since = since;
-        }
-    }
-
-    var geo = req.headers.geo;
-    if (geo) try {
-        req.geo = JSON.parse(geo);
-    }
-    catch (ex) {
-        invalid('geo');
-    }
-
-    if (req.auth) {
-        db.collection('user').findOne({auth: req.auth}, _.wrap(function (user) {
-            _.user = user;
-            process(_);
-        }));
-    }
-    else {
-        process(_);
-    }
-}
 
 function exec(_, action) {
     function call_action() {
@@ -343,14 +392,14 @@ function exec(_, action) {
                 action(_);
             }
             else {
-                _.res.send(400, {
+                _.send(400, {
                     invalid: valid
                 });
             }
         }
         catch (ex) {
             if (ex.invalid) {
-                _.res.send(400, ex);
+                _.send(400, ex);
             }
             else {
                 throw ex;
@@ -372,7 +421,7 @@ function exec(_, action) {
         }
     }
     else {
-        _.res.send(401, {
+        _.send(401, {
             error: {
                 auth: 'required'
             }
@@ -380,17 +429,42 @@ function exec(_, action) {
     }
 }
 
-var subscribers = {};
+// -------------------------------------------------------------------------------
 
-var server = http.createServer(function(req, res) {
-    try {
-        service(req, res);
-    }
-    catch (ex) {
-        if (ex.invalid) {
-            res.send(ex);
+function morozov(err, results) {
+    console.log(results);
+}
+
+function parse(url) {
+    var a = url_parse(url);
+    a.original = url;
+    if (a.query) {
+        a.query = querystring_parse(a.query);
+        for (var i in a.query) {
+            if (/^\d+$/.test(a.query[i])) {
+                a.query[i] = parseFloat(a.query[i]);
+            }
         }
-        throw ex;
     }
-});
-console.log(new Date());
+    else {
+        a.query = {};
+    }
+    a.route = a.pathname.split('/').slice(1);
+    return a;
+}
+
+function receive(call) {
+    var data = [];
+    this.on('data', function (chunk) {
+        data.push(chunk);
+    });
+    this.on('end', function () {
+        data = data.join('');
+        try {
+            data = JSON.parse(data);
+        }
+        catch (ex) {
+        }
+        call(data);
+    });
+}

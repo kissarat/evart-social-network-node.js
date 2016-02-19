@@ -9,6 +9,7 @@
   "author": "Taras Labiak <kissarat@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "colors": "^1.1.2",
     "faker": "^3.0.1",
     "fluent-ffmpeg": "^2.0.1",
     "jsonschema": "^1.1.0",

@@ -39,7 +39,7 @@ module.exports = {
                 _.db.collection('photo').insertOne(data, _.wrap(function(result) {
                     var filename = _photo + '/' + data._id + '.jpg';
                     fs.renameSync(tmp, filename);
-                    _.res.send({
+                    _.send({
                         id: data._id,
                         filename: filename,
                         url: '/photo/' + data._id + '.jpg',
@@ -57,7 +57,7 @@ module.exports = {
             if (result.n > 0) {
                 fs.unlinkSync(_photo + '/' + _.req.url.query.id + '.jpg');
             }
-            _.res.send(result);
+            _.send(result);
         }));
     }
 };

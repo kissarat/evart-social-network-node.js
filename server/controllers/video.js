@@ -34,7 +34,7 @@ module.exports = {
         }
 
         _.db.collection('media').insertOne(data, _.wrap(function (result) {
-            _.res.send({
+            _.send({
                 id: data._id,
                 result: result
             });
@@ -48,7 +48,7 @@ module.exports = {
             _.req.on('data', function (data) {
                 fs.write(fd, data, 0, data.byteLength, _.wrap(function (written, string) {
                     //if (written.length != data.byteLength) {
-                    //    _.res.send(502, {
+                    //    _.send(502, {
                     //        received: data.byteLength,
                     //        written: written
                     //    });
@@ -64,7 +64,7 @@ module.exports = {
                 };
                 _.db.collection('media').update({_id: id}, {$set: summary.info}, _.wrap(function (result) {
                     summary.result = result;
-                    _.res.send(summary);
+                    _.send(summary);
                 }));
             });
         }));
@@ -79,7 +79,7 @@ module.exports = {
 
         function collect() {
             if (list.length <= 0) {
-                _.res.send(result);
+                _.send(result);
                 return;
             }
             var capability = list.pop();

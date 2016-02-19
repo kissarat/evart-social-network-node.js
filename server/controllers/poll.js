@@ -21,13 +21,13 @@ module.exports = {
         }
         $.data.find('queue', {time: {$gt: $.req.since}}, function (events) {
             if (events.length > 0) {
-                $.res.send({
+                $.send({
                     type: 'queue',
                     queue: events
                 })
             }
             else {
-                subscriber[cid] = $.res;
+                subscriber[cid] = $;
                 var close = function () {
                     delete $.subscribers[uid][cid];
                 };
@@ -47,7 +47,7 @@ module.exports = {
             _.db.collection('chat').findOne({_id: _.params.chat_id}, _.wrap(function (result) {
                 if (result) {
                     result.members.forEach(function (member) {
-                        _.send(member, data);
+                        _.notify(member, data);
                     });
                     _.res.end();
                 }
@@ -57,8 +57,7 @@ module.exports = {
             }));
         }
         else {
-            data =
-            _.send($('target_id'), data);
+            _.notify($('target_id'), data);
             _.res.end();
         }
     }

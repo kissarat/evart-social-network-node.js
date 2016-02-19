@@ -30,8 +30,8 @@ module.exports = {
 
         _.db.collection('message').insertOne(data, _.wrap(function (result) {
             data.type = 'message';
-            _.send(_.body.target_id, data);
-            _.res.send(result);
+            _.notify(_.body.target_id, data);
+            _.send(result);
         }));
     },
 
@@ -59,7 +59,7 @@ module.exports = {
                 _.db.collection('user')
                     .find({_id: {$in: Array.from(user_ids)}}, secret_projection)
                     .toArray(_.wrap(function (users) {
-                        _.res.send({
+                        _.send({
                             users: keyed(users),
                             messages: messages
                         });

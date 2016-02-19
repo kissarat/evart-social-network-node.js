@@ -8,15 +8,10 @@ var client_id = /cid=(\w+)/.exec(document.cookie);
 if (client_id) {
     client_id = client_id[0];
 }
-else {
-    client_id = base62rand(16);
-    document.cookie = 'cid=' + client_id + '; path=/; expires='
-        + new Date(Date.now() + 1000 * 3600 * 24 * 365 * 10).toUTCString();
-}
 
 var config = {
     delay: {
-        active: 100,
+        active: 1000,
         passive: 2000
     }
 };
@@ -199,7 +194,24 @@ var ui = {
     user: 'user.js',
     chat: 'chat.js',
     video: 'video.js',
-    photo: 'photo.js'
+    photo: 'photo.js',
+    admin: function() {
+        var view = this;
+        api('admin', 'GET', {}, function(data) {
+            data.forEach(function(row) {
+                var route = 'string' == typeof row.route ? row.route : row.route.join('/');
+                var items = [
+                    '<strong>' + route + '</strong>',
+                    row.method, row.code,
+                    '<i>' + new Date(row.time).toLocaleString() + '</i>',
+                    row.client_id
+                ];
+                view.rows.appendChild($row(items.join('<br />'),
+                    row.body ? $new('pre', JSON.stringify(row.body, null, "  ")) : ''));
+            });
+            view.visible = true;
+        })
+    }
 };
 
 extend(ui, EventEmitter);
@@ -302,8 +314,6 @@ var server = {
                         server.fire(e.type, e);
                     }
                 }
-
-                console.log('poll', this.status, data);
                 if (data) {
                     if ('queue' == data.type) {
                         data.queue.forEach(fire);
@@ -332,7 +342,6 @@ var server = {
             if (battery.chargingTime) {
                 batteryInfo.t = battery.chargingTime;
             }
-            o.headers = {};
         }
 
         var xhr = query(o);

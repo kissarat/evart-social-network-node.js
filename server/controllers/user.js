@@ -15,7 +15,7 @@ module.exports = {
     login: function (_) {
         _.db.collection('user').findOne({email: _.body.email}, _.wrap(function (doc) {
             if (doc && password_hash(_.body.password + _.body.email) == doc.auth) {
-                _.res.send(200, {
+                _.send(200, {
                     _id: doc._id,
                     auth: doc.auth
                 });
@@ -33,7 +33,7 @@ module.exports = {
     },
 
     me: function (_) {
-        _.res.send(_.user);
+        _.send(_.user);
     },
 
     many: function (_) {
@@ -46,14 +46,14 @@ module.exports = {
         _.db.collection('user').find({_id: {$in: ids}}, {auth: 0, password: 0, email: 0, friends: 0, blacks: 0}).toArray(_.answer);
     },
 
-    view: function(_) {
-        _.db.collection('user')
+    view: function($) {
+        $.db.collection('user')
             .findOne(
-                {_id: ObjectID(_.req.url.query.id)},
+                {_id: $('id')},
                 {auth: 0, password: 0, email: 0},
-                _.wrap(function(user) {
-                    if (user.blacks && user.blacks.indexOf(_.user._id) >= 0) {
-                        _.res.send(403, {
+                $.wrap(function(user) {
+                    if (user.blacks && user.blacks.indexOf($.user._id) >= 0) {
+                        $.send(403, {
                             surname: user.surname,
                             forename: user.forename,
                             avatar: user.avatar,
@@ -61,7 +61,7 @@ module.exports = {
                         });
                     }
                     else {
-                        _.res.send(user);
+                        $.send(user);
                     }
                 }));
     },
@@ -75,7 +75,7 @@ module.exports = {
         _set[o] = {};
         _set[o][l] = target_id;
         if (source_id == target_id) {
-            _.res.send(400, {error: "cannot himself"});
+            _.send(400, {error: "cannot himself"});
         }
         else {
             _.db.collection('user').updateOne({_id: source_id}, _set, _.answer);
@@ -92,7 +92,7 @@ module.exports = {
                 _.db.collection('user').find({_id: {$in: user.friends}}, user_list_fields).toArray(_.answer);
             }
             else {
-                _.res.send([]);
+                _.send([]);
             }
         }));
     },

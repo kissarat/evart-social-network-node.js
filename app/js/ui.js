@@ -34,7 +34,7 @@ server.on('login', function () {
         navigator.geolocation.watchPosition(function (p) {
             var c = p.coords;
             var geo = {
-                ts: p.timestamp,
+                //ts: p.timestamp,
                 p: [c.latitude, c.longitude]
             };
 

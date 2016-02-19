@@ -71,6 +71,7 @@ ui.wall = function (params) {
     api('comment', 'GET', params, function (comments) {
         if (comments.length > 0) {
             User.find(Message.getUserIds(comments), function (users) {
+                comments.reverse();
                 comments.forEach(function (comment) {
                     comment.user = users[comment.source_id];
                     hook.wall(comment);

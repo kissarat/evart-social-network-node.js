@@ -38,7 +38,7 @@ module.exports = {
         }
 
         $.data.insertOne('comment', data, function (result) {
-            $.res.send(result);
+            $.send(result);
             $.notify(data.owner_id, data);
         });
     },
