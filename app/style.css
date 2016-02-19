@@ -535,3 +535,7 @@ input:focus, textarea:focus {
 .button {
     cursor: pointer;
 }
+
+.button:hover {
+    background-color: rgba(111, 219, 232, 0.2);
+}

@@ -58,7 +58,7 @@ ui.user = {
                     go('user/view', {id: user._id});
                 }));
                 buttons.appendChild($button('Chat', function () {
-                    go('chat', {target_id: user._id});
+                    go('wall', {type: 'message', target_id: user._id});
                 }));
                 parent.appendChild(w);
             });

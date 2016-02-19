@@ -68,7 +68,7 @@ ui.wall = function (params) {
         }
     };
 
-    api('comment', 'GET', params, function (comments) {
+    function history(comments) {
         if (comments.length > 0) {
             User.find(Message.getUserIds(comments), function (users) {
                 comments.reverse();
@@ -78,7 +78,9 @@ ui.wall = function (params) {
                 });
             });
         }
-    });
+    }
+
+    api('comment', 'GET', params, history);
 
     view.on('send', function () {
         var data = {
@@ -87,6 +89,10 @@ ui.wall = function (params) {
             type: params.type,
             text: view.editor.value
         };
+
+        if ('message' == params.type) {
+            data.target_id = params.target_id;
+        }
 
         var medias = [];
         var mediasDiv = view.querySelectorAll('[data-id="attachements"] > div');

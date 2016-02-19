@@ -1,34 +1,25 @@
 'use strict';
 
-var ObjectID = require('mongodb').ObjectID;
-function keyed(array) {
-    var object = {};
-    for (var i = 0; i < array.length; i++) {
-        object[array[i]._id] = array[i];
-    }
-    return object;
-}
-
-var secret_projection = {
-    auth: 0,
-    email: 0,
-    password: 0
-};
-
 module.exports = {
     PUT: function ($) {
         var data = {
             source_id: $.user._id,
             type: $('type'),
-            owner_id: $('owner_id'),
             text: $('text'),
             time: Date.now()
         };
-/*
-        if (_.body.target_id) {
-            data.target_id = ObjectID(_.body.target_id)
+
+        if ($.has('owner_id')) {
+            data.owner_id = $('owner_id');
         }
-*/
+        if ($.has('target_id')) {
+            data.target_id = $('target_id');
+        }
+        /*
+         if (_.body.target_id) {
+         data.target_id = ObjectID(_.body.target_id)
+         }
+         */
         if ($.req.geo) {
             data.geo = $.req.geo;
         }
@@ -45,11 +36,73 @@ module.exports = {
 
     GET: function ($) {
         var match = {
-            type: $('type'),
-            owner_id: $('owner_id')
+            type: $('type')
         };
-        if ('video' == match.type) {
-            match.video_id = $('video_id');
+        if ($.has('owner_id')) {
+            match.owner_id = $('owner_id');
+            if ('video' == match.type) {
+                match.video_id = $('video_id');
+            }
+        }
+        else if ('message' == match.type) {
+            var or;
+            if ($.has('target_id')) {
+                var target_id = $('target_id');
+                or = [
+                    {
+                        source_id: $.user._id,
+                        target_id: target_id
+                    },
+                    {
+                        source_id: target_id,
+                        target_id: $.user._id
+                    }
+                ];
+            }
+            else {
+                or = [
+                    {source_id: $.user._id},
+                    {target_id: $.user._id}
+
+                ];
+            }
+            match = [
+                {
+                    $match: {
+                        //type: 'message',
+                        $or: or
+                    }
+                }
+            ];
+
+            //if ($.has('show')) {
+            //    match.push({
+            //        $group: {
+            //            _id: {$source_id: '$source_id', $target_id: '$target_id'},
+            //            text: {$first: '$text'},
+            //            time: {$first: '$time'}
+            //        }
+            //    });
+            //}
+
+
+            //match.push({
+            //    $lookup: {
+            //        from: 'user',
+            //        localField: 'source_id',
+            //        foreignField: '_id',
+            //        as: 'source'
+            //    }
+            //});
+            //match.push({
+            //    $lookup: {
+            //        from: 'user',
+            //        localField: 'target_id',
+            //        foreignField: '_id',
+            //        as: 'target'
+            //    }
+            //});
+
         }
         $.data.find('comment', match);
     }

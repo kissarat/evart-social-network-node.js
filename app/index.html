@@ -21,8 +21,10 @@
     <nav style="display: none" class="col-sm-2">
         <div data-go="user/view" data-idparam="id">Profile</div>
         <div data-go="user/index" data-idparam="id">Friends</div>
+        <div data-go="message/index" data-idparam="id">Messages</div>
         <div data-go="video/index" data-idparam="owner_id">Video</div>
         <div data-go="photo/album/index" data-idparam="owner_id">Photo</div>
+        <div data-go="admin">Journal</div>
         <div data-go="user/logout" data-idparam="id">Logout</div>
     </nav>
     <div class="content col-sm-10">JavaScript is disabled</div>
@@ -315,6 +317,12 @@
     </form>
 
     <div id="admin">
+        <table class="table">
+            <tbody data-id="rows"></tbody>
+        </table>
+    </div>
+
+    <div id="message/index">
         <table class="table">
             <tbody data-id="rows"></tbody>
         </table>

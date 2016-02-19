@@ -31,16 +31,16 @@ MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db) {
     db = _db;
 
     server = http.createServer(function(req, res) {
-        try {
+        //try {
             service(req, res);
-        }
-        catch (ex) {
-            if (ex.invalid) {
-                res.writeHead(400);
-                res.end(JSON.stringify(ex));
-            }
-            throw ex;
-        }
+        //}
+        //catch (ex) {
+        //    if (ex.invalid) {
+        //        res.writeHead(400);
+        //        res.end(JSON.stringify(ex));
+        //    }
+        //    throw ex;
+        //}
     });
 
     server.listen(8080);
@@ -261,7 +261,7 @@ function service(req, res) {
             {$sort: {time: -1}}
         ];
         if (match instanceof Array) {
-            aggr = $.merge(match, aggr)
+            aggr = match.concat(aggr);
         }
         else {
             aggr.unshift({$match: match});
@@ -282,7 +282,7 @@ function service(req, res) {
         req.auth = req.cookies.auth;
     }
 
-    if (req.cookies.cid) {
+    if (req.cookies.cid && /^[0-9a-z]{24}$/.test(req.cookies.cid)) {
         req.client_id = ObjectID(req.cookies.cid);
     }
 

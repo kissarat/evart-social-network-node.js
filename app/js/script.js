@@ -195,10 +195,11 @@ var ui = {
     chat: 'chat.js',
     video: 'video.js',
     photo: 'photo.js',
-    admin: function() {
+    message: 'message.js',
+    admin: function () {
         var view = this;
-        api('admin', 'GET', {}, function(data) {
-            data.forEach(function(row) {
+        api('admin', 'GET', {}, function (data) {
+            data.forEach(function (row) {
                 var route = 'string' == typeof row.route ? row.route : row.route.join('/');
                 var items = [
                     '<strong>' + route + '</strong>',
@@ -314,6 +315,7 @@ var server = {
                         server.fire(e.type, e);
                     }
                 }
+
                 if (data) {
                     if ('queue' == data.type) {
                         data.queue.forEach(fire);
@@ -448,6 +450,8 @@ if (isTopFrame() && window.SharedWorker) {
     worker = new SharedWorker('/js/worker.js');
     worker.addEventListener('error', function (e) {
         console.error(e);
+        worker.close();
+        worker = null;
     });
     worker.port.addEventListener('message', function (e) {
         var message = JSON.parse(e.data);
@@ -483,10 +487,16 @@ if (isTopFrame() && window.SharedWorker) {
     worker.post('open');
 
     addEventListener('beforeunload', function () {
+        if (!worker) {
+            return;
+        }
         worker.post('close');
     });
 
     document.addEventListener('visibilitychange', function () {
+        if (!worker) {
+            return;
+        }
         worker.post({type: 'focus', visible: 'visible' == document.visibilityState});
     });
 
@@ -495,6 +505,9 @@ if (isTopFrame() && window.SharedWorker) {
     //});
 
     worker.list = function () {
+        if (!worker) {
+            return;
+        }
         worker.post('list');
     }
 }
