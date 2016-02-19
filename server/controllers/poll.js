@@ -1,33 +1,45 @@
 'use strict';
 
 module.exports = {
-    GET: function (_) {
-        var uid = _.user._id;
-        var cid = _.req.client_id;
-        var subscriber = _.subscribers[uid];
-        if (subscriber) {
-            subscriber = subscriber[cid];
+    GET: function ($) {
+        if (!$.req.since) {
+            $.sendStatus(400);
+            return;
         }
-        if (subscriber && 'queue' == subscriber.type) {
-            delete _.subscribers[uid][cid];
-            _.res.send(subscriber);
+        var uid = $.user._id;
+        var cid = $.req.client_id;
+        var subscriber = $.subscribers[uid];
+        if (subscriber) {
+            if (subscriber[cid]) {
+                var res = subscriber[cid];
+                res.writeHead(409);
+                res.end();
+            }
         }
         else {
-            if (!_.subscribers[uid]) {
-                _.subscribers[uid] = {}
-            }
-            _.subscribers[uid][cid] = _.res;
-            var close = function () {
-                delete _.subscribers[uid][cid];
-            };
-            _.req.on('close', close);
-            _.res.on('finish', close);
+            $.subscribers[uid] = subscriber = {};
         }
+        $.data.find('queue', {time: {$gt: $.req.since}}, function (events) {
+            if (events.length > 0) {
+                $.res.send({
+                    type: 'queue',
+                    queue: events
+                })
+            }
+            else {
+                subscriber[cid] = $.res;
+                var close = function () {
+                    delete $.subscribers[uid][cid];
+                };
+                $.req.on('close', close);
+                $.res.on('finish', close);
+            }
+        });
     },
 
-    POST: function (_) {
+    POST: function ($) {
         var data = _.body;
-        data.source_id = _.user._id;
+        data.source_id = $.user._id;
         if (!data.time) {
             data.time = Date.now();
         }
@@ -45,7 +57,8 @@ module.exports = {
             }));
         }
         else {
-            _.send(_.req.url.query.target_id, data);
+            data =
+            _.send($('target_id'), data);
             _.res.end();
         }
     }

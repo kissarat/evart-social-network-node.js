@@ -68,16 +68,14 @@ ui.wall = function (params) {
         }
     };
 
-    query({
-        route: 'comment/history', params: params, success: function (comments) {
-            if (comments.length > 0) {
-                User.find(Message.getUserIds(comments), function (users) {
-                    comments.forEach(function (comment) {
-                        comment.user = users[comment.source_id];
-                        hook.wall(comment);
-                    });
+    api('comment', 'GET', params, function (comments) {
+        if (comments.length > 0) {
+            User.find(Message.getUserIds(comments), function (users) {
+                comments.forEach(function (comment) {
+                    comment.user = users[comment.source_id];
+                    hook.wall(comment);
                 });
-            }
+            });
         }
     });
 
@@ -102,16 +100,11 @@ ui.wall = function (params) {
             data.video_id = params.video_id;
         }
 
-        query({
-            method: 'POST',
-            route: 'comment/post',
-            body: data,
-            success: function (result) {
-                if (result.ok) {
-                    view.frame.visible = false;
-                    view.attachements.innerHTML = '';
-                    view.editor.value = '';
-                }
+        api('comment', 'PUT', data, function (result) {
+            if (result.ok) {
+                view.frame.visible = false;
+                view.attachements.innerHTML = '';
+                view.editor.value = '';
             }
         });
     });

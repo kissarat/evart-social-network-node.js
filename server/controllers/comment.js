@@ -16,34 +16,34 @@ var secret_projection = {
 };
 
 module.exports = {
-    post: function (_) {
+    PUT: function ($) {
         var data = {
-            source_id: _.user._id,
-            owner_id: ObjectID(_.body.owner_id),
-            text: _.body.text,
-            time: Date.now(),
-            type: _.body.type
+            source_id: $.user._id,
+            type: $('type'),
+            owner_id: $('owner_id'),
+            text: $('text'),
+            time: Date.now()
         };
-
+/*
         if (_.body.target_id) {
             data.target_id = ObjectID(_.body.target_id)
         }
-
-        if (_.req.headers.geo) {
-            data.geo = JSON.parse(_.req.headers.geo);
+*/
+        if ($.req.geo) {
+            data.geo = $.req.geo;
         }
 
-        if (_.body.medias && _.body.medias.length > 0) {
-            data.medias = _.body.medias;
+        if ($.has('medias')) {
+            data.medias = $('medias');
         }
 
-        _.db.collection('comment').insertOne(data, _.wrap(function (result) {
-            _.send(_.body.owner_id, data);
-            _.res.send(result);
-        }));
+        $.data.insertOne('comment', data, function (result) {
+            $.res.send(result);
+            $.notify(data.owner_id, data);
+        });
     },
 
-    history: function ($) {
+    GET: function ($) {
         var match = {
             type: $('type'),
             owner_id: $('owner_id')

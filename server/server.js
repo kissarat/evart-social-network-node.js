@@ -137,11 +137,14 @@ function process(_) {
 
 // -------------------------------------------------------------------------------
 
-var server = http.createServer(function (req, res) {
+function service(req, res) {
     var raw_url = req.url.replace(/^\/api\//, '/');
     req.url = parse(raw_url);
 
     function invalid(name, value) {
+        if (!value) {
+            value = 'invalid';
+        }
         var obj = {};
         obj[name] = value;
         throw {
@@ -163,9 +166,13 @@ var server = http.createServer(function (req, res) {
         invalid(name, 'required');
     }
 
-    var _ = function(name) {
+    var _ = function (name) {
         return _get(_.params, name);
     };
+
+    function insertOne(entity, mods, cb) {
+        db.collection(entity).insertOne(mods, resolve_callback(cb));
+    }
 
     _.__proto__ = {
         req: req,
@@ -196,30 +203,26 @@ var server = http.createServer(function (req, res) {
             }
         },
 
-        send: function (target_id, data) {
-            var cid = _.req.client_id;
+        notify: function (target_id, event) {
+            var data = {};
+            for (var key in event) {
+                data[key] = event[key];
+            }
+            data.target_id = target_id;
+            if (data._id) {
+                data.object_id = data._id;
+                delete data._id;
+            }
+            if (!data.time) {
+                data.time = Date.now();
+            }
             var subscriber = subscribers[target_id];
             if (subscriber) {
-                subscriber = subscriber[cid];
-            }
-            if (subscriber) {
-                if ('queue' == subscriber.type) {
-                    subscriber.queue.push(data);
-                }
-                else {
-                    subscriber.send(data);
+                for (var cid in subscriber) {
+                    subscriber[cid].send(data);
                 }
             }
-            else {
-                subscriber = {
-                    type: 'queue',
-                    queue: [data]
-                };
-                if (!subscriber[target_id]) {
-                    subscriber[target_id] = {};
-                }
-                subscribers[target_id][cid] = subscriber;
-            }
+            insertOne('queue', data, Function());
         },
 
         sendStatus: function (code) {
@@ -227,16 +230,23 @@ var server = http.createServer(function (req, res) {
             res.end();
         },
 
-        get: function(name) {
+        get: function (name) {
             return _get(req.url.query, name);
         },
 
-        post: function(name) {
+        post: function (name) {
             return _get(req.body, name);
         },
 
         has: function (name) {
-            return name in req.params;
+            if (name in _.params) {
+                var value = _.params[name];
+                if (value instanceof Array) {
+                    return value.length > 0;
+                }
+                return true;
+            }
+            return false;
         },
 
         merge: function () {
@@ -250,7 +260,7 @@ var server = http.createServer(function (req, res) {
             return o;
         },
 
-        validate: function(object) {
+        validate: function (object) {
             return schema_validator.validate(object, schema);
         },
 
@@ -258,7 +268,7 @@ var server = http.createServer(function (req, res) {
         db: db,
         params: req.url.query,
 
-        data: function(name) {
+        data: function (name) {
             return db.collection(name);
         }
     };
@@ -267,17 +277,19 @@ var server = http.createServer(function (req, res) {
         return cb ? _.wrap(cb) : _.answer;
     }
 
-    _.data.updateOne = function(entity, id, mods, cb) {
+    _.data.updateOne = function (entity, id, mods, cb) {
         db.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
     };
 
-    _.data.find = function(entity, match, cb) {
+    _.data.find = function (entity, match, cb) {
         db.collection(entity).aggregate(
             {$match: match},
             {$sort: {time: 1}}
-        )
+            )
             .toArray(resolve_callback(cb));
     };
+
+    _.data.insertOne = insertOne;
 
     req.cookies = querystring_parse(req.headers.cookie, /;\s+/);
 
@@ -293,6 +305,25 @@ var server = http.createServer(function (req, res) {
         req.client_id = req.cookies.cid;
     }
 
+    var since = req.headers['if-modified-since'];
+    if (since) {
+        since = new Date(since);
+        if (isNaN(since)) {
+            invalid('if-modified-since');
+        }
+        else {
+            req.since = since;
+        }
+    }
+
+    var geo = req.headers.geo;
+    if (geo) try {
+        req.geo = JSON.parse(geo);
+    }
+    catch (ex) {
+        invalid('geo');
+    }
+
     if (req.auth) {
         db.collection('user').findOne({auth: req.auth}, _.wrap(function (user) {
             _.user = user;
@@ -302,7 +333,7 @@ var server = http.createServer(function (req, res) {
     else {
         process(_);
     }
-});
+}
 
 function exec(_, action) {
     function call_action() {
@@ -351,4 +382,15 @@ function exec(_, action) {
 
 var subscribers = {};
 
+var server = http.createServer(function(req, res) {
+    try {
+        service(req, res);
+    }
+    catch (ex) {
+        if (ex.invalid) {
+            res.send(ex);
+        }
+        throw ex;
+    }
+});
 console.log(new Date());

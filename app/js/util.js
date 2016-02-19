@@ -396,7 +396,7 @@ function query(o) {
     if (o.body) {
         o.data = JSON.stringify(o.body);
         //xhr.overrideMimeType('application/json');
-        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('content-type', 'application/json');
     }
 
     xhr.send(o.data);

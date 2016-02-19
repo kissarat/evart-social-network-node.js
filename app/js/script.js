@@ -220,15 +220,12 @@ var User = {
             }
         }
         if (not_found.length > 0) {
-            query({
-                route: 'user/many', params: {ids: not_found.join('.')},
-                success: function (data) {
-                    for (var i = 0; i < data.length; i++) {
-                        var user = data[i];
-                        User._cache[user._id] = user;
-                    }
-                    call(User._cache);
+            api('user/many', 'GET', {ids: not_found.join('.')}, function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    var user = data[i];
+                    User._cache[user._id] = user;
                 }
+                call(User._cache);
             });
         }
         else {
@@ -242,12 +239,8 @@ var User = {
         });
     },
 
-    loadOne: function (id, call) {
-        query({
-            route: 'user/view',
-            params: {id: id},
-            success: call
-        });
+    loadOne: function (id, cb) {
+        api('user/view', 'GET', {id: id}, cb);
     },
 
     loadMe: function (call) {
@@ -286,11 +279,8 @@ auth = auth ? auth[1] : null;
 
 var server = {
     send: function (target_id, body) {
-        return query({
-            route: 'poll/' + target_id,
-            method: 'POST',
-            body: body
-        })
+        body.target_id = target_id;
+        return api('poll', 'POST', body);
     },
 
     poll: function () {
@@ -312,6 +302,7 @@ var server = {
                         server.fire(e.type, e);
                     }
                 }
+
                 console.log('poll', this.status, data);
                 if (data) {
                     if ('queue' == data.type) {
@@ -502,7 +493,7 @@ if (isTopFrame() && window.SharedWorker) {
 function schedule_poll() {
     var f = server.poll;
     if (worker) {
-        f = function() {
+        f = function () {
             worker.post('poll');
         };
     }
