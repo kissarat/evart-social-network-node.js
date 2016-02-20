@@ -71,29 +71,12 @@
         </p>
     </form>
 
-    <div id="chat">
-        <div class="video relative">
-            <div class="buttons">
-                <button data-action="call" type="button">Call</button>
-                <button data-action="bigger" type="button" class="hide">800x600</button>
-            </div>
-            <video data-id="localVideo" class="absolute" autoplay muted></video>
-            <video data-id="video" controls autoplay></video>
+    <form id="chat/edit">
+        <div class="form-group">
+            <label>Title</label>
+            <input name="title" />
         </div>
-        <div class="messages">
-            <div data-id="messages">
-                <div data-widget="message">
-                    <strong data-name="author"></strong>
-                    <div data-name="text"></div>
-                </div>
-            </div>
-            <form>
-                <textarea data-id="editor" cols="2"></textarea>
-                <button data-action="emoji">Emoji</button>
-                <button data-action="send">Send</button>
-            </form>
-        </div>
-    </div>
+    </form>
 
     <div id="user/index">
         <div data-widget="user">
@@ -108,18 +91,19 @@
         </div>
         <div class="tabs">
             <div class="menu table-row">
+                <div data-open="users">Users</div>
                 <div data-open="subto">Подписан</div>
                 <div data-open="subme">Подпищики</div>
-                <div data-open="users">Users</div>
             </div>
             <div class="container">
+                <div data-tab="users">
+                    <input type="search" data-id="search" />
+                    <div class="table-block"></div>
+                </div>
                 <div data-tab="subto">
                     <div class="table-block"></div>
                 </div>
                 <div data-tab="subme">
-                    <div class="table-block"></div>
-                </div>
-                <div data-tab="users">
                     <div class="table-block"></div>
                 </div>
             </div>

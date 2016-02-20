@@ -68,7 +68,7 @@ function service(req, res) {
     function _get(object, name) {
         if (name in object) {
             var value = object[name];
-            if (name.indexOf('id') === name.length - 2) {
+            if (name.length >= 2 && name.indexOf('id') === name.length - 2) {
                 if (!/[0-9a-z]{24}/.test(value)) {
                     invalid(name, 'ObjectID');
                 }
@@ -325,6 +325,15 @@ function process(_) {
         }
     });
 
+    if ('' == _.req.url.route[0]) {
+        return _.send({
+            type: 'api',
+            name: 'socex',
+            version: 0.1,
+            dir: Object.keys(controllers)
+        });
+    }
+
     switch (_.req.url.route[0]) {
         case 'entity':
             var collectionName = _.req.url.route[1];
@@ -360,7 +369,18 @@ function process(_) {
 
     var action;
     if (_.req.url.route.length >= 1) {
-        action = controllers[_.req.url.route[0]][_.req.url.route.length < 2 ? _.req.method : _.req.url.route[1]];
+        action = controllers[_.req.url.route[0]];
+        if (!action) {
+            return _.send(404, {
+                error: 'Route not found'
+            });
+        }
+        action = action[_.req.url.route.length < 2 ? _.req.method : _.req.url.route[1]];
+        if (!(action && action instanceof Function)) {
+            return _.send(404, {
+                error: 'Route not found'
+            });
+        }
     }
     if (!action) {
         $.send(404, _.req.url);

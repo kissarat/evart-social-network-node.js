@@ -49,44 +49,34 @@ ui.user = {
     index: function () {
         document.title = 'Users';
         var view = this;
+        var me = {id: localStorage.user_id};
 
-        function add_users(users, parent) {
-            users.forEach(function (user) {
-                var w = view.widget('user', user);
-                var buttons = w.querySelector('.buttons');
-                buttons.appendChild($button('View', function () {
-                    go('user/view', {id: user._id});
-                }));
-                buttons.appendChild($button('Chat', function () {
-                    go('wall', {type: 'message', target_id: user._id});
-                }));
-                parent.appendChild(w);
-            });
+        function add_users(parent) {
+            parent = view.querySelector(parent);
+            parent.innerHTML = '';
+            return function (users) {
+                users.forEach(function (user) {
+                    var w = view.widget('user', user);
+                    var buttons = w.querySelector('.buttons');
+                    buttons.appendChild($button('View', function () {
+                        go('user/view', {id: user._id});
+                    }));
+                    buttons.appendChild($button('Chat', function () {
+                        go('wall', {type: 'message', target_id: user._id});
+                    }));
+                    parent.appendChild(w);
+                });
+            }
         }
 
-        query({
-            route: 'user/subto',
-            params: {id: localStorage.user_id},
-            success: function (users) {
-                add_users(users, view.querySelector('[data-tab="subto"] .table-block'));
-                view.visible = true;
-            }
+        view.search.addEventListener('keyup', function(e) {
+            api('user', 'GET', {q: e.target.value}, add_users('[data-tab="users"] .table-block'));
         });
 
-        query({
-            route: 'user/subme',
-            params: {id: localStorage.user_id},
-            success: function (users) {
-                add_users(users, view.querySelector('[data-tab="subme"] .table-block'));
-            }
-        });
-
-        query({
-            route: 'entity/user',
-            success: function (users) {
-                add_users(users, view.querySelector('[data-tab="users"] .table-block'));
-            }
-        });
+        api('user', 'GET', {q:''}, add_users('[data-tab="users"] .table-block'));
+        api('user/subto', 'GET', me, add_users('[data-tab="subto"] .table-block'));
+        api('user/subme', 'GET', me, add_users('[data-tab="subme"] .table-block'));
+        view.visible = true;
     },
 
     view: function (params) {

@@ -101,5 +101,17 @@ module.exports = {
         var _set = {};
         _set[_.req.url.query.field] = 1;
         _.db.collection('user').updateOne({_id: _.user._id}, {$unset: _set}, _.answer);
+    },
+
+    GET: function($) {
+        var q = {$regex: $('q')};
+        var fields = $.has('fields') ? $('fields').split(',') : ['surname', 'forename'];
+        var or = [];
+        fields.forEach(field => {
+            var part = {};
+            part[field] = q;
+            or.push(part)
+        });
+        $.data.find('user', {$or: or});
     }
 };
