@@ -30,9 +30,9 @@ MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db) {
     }
     db = _db;
 
-    server = http.createServer(function(req, res) {
+    server = http.createServer(function (req, res) {
         //try {
-            service(req, res);
+        service(req, res);
         //}
         //catch (ex) {
         //    if (ex.invalid) {
@@ -185,7 +185,7 @@ function service(req, res) {
             return db.collection(name);
         },
 
-        getUserAgent: function() {
+        getUserAgent: function () {
             var agent = {
                 ip: req.connection.remoteAddress
             };
@@ -198,15 +198,15 @@ function service(req, res) {
             return agent;
         },
 
-        setCookie: function(name, value, age, path) {
+        setCookie: function (name, value, age, path) {
             if (!path) {
                 path = '/';
             }
             res.setHeader('set-cookie', name + '=' + value + '; path=' + path + '; expires='
-            + new Date(Date.now() + age).toUTCString());
+                + new Date(Date.now() + age).toUTCString());
         },
 
-        send: function() {
+        send: function () {
             var object;
             var code = 200;
             if (1 == arguments.length) {
@@ -231,7 +231,7 @@ function service(req, res) {
                     result: object.result,
                     time: Date.now()
                 };
-                for(var i in req.url.query) {
+                for (var i in req.url.query) {
                     record.params = req.url.query;
                     break;
                 }
@@ -268,6 +268,11 @@ function service(req, res) {
         }
         db.collection(entity).aggregate(aggr)
             .toArray(resolve_callback(cb));
+    };
+
+    $.data.findOne = function (entity, id, cb) {
+        cb = resolve_callback(cb);
+        db.collection(entity).findOne({_id: id}, cb);
     };
 
     $.data.insertOne = insertOne;
@@ -391,11 +396,11 @@ function process(_) {
         }
         else {
             var agent = _.getUserAgent();
-            _.data.insertOne('client', agent, function(result) {
+            _.data.insertOne('client', agent, function (result) {
                 //if (result.insertedCount > 0) {
-                    _.req.client_id = agent._id;
-                    _.setCookie('cid', agent._id, 1000 * 3600 * 24 * 365 * 10);
-                    exec(_, action);
+                _.req.client_id = agent._id;
+                _.setCookie('cid', agent._id, 1000 * 3600 * 24 * 365 * 10);
+                exec(_, action);
                 //}
             });
         }

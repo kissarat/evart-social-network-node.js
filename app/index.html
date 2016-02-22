@@ -10,6 +10,17 @@
     <link rel="stylesheet" type="text/css" href="/style.css"/>
 </head>
 <body class="z">
+
+<div id="frame">
+    <div class="buttons">
+        <div class="fa fa-close"></div>
+    </div>
+    <iframe></iframe>
+    <!--div class="loading">
+        <img src="/images/attachements-loading.gif"/>
+    </div-->
+</div>
+
 <div id="preview" class="fullscreen">
     <img/>
 </div>
@@ -71,13 +82,6 @@
         </p>
     </form>
 
-    <form id="chat/edit">
-        <div class="form-group">
-            <label>Title</label>
-            <input name="title" />
-        </div>
-    </form>
-
     <div id="user/index">
         <div data-widget="user">
             <div class="user">
@@ -97,7 +101,7 @@
             </div>
             <div class="container">
                 <div data-tab="users">
-                    <input type="search" data-id="search" />
+                    <input type="search" data-id="search"/>
                     <div class="table-block"></div>
                 </div>
                 <div data-tab="subto">
@@ -196,15 +200,7 @@
                 <span data-action="/photo/index" class="fa fa-picture-o"></span>
                 <span data-action="file_upload" class="fa fa-cloud-upload"></span>
             </p>
-            <div data-id="frame" style="display: none">
-                <div class="buttons">
-                    <div data-action="close" class="fa fa-close"></div>
-                </div>
-                <iframe style="display: none"></iframe>
-                <div class="loading">
-                    <img src="/images/attachements-loading.gif"/>
-                </div>
-            </div>
+            <div class="frame"></div>
             <hr/>
         </form>
         <div data-id="comments">
@@ -307,6 +303,27 @@
     </div>
 
     <div id="message/index">
+        <button data-go="chat/index" type="button">Chats</button>
+        <table class="table">
+            <tbody data-id="rows"></tbody>
+        </table>
+    </div>
+
+    <form id="chat/edit">
+        <div class="form-group">
+            <label>Title</label>
+            <input name="title" required />
+        </div>
+        <div data-id="members"></div>
+        <button data-action="save" type="button">Save</button>
+        <div data-id="frame"></div>
+    </form>
+
+    <div id="chat/index">
+        <p>
+            <button data-go="message/index" type="button">Dialogs</button>
+            <button data-go="chat/edit" type="button">Create Chat</button>
+        </p>
         <table class="table">
             <tbody data-id="rows"></tbody>
         </table>

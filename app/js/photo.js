@@ -1,10 +1,14 @@
 function preview() {
     var id = this.id;
-    if (hook.select) {
-        return hook.select({
+    var message = {
+        type: 'select',
+        media: {
             id: id,
             type: 'photo'
-        });
+        }
+    };
+    if (sendParentWindow(message)) {
+        return;
     }
     var div = $id('preview');
     var source = /"([^"]+)"/.exec(this.style.backgroundImage);
@@ -43,7 +47,7 @@ function $video_thumbnail(video) {
         'data-url': video.url,
         style: 'background-image: url("' + video.url + '")',
         'data-media': JSON.stringify(video)
-    }, null, function() {
+    }, null, function () {
         go('video/view', {id: video.id});
     });
 }

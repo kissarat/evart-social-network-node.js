@@ -23,6 +23,7 @@ Notification.requestPermission(function (permission) {
 });
 
 server.on('wall', wall.add);
+server.on('message', wall.add);
 
 ui.wall = function (params) {
     var view = this;
@@ -91,7 +92,12 @@ ui.wall = function (params) {
         };
 
         if ('message' == params.type) {
-            data.target_id = params.target_id;
+            if (params.chat_id) {
+                data.chat_id = params.chat_id;
+            }
+            else {
+                data.target_id = params.target_id;
+            }
         }
 
         var medias = [];
@@ -109,34 +115,22 @@ ui.wall = function (params) {
 
         api('comment', 'PUT', data, function (result) {
             if (result.ok) {
-                view.frame.visible = false;
+                frame.close();
                 view.attachements.innerHTML = '';
                 view.editor.value = '';
             }
         });
     });
 
-    var iframe = view.frame.querySelector('iframe');
-
-    view.on('close', function () {
-        view.frame.visible = false;
-    });
-
-    iframe.addEventListener('load', function () {
-        view.frame.querySelector('.loading').visible = false;
-        iframe.contentWindow.hook.select = function (attachement) {
-            var thumbnail = 'photo' == attachement.type ? $thumbnail : $video_thumbnail;
-            view.attachements.appendChild(thumbnail(attachement));
-        };
-        iframe.visible = true;
+    frame.single('select', function (event) {
+        var thumbnail = 'photo' == event.media.type ? $thumbnail : $video_thumbnail;
+        view.attachements.appendChild(thumbnail(event.media));
     });
 
     function add_attachment_type(path) {
         view.on(path, function () {
-            iframe.visible = false;
-            view.frame.querySelector('.loading').visible = true;
-            iframe.setAttribute('src', path);
-            view.frame.visible = true;
+            view.querySelector('.frame').appendChild(frame.tag);
+            frame.source = path;
         });
     }
 

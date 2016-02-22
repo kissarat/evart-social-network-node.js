@@ -58,12 +58,22 @@ ui.user = {
                 users.forEach(function (user) {
                     var w = view.widget('user', user);
                     var buttons = w.querySelector('.buttons');
-                    buttons.appendChild($button('View', function () {
-                        go('user/view', {id: user._id});
-                    }));
-                    buttons.appendChild($button('Chat', function () {
-                        go('wall', {type: 'message', target_id: user._id});
-                    }));
+                    if (isTopFrame()) {
+                        buttons.appendChild($button('View', function () {
+                            go('user/view', {id: user._id});
+                        }));
+                        buttons.appendChild($button('Chat', function () {
+                            go('wall', {type: 'message', target_id: user._id});
+                        }));
+                    }
+                    else {
+                        buttons.appendChild($button('Add', function () {
+                            sendParentWindow({
+                                type: 'select',
+                                id: user._id
+                            });
+                        }));
+                    }
                     parent.appendChild(w);
                 });
             }

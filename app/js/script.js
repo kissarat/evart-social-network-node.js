@@ -151,22 +151,37 @@ function append_content(route, params, push) {
             console.log(_url);
             history.pushState(state, document.title, '/' + _url);
         }
+
+        return view;
     }
 
-    if ('string' == typeof action) {
-        $script('js/' + action, function () {
-            load(action_get());
-        });
-    }
-    else {
-        load(action);
-    }
+    return new Promise(function (resolve, reject) {
+        if ('string' == typeof action) {
+            $script('js/' + action, function () {
+                resolve(load(action_get()));
+            });
+        }
+        else {
+            resolve(load(action));
+        }
+    });
 }
 
 function go(route, params) {
     content.innerHTML = '';
     hook = {};
-    append_content(route, params, true);
+    return append_content(route, params, true).then(function(view) {
+        window.fire('go', view);
+        sendParentWindow({type: 'go'});
+    })
+}
+
+function sendParentWindow(data) {
+    if (!isTopFrame()) {
+        window.top.postMessage(data, '*');
+        return true;
+    }
+    return false;
 }
 
 function reload(data) {
@@ -258,7 +273,7 @@ var User = {
 
     loadMe: function (call) {
         User.loadOne(localStorage.user_id, function (data) {
-            user = data;
+            me = data;
             if (call) {
                 call();
             }
@@ -356,7 +371,7 @@ var server = {
 
 extend(server, EventEmitter);
 
-var user;
+var me;
 
 function login() {
     User.loadMe(function () {
@@ -423,10 +438,16 @@ function Notify(comment) {
     }
     var n = new Notification(title, options);
     n.addEventListener('click', function () {
-        go('wall', {
-            type: comment.type,
-            owner_id: comment.owner_id
+        var message = {
+            type: comment.type
+        };
+        ['chat_id', 'owner_id', 'target_id'].forEach(function(field) {
+            if (comment[field]) {
+                message[field] = comment[field];
+                return false;
+            }
         });
+        go('wall', message);
         Notify.close();
     });
     self.notification = n;

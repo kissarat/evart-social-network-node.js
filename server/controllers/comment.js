@@ -15,6 +15,9 @@ module.exports = {
         if ($.has('target_id')) {
             data.target_id = $('target_id');
         }
+        if ($.has('chat_id')) {
+            data.chat_id = $('chat_id');
+        }
         /*
          if (_.body.target_id) {
          data.target_id = ObjectID(_.body.target_id)
@@ -30,7 +33,16 @@ module.exports = {
 
         $.data.insertOne('comment', data, function (result) {
             $.send(result);
-            $.notify(data.owner_id, data);
+            if (data.chat_id) {
+                $.data.findOne('chat', data.chat_id, function(chat) {
+                    chat.members.forEach(function(member) {
+                        $.notify(member, data);
+                    });
+                });
+            }
+            else {
+                $.notify(data.owner_id, data);
+            }
         });
     },
 
@@ -46,34 +58,40 @@ module.exports = {
         }
         else if ('message' == match.type) {
             var or;
-            if ($.has('target_id')) {
-                var target_id = $('target_id');
-                or = [
-                    {
-                        source_id: $.user._id,
-                        target_id: target_id
-                    },
-                    {
-                        source_id: target_id,
-                        target_id: $.user._id
-                    }
-                ];
+            if ($.has('chat_id')) {
+                match.chat_id = $('chat_id');
             }
             else {
-                or = [
-                    {source_id: $.user._id},
-                    {target_id: $.user._id}
+                if ($.has('target_id')) {
+                    var target_id = $('target_id');
+                    or = [
+                        {
+                            source_id: $.user._id,
+                            target_id: target_id
+                        },
+                        {
+                            source_id: target_id,
+                            target_id: $.user._id
+                        }
+                    ];
+                }
+                else {
+                    or = [
+                        {source_id: $.user._id},
+                        {target_id: $.user._id}
 
+                    ];
+                }
+                match = [
+                    {
+                        $match: {
+                            chat_id: {$exists: false},
+                            type: 'message',
+                            $or: or
+                        }
+                    }
                 ];
             }
-            match = [
-                {
-                    $match: {
-                        //type: 'message',
-                        $or: or
-                    }
-                }
-            ];
 
             //if ($.has('show')) {
             //    match.push({

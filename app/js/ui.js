@@ -206,3 +206,50 @@ function tabs(root) {
         });
     })
 }
+
+extend(window, EventEmitter);
+
+function Frame() {
+    var self = this;
+    this.tag = $id('frame');
+    this.iframe = this.tag.querySelector('iframe');
+    this.close = this.close.bind(this);
+    this.tag.querySelector('.fa-close').addEventListener('click', this.close);
+    this.close();
+
+    this.iframe.addEventListener('load', function() {
+        self.fire('load');
+        self.tag.visible = true;
+    });
+    window.addEventListener('message', function(e) {
+        self.fire(e.data.type, e.data);
+    });
+}
+
+Frame.prototype = {
+    close: function() {
+        this.tag.visible = true;
+        this.tag.remove();
+    },
+
+    set source(value) {
+        if (this.iframe.getAttribute('src') && this.iframe.contentWindow.go) {
+            this.iframe.contentWindow.go(value);
+        }
+        else {
+            this.iframe.setAttribute('src', value);
+        }
+    },
+
+    get hook() {
+        return this.iframe.contentWindow.hook;
+    },
+
+    get window() {
+        return this.iframe.contentWindow;
+    }
+};
+
+extend(Frame.prototype, EventEmitter);
+
+var frame = new Frame();

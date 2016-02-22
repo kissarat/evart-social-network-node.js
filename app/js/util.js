@@ -102,8 +102,8 @@ function isTopFrame() {
 function isFullscreen() {
     return (0 == screenLeft)
         && (0 == screenTop);
-        //&& (screen.width == innerWidth)
-        //&& (screen.height == innerHeight);
+    //&& (screen.width == innerWidth)
+    //&& (screen.height == innerHeight);
 }
 
 function unsafe_uid() {
@@ -471,15 +471,14 @@ var EventEmitter = {
 
         this._events[name].push(call);
     },
-    /*
-     single: function (name, call) {
-     if (!this._events) {
-     this._events = {};
-     }
 
-     this._events[name] = [call];
-     },
-     */
+    single: function (name, call) {
+        if (!this._events) {
+            this._events = {};
+        }
+        this._events[name] = [call];
+    },
+
     off: function (name, call) {
         var i = this._events[name].indexOf(call);
         this._events[name].splice(i, 1);

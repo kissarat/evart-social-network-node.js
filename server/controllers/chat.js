@@ -2,13 +2,35 @@
 var ObjectID = require('mongodb').ObjectID;
 
 module.exports = {
-    PUT: function(_) {
+    GET: function($) {
+        if ($.has('id')) {
+            $.data.findOne('chat', $('id'));
+        }
+        else {
+            var member_id = $.has('member_id') ? $('member_id') : $.user._id;
+            $.data.find('chat', {members: member_id});
+        }
+    },
+
+    PUT: function($) {
         var data = {
-            owner_id: _.user._id,
-            members: 'members' in _.params ? _.params.members.map(ObjectID) : [],
+            owner_id: $.user._id,
+            title: $('title'),
+            members: $('members').map(ObjectID),
             created: Date.now()
         };
-        _.db.collection('chat').insertOne(data, _.answer);
+        $.data.insertOne('chat', data, function(result) {
+            if (result.insertedCount > 0) {
+                result.id = data._id;
+                $.send(201, {
+                    ok: 1,
+                    id: data._id
+                });
+            }
+            else {
+                $.send(500);
+            }
+        });
     },
 
     POST: function(_) {
@@ -16,10 +38,10 @@ module.exports = {
     },
 
     DELETE: function(_) {
-        if ('id' in _.params) {
+        if (_.has('id')) {
             _.db.collection('chat').deleteOne({_id: _.params.id}, _.answer);
         }
-        else if ('members' in _.params) {
+        else if (_.has('members')) {
 
         }
         else {

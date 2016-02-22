@@ -37,14 +37,15 @@ ui.video = {
             success: function(videos) {
                 videos.forEach(function(info) {
                     function open() {
-                        if (hook.select) {
-                            hook.select({
+                        var message = {
+                            type: 'select',
+                            media: {
                                 type: 'video',
                                 id: info._id,
                                 url: info.thumbnail_url
-                            });
-                        }
-                        else {
+                            }
+                        };
+                        if (!sendParentWindow(message)) {
                             go('video/view', {id: info._id, owner_id: params.owner_id || localStorage.user_id});
                         }
                     }
