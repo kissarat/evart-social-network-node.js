@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
     <title>Socex</title>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>
@@ -198,8 +199,9 @@
                 <button data-action="send" class="light-blue">Send</button>
                 <span data-action="/video/index" class="fa fa-youtube-play"></span>
                 <span data-action="/photo/index" class="fa fa-picture-o"></span>
-                <span data-action="file_upload" class="fa fa-cloud-upload"></span>
+                <!--<span data-action="file_upload" class="fa fa-cloud-upload"></span>-->
             </p>
+            <div class="emoji" data-id="emoji"></div>
             <div class="frame"></div>
             <hr/>
         </form>
@@ -344,18 +346,6 @@
 <div id="emoji" class="table-block" style="display: none">
 </div>
 
-<script class="autoremove">
-    for (var i = 0; i < 8; i++) {
-        var row = document.createElement('div');
-        for (var j = 0; j < 9; j++) {
-            var char = String.fromCodePoint(0xd83d, 0xde00 + i * 10 + j);
-            var cell = document.createElement('div');
-            cell.innerHTML = char;
-            row.appendChild(cell);
-        }
-        emoji.appendChild(row);
-    }
-</script>
 <script src="/js/ui.js"></script>
 <script src="/js/wall.js"></script>
 <script src="/js/photo.js"></script>

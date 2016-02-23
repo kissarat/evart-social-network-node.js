@@ -1,11 +1,23 @@
 'use strict';
 
+var chars_subs = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;'
+};
+
 module.exports = {
     PUT: function ($) {
+        var text = $('text').trim();
+        text = text.replace(/\s*\n+\s*/g, '<br/>');
+        text = text.replace(/[ \t\r]/g, ' ');
+        text = text.replace(/[<>"]/g, function (s) {
+            return chars_subs[s];
+        });
         var data = {
             source_id: $.user._id,
             type: $('type'),
-            text: $('text'),
+            text: text,
             time: Date.now()
         };
 
@@ -34,8 +46,8 @@ module.exports = {
         $.data.insertOne('comment', data, function (result) {
             $.send(result);
             if (data.chat_id) {
-                $.data.findOne('chat', data.chat_id, function(chat) {
-                    chat.members.forEach(function(member) {
+                $.data.findOne('chat', data.chat_id, function (chat) {
+                    chat.members.forEach(function (member) {
                         $.notify(member, data);
                     });
                 });

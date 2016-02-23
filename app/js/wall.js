@@ -127,6 +127,24 @@ ui.wall = function (params) {
         view.attachements.appendChild(thumbnail(event.media));
     });
 
+    function add_emoji() {
+        var t = view.editor;
+        var string = t.value;
+        t.value = string.slice(0, t.selectionStart) + this.innerHTML + string.slice(t.selectionEnd);
+    }
+
+    each(view.emoji.querySelectorAll('span'), function (span) {
+        span.addEventListener('click', add_emoji);
+    });
+
+    view.emoji.appendChild($new('span', ' more', function () {
+        view.emoji.innerHTML = '';
+        view.emoji.classList.add('more');
+        emoji_text.forEach(function (emo) {
+            view.emoji.appendChild($new('span', emo, add_emoji));
+        });
+    }));
+
     function add_attachment_type(path) {
         view.on(path, function () {
             view.querySelector('.frame').appendChild(frame.tag);

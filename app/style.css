@@ -516,12 +516,37 @@ input:focus, textarea:focus {
     padding-top: 16px;
 }
 
-[id="wall"] button {
-    margin-right: 10px;
+#wall p {
+    float: left;
 }
 
-[id="wall"] {
-    color: #6fdbe8;
+#wall .emoji {
+    display: inline-block;
+    width: 83%;
+    float: right;
+    text-align: justify;
+}
+
+#wall .emoji.more {
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    #wall .emoji {
+        width: 75%;
+    }
+}
+
+#wall .emoji span {
+    cursor: pointer;
+}
+
+#wall .frame {
+    clear: both;
+}
+
+[id="wall"] button {
+    margin-right: 10px;
 }
 
 [data-id="list"] > div > div {
