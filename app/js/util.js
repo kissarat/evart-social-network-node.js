@@ -570,6 +570,9 @@ function merge() {
 }
 
 function download(url) {
+    if (!('string' == typeof url)) {
+        url = '/api/file?id=' + (url.id || url._id);
+    }
     open(url, '_blank');
 }
 

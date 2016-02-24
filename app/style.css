@@ -568,3 +568,18 @@ input:focus, textarea:focus {
 [data-id="error"] {
     color: red;
 }
+
+.file {
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    height: 128px;
+    width: 128px;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.file .fa {
+    font-size: 60px;
+    margin-top: 4px;
+}

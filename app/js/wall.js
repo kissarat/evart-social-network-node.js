@@ -27,6 +27,24 @@ else {
     console.warn('Notification not supported');
 }
 
+function attachment(media) {
+    var thumbnail;
+    switch (media.type) {
+        case 'photo':
+            thumbnail = $thumbnail;
+            break;
+        case 'video':
+            thumbnail = $video_thumbnail;
+            break;
+        case 'file':
+            thumbnail = $file_thumbnail;
+            break;
+        default:
+            return;
+    }
+    return thumbnail(media);
+}
+
 server.on('wall', wall.add);
 server.on('message', wall.add);
 
@@ -63,8 +81,7 @@ ui.wall = function (params) {
             if (comment.medias) {
                 var mediasDiv = post.querySelector('.medias');
                 comment.medias.forEach(function (media) {
-                    var thumbnail = 'photo' == media.type ? $thumbnail : $video_thumbnail;
-                    mediasDiv.appendChild(thumbnail(media));
+                    mediasDiv.appendChild(attachment(media));
                 });
             }
 
@@ -128,8 +145,7 @@ ui.wall = function (params) {
     });
 
     frame.single('select', function (event) {
-        var thumbnail = 'photo' == event.media.type ? $thumbnail : $video_thumbnail;
-        view.attachements.appendChild(thumbnail(event.media));
+        view.attachements.appendChild(attachment(event.media));
     });
 
     function add_emoji() {
@@ -162,6 +178,7 @@ ui.wall = function (params) {
 
     add_attachment_type('/video/index');
     add_attachment_type('/photo/index');
+    add_attachment_type('/file/index');
 
     this.visible = true;
 };

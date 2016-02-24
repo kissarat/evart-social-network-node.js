@@ -2,6 +2,59 @@
 
 var uploads = {};
 
+function $file_icon(mime) {
+    var fa = 'o';
+    mime = mime.replace(/;.*$/, '');
+    mime = mime.split('/');
+    switch (mime[0]) {
+        case 'text':
+            fa = /ml/.test(mime[1]) ? 'code-o' : 'text-o';
+            break;
+        case 'image':
+            fa = 'image-o';
+            break;
+        case 'video':
+            fa = 'video-o';
+            break;
+        case 'audio':
+            fa = 'audio-o';
+            break;
+        case 'application':
+            fa = 'file';
+            if (mime[1].indexOf('word') >= 0 || mime[1].indexOf('document.text') >= 0) {
+                fa = 'word-o';
+            }
+            if (mime[1].indexOf('excel') >= 0 || mime[1].indexOf('document.spreadsheet') >= 0) {
+                fa = 'excel-o';
+            }
+            if (mime[1].indexOf('powerpoint') >= 0 || mime[1].indexOf('document.presentation') >= 0) {
+                fa = 'powerpoint-o';
+            }
+            if (mime[1].indexOf('zip') >= 0 || mime[1].indexOf('compressed') >= 0) {
+                fa = 'archive-o';
+            }
+            if ('pdf' == mime[1]) {
+                fa = 'pdf-o';
+            }
+            break;
+    }
+    return $new('div', {class: 'fa fa-file-' + fa});
+}
+
+function $file_thumbnail(file) {
+    var thumbnail = $new('div', {
+            class: 'file button',
+            'data-media': JSON.stringify(file)
+        },
+        function () {
+            download(file);
+        });
+    return $add(thumbnail,
+        $file_icon(file.mime),
+        $content(file.name)
+    );
+}
+
 ui.file = {
     create: function () {
         var view = this;
@@ -33,11 +86,11 @@ ui.file = {
                 last = e.loaded;
                 view.progress.setAttribute('value', e.loaded);
             });
-            xhr.upload.addEventListener('load', function() {
+            xhr.upload.addEventListener('load', function () {
                 uploads[Date.now()] = upload;
                 go('file/index');
             });
-            xhr.upload.addEventListener('error', function(error) {
+            xhr.upload.addEventListener('error', function (error) {
                 upload.error = error;
                 uploads[Date.now()] = upload;
             });
@@ -48,56 +101,33 @@ ui.file = {
 
     index: function () {
         var view = this;
-        api('file', 'GET', {}, function(data) {
-            data.forEach(function(row) {
-                var fa = 'o';
-                var mime = row.mime.replace(/;.*$/, '');
-                mime = mime.split('/');
-                switch (mime[0]) {
-                    case 'text':
-                        fa = /ml/.test(mime[1]) ? 'code-o' : 'text-o';
-                        break;
-                    case 'image':
-                        fa = 'image-o';
-                        break;
-                    case 'video':
-                        fa = 'video-o';
-                        break;
-                    case 'audio':
-                        fa = 'audio-o';
-                        break;
-                    case 'application':
-                        fa = 'file';
-                        if (mime[1].indexOf('word') >= 0 || mime[1].indexOf('document.text') >= 0) {
-                            fa = 'word-o';
+        api('file', 'GET', {}, function (data) {
+            data.forEach(function (file) {
+                var row = $row(
+                    $file_icon(file.mime),
+                    $new('div', file.name, function () {
+                        var message = {
+                            type: 'select',
+                            media: {
+                                type: 'file',
+                                id: file._id,
+                                md5: file.md5,
+                                mime: file.mime,
+                                name: file.name
+                            }
+                        };
+                        if (!sendParentWindow(message)) {
+                            download(file);
                         }
-                        if (mime[1].indexOf('excel') >= 0 || mime[1].indexOf('document.spreadsheet') >= 0) {
-                            fa = 'excel-o';
-                        }
-                        if (mime[1].indexOf('powerpoint') >= 0 || mime[1].indexOf('document.presentation') >= 0) {
-                            fa = 'powerpoint-o';
-                        }
-                        if (mime[1].indexOf('zip') >= 0 || mime[1].indexOf('compressed') >= 0 ) {
-                            fa = 'archive-o';
-                        }
-                        if ('pdf' == mime[1]) {
-                            fa = 'pdf-o';
-                        }
-                        break;
-                }
-                var tr = $row(
-                    $new('div', {class: 'fa fa-file-' + fa}),
-                    $new('div', row.name, function() {
-                        download('/api/file?id=' + row._id);
                     }),
-                    measure(row.size),
-                    new Date(row.time).toLocaleString(),
-                    $new('div', {class: 'fa fa-close'}, function() {
-                        api('file', 'DELETE', {id: row._id}, reload);
+                    measure(file.size),
+                    new Date(file.time).toLocaleString(),
+                    $new('div', {class: 'fa fa-close'}, function () {
+                        api('file', 'DELETE', {id: file._id}, reload);
                     })
                 );
-                tr.classList.add('button');
-                view.rows.appendChild(tr);
+                row.classList.add('button');
+                view.rows.appendChild(row);
             })
         });
         view.visible = true;
