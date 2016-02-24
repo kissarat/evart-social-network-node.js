@@ -34,8 +34,9 @@
         <div data-go="user/view" data-idparam="id">Profile</div>
         <div data-go="user/index" data-idparam="id">Friends</div>
         <div data-go="message/index" data-idparam="id">Messages</div>
-        <div data-go="video/index" data-idparam="owner_id">Video</div>
-        <div data-go="photo/album/index" data-idparam="owner_id">Photo</div>
+        <div data-go="video/index" data-idparam="owner_id">Videos</div>
+        <div data-go="photo/album/index" data-idparam="owner_id">Photos</div>
+        <div data-go="file/index" data-idparam="owner_id">Files</div>
         <div data-go="admin">Journal</div>
         <div data-go="user/logout" data-idparam="id">Logout</div>
     </nav>
@@ -260,7 +261,7 @@
     </div>
 
     <div id="video/view">
-        <video controls/>
+        <video controls></video>
     </div>
 
     <form id="photo/create">
@@ -314,7 +315,7 @@
     <form id="chat/edit">
         <div class="form-group">
             <label>Title</label>
-            <input name="title" required />
+            <input name="title" required/>
         </div>
         <div data-id="members"></div>
         <button data-action="save" type="button">Save</button>
@@ -330,6 +331,29 @@
             <tbody data-id="rows"></tbody>
         </table>
     </div>
+
+    <div id="file/index">
+        <p>
+            <button data-go="file/create" type="button">Upload</button>
+        </p>
+        <table class="table">
+            <tbody data-id="rows"></tbody>
+        </table>
+    </div>
+
+    <form id="file/create">
+        <div data-id="error"></div>
+        <div class="form-group">
+            <label>File</label>
+            <input type="file" name="file" required/>
+        </div>
+        <p>
+            <progress data-id="progress" style="display: none"></progress>
+        </p>
+        <p>
+            <button type="button" data-action="upload">Upload</button>
+        </p>
+    </form>
 </div>
 
 <script src="/lib/jquery/dist/jquery.min.js"></script>

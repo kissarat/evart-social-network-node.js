@@ -15,12 +15,17 @@ var wall = {
     }
 };
 
-Notification.requestPermission(function (permission) {
-    Notify.permission = permission;
-    if ('granted' != permission) {
-        console.warn('Notification: ' + permission);
-    }
-});
+if (window.Notification) {
+    Notification.requestPermission(function (permission) {
+        Notify.permission = permission;
+        if ('granted' != permission) {
+            console.warn('Notification: ' + permission);
+        }
+    });
+}
+else {
+    console.warn('Notification not supported');
+}
 
 server.on('wall', wall.add);
 server.on('message', wall.add);
@@ -141,7 +146,10 @@ ui.wall = function (params) {
         view.emoji.innerHTML = '';
         view.emoji.classList.add('more');
         emoji_text.forEach(function (emo) {
-            view.emoji.appendChild($new('span', emo, add_emoji));
+            $add(view.emoji,
+                $new('span', emo, add_emoji),
+                document.createTextNode(' ')
+            );
         });
     }));
 

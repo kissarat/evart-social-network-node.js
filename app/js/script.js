@@ -211,6 +211,7 @@ var ui = {
     video: 'video.js',
     photo: 'photo.js',
     message: 'message.js',
+    file: 'file.js',
     admin: function () {
         var view = this;
         api('admin', 'GET', {}, function (data) {
@@ -435,6 +436,9 @@ function Notify(comment) {
     };
     if (isFirefox) {
         options.sticky = true;
+    }
+    if (!window.Notification) {
+        return;
     }
     var n = new Notification(title, options);
     n.addEventListener('click', function () {

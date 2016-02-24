@@ -12,19 +12,18 @@ function password_hash(data) {
 }
 
 module.exports = {
-    login: function (_) {
-        _.db.collection('user').findOne({email: _.body.email}, _.wrap(function (doc) {
-            if (doc && password_hash(_.body.password + _.body.email) == doc.auth) {
-                _.send(200, {
-                    _id: doc._id,
-                    auth: doc.auth
+    login: function ($) {
+        $.data.findOne('user', {email: $.body.email}, user => {
+            if (user && password_hash(_.body.password + _.body.email) == user.auth) {
+                $.send(200, {
+                    id: user._id,
+                    auth: user.auth
                 });
             }
             else {
-                _.res.writeHead(404);
-                _.res.end();
+                $.sendStatus(404);
             }
-        }));
+        });
     },
 
     signup: function (_) {

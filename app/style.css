@@ -564,3 +564,7 @@ input:focus, textarea:focus {
 .button:hover {
     background-color: rgba(111, 219, 232, 0.2);
 }
+
+[data-id="error"] {
+    color: red;
+}

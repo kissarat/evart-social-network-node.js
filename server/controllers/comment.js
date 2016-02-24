@@ -1,5 +1,7 @@
 'use strict';
 
+var ObjectID = require('mongodb').ObjectID;
+
 var chars_subs = {
     '<': '&lt;',
     '>': '&gt;',
@@ -40,7 +42,10 @@ module.exports = {
         }
 
         if ($.has('medias')) {
-            data.medias = $('medias');
+            data.medias = $('medias').map(media => {
+                media.id = ObjectID(media.id);
+                return media;
+            });
         }
 
         $.data.insertOne('comment', data, function (result) {

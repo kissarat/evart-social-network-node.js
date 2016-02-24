@@ -85,12 +85,13 @@ ui.photo = {
                     this.addEventListener('load', function () {
                         var id = this.responseJSON.id;
                         view.uploaded.appendChild($thumbnail(id));
-                        if (hook.select) {
-                            hook.select({
-                                type: 'photo',
-                                id: id
-                            });
-                        }
+                        sendParentWindow({
+                            type: 'select',
+                            media: {
+                                id: id,
+                                type: 'photo'
+                            }
+                        });
                     });
                 }
                 else {

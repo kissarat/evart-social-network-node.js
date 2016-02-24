@@ -68,7 +68,7 @@ function service(req, res) {
     function _get(object, name) {
         if (name in object) {
             var value = object[name];
-            if (name.length >= 2 && name.indexOf('id') === name.length - 2) {
+            if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
                 if (!/[0-9a-z]{24}/.test(value)) {
                     invalid(name, 'ObjectID');
                 }
@@ -95,7 +95,7 @@ function service(req, res) {
         wrap: function (call) {
             return function (err, result) {
                 if (err) {
-                    _.send(500, {
+                    $.send(500, {
                         error: err
                     });
                 }
@@ -216,12 +216,16 @@ function service(req, res) {
                 code = arguments[0];
                 object = arguments[1];
             }
-            res.writeHead(code, {
-                'Content-Type': 'text/json',
-                'Access-Control-Allow-Origin': '*'
-            });
 
-            function log() {
+            if (!$.res.finished) {
+                res.writeHead(code, {
+                    'Content-Type': 'text/json',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify(object));
+            }
+
+            if ('GET' != req.method || ('poll' == req.url.route[0] && code < 400)) {
                 var record = {
                     client_id: req.client_id,
                     user_id: $.user._id,
@@ -240,16 +244,23 @@ function service(req, res) {
                 }
                 db.collection('log').insertOne(record, Function());
             }
-
-            res.end(JSON.stringify(object));
-            if ('GET' != req.method || ('poll' == req.url.route[0] && code < 400)) {
-                log();
-            }
         }
     };
 
     function resolve_callback(cb) {
-        return cb ? $.wrap(cb) : $.answer;
+        if (cb) {
+            return $.wrap(result => {
+                if (result) {
+                    cb(result)
+                }
+                else {
+                    $.sendStatus(404);
+                }
+            })
+        }
+        else {
+            return $.answer;
+        }
     }
 
     $.data.updateOne = function (entity, id, mods, cb) {
@@ -271,8 +282,22 @@ function service(req, res) {
     };
 
     $.data.findOne = function (entity, id, cb) {
+        if (!id) {
+            id = $('id');
+        }
+        if (id instanceof ObjectID) {
+            id = {_id: id};
+        }
         cb = resolve_callback(cb);
-        db.collection(entity).findOne({_id: id}, cb);
+        db.collection(entity).findOne(id, cb);
+    };
+
+    $.data.deleteOne = function (entity, id, cb) {
+        if (!id) {
+            id = $('id');
+        }
+        cb = resolve_callback(cb);
+        db.collection(entity).deleteOne({_id: id}, cb);
     };
 
     $.data.insertOne = insertOne;
@@ -323,15 +348,15 @@ function service(req, res) {
 
 // -------------------------------------------------------------------------------
 
-function process(_) {
-    Object.defineProperty(_, 'id', {
+function process($) {
+    Object.defineProperty($, 'id', {
         get: function () {
-            return ObjectID(_.req.url.query.id);
+            return ObjectID($.req.url.query.id);
         }
     });
 
-    if ('' == _.req.url.route[0]) {
-        return _.send({
+    if ('' == $.req.url.route[0]) {
+        return $.send({
             type: 'api',
             name: 'socex',
             version: 0.1,
@@ -339,68 +364,68 @@ function process(_) {
         });
     }
 
-    switch (_.req.url.route[0]) {
+    switch ($.req.url.route[0]) {
         case 'entity':
-            var collectionName = _.req.url.route[1];
-            switch (_.req.method) {
+            var collectionName = $.req.url.route[1];
+            switch ($.req.method) {
                 case 'GET':
-                    if (_.req.url.query.id) {
-                        db.collection(collectionName).findOne(_.id, _.answer);
+                    if ($.req.url.query.id) {
+                        db.collection(collectionName).findOne($.id, $.answer);
                     }
                     else {
-                        db.collection(collectionName).find(_.req.url.query).toArray(_.answer);
+                        db.collection(collectionName).find($.req.url.query).toArray($.answer);
                     }
                     break;
                 case 'PUT':
-                    receive.call(_.req, function (data) {
-                        db.collection(collectionName).insertOne(data, _.answer);
+                    receive.call($.req, function (data) {
+                        db.collection(collectionName).insertOne(data, $.answer);
                     });
                     break;
                 case 'PATCH':
-                    receive.call(_.req, function (data) {
-                        db.collection(collectionName).updateOne({_id: _.id}, {$set: data}, _.answer);
+                    receive.call($.req, function (data) {
+                        db.collection(collectionName).updateOne({_id: $.id}, {$set: data}, $.answer);
                     });
                     break;
                 case 'DELETE':
-                    db.collection(collectionName).deleteOne({_id: _.id}, _.answer);
+                    db.collection(collectionName).deleteOne({_id: $.id}, $.answer);
                     break;
                 default:
-                    _.res.writeHead(405);
-                    _.res.end();
+                    $.res.writeHead(405);
+                    $.res.end();
                     break;
             }
             return;
     }
 
     var action;
-    if (_.req.url.route.length >= 1) {
-        action = controllers[_.req.url.route[0]];
+    if ($.req.url.route.length >= 1) {
+        action = controllers[$.req.url.route[0]];
         if (!action) {
-            return _.send(404, {
+            return $.send(404, {
                 error: 'Route not found'
             });
         }
-        action = action[_.req.url.route.length < 2 ? _.req.method : _.req.url.route[1]];
+        action = action[$.req.url.route.length < 2 ? $.req.method : $.req.url.route[1]];
         if (!(action && action instanceof Function)) {
-            return _.send(404, {
+            return $.send(404, {
                 error: 'Route not found'
             });
         }
     }
     if (!action) {
-        $.send(404, _.req.url);
+        $.send(404, $.req.url);
     }
     else {
-        if (_.req.client_id || 'poll' == _.req.url.route[0]) {
-            exec(_, action);
+        if ($.req.client_id || 'poll' == $.req.url.route[0]) {
+            exec($, action);
         }
         else {
-            var agent = _.getUserAgent();
-            _.data.insertOne('client', agent, function (result) {
+            var agent = $.getUserAgent();
+            $.data.insertOne('client', agent, function (result) {
                 //if (result.insertedCount > 0) {
-                _.req.client_id = agent._id;
-                _.setCookie('cid', agent._id, 1000 * 3600 * 24 * 365 * 10);
-                exec(_, action);
+                $.req.client_id = agent._id;
+                $.setCookie('cid', agent._id, 1000 * 3600 * 24 * 365 * 10);
+                exec($, action);
                 //}
             });
         }

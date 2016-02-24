@@ -118,6 +118,9 @@ Peer.prototype = {
 var peer;
 
 server.on('login', function () {
+    if (!window.RTCPeerConnection) {
+        return console.warn('Peer connection is not supported');
+    }
     peer = new Peer(null, iceServerConfig);
     server.on('candidate', function (e) {
         console.log('candidate', e.candidate);
