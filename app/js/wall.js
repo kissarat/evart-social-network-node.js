@@ -161,7 +161,7 @@ ui.wall = function (params) {
     view.emoji.appendChild($new('span', ' more', function () {
         view.emoji.innerHTML = '';
         view.emoji.classList.add('more');
-        emoji_text.forEach(function (emo) {
+        emoji_text.forEach(funcйtion (emo) {
             $add(view.emoji,
                 $new('span', emo, add_emoji),
                 document.createTextNode(' ')
@@ -179,6 +179,17 @@ ui.wall = function (params) {
     add_attachment_type('/video/index');
     add_attachment_type('/photo/index');
     add_attachment_type('/file/index');
+
+    var video = view.video.querySelector('video');
+    view.on('capture', function(e) {
+        peer.capture(function() {
+            peer.shareVideo();
+            if (!video.srcObject) {
+                video.srcObject = peer.stream;
+            }
+        });
+    });
+    view.querySelector('[data-action="capture"]').style.cursor = 'pointer';
 
     this.visible = true;
 };

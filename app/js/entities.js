@@ -26,7 +26,7 @@ Entity.resolve = function (config, object) {
     }
 };
 
-Entity.prototype = {
+inherit(Entity, EventEmitter, {
     like: function () {
         var params = {
             entity: this.route,
@@ -58,26 +58,31 @@ Entity.prototype = {
         return function () {
             self[name].apply(self, args);
         }
-    }
-};
-
-Object.defineProperties(Entity.prototype, {
-    id: {
-        get: function() {
-            return this._id;
-        }
     },
-    route: {
-        get: function() {
-            return this.entity.toLowerCase();
-        }
+
+    get id() {
+        return this._id;
+    },
+
+    get route() {
+        return this.entity.toLowerCase();
     }
 });
 
-extend(Entity.prototype, EventEmitter);
 
-var Comment = {
-    resolve: function(object) {
-        return Entity.resolve('Comment', object)
-    }
+function Comment() {}
+
+Comment.resolve = function(object) {
+    return Entity.resolve('Comment', object)
 };
+
+inherit(Comment, Entity);
+
+
+function User() {}
+
+inherit(User, Entity, {
+    get name() {
+        return this.surname + ' ' + this.forename;
+    }
+});

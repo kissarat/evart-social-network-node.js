@@ -357,14 +357,23 @@ video.bigger {
     margin-top: 4px;
 }
 
-[id="video/view"] {
+[data-id="video"] {
     text-align: center;
     vertical-align: top;
 }
 
-[id="video/view"] > * {
-    max-height: 360px;
-    max-width: 480px;
+[data-id="video"] video {
+    background: url("/images/phone.jpg");
+    background-size: cover;
+}
+
+[data-id="video"] .controls > * {
+    vertical-align: middle;
+}
+
+[data-id="video"] [type="range"] {
+    display: inline-block;
+    width: 200px;
 }
 
 [id="user/view"] h1 {

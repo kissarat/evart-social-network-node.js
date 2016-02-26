@@ -582,3 +582,27 @@ function measure(bytes) {
     var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
     return (bytes / Math.pow(1024, i)).toPrecision(4) + ' ' + sizes[i];
 }
+
+function inherit(child, parent, proto, descriptor) {
+    if (!child)
+        child = function() {
+            parent.apply(this, arguments);
+        };
+    if (!descriptor)
+        descriptor = {};
+    descriptor.base = {
+        value: parent,
+        enumerable: false,
+        writable: false
+    };
+    child.prototype = Object.create(parent.prototype ? parent.prototype : parent);
+    child.prototype.constructor = child;
+    var names = proto ? Object.getOwnPropertyNames(proto) : [];
+    for (var i in names) {
+        var name = names[i];
+        descriptor[name] = Object.getOwnPropertyDescriptor(proto, name);
+    }
+    Object.defineProperties(child.prototype, descriptor);
+    child.descriptor = descriptor;
+    return child;
+}
