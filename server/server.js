@@ -91,6 +91,7 @@ function service(req, res) {
         req: req,
         res: res,
         subscribers: subscribers,
+        COOKIE_AGE_FOREVER: 1000 * 3600 * 24 * 365 * 10,
 
         wrap: function (call) {
             return function (err, result) {
@@ -130,12 +131,12 @@ function service(req, res) {
                 data.time = Date.now();
             }
             var subscriber = subscribers[target_id];
-            if (subscriber) {
+            insertOne('queue', data, subscriber ? function() {
                 for (var cid in subscriber) {
-                    subscriber[cid].send(data);
+                    var o = subscriber[cid];
+                    o.send(data);
                 }
-            }
-            insertOne('queue', data, Function());
+            } : Function());
         },
 
         sendStatus: function (code) {
@@ -218,10 +219,15 @@ function service(req, res) {
             }
 
             if (!$.res.finished) {
-                res.writeHead(code, {
-                    'Content-Type': 'text/json',
-                    'Access-Control-Allow-Origin': '*'
-                });
+                if (2 == arguments.length) {
+                    res.writeHead(code, {
+                        'content-type': 'text/json'
+                        //'Access-Control-Allow-Origin': '*'
+                    });
+                }
+                else {
+                    res.setHeader('content-type', 'text/json');
+                }
                 res.end(JSON.stringify(object));
             }
 
@@ -314,6 +320,13 @@ function service(req, res) {
 
     if (req.cookies.cid && /^[0-9a-z]{24}$/.test(req.cookies.cid)) {
         req.client_id = ObjectID(req.cookies.cid);
+    }
+
+    if (req.cookies.last) {
+        var last = parseInt(req.cookies.last);
+        if (!isNaN(last)) {
+            req.last = new Date(last);
+        }
     }
 
     var since = req.headers['if-modified-since'];
@@ -424,7 +437,7 @@ function process($) {
             $.data.insertOne('client', agent, function (result) {
                 //if (result.insertedCount > 0) {
                 $.req.client_id = agent._id;
-                $.setCookie('cid', agent._id, 1000 * 3600 * 24 * 365 * 10);
+                $.setCookie('cid', agent._id, $.COOKIE_AGE_FOREVER);
                 exec($, action);
                 //}
             });

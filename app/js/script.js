@@ -314,20 +314,20 @@ var server = {
         else {
             body.target_id = target_id;
         }
-        return api('poll', 'POST', body);
+        return new Promise(function(resolve, reject) {
+            api('poll', 'POST', body, resolve).onerror = reject;
+        });
     },
 
     poll: function () {
         if (server._poll && 1 == server._poll.readyState) {
             return;
         }
-        var now = new Date();
         var o = {
             route: 'poll',
-            headers: {
-                'if-modified-since': now.toUTCString()
-            },
             success: function (data) {
+                cookies.set('last', Date.now(), cookies.FOREVER);
+
                 function fire(e) {
                     if (worker) {
                         worker.post(e);
@@ -338,11 +338,14 @@ var server = {
                 }
 
                 if (data) {
-                    if ('queue' == data.type) {
-                        data.queue.forEach(fire);
-                    }
-                    else if (data.type) {
-                        fire(data);
+                    switch (data.type) {
+                        case 'empty':
+                            break;
+                        case 'queue':
+                            data.queue.forEach(fire);
+                            break;
+                        default:
+                            fire(data);
                     }
                 }
                 if (this.status < 400) {
@@ -480,7 +483,6 @@ if (isTopFrame() && window.SharedWorker) {
     worker = new SharedWorker('/js/worker.js');
     worker.addEventListener('error', function (e) {
         console.error(e);
-        worker.close();
         worker = null;
     });
     worker.port.addEventListener('message', function (e) {

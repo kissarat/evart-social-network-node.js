@@ -16,15 +16,15 @@ var isChrome = !!window.chrome && !!window.chrome.webstore;
 var isBlink = (isChrome || isOpera) && !!window.CSS;
 
 var features = [
-    'navigator.getUserMedia',
-    'MediaDevices.getUserMedia',
+    //'navigator.getUserMedia',
+    //'MediaDevices.getUserMedia',
+    //'MediaSource',
+    //'MediaStream',
+    //'RTCPeerConnection',
+    //'RTCSessionDescription',
+    //'RTCIceCandidate',
     'navigator.getBattery',
     'navigator.serviceWorker',
-    'MediaSource',
-    'MediaStream',
-    'RTCPeerConnection',
-    'RTCSessionDescription',
-    'RTCIceCandidate',
     'AudioContext',
     'GestureEvent',
     'PointerEvent',
@@ -421,7 +421,7 @@ function api(route, method, params, success) {
     else {
         o.body = params;
     }
-    query(o);
+    return query(o);
 }
 
 function $button(text, call) {
@@ -477,8 +477,8 @@ var EventEmitter = {
         EventEmitter.init.call(this, name, [call]);
     },
 
-    register: function(events) {
-        for(var name in events) {
+    register: function (events) {
+        for (var name in events) {
             this.on(name, events[name]);
         }
     },
@@ -523,7 +523,7 @@ var EventEmitter = {
     }
 };
 
-EventEmitter.init = function(name, cbs) {
+EventEmitter.init = function (name, cbs) {
     if (!this._events) {
         this._events = this.constructor
         && this.constructor._events
@@ -640,4 +640,49 @@ function inherit(child, parent, proto, descriptor) {
     Object.defineProperties(child.prototype, descriptor);
     child.descriptor = descriptor;
     return child;
+}
+
+function extract(object, keys) {
+    var result = {};
+    keys.forEach(function (key) {
+        if (object[key]) {
+            result[key] = object[key];
+        }
+    });
+    return result;
+}
+
+var cookies = {
+    FOREVER: 1000 * 3600 * 24 * 365 * 10,
+
+    set: function (name, value, age, path) {
+        if (!path) {
+            path = '/';
+        }
+        document.cookie = name + '=' + value + '; path=' + path + '; expires='
+            + new Date(Date.now() + age).toUTCString();
+    },
+
+    get: function (name) {
+        return cookies.all()[name];
+    },
+
+    each: function (cb) {
+        document.cookie.split(';').forEach(function (part) {
+            part = part.split('=');
+            cb(part[0].trim(), part[1].trim());
+        });
+    },
+
+    all: function() {
+        var o = {};
+        cookies.each(function(key, value) {
+            o[key] = value;
+        });
+        return o;
+    }
+};
+
+function inverse(o) {
+    return o.chat_id ? {chat_id: o.chat_id} : {target_id: o.source_id};
 }

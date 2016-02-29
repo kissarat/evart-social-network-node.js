@@ -2,10 +2,7 @@
 
 module.exports = {
     GET: function ($) {
-        if (!$.req.since) {
-            $.sendStatus(400);
-            return;
-        }
+        var last = $.req.last ? $.req.last.getTime() : 0;
         var uid = $.user._id;
         var cid = $.req.client_id;
         var subscriber = $.subscribers[uid];
@@ -19,7 +16,7 @@ module.exports = {
         else {
             $.subscribers[uid] = subscriber = {};
         }
-        $.data.find('queue', {time: {$gt: $.req.since}}, function (events) {
+        $.data.find('queue', {time: {$gt: last}}, function (events) {
             if (events.length > 0) {
                 $.send({
                     type: 'queue',
@@ -30,7 +27,18 @@ module.exports = {
                 subscriber[cid] = $;
                 var close = function () {
                     delete $.subscribers[uid][cid];
+                    clearTimeout($.timeout);
                 };
+                var sendEmpty = function() {
+                    $.send(200, {type: 'empty'});
+                    close();
+                };
+                if (last > 0) {
+                    $.timeout = setTimeout(sendEmpty, 50000);
+                }
+                else {
+                    sendEmpty();
+                }
                 $.req.on('close', close);
                 $.res.on('finish', close);
             }

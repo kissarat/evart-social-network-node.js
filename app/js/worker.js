@@ -16,6 +16,7 @@ function Client(port) {
 
         function poll() {
             var found = null;
+            var client;
             var focus = function () {
                 Client.broadcast({
                     type: 'poll',
@@ -33,7 +34,9 @@ function Client(port) {
                     found = client;
                 }
             }
-            focus();
+            if (client) {
+                focus();
+            }
         }
 
         switch (message.type) {

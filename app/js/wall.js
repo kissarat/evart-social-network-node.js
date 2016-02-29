@@ -181,24 +181,26 @@ ui.wall = function (params) {
     add_attachment_type('/file/index');
 
     if (view.video && 'message' == params.type) {
-        var video = view.video.querySelector('video');
         var phone = phones.findOrCreate(params);
-        phone.addEventListener('addstream', function (e) {
-            video.srcObject = e.stream;
-            video.srcObject.trace();
+        phone.connection.addEventListener('addstream', function (e) {
+            view.remote.srcObject = e.stream;
+            view.remote.srcObject.trace();
         });
         view.on('capture', function (e) {
             var offerConfig = {
                 offerToReceiveAudio: 1,
                 offerToReceiveVideo: 1
             };
-            phone.call(offerConfig);
+
             if (!phone.stream) {
-                navigator.mediaDevices.getUserMedia({audio: true, video: true})
-                    .then(function (stream) {
-                        phone.stream = stream;
-                    });
+                getUserMedia({audio: true, video: true}, function (stream) {
+                    phone.stream = stream;
+                    view.local.srcObject = stream;
+                    phone.connection.addStream(stream);
+                }, _error);
             }
+
+            phone.call(offerConfig);
         });
 
         view.querySelector('[data-action="capture"]').style.cursor = 'pointer';
@@ -247,28 +249,32 @@ var phones = {
 addEventListener('load', function () {
     if (window.Peer) {
         server.register({
-            candidate: function (candidate) {
-                var phone = phones.find(candidate);
+            candidate: function (message) {
+                var phone = phones.find(inverse(message));
                 if (phone) {
-                    candidate = new RTCIceCandidate(candidate);
-                    phone.addIceCandidate(candidate);
+                    var candidate = new RTCIceCandidate({
+                        sdpMLineIndex: message.candidate.sdpMLineIndex,
+                        candidate: message.candidate.candidate
+                    });
+                    phone.connection.addIceCandidate(candidate);
                 }
             },
 
             offer: function (offer) {
-                var phone = phones.findOrCreate(offer);
+                var phone = phones.findOrCreate(inverse(offer));
                 phone.offers.push(offer);
-                new Notify(merge(offer, {
+                new Notify(merge(phone.params, {
+                    type: 'message',
                     title: 'Call',
                     text: 'Call'
                 }));
             },
 
             answer: function (answer) {
-                var phone = phones.find(answer);
+                var phone = phones.find(inverse(answer));
                 if (phone) {
-                    var answer_description = new RTCSessionDescription(answer);
-                    phone.setRemoteDescription(answer_description, morozov, morozov);
+                    var answer_description = new RTCSessionDescription({type: 'answer', sdp: answer.sdp});
+                    phone.connection.setRemoteDescription(answer_description, morozov, morozov);
                 }
             }
         });

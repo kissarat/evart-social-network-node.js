@@ -46,35 +46,31 @@
     iceServerConfig.iceServers.sort(shuffle);
     iceServerConfig.iceServers.unshift({urls: stun});
 
-    MediaStream.prototype.trace = function () {
-        this.getTracks().forEach(function (t) {
-            console.log(JSON.stringify({
-                kind: t.kind,
-                state: t.readyState,
-                muted: t.muted,
-                enabled: t.enabled,
-                label: t.label
-            }));
-        });
-    };
-
-
     function Peer(params) {
-        this.params = params;
+        this.params = extract(params, ['chat_id', 'target_id']);
         this.offers = [];
-        RTCPeerConnection.call(this, iceServerConfig, {
+        this.connection = new RTCPeerConnection(iceServerConfig, {
             optional: [{RtpDataChannels: true}]
+        });
+        var self = this;
+        this.connection.addEventListener('icecandidate', function(e) {
+           if (e.candidate) {
+               server.send(merge(self.params, {
+                   type: 'candidate',
+                   candidate: e.candidate
+               }));
+           }
         });
     }
 
-    inherit(Peer, RTCPeerConnection, {
+    Peer.prototype = {
         offer: function (options) {
             var self = this;
             return new Promise(function (resolve, reject) {
-                this.createOffer(function (offer) {
-                    self.setLocalDescription(offer, function () {
-                        server.send(offer);
-                        resolve();
+                self.connection.createOffer(function (offer) {
+                    self.connection.setLocalDescription(offer, function () {
+                        var message = merge(offer.toJSON(), self.params);
+                        server.send(message).then(resolve, reject);
                     }, reject);
                 }, reject, options);
             });
@@ -83,12 +79,15 @@
         answer: function (offer) {
             var self = this;
             return new Promise(function (resolve, reject) {
-                offer = new RTCSessionDescription(offer);
-                self.setRemoteDescription(offer, function () {
-                    self.createAnswer(function (answer) {
-                        self.setRemoteDescription(answer, resolve, reject)
+                offer = new RTCSessionDescription({type: 'offer', sdp: offer.sdp});
+                self.connection.setRemoteDescription(offer, function () {
+                    self.connection.createAnswer(function (answer) {
+                        self.connection.setLocalDescription(answer, function () {
+                            var message = merge(answer.toJSON(), self.params);
+                            server.send(message).then(resolve, reject);
+                        });
                     });
-                }, reject);
+                })
             });
         },
 
@@ -97,7 +96,7 @@
                 ? this.answer(this.offers.shift())
                 : this.offer(options);
         }
-    });
+    };
 
     extend(Peer, EventEmitter);
 

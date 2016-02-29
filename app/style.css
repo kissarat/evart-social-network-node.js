@@ -338,6 +338,14 @@ nav > *:hover {
 [data-id="video"] video {
     position: absolute;
     background-size: cover;
+}
+
+[data-id="video"] [data-id="local"] {
+    max-width: 180px;
+    z-index: 2;
+}
+
+[data-id="video"] [data-id="remote"] {
     width: inherit;
     height: inherit;
 }
