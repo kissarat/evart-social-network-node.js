@@ -43,6 +43,17 @@ nav {
     padding: 6px 0;
 }
 
+.z nav .fa {
+    display: block;
+}
+
+.z nav .fa:before {
+    display: inline-block;
+    text-align: center;
+    width: 20px;
+    padding-right: 8px;
+}
+
 nav > * {
     padding: 2px 16px 2px 8px;
     border-left: 3px solid transparent;
@@ -62,48 +73,8 @@ nav > *:hover {
     overflow-y: scroll;
 }
 
-#chat > .video {
-    text-align: center;
-    position: relative;
-    min-height: 480px;
-}
-
-#chat > .video > .buttons {
-    left: 200px;
-    top: 10px;
-}
-
-#chat > form {
-    width: inherit;
-}
-
-#chat [data-id="video"] {
-    height: 360px;
-    background: url("/images/rotary.jpg") no-repeat center;
-    background-size: 40%;
-}
-
-[data-id="localVideo"] {
-    left: 0;
-    top: 0;
-    width: 160px;
-    height: 120px;
-}
-
-video.bigger {
-    height: 600px;
-}
-
-#chat .messages {
-    background-color: white;;
-}
-
 [data-id="messages"] {
     min-height: 6em;
-}
-
-#chat textarea {
-    width: 88%;
 }
 
 .table-block {
@@ -124,16 +95,6 @@ video.bigger {
 
 .table-row > div {
     display: table-cell;
-}
-
-.floating {
-    position: absolute;
-    cursor: move;
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Chrome/Safari/Opera */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* IE/Edge */
-    user-select: none;
 }
 
 #emoji {
@@ -358,13 +319,34 @@ video.bigger {
 }
 
 [data-id="video"] {
+    position: relative;
+    vertical-align: middle;
+    color: white;
+    width: 100%;
+    min-height: 240px;
+    height: 100%;
+    overflow: hidden;
+    background-color: black;
+    margin-bottom: 6px;
+}
+
+[data-id="video"] > * {
+    position: absolute;
     text-align: center;
-    vertical-align: top;
 }
 
 [data-id="video"] video {
-    background: url("/images/phone.jpg");
+    position: absolute;
     background-size: cover;
+    width: inherit;
+    height: inherit;
+}
+
+[data-id="video"] .controls {
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1;
 }
 
 [data-id="video"] .controls > * {

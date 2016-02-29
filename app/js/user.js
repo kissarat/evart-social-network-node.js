@@ -12,7 +12,7 @@ ui.user = {
                     if (data.auth) {
                         document.cookie = 'auth=' + data.auth + '; path=/; expires='
                             + (new Date(Date.now() + 6 * 24 * 3600 * 1000).toUTCString());
-                        localStorage.user_id = data._id;
+                        localStorage.user_id = data.id;
                         login();
                     }
                     go('user/index');

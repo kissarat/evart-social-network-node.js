@@ -308,7 +308,12 @@ auth = auth ? auth[1] : null;
 
 var server = {
     send: function (target_id, body) {
-        body.target_id = target_id;
+        if (!body) {
+            body = target_id;
+        }
+        else {
+            body.target_id = target_id;
+        }
         return api('poll', 'POST', body);
     },
 
@@ -352,7 +357,7 @@ var server = {
             }
         };
 
-        if (battery) {
+        if (window.battery) {
             var batteryInfo = {
                 c: battery.charging,
                 l: battery.level
@@ -429,7 +434,7 @@ function stream() {
 
 function Notify(comment) {
     var user = comment.user;
-    var title = user.surname + ' ' + user.forename;
+    var title = user ? (user.surname + ' ' + user.forename) : comment.title;
     var self = this;
     var options = {
         body: comment.text
@@ -485,7 +490,6 @@ if (isTopFrame() && window.SharedWorker) {
             switch (message.type) {
                 case 'poll':
                     server.poll();
-                    console.log(e.data);
                     break;
             }
         }

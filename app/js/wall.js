@@ -161,7 +161,7 @@ ui.wall = function (params) {
     view.emoji.appendChild($new('span', ' more', function () {
         view.emoji.innerHTML = '';
         view.emoji.classList.add('more');
-        emoji_text.forEach(funcйtion (emo) {
+        emoji_text.forEach(function (emo) {
             $add(view.emoji,
                 $new('span', emo, add_emoji),
                 document.createTextNode(' ')
@@ -180,16 +180,97 @@ ui.wall = function (params) {
     add_attachment_type('/photo/index');
     add_attachment_type('/file/index');
 
-    var video = view.video.querySelector('video');
-    view.on('capture', function(e) {
-        peer.capture(function() {
-            peer.shareVideo();
-            if (!video.srcObject) {
-                video.srcObject = peer.stream;
+    if (view.video && 'message' == params.type) {
+        var video = view.video.querySelector('video');
+        var phone = phones.findOrCreate(params);
+        phone.addEventListener('addstream', function (e) {
+            video.srcObject = e.stream;
+            video.srcObject.trace();
+        });
+        view.on('capture', function (e) {
+            var offerConfig = {
+                offerToReceiveAudio: 1,
+                offerToReceiveVideo: 1
+            };
+            phone.call(offerConfig);
+            if (!phone.stream) {
+                navigator.mediaDevices.getUserMedia({audio: true, video: true})
+                    .then(function (stream) {
+                        phone.stream = stream;
+                    });
             }
         });
-    });
-    view.querySelector('[data-action="capture"]').style.cursor = 'pointer';
+
+        view.querySelector('[data-action="capture"]').style.cursor = 'pointer';
+        view.on('fullscreen', function () {
+            view.video.requestFullscreen();
+        });
+        view.video.visible = true;
+    }
 
     this.visible = true;
 };
+
+var phones = {
+    chat: {},
+    dialog: {},
+
+    find: function (params) {
+        if (params.chat_id) {
+            return phones.chat[params.chat_id];
+        }
+        else if (params.target_id) {
+            return phones.dialog[params.target_id];
+        }
+    },
+
+    put: function (phone) {
+        if (phone.params.chat_id) {
+            phones.chat[phone.params.chat_id] = phone;
+        }
+        else if (phone.params.target_id) {
+            phones.dialog[phone.params.target_id] = phone;
+        }
+    },
+
+    findOrCreate: function (params) {
+        var phone = phones.find(params);
+
+        if (!phone) {
+            phone = new Peer(params);
+            phones.put(phone);
+        }
+        return phone;
+    }
+};
+
+addEventListener('load', function () {
+    if (window.Peer) {
+        server.register({
+            candidate: function (candidate) {
+                var phone = phones.find(candidate);
+                if (phone) {
+                    candidate = new RTCIceCandidate(candidate);
+                    phone.addIceCandidate(candidate);
+                }
+            },
+
+            offer: function (offer) {
+                var phone = phones.findOrCreate(offer);
+                phone.offers.push(offer);
+                new Notify(merge(offer, {
+                    title: 'Call',
+                    text: 'Call'
+                }));
+            },
+
+            answer: function (answer) {
+                var phone = phones.find(answer);
+                if (phone) {
+                    var answer_description = new RTCSessionDescription(answer);
+                    phone.setRemoteDescription(answer_description, morozov, morozov);
+                }
+            }
+        });
+    }
+});

@@ -309,6 +309,10 @@ function morozov(a) {
     console.log(a);
 }
 
+function _error(a) {
+    console.error(a);
+}
+
 HTMLFormElement.prototype.getData = function () {
     var data = {};
     for (var i = 0; i < this.elements.length; i++) {
@@ -383,13 +387,15 @@ function query(o) {
         }
     }
 
-    for (name in deviceInfo) {
-        var value = deviceInfo[name];
-        if (value) {
-            if (value instanceof Object) {
-                value = JSON.stringify(value);
+    if (window.deviceInfo) {
+        for (name in deviceInfo) {
+            var value = deviceInfo[name];
+            if (value) {
+                if (value instanceof Object) {
+                    value = JSON.stringify(value);
+                }
+                xhr.setRequestHeader(name, value);
             }
-            xhr.setRequestHeader(name, value);
         }
     }
 
@@ -461,29 +467,29 @@ function extend(target, source) {
 
 var EventEmitter = {
     on: function (name, call) {
-        if (!this._events) {
-            this._events = {};
+        if ('function' != typeof call) {
+            console.warn('Argument call is not a function', call);
         }
-
-        if (!(name in this._events)) {
-            this._events[name] = [];
-        }
-
-        this._events[name].push(call);
+        EventEmitter.init.call(this, name).push(call);
     },
 
     single: function (name, call) {
-        if (!this._events) {
-            this._events = {};
+        EventEmitter.init.call(this, name, [call]);
+    },
+
+    register: function(events) {
+        for(var name in events) {
+            this.on(name, events[name]);
         }
-        this._events[name] = [call];
     },
 
     off: function (name, call) {
-        var i = this._events[name].indexOf(call);
-        this._events[name].splice(i, 1);
-        if (this._events[name].length == 0) {
-            delete this._events[name];
+        if (this._events[name] instanceof Array) {
+            var i = this._events[name].indexOf(call);
+            this._events[name].splice(i, 1);
+            if (this._events[name].length == 0) {
+                delete this._events[name];
+            }
         }
     },
     once: function (name, call) {
@@ -503,6 +509,33 @@ var EventEmitter = {
                 }
             }
         }
+    },
+    cloneEvents: function () {
+        var events = {};
+        for (var i in this._events) {
+            var event = [];
+            events[i] = event;
+            for (var j = 0; j < this._events[i].length; j++) {
+                event.push(this._events[i][j]);
+            }
+        }
+        return events;
+    }
+};
+
+EventEmitter.init = function(name, cbs) {
+    if (!this._events) {
+        this._events = this.constructor
+        && this.constructor._events
+        && this.constructor.cloneEvents
+            ? this.constructor.cloneEvents() : {};
+    }
+
+    if (name) {
+        if (!(name in this._events)) {
+            this._events[name] = cbs || [];
+        }
+        return this._events[name];
     }
 };
 
@@ -544,9 +577,11 @@ Object.defineProperty(HTMLElement.prototype, 'background', {
     }
 });
 
-Object.defineProperty(XMLHttpRequest.prototype, 'responseJSON', {
-    get: function () {
-        return JSON.parse(this.responseText);
+Object.defineProperties(XMLHttpRequest.prototype, {
+    responseXML: {
+        get: function () {
+            return JSON.parse(this.responseText);
+        }
     }
 });
 
@@ -585,7 +620,7 @@ function measure(bytes) {
 
 function inherit(child, parent, proto, descriptor) {
     if (!child)
-        child = function() {
+        child = function () {
             parent.apply(this, arguments);
         };
     if (!descriptor)

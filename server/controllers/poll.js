@@ -38,27 +38,27 @@ module.exports = {
     },
 
     POST: function ($) {
-        var data = _.body;
+        var data = $.body;
         data.source_id = $.user._id;
         if (!data.time) {
             data.time = Date.now();
         }
-        if ('chat_id' in _.params) {
-            _.db.collection('chat').findOne({_id: _.params.chat_id}, _.wrap(function (result) {
+        if ('chat_id' in $.params) {
+            $.db.collection('chat').findOne({_id: $.params.chat_id}, $.wrap(function (result) {
                 if (result) {
                     result.members.forEach(function (member) {
-                        _.notify(member, data);
+                        $.notify(member, data);
                     });
-                    _.res.end();
+                    $.res.end();
                 }
                 else {
-                    _.sendStatus(404);
+                    $.sendStatus(404);
                 }
             }));
         }
         else {
-            _.notify($('target_id'), data);
-            _.res.end();
+            $.notify($('target_id'), data);
+            $.res.end();
         }
     }
 };
