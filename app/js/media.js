@@ -53,14 +53,38 @@
             optional: [{RtpDataChannels: true}]
         });
         var self = this;
-        this.connection.addEventListener('icecandidate', function(e) {
+        var c = this.connection;
+        if (DEBUG) {
+            c.addEventListener('iceconnectionstatechange', _debug);
+            c.addEventListener('identityresult', _debug);
+            c.addEventListener('idpassertionerror', _error);
+            c.addEventListener('idpvalidationerror', _error);
+            c.addEventListener('negotiationneeded', _debug);
+            c.addEventListener('peeridentity', _debug);
+            c.addEventListener('signalingstatechange', _debug);
+            DEBUG.peer = this;
+        }
+
+        //this._candidates = [];
+
+        c.addEventListener('icecandidate', function(e) {
            if (e.candidate) {
+               _debug('Peer.candidate', e.candidate);
                server.send(merge(self.params, {
                    type: 'candidate',
                    candidate: e.candidate
                }));
            }
         });
+
+        //c.addEventListener('signalingstatechange', function(e) {
+        //    if ('stable' == e.target.signalingState) {
+        //        c._candidates.forEach(function(candidate) {
+        //            e.target.addIceCandidate(candidate);
+        //        });
+        //        c._candidates = [];
+        //    }
+        //});
     }
 
     Peer.prototype = {
@@ -68,6 +92,7 @@
             var self = this;
             return new Promise(function (resolve, reject) {
                 self.connection.createOffer(function (offer) {
+                    _debug('Peer.offer', offer);
                     self.connection.setLocalDescription(offer, function () {
                         var message = merge(offer.toJSON(), self.params);
                         server.send(message).then(resolve, reject);
@@ -82,6 +107,7 @@
                 offer = new RTCSessionDescription({type: 'offer', sdp: offer.sdp});
                 self.connection.setRemoteDescription(offer, function () {
                     self.connection.createAnswer(function (answer) {
+                        _debug('Peer.answer', offer, answer);
                         self.connection.setLocalDescription(answer, function () {
                             var message = merge(answer.toJSON(), self.params);
                             server.send(message).then(resolve, reject);

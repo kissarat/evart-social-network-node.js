@@ -43,7 +43,7 @@ inherit(Entity, EventEmitter, {
             });
         }
         else {
-            api('like', 'DELETE', params, function(data) {
+            api('like', 'DELETE', params, function (data) {
                 if (data.nModified > 0) {
                     self.likes.splice(self.likes.indexOf(i), 1);
                     self.fire('like', data);
@@ -52,7 +52,7 @@ inherit(Entity, EventEmitter, {
         }
     },
 
-    handler: function(name) {
+    handler: function (name) {
         var self = this;
         var args = array(arguments).slice(1);
         return function () {
@@ -70,19 +70,73 @@ inherit(Entity, EventEmitter, {
 });
 
 
-function Comment() {}
+function Comment() {
+}
 
-Comment.resolve = function(object) {
+Comment.resolve = function (object) {
     return Entity.resolve('Comment', object)
 };
 
 inherit(Comment, Entity);
 
 
-function User() {}
+function User(object) {
+    Entity.call(this, config, object);
+}
 
 inherit(User, Entity, {
     get name() {
-        return this.surname + ' ' + this.forename;
+        return this.forename + ' ' + this.surname;
+    }
+});
+
+extend(User, {
+    _cache: {},
+
+    resolve: function (object) {
+        return Entity.resolve('User', object)
+    },
+
+    find: function (ids, call) {
+        if (!(ids instanceof Array)) {
+            ids = [ids];
+        }
+        var not_found = [];
+        for (var i = 0; i < ids.length; i++) {
+            var id = ids[i];
+            if (id && !(id in User._cache)) {
+                not_found.push(id);
+            }
+        }
+        if (not_found.length > 0) {
+            api('user/many', 'GET', {ids: not_found.join('.')}, function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    var user = data[i];
+                    User._cache[user._id] = new User(user);
+                }
+                call(User._cache);
+            });
+        }
+        else {
+            call(User._cache);
+        }
+    },
+
+    findOne: function (id, call) {
+        User.find(id, function (users) {
+            call(users[id]);
+        });
+    },
+
+    loadOne: function (id, cb) {
+        api('user/view', 'GET', {id: id}, cb);
+    },
+    loadMe: function (call) {
+        User.loadOne(localStorage.user_id, function (data) {
+            me = data;
+            if (call) {
+                call();
+            }
+        });
     }
 });

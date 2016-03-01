@@ -35,6 +35,8 @@ var features = [
     'WebSocket',
     'Element.prototype.requestPointerLock',
     'Element.prototype.requestFullscreen',
+    'Element.prototype.fullscreenEnabled',
+    'document.cancelFullScreen',
     'Element.prototype.matchesSelector',
     'sessionStorage',
     'localStorage',
@@ -50,6 +52,8 @@ var features = [
     'requestFileSystem',
     'SpeechRecognition'
 ];
+
+var DEBUG = '1' === localStorage.debug ? {} : false;
 
 var prefix = '';
 
@@ -306,11 +310,34 @@ Object.defineProperty(Element.prototype, 'visible', {
 });
 
 function morozov(a) {
-    console.log(a);
+    if (arguments.length > 1) {
+        console.log.apply(console, arguments);
+    }
+    else {
+        console.log(a);
+    }
 }
 
 function _error(a) {
-    console.error(a);
+    if (DEBUG) {
+        if (a instanceof Event) {
+            console.log(a.type, a);
+        }
+        else {
+            console.error.apply(console, arguments);
+        }
+    }
+}
+
+function _debug(a) {
+    if (DEBUG) {
+        if (a instanceof Event) {
+            console.log(a.type, a);
+        }
+        else {
+            console.log.apply(console, arguments);
+        }
+    }
 }
 
 HTMLFormElement.prototype.getData = function () {

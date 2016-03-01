@@ -70,6 +70,23 @@ function append_content(route, params, push) {
             view = view.cloneNode(true);
             view.visible = false;
             content.appendChild(view);
+            Object.defineProperties(view, {
+                title: {
+                    set: function(value) {
+                        var content_container = $$('.root .col-sm-10');
+                        if (!content_container) {
+                            return console.error('Container not found');
+                        }
+                        var h1 = content_container.querySelector('h1');
+                        if (!h1) {
+                            h1 = $new('h1');
+                            content_container.prependChild(h1);
+                        }
+                        h1.innerHTML = value;
+                        document.title = value ? value : 'Socex';
+                    }
+                }
+            });
             each(view.querySelectorAll('[data-id]'), function (el) {
                 view[el.dataset.id] = el;
             });
@@ -79,10 +96,16 @@ function append_content(route, params, push) {
                         el.addEventListener('click', command[action].bind(view));
                     }
                 }
-                el.setAttribute('type', 'button');
                 el.addEventListener('click', function (e) {
                     view.fire(this.dataset.action, e);
                 });
+
+                if ('BUTTON' == el.tagName) {
+                    el.setAttribute('type', 'button');
+                }
+                else {
+                    el.style.cursor = 'pointer';
+                }
             });
             view.templates = {};
             each(view.querySelectorAll('[data-widget]'), function (widget) {
@@ -131,7 +154,19 @@ function append_content(route, params, push) {
             view = window;
         }
 
-        action.call(view, params);
+        view.title = null;
+
+        if (!empty(params)) {
+            _url = route + '?' + $.param(params);
+        }
+
+        if (action && action.call) {
+            action.call(view, params);
+        }
+        else {
+            inform('danger', 'Wrong action: ' + _url);
+            return;
+        }
 
         if (true === push) {
             location.route = parts;
@@ -146,9 +181,8 @@ function append_content(route, params, push) {
             var state = {_: route};
             if (!empty(params)) {
                 state.params = params;
-                _url = state._ + '?' + $.param(params);
             }
-            console.log(_url);
+            _debug(_url);
             history.pushState(state, document.title, '/' + _url);
         }
 
@@ -232,55 +266,6 @@ var ui = {
 };
 
 extend(ui, EventEmitter);
-
-var User = {
-    //_cache: localStorage.users ? keyed(JSON.parse(localStorage.users)) : {},
-    _cache: {},
-
-    find: function (ids, call) {
-        if (!(ids instanceof Array)) {
-            ids = [ids];
-        }
-        var not_found = [];
-        for (var i = 0; i < ids.length; i++) {
-            var id = ids[i];
-            if (id && !(id in User._cache)) {
-                not_found.push(id);
-            }
-        }
-        if (not_found.length > 0) {
-            api('user/many', 'GET', {ids: not_found.join('.')}, function (data) {
-                for (var i = 0; i < data.length; i++) {
-                    var user = data[i];
-                    User._cache[user._id] = user;
-                }
-                call(User._cache);
-            });
-        }
-        else {
-            call(User._cache);
-        }
-    },
-
-    findOne: function (id, call) {
-        User.find(id, function (users) {
-            call(users[id]);
-        });
-    },
-
-    loadOne: function (id, cb) {
-        api('user/view', 'GET', {id: id}, cb);
-    },
-
-    loadMe: function (call) {
-        User.loadOne(localStorage.user_id, function (data) {
-            me = data;
-            if (call) {
-                call();
-            }
-        });
-    }
-};
 
 var Message = {
     getUserIds: function (messages) {

@@ -180,34 +180,70 @@ ui.wall = function (params) {
     add_attachment_type('/photo/index');
     add_attachment_type('/file/index');
 
-    if (view.video && 'message' == params.type) {
-        var phone = phones.findOrCreate(params);
-        phone.connection.addEventListener('addstream', function (e) {
-            view.remote.srcObject = e.stream;
-            view.remote.srcObject.trace();
-        });
-        view.on('capture', function (e) {
-            var offerConfig = {
-                offerToReceiveAudio: 1,
-                offerToReceiveVideo: 1
-            };
+    if ('message' == params.type) {
+        if (view.video) {
+            var phone = phones.findOrCreate(params);
+            phone.connection.addEventListener('addstream', function (e) {
+                view.remote.srcObject = e.stream;
+                view.remote.srcObject.trace();
+            });
 
-            if (!phone.stream) {
+            view.on('call', function () {
+                phone.call({
+                    offerToReceiveAudio: 1,
+                    offerToReceiveVideo: 1
+                });
+            });
+
+            view.on('capture', function () {
                 getUserMedia({audio: true, video: true}, function (stream) {
                     phone.stream = stream;
                     view.local.srcObject = stream;
                     phone.connection.addStream(stream);
                 }, _error);
-            }
+            });
 
-            phone.call(offerConfig);
-        });
+            view.on('fullscreen', function () {
+                if (isFullscreen()) {
+                    document.cancelFullScreen();
+                }
+                else {
+                    view.video.requestFullscreen();
+                }
+            });
 
-        view.querySelector('[data-action="capture"]').style.cursor = 'pointer';
-        view.on('fullscreen', function () {
-            view.video.requestFullscreen();
-        });
-        view.video.visible = true;
+            view.volume.value = view.remote.volume * 10;
+            view.volume.addEventListener('change', function (e) {
+                view.remote.volume = e.target.value / 10;
+            });
+
+            view.on('mute', function (e) {
+                view.remote.muted = !view.remote.muted;
+                if (view.remote.muted) {
+                    e.target.classList.remove('fa-volume-up');
+                    e.target.classList.add('fa-volume-off');
+                }
+                else {
+                    e.target.classList.add('fa-volume-up');
+                    e.target.classList.remove('fa-volume-off');
+                }
+            });
+
+            view.video.visible = true;
+        }
+
+        if (params.chat_id) {
+            document.title = params.chat_id;
+        }
+        else {
+            var ids = [localStorage.user_id, params.target_id];
+            User.find(ids, function(users) {
+                var names = ids.map(function(id) {
+                    return users[id].name;
+                });
+                view.title = names.join(' <span class="fa fa-circle-o-notch"></span> ');
+            });
+        }
     }
 
     this.visible = true;
@@ -250,19 +286,23 @@ addEventListener('load', function () {
     if (window.Peer) {
         server.register({
             candidate: function (message) {
+                console.log('server.candidate', message.candidate);
                 var phone = phones.find(inverse(message));
                 if (phone) {
-                    var candidate = new RTCIceCandidate({
-                        sdpMLineIndex: message.candidate.sdpMLineIndex,
-                        candidate: message.candidate.candidate
-                    });
-                    phone.connection.addIceCandidate(candidate);
+                    var candidate = new RTCIceCandidate(message.candidate);
+                    //if ('stable' == phone.connection.signalingState) {
+                        phone.connection.addIceCandidate(candidate);
+                    //}
+                    //else {
+                    //    phone._candidates.push(candidate);
+                    //}
                 }
             },
 
             offer: function (offer) {
+                console.log('server.offer', offer);
                 var phone = phones.findOrCreate(inverse(offer));
-                phone.offers.push(offer);
+                phone.offers.push({type: 'offer', sdp: offer.sdp});
                 new Notify(merge(phone.params, {
                     type: 'message',
                     title: 'Call',
@@ -271,6 +311,7 @@ addEventListener('load', function () {
             },
 
             answer: function (answer) {
+                console.log('server.answer', answer);
                 var phone = phones.find(inverse(answer));
                 if (phone) {
                     var answer_description = new RTCSessionDescription({type: 'answer', sdp: answer.sdp});

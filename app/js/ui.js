@@ -150,17 +150,17 @@ function Frame() {
     this.tag.querySelector('.fa-close').addEventListener('click', this.close);
     this.close();
 
-    this.iframe.addEventListener('load', function() {
+    this.iframe.addEventListener('load', function () {
         self.fire('load');
         self.tag.visible = true;
     });
-    window.addEventListener('message', function(e) {
+    window.addEventListener('message', function (e) {
         self.fire(e.data.type, e.data);
     });
 }
 
 Frame.prototype = {
-    close: function() {
+    close: function () {
         this.tag.visible = true;
         this.tag.remove();
     },
@@ -191,4 +191,23 @@ var emoji = $$('#lib #wall .emoji');
 for (var i = 0; i < 55; i++) {
     var char = String.fromCodePoint(0xd83d, 0xde00 + i);
     emoji.appendChild($new('span', char));
+}
+
+function inform(o, text) {
+    if (text) {
+        o = {
+            type: o,
+            text: text
+        };
+    }
+    if (!o.type) {
+        o.type = 'info';
+    }
+    var button = $add($new('button', {type: 'button', class: 'close', 'data-dismiss': 'alert', 'aria-label': 'Close'}),
+        $new('span', {'aria-hidden': true}, '&times;'));
+    var informer = $add($new('div', {class: 'alert alert-dismissible fade in alert-' + o.type, type: 'alert'}),
+        button,
+        document.createTextNode(o.text)
+    );
+    $$('.alerts').appendChild(informer);
 }

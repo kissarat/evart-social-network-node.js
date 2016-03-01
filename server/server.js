@@ -5,16 +5,17 @@ var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var fs = require('fs');
-var schema = require('../app/schema.json');
+var schema = require(__dirname + '/../app/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var querystring_parse = require('querystring').parse;
-var controllers_dir = fs.readdirSync('controllers');
+var controllers_dir = fs.readdirSync(__dirname + '/controllers');
 var controllers = {};
+
 controllers_dir.forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
     if (match) {
-        controllers[match[1]] = require('./controllers/' + match[0]);
+        controllers[match[1]] = require(__dirname + '/controllers/' + match[0]);
     }
 });
 

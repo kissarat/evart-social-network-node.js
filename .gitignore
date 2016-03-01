@@ -6,6 +6,7 @@ app/file
 app/video
 app/photo
 app/images
+app/examples/
 static/
 server/nginx/logs/
 server/mongodb/data/
