@@ -54,6 +54,18 @@ var features = [
 ];
 
 var DEBUG = '1' === localStorage.debug ? {} : false;
+if (DEBUG) {
+    DEBUG.events = [];
+    DEBUG.list_events = function() {
+        return DEBUG.events.map(function(a) { return a[0] });
+    }
+}
+
+function _log_event() {
+    if (DEBUG) {
+        DEBUG.events.push(arguments);
+    }
+}
 
 var prefix = '';
 

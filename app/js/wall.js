@@ -184,8 +184,8 @@ ui.wall = function (params) {
         if (view.video) {
             var phone = phones.findOrCreate(params);
             phone.connection.addEventListener('addstream', function (e) {
+                _log_event('stream', e.stream);
                 view.remote.srcObject = e.stream;
-                view.remote.srcObject.trace();
             });
 
             view.on('call', function () {
@@ -286,21 +286,23 @@ addEventListener('load', function () {
     if (window.Peer) {
         server.register({
             candidate: function (message) {
-                console.log('server.candidate', message.candidate);
+                _log_event('candidate', message);
                 var phone = phones.find(inverse(message));
                 if (phone) {
-                    var candidate = new RTCIceCandidate(message.candidate);
-                    //if ('stable' == phone.connection.signalingState) {
+                    try {
+                        phone.candidates_count++;
+                        var candidate = new RTCIceCandidate(message.candidate);
                         phone.connection.addIceCandidate(candidate);
-                    //}
-                    //else {
-                    //    phone._candidates.push(candidate);
-                    //}
+                        phone.candidates.push(candidate);
+                    }
+                    catch (ex) {
+                        _error(ex);
+                    }
                 }
             },
 
             offer: function (offer) {
-                console.log('server.offer', offer);
+                _log_event('offer', offer);
                 var phone = phones.findOrCreate(inverse(offer));
                 phone.offers.push({type: 'offer', sdp: offer.sdp});
                 new Notify(merge(phone.params, {
@@ -311,7 +313,7 @@ addEventListener('load', function () {
             },
 
             answer: function (answer) {
-                console.log('server.answer', answer);
+                _log_event('answer', answer);
                 var phone = phones.find(inverse(answer));
                 if (phone) {
                     var answer_description = new RTCSessionDescription({type: 'answer', sdp: answer.sdp});

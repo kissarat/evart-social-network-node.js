@@ -55,21 +55,25 @@
         var self = this;
         var c = this.connection;
         if (DEBUG) {
-            c.addEventListener('iceconnectionstatechange', _debug);
             c.addEventListener('identityresult', _debug);
             c.addEventListener('idpassertionerror', _error);
             c.addEventListener('idpvalidationerror', _error);
             c.addEventListener('negotiationneeded', _debug);
             c.addEventListener('peeridentity', _debug);
-            c.addEventListener('signalingstatechange', _debug);
+            c.addEventListener('iceconnectionstatechange', function(e) {
+                console.log('# connection: ' + e.target.iceConnectionState);
+            });
+            c.addEventListener('signalingstatechange', function(e) {
+                console.log('# singnal: ' + e.target.signalingState);
+            });
             DEBUG.peer = this;
         }
 
-        //this._candidates = [];
+        this.candidates_count = 0;
+        this.candidates = [];
 
         c.addEventListener('icecandidate', function(e) {
            if (e.candidate) {
-               _debug('Peer.candidate', e.candidate);
                server.send(merge(self.params, {
                    type: 'candidate',
                    candidate: e.candidate

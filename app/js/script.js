@@ -83,7 +83,7 @@ function append_content(route, params, push) {
                             content_container.prependChild(h1);
                         }
                         h1.innerHTML = value;
-                        document.title = value ? value : 'Socex';
+                        document.title = value ? value.replace(/<.*>/g, '-') : 'Socex';
                     }
                 }
             });
@@ -311,9 +311,8 @@ var server = {
         var o = {
             route: 'poll',
             success: function (data) {
-                cookies.set('last', Date.now(), cookies.FOREVER);
-
                 function fire(e) {
+                    cookies.set('last', Math.max(e.time, cookies.get('last')), cookies.FOREVER);
                     if (worker) {
                         worker.post(e);
                     }
