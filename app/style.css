@@ -599,3 +599,7 @@ input:focus, textarea:focus {
     -ms-user-select: none;       /* IE/Edge */
     user-select: none;
 }
+
+.loading {
+    background: url("/images/loading.gif") no-repeat center white;
+}

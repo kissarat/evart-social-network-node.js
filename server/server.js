@@ -132,12 +132,18 @@ function service(req, res) {
                 data.time = Date.now();
             }
             var subscriber = subscribers[target_id];
-            insertOne('queue', data, subscriber ? function() {
+            var sendSubscribers = subscriber ? function() {
                 for (var cid in subscriber) {
                     var o = subscriber[cid];
                     o.send(data);
                 }
-            } : Function());
+            } : Function();
+            if (Number.isFinite(data.end) && data.end < data.time) {
+                sendSubscribers();
+            }
+            else {
+                insertOne('queue', data, sendSubscribers);
+            }
         },
 
         sendStatus: function (code) {
@@ -235,13 +241,15 @@ function service(req, res) {
             if ('GET' != req.method || ('poll' == req.url.route[0] && code < 400)) {
                 var record = {
                     client_id: req.client_id,
-                    user_id: $.user._id,
                     route: req.url.route.length > 1 ? req.url.route : req.url.route[0],
                     method: req.method,
                     code: code,
                     result: object.result,
                     time: Date.now()
                 };
+                if ($.user) {
+                    record.user_id = $.user._id;
+                }
                 for (var i in req.url.query) {
                     record.params = req.url.query;
                     break;

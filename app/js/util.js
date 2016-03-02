@@ -35,7 +35,7 @@ var features = [
     'WebSocket',
     'Element.prototype.requestPointerLock',
     'Element.prototype.requestFullscreen',
-    'Element.prototype.fullscreenEnabled',
+    'document.fullScreenElement',
     'document.cancelFullScreen',
     'Element.prototype.matchesSelector',
     'sessionStorage',
@@ -116,10 +116,7 @@ function isTopFrame() {
 }
 
 function isFullscreen() {
-    return (0 == screenLeft)
-        && (0 == screenTop);
-    //&& (screen.width == innerWidth)
-    //&& (screen.height == innerHeight);
+    return !!document.fullScreenElement;
 }
 
 function unsafe_uid() {
@@ -307,16 +304,27 @@ function fake() {
     });
 }
 
-Object.defineProperty(Element.prototype, 'visible', {
-    get: function () {
-        return 'none' != this.style.display
+Object.defineProperties(Element.prototype, {
+    click: {
+        value: function() {
+            var event = new MouseEvent('click');
+            this.dispatchEvent(event);
+        },
+        writable: false,
+        enumerable: false
     },
-    set: function (value) {
-        if (value) {
-            this.style.removeProperty('display');
-        }
-        else {
-            this.style.display = 'none';
+
+    visible: {
+        get: function () {
+            return 'none' != this.style.display
+        },
+        set: function (value) {
+            if (value) {
+                this.style.removeProperty('display');
+            }
+            else {
+                this.style.display = 'none';
+            }
         }
     }
 });
@@ -709,7 +717,9 @@ var cookies = {
     each: function (cb) {
         document.cookie.split(';').forEach(function (part) {
             part = part.split('=');
-            cb(part[0].trim(), part[1].trim());
+            if (part.length > 1) {
+                cb(part[0].trim(), part[1].trim());
+            }
         });
     },
 

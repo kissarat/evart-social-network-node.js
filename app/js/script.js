@@ -72,7 +72,7 @@ function append_content(route, params, push) {
             content.appendChild(view);
             Object.defineProperties(view, {
                 title: {
-                    set: function(value) {
+                    set: function (value) {
                         var content_container = $$('.root .col-sm-10');
                         if (!content_container) {
                             return console.error('Container not found');
@@ -106,6 +106,7 @@ function append_content(route, params, push) {
                 else {
                     el.style.cursor = 'pointer';
                 }
+                view[el.dataset.action] = el;
             });
             view.templates = {};
             each(view.querySelectorAll('[data-widget]'), function (widget) {
@@ -204,7 +205,7 @@ function append_content(route, params, push) {
 function go(route, params) {
     content.innerHTML = '';
     hook = {};
-    return append_content(route, params, true).then(function(view) {
+    return append_content(route, params, true).then(function (view) {
         window.fire('go', view);
         sendParentWindow({type: 'go'});
     })
@@ -299,7 +300,8 @@ var server = {
         else {
             body.target_id = target_id;
         }
-        return new Promise(function(resolve, reject) {
+        body.end = 0;
+        return new Promise(function (resolve, reject) {
             api('poll', 'POST', body, resolve).onerror = reject;
         });
     },
@@ -312,7 +314,12 @@ var server = {
             route: 'poll',
             success: function (data) {
                 function fire(e) {
-                    cookies.set('last', Math.max(e.time, cookies.get('last')), cookies.FOREVER);
+                    var last = cookies.get('last');
+                    last = parseInt(last);
+                    if (!isFinite(last)) {
+                        last = 0;
+                    }
+                    cookies.set('last', Math.max(e.time, last), cookies.FOREVER);
                     if (worker) {
                         worker.post(e);
                     }
@@ -337,6 +344,9 @@ var server = {
                 }
                 else if (401 == this.status) {
                     server.on('login', schedule_poll);
+                }
+                else if (502 == this.status) {
+                    schedule_poll(data ? data.delay : undefined);
                 }
                 else {
                     schedule_poll();
@@ -429,7 +439,7 @@ function Notify(comment) {
     if (isFirefox) {
         options.sticky = true;
     }
-    if (!window.Notification) {
+    if (!window.Notification || '0' == localStorage.notify) {
         return;
     }
     var n = new Notification(title, options);
@@ -437,7 +447,7 @@ function Notify(comment) {
         var message = {
             type: comment.type
         };
-        ['chat_id', 'owner_id', 'target_id'].forEach(function(field) {
+        ['chat_id', 'owner_id', 'target_id'].forEach(function (field) {
             if (comment[field]) {
                 message[field] = comment[field];
                 return false;
@@ -527,14 +537,17 @@ if (isTopFrame() && window.SharedWorker) {
     }
 }
 
-function schedule_poll() {
+function schedule_poll(delay) {
     var f = server.poll;
     if (worker) {
         f = function () {
             worker.post('poll');
         };
     }
-    setTimeout(f, 'visible' == document.visibilityState
-        ? config.delay.active : config.delay.passive);
+    if (!delay) {
+        delay = 'visible' == document.visibilityState
+            ? config.delay.active : config.delay.passive;
+    }
+    setTimeout(f, delay);
     server._poll = null;
 }

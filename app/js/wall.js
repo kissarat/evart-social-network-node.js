@@ -188,6 +188,29 @@ ui.wall = function (params) {
                 view.remote.srcObject = e.stream;
             });
 
+            phone.connection.addEventListener('removestream', function () {
+                if (view.remote.srcObject) {
+                    each(view.remote.srcObject.getTracks(), function(track) {
+                        track.stop();
+                    });
+                    view.remote.srcObject = null;
+                }
+                inform('info', 'Call end');
+            });
+
+            phone.connection.addEventListener('iceconnectionstatechange', function(e) {
+                switch (e.target.iceConnectionState) {
+                    case 'closed':
+                    case 'disconnected':
+                        inform('warning', 'Disconnected');
+                        break;
+
+                    case 'failed':
+                        inform('warning', 'Connection failed');
+                        break;
+                }
+            });
+
             view.on('call', function () {
                 phone.call({
                     offerToReceiveAudio: 1,
@@ -195,12 +218,25 @@ ui.wall = function (params) {
                 });
             });
 
-            view.on('capture', function () {
-                getUserMedia({audio: true, video: true}, function (stream) {
-                    phone.stream = stream;
-                    view.local.srcObject = stream;
-                    phone.connection.addStream(stream);
-                }, _error);
+            view.on('capture', function (e) {
+                if (phone.stream) {
+                    phone.connection.removeStream(phone.stream);
+                    each(phone.stream.getTracks(), function(track) {
+                        track.stop();
+                    });
+                    //view.local.pause();
+                    phone.stream = null;
+                    view.local.classList.remove('loading');
+                }
+                else {
+                    view.local.classList.add('loading');
+                    getUserMedia({audio: true, video: true}, function (stream) {
+                        phone.stream = stream;
+                        view.local.muted = true;
+                        view.local.srcObject = stream;
+                        phone.connection.addStream(stream);
+                    }, _error);
+                }
             });
 
             view.on('fullscreen', function () {
@@ -219,6 +255,7 @@ ui.wall = function (params) {
 
             view.on('mute', function (e) {
                 view.remote.muted = !view.remote.muted;
+                localStorage.muted = view.remote.muted ? 1 : 0;
                 if (view.remote.muted) {
                     e.target.classList.remove('fa-volume-up');
                     e.target.classList.add('fa-volume-off');
@@ -229,6 +266,15 @@ ui.wall = function (params) {
                 }
             });
 
+            view.on('refresh', function() {
+                phone.reconnect();
+            });
+
+            if ('1' == localStorage.muted) {
+                view.mute.click();
+            }
+
+            view.capture.click();
             view.video.visible = true;
         }
 
@@ -237,8 +283,8 @@ ui.wall = function (params) {
         }
         else {
             var ids = [localStorage.user_id, params.target_id];
-            User.find(ids, function(users) {
-                var names = ids.map(function(id) {
+            User.find(ids, function (users) {
+                var names = ids.map(function (id) {
                     return users[id].name;
                 });
                 view.title = names.join(' <span class="fa fa-circle-o-notch"></span> ');
@@ -262,6 +308,15 @@ var phones = {
         }
     },
 
+    remove: function (params) {
+        if (params.chat_id) {
+            delete phones.chat[params.chat_id];
+        }
+        else if (params.target_id) {
+            delete phones.dialog[params.target_id];
+        }
+    },
+
     put: function (phone) {
         if (phone.params.chat_id) {
             phones.chat[phone.params.chat_id] = phone;
@@ -276,6 +331,11 @@ var phones = {
 
         if (!phone) {
             phone = new Peer(params);
+            phone.connection.addEventListener('iceconnectiostatechange', function(e) {
+                if (phone.isClosed()) {
+                    phones.remove(params);
+                }
+            });
             phones.put(phone);
         }
         return phone;
@@ -290,10 +350,13 @@ addEventListener('load', function () {
                 var phone = phones.find(inverse(message));
                 if (phone) {
                     try {
-                        phone.candidates_count++;
                         var candidate = new RTCIceCandidate(message.candidate);
-                        phone.connection.addIceCandidate(candidate);
-                        phone.candidates.push(candidate);
+                        if (phone.isCompleted()) {
+                            phone.candidates.push(candidate);
+                        }
+                        else {
+                            phone.connection.addIceCandidate(candidate);
+                        }
                     }
                     catch (ex) {
                         _error(ex);
@@ -304,7 +367,8 @@ addEventListener('load', function () {
             offer: function (offer) {
                 _log_event('offer', offer);
                 var phone = phones.findOrCreate(inverse(offer));
-                phone.offers.push({type: 'offer', sdp: offer.sdp});
+                //phone.offers.push({type: 'offer', sdp: offer.sdp});
+                phone.answer({type: 'offer', sdp: offer.sdp});
                 new Notify(merge(phone.params, {
                     type: 'message',
                     title: 'Call',

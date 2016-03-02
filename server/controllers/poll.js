@@ -8,9 +8,8 @@ module.exports = {
         var subscriber = $.subscribers[uid];
         if (subscriber) {
             if (subscriber[cid]) {
-                var res = subscriber[cid];
-                res.writeHead(409);
-                res.end();
+                var previous = subscriber[cid];
+                previous.sendStatus(409);
             }
         }
         else {
@@ -30,13 +29,17 @@ module.exports = {
                     clearTimeout($.timeout);
                 };
                 var sendEmpty = function() {
-                    $.send(200, {type: 'empty'});
+                    $.send(200, {
+                        type: 'empty',
+                        delay: 3000
+                    });
                     close();
                 };
                 if (last > 0) {
                     $.timeout = setTimeout(sendEmpty, 50000);
                 }
                 else {
+                    $.setCookie('last', Date.now(), $.COOKIE_AGE_FOREVER);
                     sendEmpty();
                 }
                 $.req.on('close', close);
