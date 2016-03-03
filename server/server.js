@@ -5,10 +5,11 @@ var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var fs = require('fs');
+var config = require(__dirname + '/config.json');
 var schema = require(__dirname + '/../app/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
-var querystring_parse = require('querystring').parse;
+var qs = require('querystring');
 var controllers_dir = fs.readdirSync(__dirname + '/controllers');
 var controllers = {};
 
@@ -24,7 +25,7 @@ var subscribers = {};
 var server;
 var start;
 
-MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db) {
+MongoClient.connect(config.mongo, function (err, _db) {
     if (err) {
         console.error(err);
         process.exit();
@@ -44,12 +45,24 @@ MongoClient.connect('mongodb://localhost:27017/socex', function (err, _db) {
         //}
     });
 
-    server.listen(8080);
+    server.listen(config.port, config.host, function () {
+        call_controllers_method('_boot', {
+            server: server
+        });
+    });
     start = new Date();
     var startMessage = 'Started:\t' + start;
     console.log(startMessage.bgBlue.black);
 });
 
+function call_controllers_method(name, $) {
+    for (var i in controllers) {
+        var controller = controllers[i];
+        if (name in controller && controller[name] instanceof Function) {
+            controller[name]($);
+        }
+    }
+}
 
 function service(req, res) {
     var raw_url = req.url.replace(/^\/api\//, '/');
@@ -132,7 +145,7 @@ function service(req, res) {
                 data.time = Date.now();
             }
             var subscriber = subscribers[target_id];
-            var sendSubscribers = subscriber ? function() {
+            var sendSubscribers = subscriber ? function () {
                 for (var cid in subscriber) {
                     var o = subscriber[cid];
                     o.send(data);
@@ -207,11 +220,12 @@ function service(req, res) {
         },
 
         setCookie: function (name, value, age, path) {
-            if (!path) {
-                path = '/';
+            var cookie = name + '=' + value;
+            cookie += '; path=' + (path || '/');
+            if (age) {
+                cookie += '; expires=' + new Date(Date.now() + age).toUTCString();
             }
-            res.setHeader('set-cookie', name + '=' + value + '; path=' + path + '; expires='
-                + new Date(Date.now() + age).toUTCString());
+            res.setHeader('set-cookie', cookie);
         },
 
         send: function () {
@@ -317,7 +331,8 @@ function service(req, res) {
 
     $.data.insertOne = insertOne;
 
-    req.cookies = querystring_parse(req.headers.cookie, /;\s+/);
+    req.cookies = qs.parse(req.headers.cookie, /;\s+/);
+    //console.log(req.cookies);
 
     if (req.url.query.auth) {
         req.auth = req.url.query.auth;
@@ -399,14 +414,16 @@ function process($) {
                     }
                     break;
                 case 'PUT':
-                    receive.call($.req, function (data) {
-                        db.collection(collectionName).insertOne(data, $.answer);
-                    });
+                    throw {};
+                    //receive.call($.req, function (data) {
+                    //    db.collection(collectionName).insertOne(data, $.answer);
+                    //});
                     break;
                 case 'PATCH':
-                    receive.call($.req, function (data) {
-                        db.collection(collectionName).updateOne({_id: $.id}, {$set: data}, $.answer);
-                    });
+                    throw {};
+                    //receive.call($.req, function (data) {
+                    //    db.collection(collectionName).updateOne({_id: $.id}, {$set: data}, $.answer);
+                    //});
                     break;
                 case 'DELETE':
                     db.collection(collectionName).deleteOne({_id: $.id}, $.answer);
@@ -479,13 +496,25 @@ function exec(_, action) {
         }
     }
 
-    if (_.user || /^.(fake|user.(login|signup))/.test(_.req.url.original)) {
-        if (_.req.headers['content-type'] && _.req.headers['content-type'].indexOf('json') >= 0) {
-            receive.call(_.req, function (data) {
-                _.body = data;
-                _.params = _.merge(_.params, data);
-                //console.log(_.params);
-                call_action();
+    if (_.user || /^.(pong|fake|user.(login|signup))/.test(_.req.url.original)) {
+        if (_.req.headers['content-length']) {
+            receive(_.req, function (data) {
+                if (_.req.headers['content-type'].indexOf('json') > 0) {
+                    try {
+                        _.body = JSON.parse(data.toString(''));
+                        _.params = _.merge(_.params, data);
+                        call_action();
+                    }
+                    catch (ex) {
+                        _.send(400, {
+                            error: 'Invalid JSON format'
+                        })
+                    }
+                }
+                else {
+                    _.data = data;
+                    call_action();
+                }
             });
         }
         else {
@@ -511,7 +540,7 @@ function parse(url) {
     var a = url_parse(url);
     a.original = url;
     if (a.query) {
-        a.query = querystring_parse(a.query);
+        a.query = qs.parse(a.query);
         for (var i in a.query) {
             if (/^\d+$/.test(a.query[i])) {
                 a.query[i] = parseFloat(a.query[i]);
@@ -525,17 +554,21 @@ function parse(url) {
     return a;
 }
 
-function receive(call) {
-    var data = [];
-    this.on('data', function (chunk) {
-        data.push(chunk);
+function receive(readable, call) {
+    var chunks = [];
+    readable.on('data', function (chunk) {
+        chunks.push(chunk);
     });
-    this.on('end', function () {
-        data = data.join('');
-        try {
-            data = JSON.parse(data);
+    readable.on('end', function () {
+        var data;
+        if (0 == chunks.length) {
+            data = new Buffer();
         }
-        catch (ex) {
+        else if (1 == chunks.length) {
+            data = chunks[0];
+        }
+        else {
+            data = Buffer.concat(chunks);
         }
         call(data);
     });

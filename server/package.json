@@ -20,6 +20,7 @@
     "mongodb": "^2.1.4",
     "mongoose": "^4.3.7",
     "request": "^2.69.0",
+    "sse": "0.0.6",
     "ws": "^1.0.1"
   },
   "directories": {
