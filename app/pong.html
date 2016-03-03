@@ -5,12 +5,32 @@
     <title>Pong</title>
     <script src="/lib/webrtc-adapter/adapter.js"></script>
     <style>
+        body > * {
+            vertical-align: top;
+        }
+
         video {
             height: 320px;
+        }
+
+        #list > div {
+            cursor: pointer;
+        }
+
+        #panel, #videos {
+            display: inline-block;
         }
     </style>
 </head>
 <body>
+<div id="panel">
+<form id="login">
+    <input name="name" placeholder="Name" />
+    <button id="enter" type="button">Join</button>
+</form>
+<div id="list"></div>
+</div>
+<div id="videos"></div>
 <script>
     var isFirefox = 'InstallTrigger' in window;
 
@@ -44,6 +64,7 @@
         if (client_id) {
             client_id = client_id[1];
         }
+        post(null, 'name', {name: login.name.value || localStorage._pong_name});
     });
     server.addEventListener('error', function (e) {
         console.error(e, arguments.length);
@@ -63,7 +84,7 @@
         video.controls = true;
         video.muted = true;
         video.play();
-        document.body.appendChild(video);
+        videos.appendChild(video);
     });
 
     server.on = function (name, cb) {
@@ -103,21 +124,49 @@
 
     var clients = {};
 
-    server.on('enter', function (message) {
-        clients[message.source_id] = null;
-    });
+    function add(message) {
+        remove(message);
+        if (message.source_id == client_id) {
+            return;
+        }
+        clients[message.source_id] = message.name;
+        var div = document.createElement('div');
+        div.innerHTML = message.name;
+        div.id = message.source_id;
+        div.onclick = function() {
+            offer(this.id);
+        };
+        list.appendChild(div);
+    }
 
-    server.on('exit', function (message) {
+    function remove(message) {
         delete clients[message.source_id];
-    });
+        var contact = document.getElementById(message.source_id);
+        if (contact) {
+            contact.remove();
+        }
+    }
+
+    server.on('enter', add);
+    server.on('exit', remove);
 
     server.on('clients', function (message) {
         clients = message;
+        for(var id in clients) {
+            add({
+                source_id: id,
+                name: clients[id]
+            });
+        }
     });
 
-    function post(id, event, data) {
+    function post(id, event, data, async) {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/pong?event=' + event + '&id=' + id);
+        var url = '/api/pong?event=' + event;
+        if (id) {
+            url += '&id=' + id;
+        }
+        xhr.open('POST', url, false !== async);
         xhr.setRequestHeader('content-type', 'text/json');
         xhr.send(JSON.stringify(data));
     }
@@ -148,6 +197,22 @@
     });
     peer.addEventListener('signalingstatechange', function (e) {
         console.log('# singnal: ' + e.target.signalingState);
+    });
+
+    enter.onclick = function() {
+        localStorage._pong_name = login.name.value;
+        post(null, 'name', {name: localStorage._pong_name});
+        login.remove();
+        list.style.removeProperty('display');
+        capture();
+    };
+
+    if (localStorage._pong_name) {
+        login.name.value = localStorage._pong_name;
+    }
+
+    addEventListener('beforeunload', function() {
+        post(null, 'exit', {source_id: client_id}, false);
     });
 </script>
 </body>

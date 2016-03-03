@@ -1,9 +1,5 @@
 var clients = {};
 
-function unsafe_uid() {
-    return Math.round(Math.random() * 1679615).toString(36);
-}
-
 var i = 0;
 
 function send(id, event, data) {
@@ -26,16 +22,24 @@ module.exports = {
         var event = $('event');
         var message = $.body;
         message.source_id = client_id;
-        var data = JSON.stringify(message);
-
-        console.log(id, event);
-        if (id) {
-            if (id in clients) {
-                send(id, event, data);
-            }
+        if ('name' == event) {
+            var client = clients[client_id];
+            client.username = message.name;
+            console.log(client.username, message);
+            broadcast('enter', JSON.stringify(message));
         }
         else {
-            broadcast(event, data);
+            var data = JSON.stringify(message);
+
+            console.log(id, event);
+            if (id) {
+                if (id in clients) {
+                    send(id, event, data);
+                }
+            }
+            else {
+                broadcast(event, data);
+            }
         }
         $.res.end();
     },
@@ -54,19 +58,22 @@ module.exports = {
             $.res.setHeader(name, headers[name]);
         }
         $.res.write(':ok\n\n');
-        var me = JSON.stringify({source_id: id});
-        broadcast('enter', me);
-        clients[id] = $;
         var summary = {};
-        for(var client_id in clients) {
-            summary[client_id] = null;
+        for(var cid in clients) {
+            var client = clients[cid];
+            summary[cid] = client.username || cid;
         }
-        send(id, 'clients', JSON.stringify(summary));
+        clients[id] = $;
         var close = function () {
-            delete clients[id];
-            broadcast('exit', me);
+            if (id in clients) {
+                console.log(id);
+                delete clients[id];
+                broadcast('exit', JSON.stringify({source_id: id}));
+            }
         };
         $.req.on('close', close);
+        $.res.on('close', close);
         $.res.on('finish', close);
+        send(id, 'clients', JSON.stringify(summary));
     }
 };
