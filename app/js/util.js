@@ -53,6 +53,8 @@ var features = [
     'SpeechRecognition'
 ];
 
+var agent = [browser.name, browser.version, browser.os.name, browser.os.version].join('_');
+
 var DEBUG = '1' === localStorage.debug ? {} : false;
 if (DEBUG) {
     DEBUG.events = [];

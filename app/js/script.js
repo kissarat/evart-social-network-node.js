@@ -312,6 +312,7 @@ var server = {
         }
         var o = {
             route: 'poll',
+            params: {agent: agent},
             success: function (data) {
                 function fire(e) {
                     var last = cookies.get('last');

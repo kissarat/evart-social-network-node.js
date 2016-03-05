@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doppler</title>
+    <script src="/js/util.js"></script>
+    <style>
+        #root {
+            position: relative;
+            width: 1024px;
+            border: 1px solid black;
+            min-height: 400px;
+        }
+
+        #root > * {
+            position: absolute;
+            min-width: 5px;
+            height: 30px;
+            border: 1px solid black;
+        }
+
+        #source, #movie {
+            width: 30px;
+        }
+
+
+    </style>
+</head>
+<body>
+<div id="root">
+    <div id="source"></div>
+    <div id="movie"></div>
+    <div class="thing"></div>
+    <div class="thing"></div>
+</div>
+<script>
+    function setPixel(el, coordinate, value) {
+        el.style[coordinate] = value + 'px';
+    }
+
+    var x = 400;
+
+    var rootStyle = getComputedStyle(root);
+    var things = $all('.thing');
+    var w = parseInt(rootStyle.width);
+    var h = parseInt(rootStyle.height) / 2;
+    setPixel(source, 'top', h - 15);
+    setPixel(movie, 'top', h - 15);
+    setPixel(source, 'left', 10);
+    var k = 30;
+    var i = 50;
+    each(things, function(thing) {
+       setPixel(thing, 'top', h - 15);
+        thing.left = k += 20;
+        thing.vector = 1;
+       setPixel(thing, 'left', thing.left);
+    });
+
+    var source_box = source.getBoundingClientRect();
+
+    var right = true;
+    setInterval(function() {
+        x = 400 + Math.sin(Date.now() / 400) * 200;
+        setPixel(movie, 'left', x);
+        var movie_box = movie.getBoundingClientRect();
+        i += 1;
+        each(things, function(thing) {
+            if (movie_box.left < thing.left) {
+                right = false;
+            }
+            thing.left += right ? +1 : -1;
+            setPixel(thing, 'left', Math.round(thing.left));
+        });
+    }, 10);
+</script>
+</body>
+</html>
