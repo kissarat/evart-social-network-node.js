@@ -149,6 +149,12 @@ if (b = /(MSIE |Edge\/)([0-9\.]+)/.exec(navigator.userAgent)) {
 else if (b = /(Chrome|Firefox)\/([0-9\.]+)/.exec(navigator.userAgent)) {
     browser.name = b[1];
     browser.version = b[2];
+    if (navigator.userAgent.indexOf('YaBrowser') >= 0) {
+        browser.vendor = 'Yandex';
+    }
+    if (navigator.userAgent.indexOf('OPR') >= 0) {
+        browser.vendor = 'Opera';
+    }
 }
 else if (b = /Version\/([0-9\.]+).*Safari\//.exec(navigator.userAgent)) {
     browser.name = 'Safari';

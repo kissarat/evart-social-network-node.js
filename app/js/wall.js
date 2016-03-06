@@ -182,60 +182,40 @@ ui.wall = function (params) {
 
     if ('message' == params.type) {
         if (view.video) {
-            var phone = phones.findOrCreate(params);
-            phone.connection.addEventListener('addstream', function (e) {
-                _log_event('stream', e.stream);
-                view.remote.srcObject = e.stream;
-            });
-
-            phone.connection.addEventListener('removestream', function () {
-                if (view.remote.srcObject) {
-                    each(view.remote.srcObject.getTracks(), function(track) {
-                        track.stop();
-                    });
-                    view.remote.srcObject = null;
-                }
-                inform('info', 'Call end');
-            });
-
-            phone.connection.addEventListener('iceconnectionstatechange', function(e) {
-                switch (e.target.iceConnectionState) {
-                    case 'closed':
-                    case 'disconnected':
-                        inform('warning', 'Disconnected');
-                        break;
-
-                    case 'failed':
-                        inform('warning', 'Connection failed');
-                        break;
-                }
-            });
-
             view.on('call', function () {
-                phone.call({
-                    offerToReceiveAudio: 1,
-                    offerToReceiveVideo: 1
-                });
-            });
-
-            view.on('capture', function (e) {
-                if (phone.stream) {
-                    phone.connection.removeStream(phone.stream);
-                    each(phone.stream.getTracks(), function(track) {
-                        track.stop();
-                    });
-                    //view.local.pause();
-                    phone.stream = null;
-                    view.local.classList.remove('loading');
+                if (camera) {
+                    Peer.create(params);
                 }
                 else {
-                    view.local.classList.add('loading');
                     getUserMedia({audio: true, video: true}, function (stream) {
-                        phone.stream = stream;
+                        camera = stream;
                         view.local.muted = true;
                         view.local.srcObject = stream;
-                        phone.connection.addStream(stream);
+                        Peer.create(params);
                     }, _error);
+                }
+            });
+
+            view.on('microphone', function () {
+                if (camera) {
+                    var audio = camera.getAudioTracks()[0];
+                    audio.enabled = !audio.enabled;
+                    if (audio.enabled) {
+                        e.target.classList.remove('fa-microphone');
+                        e.target.classList.add('fa-microphone-slash');
+                    }
+                    else {
+                        e.target.classList.add('fa-microphone-slash');
+                        e.target.classList.remove('fa-microphone');
+                    }
+                }
+            });
+
+            view.on('camera', function () {
+                if (camera) {
+                    var video = camera.getVideoTracks()[0];
+                    video.enabled = !video.enabled;
+                    e.target.style.color = video.enabled ? 'white' : 'green';
                 }
             });
 
@@ -266,15 +246,10 @@ ui.wall = function (params) {
                 }
             });
 
-            view.on('refresh', function() {
-                phone.reconnect();
-            });
-
             if ('1' == localStorage.muted) {
                 view.mute.click();
             }
 
-            view.capture.click();
             view.video.visible = true;
         }
 
@@ -294,96 +269,3 @@ ui.wall = function (params) {
 
     this.visible = true;
 };
-
-var phones = {
-    chat: {},
-    dialog: {},
-
-    find: function (params) {
-        if (params.chat_id) {
-            return phones.chat[params.chat_id];
-        }
-        else if (params.target_id) {
-            return phones.dialog[params.target_id];
-        }
-    },
-
-    remove: function (params) {
-        if (params.chat_id) {
-            delete phones.chat[params.chat_id];
-        }
-        else if (params.target_id) {
-            delete phones.dialog[params.target_id];
-        }
-    },
-
-    put: function (phone) {
-        if (phone.params.chat_id) {
-            phones.chat[phone.params.chat_id] = phone;
-        }
-        else if (phone.params.target_id) {
-            phones.dialog[phone.params.target_id] = phone;
-        }
-    },
-
-    findOrCreate: function (params) {
-        var phone = phones.find(params);
-
-        if (!phone) {
-            phone = new Peer(params);
-            phone.connection.addEventListener('iceconnectiostatechange', function(e) {
-                if (phone.isClosed()) {
-                    phones.remove(params);
-                }
-            });
-            phones.put(phone);
-        }
-        return phone;
-    }
-};
-
-addEventListener('load', function () {
-    if (window.Peer) {
-        server.register({
-            candidate: function (message) {
-                _log_event('candidate', message);
-                var phone = phones.find(inverse(message));
-                if (phone) {
-                    try {
-                        var candidate = new RTCIceCandidate(message.candidate);
-                        if (phone.isCompleted()) {
-                            phone.candidates.push(candidate);
-                        }
-                        else {
-                            phone.connection.addIceCandidate(candidate);
-                        }
-                    }
-                    catch (ex) {
-                        _error(ex);
-                    }
-                }
-            },
-
-            offer: function (offer) {
-                _log_event('offer', offer);
-                var phone = phones.findOrCreate(inverse(offer));
-                //phone.offers.push({type: 'offer', sdp: offer.sdp});
-                phone.answer({type: 'offer', sdp: offer.sdp});
-                new Notify(merge(phone.params, {
-                    type: 'message',
-                    title: 'Call',
-                    text: 'Call'
-                }));
-            },
-
-            answer: function (answer) {
-                _log_event('answer', answer);
-                var phone = phones.find(inverse(answer));
-                if (phone) {
-                    var answer_description = new RTCSessionDescription({type: 'answer', sdp: answer.sdp});
-                    phone.connection.setRemoteDescription(answer_description, morozov, morozov);
-                }
-            }
-        });
-    }
-});

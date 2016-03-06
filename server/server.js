@@ -136,6 +136,9 @@ function service(req, res) {
             for (var key in event) {
                 data[key] = event[key];
             }
+            if (!(target_id instanceof ObjectID)) {
+                target_id = ObjectID(target_id);
+            }
             data.target_id = target_id;
             if (data._id) {
                 data.object_id = data._id;
@@ -144,7 +147,7 @@ function service(req, res) {
             if (!data.time) {
                 data.time = Date.now();
             }
-            var subscriber = subscribers[target_id];
+            var subscriber = subscribers[target_id.toString()];
             var sendSubscribers = subscriber ? function () {
                 for (var cid in subscriber) {
                     var o = subscriber[cid];
@@ -502,7 +505,7 @@ function exec(_, action) {
                 if (_.req.headers['content-type'].indexOf('json') > 0) {
                     try {
                         _.body = JSON.parse(data.toString(''));
-                        _.params = _.merge(_.params, data);
+                        _.params = _.merge(_.params, _.body);
                         call_action();
                     }
                     catch (ex) {

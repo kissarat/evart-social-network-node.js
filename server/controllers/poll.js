@@ -36,7 +36,7 @@ module.exports = {
                     close();
                 };
                 if (last > 0) {
-                    $.timeout = setTimeout(sendEmpty, 50000);
+                    $.timeout = setTimeout(sendEmpty, 500000);
                 }
                 else {
                     $.setCookie('last', Date.now(), $.COOKIE_AGE_FOREVER);
@@ -54,8 +54,8 @@ module.exports = {
         if (!data.time) {
             data.time = Date.now();
         }
-        if ('chat_id' in $.params) {
-            $.db.collection('chat').findOne({_id: $.params.chat_id}, $.wrap(function (result) {
+        if ($.has('chat_id')) {
+            $.db.collection('chat').findOne({_id: $('chat_id')}, $.wrap(function (result) {
                 if (result) {
                     result.members.forEach(function (member) {
                         $.notify(member, data);

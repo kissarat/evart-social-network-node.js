@@ -328,6 +328,14 @@ Object.defineProperties(Element.prototype, {
                 this.style.display = 'none';
             }
         }
+    },
+
+    addText: {
+        value: function(text) {
+            this.appendChild(document.createTextNode(text));
+        },
+        writable: false,
+        enumerable: false
     }
 });
 

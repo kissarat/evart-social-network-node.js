@@ -35,7 +35,6 @@ var peerConstrains = {
 var peer = new RTCPeerConnection(iceServerConfig);
 
 var channels = [];
-channels.push(channel('data'));
 
 peer.addEventListener('icecandidate', function (e) {
     if (e.candidate) {
@@ -155,6 +154,7 @@ function post(id, event, data, async) {
 
 function offer(id) {
     peer.target_id = id;
+    channels.push(channel(browser.name));
     peer.createOffer(function (offer) {
         peer.setLocalDescription(offer).then(function () {
             post(id, 'offer', {offer: offer.sdp});
@@ -209,8 +209,14 @@ function channel(name) {
 }
 
 function listen_channel(data) {
+    data.sendObject = function(object) {
+        this.send(JSON.stringify(object));
+    };
+
     data.addEventListener('open', function (e) {
-        console.log(e);
+        this.sendObject({
+            agent: browser
+        });
     });
 
     data.addEventListener('close', function () {
