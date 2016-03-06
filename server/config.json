@@ -1,5 +1,8 @@
 {
   "host": "0.0.0.0",
   "port": 8080,
+  "socket": {
+    "port": 8081
+  },
   "mongo": "mongodb://localhost:27017/socex"
 }

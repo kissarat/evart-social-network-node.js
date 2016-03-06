@@ -1,4 +1,5 @@
 'use strict';
+var ws = require('ws');
 
 module.exports = {
     GET: function ($) {
@@ -9,7 +10,12 @@ module.exports = {
         if (subscriber) {
             if (subscriber[cid]) {
                 var previous = subscriber[cid];
-                previous.sendStatus(409);
+                if (previous.sendStatus) {
+                    previous.sendStatus(409);
+                }
+                else {
+                    previous.close();
+                }
             }
         }
         else {

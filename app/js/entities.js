@@ -140,3 +140,18 @@ extend(User, {
         });
     }
 });
+
+var Message = {
+    getUserIds: function (messages) {
+        var ids = [localStorage.user_id];
+        messages.forEach(function (message) {
+            if (ids.indexOf(message.source_id) < 0) {
+                ids.push(message.source_id);
+            }
+            if (ids.indexOf(message.target_id) < 0) {
+                ids.push(message.target_id);
+            }
+        });
+        return ids;
+    }
+};

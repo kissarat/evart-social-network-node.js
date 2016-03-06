@@ -4,6 +4,7 @@ require('colors');
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
+var ws = require('ws');
 var fs = require('fs');
 var config = require(__dirname + '/config.json');
 var schema = require(__dirname + '/../app/schema.json');
@@ -46,8 +47,44 @@ MongoClient.connect(config.mongo, function (err, _db) {
     });
 
     server.listen(config.port, config.host, function () {
+        var socketServer = new ws.Server(config.socket);
+        socketServer.on('connection', function(socket) {
+            //console.log(Object.keys(socket.upgradeReq));
+            socket.on('message', function(message) {
+                message = JSON.parse(message);
+                switch (message.type) {
+                    case 'auth':
+                        authorize(db, message.auth, function(err, user) {
+                            if (err || !user) {
+                                console.error(err);
+                                socket.close();
+                            }
+                            else {
+                                var uid = user._id.toString();
+                                var cid = message.client_id;
+                                console.log(message);
+                                var subscriber = subscribers[uid];
+                                if (!subscriber) {
+                                    subscribers[uid] = subscriber = {};
+                                }
+                                else if (subscriber[cid]) {
+                                    var client = subscriber[cid];
+                                    client.close();
+                                }
+                                socket.user = user;
+                                socket.on('close', function() {
+                                    delete subscriber[cid];
+                                });
+                                subscriber[cid] = socket;
+                            }
+                        });
+                        break;
+                }
+            });
+        });
         call_controllers_method('_boot', {
-            server: server
+            server: server,
+            socketServer: socketServer
         });
     });
     start = new Date();
@@ -376,7 +413,7 @@ function service(req, res) {
     }
 
     if (req.auth) {
-        db.collection('user').findOne({auth: req.auth}, $.wrap(function (user) {
+        authorize($.db, req.auth, $.wrap(function(user) {
             $.user = user;
             process($);
         }));
@@ -555,6 +592,10 @@ function parse(url) {
     }
     a.route = a.pathname.split('/').slice(1);
     return a;
+}
+
+function authorize(db, auth, cb) {
+    db.collection('user').findOne({auth: auth}, cb);
 }
 
 function receive(readable, call) {
