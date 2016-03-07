@@ -4,5 +4,6 @@
   "socket": {
     "port": 8081
   },
+  "forever": 100036002436510,
   "mongo": "mongodb://localhost:27017/socex"
 }

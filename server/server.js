@@ -35,7 +35,16 @@ MongoClient.connect(config.mongo, function (err, _db) {
 
     server = http.createServer(function (req, res) {
         //try {
-        service(req, res);
+        var $ = new Context(req, _db);
+
+        $.res = res;
+        $.subscribers = subscribers;
+        $.COOKIE_AGE_FOREVER = config.forever;
+
+        $.authorize(function (user) {
+            $.user = user;
+            serve($);
+        });
         //}
         //catch (ex) {
         //    if (ex.invalid) {
@@ -48,37 +57,39 @@ MongoClient.connect(config.mongo, function (err, _db) {
 
     server.listen(config.port, config.host, function () {
         var socketServer = new ws.Server(config.socket);
-        socketServer.on('connection', function(socket) {
-            //console.log(Object.keys(socket.upgradeReq));
-            socket.on('message', function(message) {
-                message = JSON.parse(message);
-                switch (message.type) {
-                    case 'auth':
-                        authorize(db, message.auth, function(err, user) {
-                            if (err || !user) {
-                                console.error(err);
-                                socket.close();
-                            }
-                            else {
-                                var uid = user._id.toString();
-                                var cid = message.client_id;
-                                console.log(message);
-                                var subscriber = subscribers[uid];
-                                if (!subscriber) {
-                                    subscribers[uid] = subscriber = {};
-                                }
-                                else if (subscriber[cid]) {
-                                    var client = subscriber[cid];
-                                    client.close();
-                                }
-                                socket.user = user;
-                                socket.on('close', function() {
-                                    delete subscriber[cid];
-                                });
-                                subscriber[cid] = socket;
-                            }
-                        });
-                        break;
+        socketServer.on('connection', function (socket) {
+            var $ = new Context(socket.upgradeReq, _db);
+            $.socket = socket;
+            $.authorize(function (user) {
+                $.user = user;
+                if (user) {
+                    var uid = user._id.toString();
+                    var cid = $.req.client_id;
+                    var subscriber = subscribers[uid];
+                    if (!subscriber) {
+                        subscribers[uid] = subscriber = {};
+                    }
+                    else if (subscriber[cid]) {
+                        var client = subscriber[cid];
+                        client.socket.close();
+                    }
+                    socket.on('close', function () {
+                        delete subscriber[cid];
+                    });
+                    subscriber[cid] = $;
+
+                    socket.on('message', function (message) {
+                        message = JSON.parse(message);
+                        if (!message.target_id) {
+                            return;
+                        }
+                        message.source_id = user._id;
+                        $.notify(message.target_id, message);
+                        console.log(message);
+                    });
+                }
+                else {
+                    socket.close();
                 }
             });
         });
@@ -101,276 +112,11 @@ function call_controllers_method(name, $) {
     }
 }
 
-function service(req, res) {
+function Context(req, db) {
+    this.db = db;
     var raw_url = req.url.replace(/^\/api\//, '/');
     req.url = parse(raw_url);
-
-    function invalid(name, value) {
-        if (!value) {
-            value = 'invalid';
-        }
-        var obj = {};
-        obj[name] = value;
-        throw {
-            invalid: obj
-        };
-    }
-
-    function _get(object, name) {
-        if (name in object) {
-            var value = object[name];
-            if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
-                if (!/[0-9a-z]{24}/.test(value)) {
-                    invalid(name, 'ObjectID');
-                }
-                value = ObjectID(value);
-            }
-            return value;
-        }
-        invalid(name, 'required');
-    }
-
-    var $ = function (name) {
-        return _get($.params, name);
-    };
-
-    function insertOne(entity, mods, cb) {
-        db.collection(entity).insertOne(mods, resolve_callback(cb));
-    }
-
-    $.__proto__ = {
-        req: req,
-        res: res,
-        subscribers: subscribers,
-        COOKIE_AGE_FOREVER: 1000 * 3600 * 24 * 365 * 10,
-
-        wrap: function (call) {
-            return function (err, result) {
-                if (err) {
-                    $.send(500, {
-                        error: err
-                    });
-                }
-                else {
-                    call(result);
-                }
-            }
-        },
-
-        answer: function (err, result) {
-            if (err) {
-                $.send(500, {
-                    error: err.message
-                });
-            }
-            else {
-                $.send(result);
-            }
-        },
-
-        notify: function (target_id, event) {
-            var data = {};
-            for (var key in event) {
-                data[key] = event[key];
-            }
-            if (!(target_id instanceof ObjectID)) {
-                target_id = ObjectID(target_id);
-            }
-            data.target_id = target_id;
-            if (data._id) {
-                data.object_id = data._id;
-                delete data._id;
-            }
-            if (!data.time) {
-                data.time = Date.now();
-            }
-            var subscriber = subscribers[target_id.toString()];
-            var sendSubscribers = subscriber ? function () {
-                for (var cid in subscriber) {
-                    var o = subscriber[cid];
-                    o.send(data);
-                }
-            } : Function();
-            if (Number.isFinite(data.end) && data.end < data.time) {
-                sendSubscribers();
-            }
-            else {
-                insertOne('queue', data, sendSubscribers);
-            }
-        },
-
-        sendStatus: function (code) {
-            res.writeHead(code);
-            res.end();
-        },
-
-        get: function (name) {
-            return _get(req.url.query, name);
-        },
-
-        post: function (name) {
-            return _get(req.body, name);
-        },
-
-        has: function (name) {
-            if (name in $.params) {
-                var value = $.params[name];
-                if (value instanceof Array) {
-                    return value.length > 0;
-                }
-                return true;
-            }
-            return false;
-        },
-
-        merge: function () {
-            var o = {};
-            for (var i = 0; i < arguments.length; i++) {
-                var a = arguments[i];
-                for (var j in a) {
-                    o[j] = a[j];
-                }
-            }
-            return o;
-        },
-
-        validate: function (object) {
-            return schema_validator.validate(object, schema);
-        },
-
-        invalid: invalid,
-        db: db,
-        params: req.url.query,
-
-        data: function (name) {
-            return db.collection(name);
-        },
-
-        getUserAgent: function () {
-            var agent = {
-                ip: req.connection.remoteAddress
-            };
-            if (req.headers['user-agent']) {
-                agent.agent = req.headers['user-agent'];
-            }
-            if (req.geo) {
-                agent.geo = req.geo;
-            }
-            return agent;
-        },
-
-        setCookie: function (name, value, age, path) {
-            var cookie = name + '=' + value;
-            cookie += '; path=' + (path || '/');
-            if (age) {
-                cookie += '; expires=' + new Date(Date.now() + age).toUTCString();
-            }
-            res.setHeader('set-cookie', cookie);
-        },
-
-        send: function () {
-            var object;
-            var code = 200;
-            if (1 == arguments.length) {
-                object = arguments[0];
-            }
-            else if (2 == arguments.length) {
-                code = arguments[0];
-                object = arguments[1];
-            }
-
-            if (!$.res.finished) {
-                if (2 == arguments.length) {
-                    res.writeHead(code, {
-                        'content-type': 'text/json'
-                        //'Access-Control-Allow-Origin': '*'
-                    });
-                }
-                else {
-                    res.setHeader('content-type', 'text/json');
-                }
-                res.end(JSON.stringify(object));
-            }
-
-            if ('GET' != req.method || ('poll' == req.url.route[0] && code < 400)) {
-                var record = {
-                    client_id: req.client_id,
-                    route: req.url.route.length > 1 ? req.url.route : req.url.route[0],
-                    method: req.method,
-                    code: code,
-                    result: object.result,
-                    time: Date.now()
-                };
-                if ($.user) {
-                    record.user_id = $.user._id;
-                }
-                for (var i in req.url.query) {
-                    record.params = req.url.query;
-                    break;
-                }
-                if ($.body) {
-                    record.body = $.body;
-                }
-                db.collection('log').insertOne(record, Function());
-            }
-        }
-    };
-
-    function resolve_callback(cb) {
-        if (cb) {
-            return $.wrap(result => {
-                if (result) {
-                    cb(result)
-                }
-                else {
-                    $.sendStatus(404);
-                }
-            })
-        }
-        else {
-            return $.answer;
-        }
-    }
-
-    $.data.updateOne = function (entity, id, mods, cb) {
-        db.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
-    };
-
-    $.data.find = function (entity, match, cb) {
-        var aggr = [
-            {$sort: {time: -1}}
-        ];
-        if (match instanceof Array) {
-            aggr = match.concat(aggr);
-        }
-        else {
-            aggr.unshift({$match: match});
-        }
-        db.collection(entity).aggregate(aggr)
-            .toArray(resolve_callback(cb));
-    };
-
-    $.data.findOne = function (entity, id, cb) {
-        if (!id) {
-            id = $('id');
-        }
-        if (id instanceof ObjectID) {
-            id = {_id: id};
-        }
-        cb = resolve_callback(cb);
-        db.collection(entity).findOne(id, cb);
-    };
-
-    $.data.deleteOne = function (entity, id, cb) {
-        if (!id) {
-            id = $('id');
-        }
-        cb = resolve_callback(cb);
-        db.collection(entity).deleteOne({_id: id}, cb);
-    };
-
-    $.data.insertOne = insertOne;
-
+    this.params = req.url.query;
     req.cookies = qs.parse(req.headers.cookie, /;\s+/);
     //console.log(req.cookies);
 
@@ -397,7 +143,7 @@ function service(req, res) {
     if (since) {
         since = new Date(since);
         if (isNaN(since)) {
-            invalid('if-modified-since');
+            this.invalid('if-modified-since');
         }
         else {
             req.since = since;
@@ -409,29 +155,241 @@ function service(req, res) {
         req.geo = JSON.parse(geo);
     }
     catch (ex) {
-        invalid('geo');
+        this.invalid('geo');
     }
 
-    if (req.auth) {
-        authorize($.db, req.auth, $.wrap(function(user) {
-            $.user = user;
-            process($);
-        }));
-    }
-    else {
-        process($);
+    this.req = req;
+
+    database(this);
+
+    for (var i in this) {
+        var f = this[i];
+        if ('function' == typeof f) {
+            this[i] = f.bind(this);
+        }
     }
 }
 
+Context.prototype = {
+    invalid: function invalid(name, value) {
+        if (!value) {
+            value = 'invalid';
+        }
+        var obj = {};
+        obj[name] = value;
+        throw {
+            invalid: obj
+        };
+    },
+
+    wrap: function (call) {
+        return function (err, result) {
+            if (err) {
+                this.send(500, {
+                    error: err
+                });
+            }
+            else {
+                call(result);
+            }
+        }
+    },
+
+    answer: function (err, result) {
+        if (err) {
+            this.send(500, {
+                error: err.message
+            });
+        }
+        else {
+            this.send(result);
+        }
+    },
+
+    notify: function (target_id, event) {
+        var data = {};
+        for (var key in event) {
+            data[key] = event[key];
+        }
+        if (!(target_id instanceof ObjectID)) {
+            target_id = ObjectID(target_id);
+        }
+        data.target_id = target_id;
+        if (data._id) {
+            data.object_id = data._id;
+            delete data._id;
+        }
+        if (!data.time) {
+            data.time = Date.now();
+        }
+        var subscriber = subscribers[target_id.toString()];
+        var sendSubscribers = subscriber ? function () {
+            for (var cid in subscriber) {
+                var o = subscriber[cid];
+                if (o.socket) {
+                    o.socket.send(JSON.stringify(data));
+                }
+                else {
+                    o.send(data);
+                }
+            }
+        } : Function();
+        if (Number.isFinite(data.end) && data.end < data.time) {
+            sendSubscribers();
+        }
+        else {
+            $.data.insertOne('queue', data, sendSubscribers);
+        }
+    },
+
+    sendStatus: function (code) {
+        this.res.writeHead(code);
+        this.res.end();
+    },
+
+    _param: function (object, name) {
+        if (name in object) {
+            var value = object[name];
+            if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
+                if (!/[0-9a-z]{24}/.test(value)) {
+                    this.invalid(name, 'ObjectID');
+                }
+                value = ObjectID(value);
+            }
+            return value;
+        }
+        this.invalid(name, 'required');
+    },
+
+    param: function (name) {
+        return this._param(this.params, name);
+    },
+
+    get: function (name) {
+        return this._param(this.req.url.query, name);
+    },
+
+    post: function (name) {
+        return this._param(this.req.body, name);
+    },
+
+    has: function (name) {
+        if (name in this.params) {
+            var value = this.params[name];
+            if (value instanceof Array) {
+                return value.length > 0;
+            }
+            return true;
+        }
+        return false;
+    },
+
+    merge: function () {
+        var o = {};
+        for (var i = 0; i < arguments.length; i++) {
+            var a = arguments[i];
+            for (var j in a) {
+                o[j] = a[j];
+            }
+        }
+        return o;
+    },
+
+    validate: function (object) {
+        return schema_validator.validate(object, schema);
+    },
+
+    getUserAgent: function () {
+        var agent = {
+            ip: this.req.connection.remoteAddress
+        };
+        if (this.req.headers['user-agent']) {
+            agent.agent = this.req.headers['user-agent'];
+        }
+        if (this.req.geo) {
+            agent.geo = this.req.geo;
+        }
+        return agent;
+    },
+
+    setCookie: function (name, value, age, path) {
+        var cookie = name + '=' + value;
+        cookie += '; path=' + (path || '/');
+        if (age) {
+            cookie += '; expires=' + new Date(Date.now() + age).toUTCString();
+        }
+        res.setHeader('set-cookie', cookie);
+    },
+
+    send: function () {
+        var object;
+        var code = 200;
+        if (1 == arguments.length) {
+            object = arguments[0];
+        }
+        else if (2 == arguments.length) {
+            code = arguments[0];
+            object = arguments[1];
+        }
+        var data = JSON.stringify(object);
+        if (this.socket) {
+            this.socket.send(data);
+            return;
+        }
+
+        if (!this.res.finished) {
+            if (2 == arguments.length) {
+                res.writeHead(code, {
+                    'content-type': 'text/json'
+                    //'Access-Control-Allow-Origin': '*'
+                });
+            }
+            else {
+                this.res.setHeader('content-type', 'text/json');
+            }
+            this.res.end(data);
+        }
+
+        if ('GET' != this.req.method) {
+            var record = {
+                client_id: this.req.client_id,
+                route: this.req.url.route.length > 1 ? this.req.url.route : this.req.url.route[0],
+                method: this.req.method,
+                code: code,
+                result: object.result,
+                time: Date.now()
+            };
+            if (this.user) {
+                record.user_id = this.user._id;
+            }
+            for (var i in this.req.url.query) {
+                record.params = this.req.url.query;
+                break;
+            }
+            if (this.body) {
+                record.body = this.body;
+            }
+            this.db.collection('log').insertOne(record, Function());
+        }
+    },
+
+    authorize: function (cb) {
+        if (this.req.auth) {
+            this.data.findOne('user', {auth: this.req.auth}, cb);
+        }
+        else {
+            cb();
+        }
+    },
+
+    get id() {
+        return ObjectID(this.req.url.query.id);
+    }
+};
+
 // -------------------------------------------------------------------------------
 
-function process($) {
-    Object.defineProperty($, 'id', {
-        get: function () {
-            return ObjectID($.req.url.query.id);
-        }
-    });
-
+function serve($) {
     if ('' == $.req.url.route[0]) {
         return $.send({
             type: 'api',
@@ -439,41 +397,6 @@ function process($) {
             version: 0.1,
             dir: Object.keys(controllers)
         });
-    }
-
-    switch ($.req.url.route[0]) {
-        case 'entity':
-            var collectionName = $.req.url.route[1];
-            switch ($.req.method) {
-                case 'GET':
-                    if ($.req.url.query.id) {
-                        db.collection(collectionName).findOne($.id, $.answer);
-                    }
-                    else {
-                        db.collection(collectionName).find($.req.url.query).toArray($.answer);
-                    }
-                    break;
-                case 'PUT':
-                    throw {};
-                    //receive.call($.req, function (data) {
-                    //    db.collection(collectionName).insertOne(data, $.answer);
-                    //});
-                    break;
-                case 'PATCH':
-                    throw {};
-                    //receive.call($.req, function (data) {
-                    //    db.collection(collectionName).updateOne({_id: $.id}, {$set: data}, $.answer);
-                    //});
-                    break;
-                case 'DELETE':
-                    db.collection(collectionName).deleteOne({_id: $.id}, $.answer);
-                    break;
-                default:
-                    $.res.writeHead(405);
-                    $.res.end();
-                    break;
-            }
-            return;
     }
 
     var action;
@@ -516,7 +439,7 @@ function process($) {
 function exec(_, action) {
     function call_action() {
         try {
-            var valid = _.validate(_.req.params);
+            var valid = _.validate(_.params);
             if (valid) {
                 action(_);
             }
@@ -541,7 +464,7 @@ function exec(_, action) {
             receive(_.req, function (data) {
                 if (_.req.headers['content-type'].indexOf('json') > 0) {
                     try {
-                        _.body = JSON.parse(data.toString(''));
+                        _.body = JSON.parse(data.toString());
                         _.params = _.merge(_.params, _.body);
                         call_action();
                     }
@@ -594,8 +517,67 @@ function parse(url) {
     return a;
 }
 
-function authorize(db, auth, cb) {
-    db.collection('user').findOne({auth: auth}, cb);
+function database($) {
+    $.collection = function (name) {
+        return $.db.collection(name);
+    };
+
+    function resolve_callback(cb) {
+        if (cb) {
+            return $.wrap(result => {
+                if (result) {
+                    cb(result)
+                }
+                else {
+                    $.sendStatus(404);
+                }
+            })
+        }
+        else {
+            return $.answer;
+        }
+    }
+
+    $.data = {
+        updateOne: function (entity, id, mods, cb) {
+            $.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
+        },
+
+        find: function (entity, match, cb) {
+            var aggr = [
+                {$sort: {time: -1}}
+            ];
+            if (match instanceof Array) {
+                aggr = match.concat(aggr);
+            }
+            else {
+                aggr.unshift({$match: match});
+            }
+            $.collection(entity).aggregate(aggr)
+                .toArray(resolve_callback(cb));
+        },
+
+        deleteOne: function (entity, id, cb) {
+            if (!id) {
+                id = $('id');
+            }
+            $.collection(entity).deleteOne({_id: id}, resolve_callback(cb));
+        },
+
+        findOne: function (entity, id, cb) {
+            if (!id) {
+                id = $('id');
+            }
+            if (id instanceof ObjectID) {
+                id = {_id: id};
+            }
+            $.collection(entity).findOne(id, resolve_callback(cb));
+        },
+
+        insertOne: function (entity, mods, cb) {
+            $.collection(entity).insertOne(mods, resolve_callback(cb));
+        }
+    };
 }
 
 function receive(readable, call) {

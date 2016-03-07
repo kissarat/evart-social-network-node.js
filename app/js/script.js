@@ -21,15 +21,26 @@ var client_id = _cookies.cid;
 
 var server = {
     send: function (message) {
-        if (server._socket || WebSocket.OPEN != server._socket.readyState) {
-            server._socket.send(JSON.stringify(message));
+        if (arguments.length > 1) {
+            message = arguments[0];
+            message.target_id = arguments[1];
         }
-        else if (server._socket) {
-            console.error(SocketReadyState[server._socket.readyState]);
-        }
-        else {
-            console.error('Socket does not exists');
-        }
+
+        return new Promise(function (resolve, reject) {
+            message.end = 0;
+            if (server._socket && WebSocket.OPEN == server._socket.readyState) {
+                server._socket.send(JSON.stringify(message));
+                resolve(server._socket);
+            }
+            else if (server._socket) {
+                console.error(SocketReadyState[server._socket.readyState]);
+                reject(server._socket);
+            }
+            else {
+                console.error('Socket does not exists');
+                reject(server._socket);
+            }
+        });
     },
 
     poll: function () {
@@ -39,13 +50,16 @@ var server = {
 
         var socket = new WebSocket('wss://' + location.hostname + '/socket');
         server._socket = socket;
-        //socket.addEventListener('open', function () {});
+        socket.addEventListener('open', function () {
+            console.log('socket: open');
+        });
         socket.addEventListener('message', function (e) {
             var message = JSON.parse(e.data);
             server.fire(message.type, message);
         });
         socket.addEventListener('close', function () {
             server._socket = null;
+            console.error('socket: close');
             server.poll();
         });
         socket.addEventListener('error', function (e) {
@@ -57,6 +71,4 @@ var server = {
 
 extend(server, EventEmitter);
 
-server.on('login', function() {
-    server.poll();
-});
+server.on('login', server.poll);

@@ -61,7 +61,7 @@ module.exports = {
             data.time = Date.now();
         }
         if ($.has('chat_id')) {
-            $.db.collection('chat').findOne({_id: $('chat_id')}, $.wrap(function (result) {
+            $.db.collection('chat').findOne({_id: $.param('chat_id')}, $.wrap(function (result) {
                 if (result) {
                     result.members.forEach(function (member) {
                         $.notify(member, data);
@@ -74,7 +74,7 @@ module.exports = {
             }));
         }
         else {
-            $.notify($('target_id'), data);
+            $.notify($.param('target_id'), data);
             $.res.end();
         }
     }

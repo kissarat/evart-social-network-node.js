@@ -4,10 +4,10 @@ var ObjectID = require('mongodb').ObjectID;
 module.exports = {
     GET: function($) {
         if ($.has('id')) {
-            $.data.findOne('chat', $('id'));
+            $.data.findOne('chat', $.param('id'));
         }
         else {
-            var member_id = $.has('member_id') ? $('member_id') : $.user._id;
+            var member_id = $.has('member_id') ? $.param('member_id') : $.user._id;
             $.data.find('chat', {members: member_id});
         }
     },
@@ -15,8 +15,8 @@ module.exports = {
     PUT: function($) {
         var data = {
             owner_id: $.user._id,
-            title: $('title'),
-            members: $('members').map(ObjectID),
+            title: $.param('title'),
+            members: $.param('members').map(ObjectID),
             created: Date.now()
         };
         $.data.insertOne('chat', data, function(result) {

@@ -66,6 +66,7 @@
     Peer.prototype = {
         init: function (params) {
             this.params = extract(params, ['chat_id', 'target_id']);
+            var self = this;
             if (camera) {
                 this.connection.addStream(camera);
             }
@@ -103,8 +104,14 @@
 
                     function setLocalDescription(answer) {
                         peer.setLocalDescription(answer, function () {
-                            var message = merge(self.params, answer.toJSON());
-                            server.send(message).then(resolve, reject);
+                            if (self.params) {
+                                var message = merge(self.params, answer.toJSON());
+                                server.send(message).then(resolve, reject);
+                            }
+                            else {
+                                self.expectant = answer.toJSON();
+                                resolve(self.expectant);
+                            }
                         }, reject)
                     }
 
@@ -157,7 +164,7 @@
                 if (!phone) {
                     phone = new Peer();
                 }
-                phone.expectant = {type: 'offer', sdp: offer.sdp};
+                phone.answer({type: 'offer', sdp: offer.sdp});
                 new Notify(merge(phone.params, {
                     type: 'message',
                     title: 'Call',
@@ -173,7 +180,12 @@
                 else {
                     console.error('Phone is not initialized');
                 }
-            }
+            },
+
+            //call: function(params) {
+            //    phone = new Peer();
+            //    phone.init(params);
+            //}
         });
     });
 
@@ -183,7 +195,7 @@
         }
         phone.init(params);
         if (phone.expectant) {
-            phone.answer(phone.expectant);
+            server.send(merge(params, phone.expectant));
         }
         else {
             phone.offer();

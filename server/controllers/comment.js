@@ -18,19 +18,19 @@ module.exports = {
         });
         var data = {
             source_id: $.user._id,
-            type: $('type'),
+            type: $.param('type'),
             text: text,
             time: Date.now()
         };
 
         if ($.has('owner_id')) {
-            data.owner_id = $('owner_id');
+            data.owner_id = $.param('owner_id');
         }
         if ($.has('target_id')) {
-            data.target_id = $('target_id');
+            data.target_id = $.param('target_id');
         }
         if ($.has('chat_id')) {
-            data.chat_id = $('chat_id');
+            data.chat_id = $.param('chat_id');
         }
         /*
          if (_.body.target_id) {
@@ -42,7 +42,7 @@ module.exports = {
         }
 
         if ($.has('medias')) {
-            data.medias = $('medias').map(media => {
+            data.medias = $.param('medias').map(media => {
                 media.id = ObjectID(media.id);
                 return media;
             });
@@ -65,22 +65,22 @@ module.exports = {
 
     GET: function ($) {
         var match = {
-            type: $('type')
+            type: $.param('type')
         };
         if ($.has('owner_id')) {
-            match.owner_id = $('owner_id');
+            match.owner_id = $.param('owner_id');
             if ('video' == match.type) {
-                match.video_id = $('video_id');
+                match.video_id = $.param('video_id');
             }
         }
         else if ('message' == match.type) {
             var or;
             if ($.has('chat_id')) {
-                match.chat_id = $('chat_id');
+                match.chat_id = $.param('chat_id');
             }
             else {
                 if ($.has('target_id')) {
-                    var target_id = $('target_id');
+                    var target_id = $.param('target_id');
                     or = [
                         {
                             source_id: $.user._id,

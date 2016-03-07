@@ -60,7 +60,7 @@ module.exports = {
     GET: function ($) {
         var user_id = $.user._id;
         if ($.has('id')) {
-            $.data.findOne('file', $('id'), file => {
+            $.data.findOne('file', $.param('id'), file => {
                 $.res.writeHead(302, {
                     'content-type': file.mime,
                     location: '/md5/' + file.md5 + '/' + file.name
@@ -74,7 +74,7 @@ module.exports = {
     },
 
     DELETE: function ($) {
-        $.data.findOne('file', $('id'), file => {
+        $.data.findOne('file', $.param('id'), file => {
             var filename = path.join(_file, file.owner_id.toString(), file.name);
             fs.unlink(filename, (err, result) => {
                 if (err && 'ENOENT' != err.code) {

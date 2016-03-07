@@ -48,7 +48,7 @@ module.exports = {
     view: function($) {
         $.db.collection('user')
             .findOne(
-                {_id: $('id')},
+                {_id: $.param('id')},
                 {auth: 0, password: 0, email: 0},
                 $.wrap(function(user) {
                     if (user.blacks && user.blacks.indexOf($.user._id) >= 0) {
@@ -103,8 +103,8 @@ module.exports = {
     },
 
     GET: function($) {
-        var q = {$regex: $('q')};
-        var fields = $.has('fields') ? $('fields').split(',') : ['surname', 'forename'];
+        var q = {$regex: $.param('q')};
+        var fields = $.has('fields') ? $.param('fields').split(',') : ['surname', 'forename'];
         var or = [];
         fields.forEach(field => {
             var part = {};
