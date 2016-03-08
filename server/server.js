@@ -339,7 +339,7 @@ Context.prototype = {
 
         if (!this.res.finished) {
             if (2 == arguments.length) {
-                res.writeHead(code, {
+                this.res.writeHead(code, {
                     'content-type': 'text/json'
                     //'Access-Control-Allow-Origin': '*'
                 });

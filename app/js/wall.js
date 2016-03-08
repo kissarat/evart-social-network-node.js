@@ -183,15 +183,39 @@ ui.wall = function (params) {
     if ('message' == params.type) {
         if (view.video) {
             view.on('call', function () {
+                function addRemote(e) {
+                    view.remote.srcObject = e.stream;
+                    if ('1' == localStorage.muted) {
+                        view.mute.click();
+                    }
+                }
+
+                function closeCamera(e) {
+                    if (phone.isClosed()) {
+                        each (camera.getTracks(), function(track) {
+                            track.stop();
+                        })
+                    }
+                }
+
                 if (camera) {
                     Peer.create(params);
+                    phone.connection.addEventListener('addstream', addRemote);
+                    phone.connection.addEventListener('iceconnectionstatechange', closeCamera);
                 }
                 else {
-                    getUserMedia({audio: true, video: true}, function (stream) {
+                    var constrains = {
+                        audio: true,
+                        video: true,
+                        mozNoiseSuppression: false
+                    };
+                    navigator.mediaDevices.getUserMedia(constrains).then(function (stream) {
                         camera = stream;
                         view.local.muted = true;
                         view.local.srcObject = stream;
                         Peer.create(params);
+                        phone.connection.addEventListener('addstream', addRemote);
+                        phone.connection.addEventListener('iceconnectionstatechange', closeCamera);
                     }, _error);
                 }
             });
@@ -245,10 +269,6 @@ ui.wall = function (params) {
                     e.target.classList.remove('fa-volume-off');
                 }
             });
-
-            if ('1' == localStorage.muted) {
-                view.mute.click();
-            }
 
             view.video.visible = true;
         }

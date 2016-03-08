@@ -24,15 +24,9 @@
     };
 
     function Peer() {
-        this.candidates = [];
         this.connection = new RTCPeerConnection(iceServerConfig);
         var self = this;
         var c = this.connection;
-        c.addEventListener('iceconnectionstatechange', function (e) {
-            if (self.isClosed()) {
-                self.connection = null;
-            }
-        });
         if (DEBUG) {
             c.addEventListener('identityresult', _debug);
             c.addEventListener('idpassertionerror', _error);
@@ -57,7 +51,7 @@
                     server.send(merge(self.params, candidate));
                 }
                 else {
-                    self.candidates.push(candidate);
+                    console.error('send candidate: Phone is not initialized');
                 }
             }
         });
@@ -66,20 +60,6 @@
     Peer.prototype = {
         init: function (params) {
             this.params = extract(params, ['chat_id', 'target_id']);
-            var self = this;
-            if (camera) {
-                this.connection.addStream(camera);
-            }
-            else {
-                console.warn('No camera');
-            }
-            if (DEBUG && this.candidates.length > 0) {
-                _debug('Candidates: ' + this.candidates.length);
-            }
-            this.candidates.forEach(function (candidate) {
-                server.send(merge(self.params, candidate));
-            });
-            this.candidates = [];
         },
 
         offer: function (options) {
@@ -104,14 +84,8 @@
 
                     function setLocalDescription(answer) {
                         peer.setLocalDescription(answer, function () {
-                            if (self.params) {
-                                var message = merge(self.params, answer.toJSON());
-                                server.send(message).then(resolve, reject);
-                            }
-                            else {
-                                self.expectant = answer.toJSON();
-                                resolve(self.expectant);
-                            }
+                            var message = merge(self.params, answer.toJSON());
+                            server.send(message).then(resolve, reject);
                         }, reject)
                     }
 
@@ -154,51 +128,62 @@
         server.register({
             candidate: function (message) {
                 var candidate = new RTCIceCandidate(message.candidate);
-                if (!phone) {
-                    phone = new Peer();
+                if (phone) {
+                    phone.connection.addIceCandidate(candidate);
                 }
-                phone.connection.addIceCandidate(candidate);
+                else {
+                    console.error('candidate: Phone is not initialized');
+                }
             },
 
             offer: function (offer) {
-                if (!phone) {
-                    phone = new Peer();
+                if (phone) {
+                    phone.answer({type: 'offer', sdp: offer.sdp});
                 }
-                phone.answer({type: 'offer', sdp: offer.sdp});
-                new Notify(merge(phone.params, {
-                    type: 'message',
-                    title: 'Call',
-                    text: 'Call'
-                }));
+                else {
+                    console.error('offer: Phone is not initialized');
+                }
             },
 
             answer: function (answer) {
                 if (phone) {
                     var description = new RTCSessionDescription({type: 'answer', sdp: answer.sdp});
-                    phone.connection.setRemoteDescription(description, morozov, morozov);
+                    phone.connection.setRemoteDescription(description).then(_debug, _error);
                 }
                 else {
-                    console.error('Phone is not initialized');
+                    console.error('answer: Phone is not initialized');
                 }
             },
 
-            //call: function(params) {
-            //    phone = new Peer();
-            //    phone.init(params);
-            //}
+            call: function (params) {
+                phone = new Peer();
+                phone.init({target_id: params.source_id});
+                new Notify(merge(phone.params, {
+                    type: 'message',
+                    title: 'Call',
+                    text: 'Call'
+                }));
+            }
         });
     });
 
     Peer.create = function (params) {
-        if (!phone) {
-            phone = new Peer();
-        }
-        phone.init(params);
-        if (phone.expectant) {
-            server.send(merge(params, phone.expectant));
+        if (phone) {
+            if (phone.params) {
+                phone.connection.addStream(camera);
+                phone.offer();
+            }
+            else {
+                console.error('call: Phone is not initialized');
+            }
         }
         else {
-            phone.offer();
+            phone = new Peer();
+            phone.init(params);
+            phone.connection.addStream(camera);
+            server.send(merge(extract(params, ['chat_id', 'target_id']), {
+                type: 'call'
+            }));
         }
         return phone;
     };
