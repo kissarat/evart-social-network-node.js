@@ -235,7 +235,7 @@ function capture(cb) {
         navigator.mediaDevices.getUserMedia({audio: 1, video: 1}).then(function (stream) {
             _camera = stream;
             cb(stream);
-        }); 
+        });
     }
 }
 

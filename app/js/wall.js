@@ -1,5 +1,7 @@
 'use strict';
 
+var isBroadcasting = false;
+
 var wall = {
     add: function (comment) {
         User.findOne(comment.source_id, function (user) {
@@ -186,48 +188,51 @@ ui.wall = function (params) {
     add_attachment_type('/photo/index');
     add_attachment_type('/file/index');
 
+    function capture(cb) {
+        if (camera) {
+            cb(camera);
+        }
+        else {
+            navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(function (stream) {
+                camera = stream;
+                view.local.muted = true;
+                view.local.srcObject = stream;
+                cb(stream);
+            }, _error);
+        }
+    }
+
+    function addRemote(e) {
+        view.remote.srcObject = e.stream;
+        if ('1' == localStorage.muted) {
+            view.mute.click();
+        }
+    }
+
     if ('message' == params.type) {
         if (view.video) {
-            view.on('call', function () {
-                function addRemote(e) {
-                    view.remote.srcObject = e.stream;
-                    if ('1' == localStorage.muted) {
-                        view.mute.click();
-                    }
-                }
-
-                function closeCamera(e) {
-                    if (phone.isClosed()) {
-                        each(camera.getTracks(), function (track) {
-                            track.stop();
-                        });
-                        phone = null;
-                    }
-                }
-
-                if (camera || (chat && chat.owner_id != localStorage.user_id)) {
-                    Peer.create(params);
-                    phone.connection.addEventListener('addstream', addRemote);
-                    if (camera) {
-                        phone.connection.addEventListener('iceconnectionstatechange', closeCamera);
-                    }
+            if (params.chat_id) {
+                var peer = Peer.create(params);
+                peer.connection.addEventListener('addstream', addRemote);
+                if (localStorage.user_id == params.target_id) {
+                    capture(function (stream) {
+                        isBroadcasting = true;
+                    });
                 }
                 else {
-                    var constrains = {
-                        audio: true,
-                        video: true,
-                        mozNoiseSuppression: false
-                    };
-                    navigator.mediaDevices.getUserMedia(constrains).then(function (stream) {
-                        camera = stream;
-                        view.local.muted = true;
-                        view.local.srcObject = stream;
-                        Peer.create(params);
-                        phone.connection.addEventListener('addstream', addRemote);
-                        phone.connection.addEventListener('iceconnectionstatechange', closeCamera);
-                    }, _error);
+                    peer.offer(Peer.offerConstraints(true, true));
                 }
-            });
+            }
+            else {
+                view.on('call', function () {
+                    var options = Peer.offerConstraints(true, true);
+                    var peer = Peer.create(params);
+                    peer.connection.addEventListener('addstream', addRemote);
+                    capture(function () {
+                        peer.success(options);
+                    });
+                });
+            }
 
             view.on('microphone', function () {
                 if (camera) {

@@ -503,24 +503,31 @@ Notify.close = function () {
     }
 };
 
+function login() {
+    User.loadMe(function () {
+        $each('nav [data-go]', function (tag) {
+            tag.addEventListener('click', function () {
+                if (tag.dataset.idparam) {
+                    var params = {};
+                    params[tag.dataset.idparam] = localStorage.user_id;
+                    go(tag.dataset.go, params);
+                }
+                else {
+                    go(tag.dataset.go);
+                }
+            });
+        });
+        server.fire('login');
+        go((location.pathname.slice(1) + location.search)
+            || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
+    });
+}
+
 addEventListener('load', function () {
     if (localStorage.user_id && auth) {
-        User.loadMe(function () {
-            $each('nav [data-go]', function (tag) {
-                tag.addEventListener('click', function () {
-                    if (tag.dataset.idparam) {
-                        var params = {};
-                        params[tag.dataset.idparam] = localStorage.user_id;
-                        go(tag.dataset.go, params);
-                    }
-                    else {
-                        go(tag.dataset.go);
-                    }
-                });
-            });
-            server.fire('login');
-        });
+       login();
     }
-    go((location.pathname.slice(1) + location.search)
-        || (auth ? 'user/view?id=' + localStorage.user_id : 'user/login'));
+    else {
+        go('user/login');
+    }
 });

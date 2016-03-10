@@ -23,10 +23,20 @@
         ]
     };
 
-    function Peer() {
-        this.connection = new RTCPeerConnection(iceServerConfig);
+    var peerConstrains = {
+        optional: [
+            //{RtpDataChannels: true},
+            {DtlsSrtpKeyAgreement: true}
+        ]
+    };
+
+    function Peer(params) {
+        this.connection = new RTCPeerConnection(iceServerConfig, peerConstrains);
         var self = this;
         var c = this.connection;
+        if (params) {
+            this.init(params);
+        }
         if (DEBUG) {
             c.addEventListener('identityresult', _debug);
             c.addEventListener('idpassertionerror', _error);
@@ -48,10 +58,10 @@
                     candidate: e.candidate
                 };
                 if (self.params) {
-                    server.send(merge(self.params, candidate));
+                    self.send(candidate);
                 }
                 else {
-                    console.error('send candidate: Phone is not initialized');
+                    console.error('send candidate: peer is not initialized');
                 }
             }
         });
@@ -62,41 +72,45 @@
             this.params = extract(params, ['chat_id', 'target_id']);
         },
 
+        send: function (message) {
+            return server.send(merge(this.params, message));
+        },
+
         offer: function (options) {
             var self = this;
             return new Promise(function (resolve, reject) {
-                self.connection.createOffer(function (offer) {
-                    self.connection.setLocalDescription(offer, function () {
-                        var message = merge(self.params, offer.toJSON());
-                        server.send(message).then(resolve, reject);
+                self.connection.createOffer(options).then(function (offer) {
+                    self.connection.setLocalDescription(offer).then(function () {
+                        self.send(offer.toJSON()).then(resolve, reject);
                     }, reject);
-                }, reject, options);
+                }, reject);
             });
         },
 
-        answer: function (offer) {
-            var peer = this.connection;
+        answer: function (offer, options) {
             var self = this;
             return new Promise(function (resolve, reject) {
-                offer = new RTCSessionDescription({type: 'offer', sdp: offer.sdp});
-                peer.setRemoteDescription(offer).then(function () {
-                    var options = {offerToReceiveAudio: true, offerToReceiveVideo: true};
-
-                    function setLocalDescription(answer) {
-                        peer.setLocalDescription(answer, function () {
-                            var message = merge(self.params, answer.toJSON());
-                            server.send(message).then(resolve, reject);
+                offer = new RTCSessionDescription({type: 'offer', sdp: 'string' == typeof offer ? offer : offer.sdp});
+                self.connection.setRemoteDescription(offer).then(function () {
+                    self.connection.createAnswer(options).then(function (answer) {
+                        self.connection.setLocalDescription(answer).then(function () {
+                            self.send(answer.toJSON()).then(resolve, reject);
                         }, reject)
-                    }
-
-                    if (isFirefox) {
-                        peer.createAnswer(options).then(setLocalDescription);
-                    }
-                    else {
-                        peer.createAnswer().then(setLocalDescription);
-                    }
+                    }, reject);
                 }, reject);
             });
+        },
+
+        success: function(options) {
+            if (camera) {
+                this.connection.addStream(camera);
+            }
+            if (this.isRespondent) {
+                this.offer(options);
+            }
+            else {
+                this.send({type: 'call'});
+            }
         },
 
         reconnect: function () {
@@ -127,38 +141,34 @@
     addEventListener('load', function () {
         server.register({
             candidate: function (message) {
+                var peer = Peer.create(message.source_id);
                 var candidate = new RTCIceCandidate(message.candidate);
-                if (phone) {
-                    phone.connection.addIceCandidate(candidate);
-                }
-                else {
-                    console.error('candidate: Phone is not initialized');
-                }
+                peer.connection.addIceCandidate(candidate);
             },
 
             offer: function (offer) {
-                if (phone) {
-                    phone.answer({type: 'offer', sdp: offer.sdp});
+                var peer = Peer.create(offer.source_id);
+                if (camera && isBroadcasting) {
+                    peer.connection.addStream(camera);
                 }
-                else {
-                    console.error('offer: Phone is not initialized');
-                }
+                peer.answer(offer, Peer.offerConstraints(true, true));
             },
 
             answer: function (answer) {
-                if (phone) {
-                    var description = new RTCSessionDescription({type: 'answer', sdp: answer.sdp});
-                    phone.connection.setRemoteDescription(description).then(_debug, _error);
+                var peer = peers[answer.source_id];
+                if (peer) {
+                    var description = new RTCSessionDescription(answer);
+                    peer.connection.setRemoteDescription(description).then(_debug, _error);
                 }
                 else {
-                    console.error('answer: Phone is not initialized');
+                    console.error('answer: peer not found');
                 }
             },
 
             call: function (params) {
-                phone = new Peer();
-                phone.init({target_id: params.source_id});
-                new Notify(merge(phone.params, {
+                var peer = Peer.create(params.source_id);
+                peer.isRespondent = true;
+                new Notify(merge(peer.params, {
                     type: 'message',
                     title: 'Call',
                     text: 'Call'
@@ -168,38 +178,27 @@
     });
 
     Peer.create = function (params) {
-        if (phone) {
-            if (phone.params) {
-                if (camera) {
-                    phone.connection.addStream(camera);
-                }
-                else {
-                    console.warn('No camera');
-                }
-                phone.offer();
-            }
-            else {
-                console.error('call: Phone is not initialized');
-            }
+        if ('string' == typeof params) {
+            params = {target_id: params};
         }
-        else {
-            phone = new Peer();
-            phone.init(params);
-            if (camera) {
-                phone.connection.addStream(camera);
-            }
-            else {
-                console.warn('No camera');
-            }
-            server.send(merge(extract(params, ['chat_id', 'target_id']), {
-                type: 'call'
-            }));
+        var peer = peers[params.target_id];
+        if (!peer) {
+            peer = new Peer(params);
+            peers[params.target_id] = peer;
         }
-        return phone;
+        return peer;
+    };
+
+    Peer.offerConstraints = function (audio, video) {
+        audio = !!audio;
+        video = !!video;
+        return isFirefox
+            ? {offerToReceiveAudio: audio, offerToReceiveVideo: video}
+            : {mandatory: {OfferToReceiveAudio: audio, OfferToReceiveVideo: video}};
     };
 
     window.Peer = Peer;
 })();
 
-var phone;
+var peers = {};
 var camera;

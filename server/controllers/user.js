@@ -13,8 +13,8 @@ function password_hash(data) {
 
 module.exports = {
     login: function ($) {
-        $.data.findOne('user', {email: $.body.email}, user => {
-            if (user && password_hash($.body.password + $.body.email) == user.auth) {
+        $.data.findOne('user', {email: $.get('email')}, user => {
+            if (user && password_hash($.get('password') + $.get('email')) == user.auth) {
                 $.send(200, {
                     id: user._id,
                     auth: user.auth

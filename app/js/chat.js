@@ -64,7 +64,7 @@ ui.chat = {
                     var row = $row(chat.title, members.join(', '));
                     row.classList.add('button');
                     row.addEventListener('click', function() {
-                        go('wall', {chat_id: chat._id, type: 'message'});
+                        go('wall', {chat_id: chat._id, target_id: chat.owner_id, type: 'message'});
                     });
                     view.rows.appendChild(row);
                 });
