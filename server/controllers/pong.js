@@ -1,5 +1,7 @@
 var clients = {};
 
+var offer;
+
 var i = 0;
 
 function send(id, event, data) {
@@ -19,7 +21,7 @@ module.exports = {
     POST: function ($) {
         var id = $.req.url.query.id;
         var client_id = $.req.client_id.toString();
-        var event = $('event');
+        var event = $.get('event');
         var message = $.body;
         message.source_id = client_id;
         if ('name' == event) {
@@ -75,5 +77,37 @@ module.exports = {
         $.res.on('close', close);
         $.res.on('finish', close);
         send(id, 'clients', JSON.stringify(summary));
+    },
+
+    offer: function($) {
+        if ('DELETE' == $.req.method) {
+            if (offer) {
+                offer = null;
+            }
+            else {
+                $.sendStatus(404);
+            }
+        }
+        else if ($.body) {
+            if ('candidate' == $.body.type) {
+                if (!offer) {
+                    offer = {};
+                }
+                if (!offer.candidates) {
+                    offer.candidates = [];
+                }
+                offer.candidates.push($.body.candidate)
+            }
+            else {
+                offer = $.body;
+                offer.source_id = $.req.client_id;
+            }
+        }
+        if (offer) {
+            $.send(offer);
+        }
+        else {
+            $.res.end();
+        }
     }
 };

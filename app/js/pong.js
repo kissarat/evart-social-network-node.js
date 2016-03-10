@@ -28,17 +28,29 @@ var iceServerConfig = {
 
 var peerConstrains = {
     optional: [
-        {RtpDataChannels: true}
+        //{RtpDataChannels: true},
+        //{DtlsSrtpKeyAgreement: true}
     ]
 };
 
-var peer = new RTCPeerConnection(iceServerConfig);
+var peer = new RTCPeerConnection(iceServerConfig, peerConstrains);
 
 var channels = [];
 
 peer.addEventListener('icecandidate', function (e) {
     if (e.candidate) {
-        post(peer.target_id, 'candidate', {candidate: e.candidate})
+        if (peer.target_id) {
+            post(peer.target_id, 'candidate', {candidate: e.candidate});
+        }
+        else {
+            var publish = new XMLHttpRequest();
+            publish.open('POST', '/api/pong/offer');
+            publish.setRequestHeader('content-type', 'text/json');
+            publish.send(JSON.stringify({
+                type: 'candidate',
+                candidate: e.candidate
+            }));
+        }
     }
 });
 
@@ -72,50 +84,6 @@ server.on = function (name, cb) {
     });
 };
 
-server.on('offer', function (message) {
-    peer.target_id = message.source_id;
-    var offer = new RTCSessionDescription({type: 'offer', sdp: message.offer});
-    peer.setRemoteDescription(offer, function () {
-        var options = {offerToReceiveAudio: true, offerToReceiveVideo: true};
-
-        function setLocalDescription(answer) {
-            peer.setLocalDescription(answer, function () {
-                post(message.source_id, 'answer', {answer: answer.sdp})
-            }, _error)
-        }
-
-        if (isFirefox) {
-            peer.createAnswer(options).then(setLocalDescription);
-        }
-        else {
-            peer.createAnswer().then(setLocalDescription);
-        }
-    }, _error);
-});
-
-server.on('answer', function (message) {
-    var answer = new RTCSessionDescription({type: 'answer', sdp: message.answer});
-    peer.setRemoteDescription(answer);
-});
-
-server.on('candidate', function (message) {
-    var candidate = new RTCIceCandidate(message.candidate);
-    peer.addIceCandidate(candidate);
-});
-
-server.on('enter', add);
-server.on('exit', remove);
-
-server.on('clients', function (message) {
-    clients = message;
-    for (var id in clients) {
-        add({
-            source_id: id,
-            name: clients[id]
-        });
-    }
-});
-
 var clients = {};
 
 function add(message) {
@@ -141,6 +109,19 @@ function remove(message) {
     }
 }
 
+server.on('enter', add);
+server.on('exit', remove);
+
+server.on('clients', function (message) {
+    clients = message;
+    for (var id in clients) {
+        add({
+            source_id: id,
+            name: clients[id]
+        });
+    }
+});
+
 function post(id, event, data, async) {
     var xhr = new XMLHttpRequest();
     var url = '/api/pong?event=' + event;
@@ -153,18 +134,68 @@ function post(id, event, data, async) {
 }
 
 function offer(id) {
-    peer.target_id = id;
-    channels.push(channel(browser.name));
-    peer.createOffer(function (offer) {
-        peer.setLocalDescription(offer).then(function () {
-            post(id, 'offer', {offer: offer.sdp});
-        }, _error)
-    }, _error)
+    if (id) {
+        peer.target_id = id;
+    }
+    //channels.push(channel(browser.name));
+    return new Promise(function (resolve, reject) {
+        function setLocalDesciption(desc) {
+            peer.setLocalDescription(desc).then(function () {
+                var message = {offer: desc.sdp};
+                if (id) {
+                    post(id, 'offer', message);
+                }
+                resolve(message);
+            }, reject)
+        }
+
+        peer.createOffer(isFirefox
+            ? {offerToReceiveAudio: false, offerToReceiveVideo: true}
+            : {mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: true}})
+            .then(setLocalDesciption, reject);
+    });
 }
 
-function capture() {
+function answer(message) {
+    peer.target_id = message.source_id;
+    var offer = new RTCSessionDescription({type: 'offer', sdp: message.offer});
+    return new Promise(function (resolve, reject) {
+        function setLocalDescription(answer) {
+            peer.setLocalDescription(answer, function () {
+                post(message.source_id, 'answer', {answer: answer.sdp});
+                resolve({answer: answer.sdp});
+            }, reject);
+        }
+
+        peer.setRemoteDescription(offer).then(function() {
+            peer.createAnswer(isFirefox
+                    ? {offerToReceiveAudio: false, offerToReceiveVideo: false}
+                    : {mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: false}})
+                .then(setLocalDescription, reject);
+        });
+    });
+}
+
+server.on('offer', answer);
+
+server.on('answer', function (message) {
+    var answer = new RTCSessionDescription({type: 'answer', sdp: message.answer});
+    //if (!peer.remoteDescription.sdp) {
+    peer.setRemoteDescription(answer);
+    //}
+});
+
+server.on('candidate', function (message) {
+    var candidate = new RTCIceCandidate(message.candidate);
+    peer.addIceCandidate(candidate);
+});
+
+function capture(cb) {
     navigator.mediaDevices.getUserMedia({audio: 1, video: 1}).then(function (stream) {
         peer.addStream(stream);
+        if ('function' == typeof cb) {
+            cb();
+        }
     });
 }
 
@@ -185,8 +216,9 @@ enter.onclick = function () {
     post(null, 'name', {name: localStorage._pong_name});
     login.remove();
     list.style.removeProperty('display');
-    capture();
 };
+
+document.getElementById('capture').onclick = capture;
 
 if (localStorage._pong_name) {
     login.name.value = localStorage._pong_name;
@@ -209,7 +241,7 @@ function channel(name) {
 }
 
 function listen_channel(data) {
-    data.sendObject = function(object) {
+    data.sendObject = function (object) {
         this.send(JSON.stringify(object));
     };
 
@@ -232,8 +264,53 @@ function listen_channel(data) {
     });
 }
 
-peer.addEventListener('datachannel', function(e) {
+peer.addEventListener('datachannel', function (e) {
     var data = e.channel;
     listen_channel(data);
     channels.push(data);
 });
+
+
+var xhr = new XMLHttpRequest();
+xhr.open('GET', '/api/pong/offer');
+//xhr.setRequestHeader('content-type', 'text/json');
+xhr.onload = function () {
+    var message;
+    try {
+        message = JSON.parse(this.responseText);
+    }
+    catch (ex) {
+    }
+    if (message && message.source_id) {
+        //peer.target_id = message.source_id;
+        offer(message.source_id);
+        //if (message.candidates) {
+        //    message.candidates.forEach(function (candidate) {
+        //        candidate = new RTCIceCandidate(candidate);
+        //        peer.addIceCandidate(candidate);
+        //    });
+        //}
+        //answer(message);
+    }
+    else {
+        capture(function () {
+            //offer().then(function (message) {
+            var message = {};
+            var publish = new XMLHttpRequest();
+            publish.open('POST', '/api/pong/offer');
+            publish.setRequestHeader('content-type', 'text/json');
+            //publish.onload = function () {
+            //    addEventListener('beforeunload', removeOffer);
+            //};
+            publish.send(JSON.stringify(message));
+            //})
+        });
+    }
+};
+xhr.send(null);
+
+function removeOffer(e) {
+    var remove = new XMLHttpRequest();
+    remove.open('DELETE', '/api/pong/offer', !e);
+    remove.send(null);
+}

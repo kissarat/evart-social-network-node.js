@@ -356,9 +356,11 @@ Context.prototype = {
                 route: this.req.url.route.length > 1 ? this.req.url.route : this.req.url.route[0],
                 method: this.req.method,
                 code: code,
-                result: object.result,
                 time: Date.now()
             };
+            if (object) {
+                record.result = object.result;
+            }
             if (this.user) {
                 record.user_id = this.user._id;
             }
@@ -464,20 +466,19 @@ function exec(_, action) {
             receive(_.req, function (data) {
                 if (_.req.headers['content-type'].indexOf('json') > 0) {
                     try {
-                        _.body = JSON.parse(data.toString());
+                        _.body = JSON.parse(data.toString('utf8'));
                         _.params = _.merge(_.params, _.body);
-                        call_action();
                     }
                     catch (ex) {
                         _.send(400, {
-                            error: 'Invalid JSON format'
+                            error: ex.getMessage()
                         })
                     }
                 }
                 else {
                     _.data = data;
-                    call_action();
                 }
+                call_action();
             });
         }
         else {

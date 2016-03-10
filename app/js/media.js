@@ -170,7 +170,12 @@
     Peer.create = function (params) {
         if (phone) {
             if (phone.params) {
-                phone.connection.addStream(camera);
+                if (camera) {
+                    phone.connection.addStream(camera);
+                }
+                else {
+                    console.warn('No camera');
+                }
                 phone.offer();
             }
             else {
@@ -180,7 +185,12 @@
         else {
             phone = new Peer();
             phone.init(params);
-            phone.connection.addStream(camera);
+            if (camera) {
+                phone.connection.addStream(camera);
+            }
+            else {
+                console.warn('No camera');
+            }
             server.send(merge(extract(params, ['chat_id', 'target_id']), {
                 type: 'call'
             }));

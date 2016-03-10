@@ -50,6 +50,12 @@ server.on('message', wall.add);
 
 ui.wall = function (params) {
     var view = this;
+    var chat;
+    if (params.chat_id) {
+        api('chat', 'GET', params, function (data) {
+            chat = data;
+        });
+    }
 
     hook.wall = function (comment) {
         comment = Comment.resolve(comment);
@@ -192,16 +198,19 @@ ui.wall = function (params) {
 
                 function closeCamera(e) {
                     if (phone.isClosed()) {
-                        each (camera.getTracks(), function(track) {
+                        each(camera.getTracks(), function (track) {
                             track.stop();
-                        })
+                        });
+                        phone = null;
                     }
                 }
 
-                if (camera) {
+                if (camera || (chat && chat.owner_id != localStorage.user_id)) {
                     Peer.create(params);
                     phone.connection.addEventListener('addstream', addRemote);
-                    phone.connection.addEventListener('iceconnectionstatechange', closeCamera);
+                    if (camera) {
+                        phone.connection.addEventListener('iceconnectionstatechange', closeCamera);
+                    }
                 }
                 else {
                     var constrains = {
