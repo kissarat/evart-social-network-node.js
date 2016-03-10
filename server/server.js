@@ -318,7 +318,7 @@ Context.prototype = {
         if (age) {
             cookie += '; expires=' + new Date(Date.now() + age).toUTCString();
         }
-        res.setHeader('set-cookie', cookie);
+        this.res.setHeader('set-cookie', cookie);
     },
 
     send: function () {

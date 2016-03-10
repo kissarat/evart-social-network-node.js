@@ -4,6 +4,8 @@ browser_info.innerHTML = JSON.stringify(browser);
 
 var isFirefox = 'Firefox' == browser.name;
 
+var peers = {};
+
 function _debug(e) {
     console.log(e);
 }
@@ -29,39 +31,56 @@ var iceServerConfig = {
 var peerConstrains = {
     optional: [
         //{RtpDataChannels: true},
-        //{DtlsSrtpKeyAgreement: true}
+        {DtlsSrtpKeyAgreement: true}
     ]
 };
 
-var peer = new RTCPeerConnection(iceServerConfig, peerConstrains);
+function connection(id) {
+    var peer = new RTCPeerConnection(iceServerConfig, peerConstrains);
 
-var channels = [];
-
-peer.addEventListener('icecandidate', function (e) {
-    if (e.candidate) {
-        if (peer.target_id) {
-            post(peer.target_id, 'candidate', {candidate: e.candidate});
+    peer.addEventListener('icecandidate', function (e) {
+        if (e.candidate) {
+            if (peer.target_id) {
+                post(peer.target_id, 'candidate', {candidate: e.candidate});
+            }
+            else {
+                var publish = new XMLHttpRequest();
+                publish.open('POST', '/api/pong/offer');
+                publish.setRequestHeader('content-type', 'text/json');
+                publish.send(JSON.stringify({
+                    type: 'candidate',
+                    candidate: e.candidate
+                }));
+            }
         }
-        else {
-            var publish = new XMLHttpRequest();
-            publish.open('POST', '/api/pong/offer');
-            publish.setRequestHeader('content-type', 'text/json');
-            publish.send(JSON.stringify({
-                type: 'candidate',
-                candidate: e.candidate
-            }));
-        }
-    }
-});
+    });
 
-peer.addEventListener('addstream', function (e) {
-    var video = document.createElement('video');
-    video.srcObject = e.stream;
-    video.controls = true;
-    video.muted = true;
-    video.play();
-    videos.appendChild(video);
-});
+    peer.addEventListener('addstream', function (e) {
+        var video = document.createElement('video');
+        video.srcObject = e.stream;
+        video.controls = true;
+        video.muted = true;
+        video.play();
+        videos.appendChild(video);
+    });
+
+    peer.addEventListener('identityresult', _debug);
+    peer.addEventListener('idpassertionerror', _error);
+    peer.addEventListener('idpvalidationerror', _error);
+    peer.addEventListener('negotiationneeded', _debug);
+    peer.addEventListener('peeridentity', _debug);
+    peer.addEventListener('iceconnectionstatechange', function (e) {
+        console.log('# connection: ' + e.target.iceConnectionState);
+    });
+    peer.addEventListener('signalingstatechange', function (e) {
+        console.log('# singnal: ' + e.target.signalingState);
+    });
+
+    peers[id] = peer;
+    peer.target_id = id;
+
+    return peer;
+}
 
 var client_id;
 
@@ -134,10 +153,7 @@ function post(id, event, data, async) {
 }
 
 function offer(id) {
-    if (id) {
-        peer.target_id = id;
-    }
-    //channels.push(channel(browser.name));
+    var peer = connection(id);
     return new Promise(function (resolve, reject) {
         function setLocalDesciption(desc) {
             peer.setLocalDescription(desc).then(function () {
@@ -149,67 +165,79 @@ function offer(id) {
             }, reject)
         }
 
-        peer.createOffer(isFirefox
-            ? {offerToReceiveAudio: false, offerToReceiveVideo: true}
-            : {mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: true}})
-            .then(setLocalDesciption, reject);
+        if (isFirefox) {
+            peer.createOffer({offerToReceiveAudio: false, offerToReceiveVideo: true})
+                .then(setLocalDesciption, reject);
+        }
+        else {
+            peer.createOffer({mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: true}})
+                .then(setLocalDesciption, reject);
+
+            //peer.createOffer()
+            //    .then(setLocalDesciption, reject);
+        }
+
     });
 }
 
 function answer(message) {
-    peer.target_id = message.source_id;
-    var offer = new RTCSessionDescription({type: 'offer', sdp: message.offer});
+    var peer;
     return new Promise(function (resolve, reject) {
-        function setLocalDescription(answer) {
-            peer.setLocalDescription(answer, function () {
-                post(message.source_id, 'answer', {answer: answer.sdp});
-                resolve({answer: answer.sdp});
-            }, reject);
-        }
+        capture(function (stream) {
+            peer = connection(message.source_id);
+            peer.addStream(stream);
+            var offerDesc = new RTCSessionDescription({type: 'offer', sdp: message.offer});
 
-        peer.setRemoteDescription(offer).then(function() {
-            peer.createAnswer(isFirefox
-                    ? {offerToReceiveAudio: false, offerToReceiveVideo: false}
-                    : {mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: false}})
-                .then(setLocalDescription, reject);
+            function setLocalDescription(answer) {
+                peer.setLocalDescription(answer).then(function () {
+                    post(message.source_id, 'answer', {answer: answer.sdp});
+                    resolve({answer: answer.sdp});
+                }, reject);
+            }
+
+            peer.setRemoteDescription(offerDesc).then(resolve, reject);
+
+            if (isFirefox) {
+                peer.createAnswer({offerToReceiveAudio: false, offerToReceiveVideo: true})
+                    .then(setLocalDescription, reject);
+            }
+            else {
+                peer.createAnswer({mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: true}})
+                    .then(setLocalDescription, reject);
+                //peer.createAnswer()
+                //    .then(setLocalDescription, reject);
+            }
         });
     });
 }
 
-server.on('offer', answer);
+server.on('offer', function (message) {
+    answer(message).then(_debug, _error);
+});
 
 server.on('answer', function (message) {
     var answer = new RTCSessionDescription({type: 'answer', sdp: message.answer});
-    //if (!peer.remoteDescription.sdp) {
-    peer.setRemoteDescription(answer);
-    //}
+    peers[message.source_id].setRemoteDescription(answer).then(_debug, _error);
 });
 
 server.on('candidate', function (message) {
     var candidate = new RTCIceCandidate(message.candidate);
-    peer.addIceCandidate(candidate);
+    console.log(candidate);
+    peers[message.source_id].addIceCandidate(candidate);
 });
 
+var _camera;
 function capture(cb) {
-    navigator.mediaDevices.getUserMedia({audio: 1, video: 1}).then(function (stream) {
-        peer.addStream(stream);
-        if ('function' == typeof cb) {
-            cb();
-        }
-    });
+    if (_camera) {
+        cb(_camera);
+    }
+    else {
+        navigator.mediaDevices.getUserMedia({audio: 1, video: 1}).then(function (stream) {
+            _camera = stream;
+            cb(stream);
+        }); 
+    }
 }
-
-peer.addEventListener('identityresult', _debug);
-peer.addEventListener('idpassertionerror', _error);
-peer.addEventListener('idpvalidationerror', _error);
-peer.addEventListener('negotiationneeded', _debug);
-peer.addEventListener('peeridentity', _debug);
-peer.addEventListener('iceconnectionstatechange', function (e) {
-    console.log('# connection: ' + e.target.iceConnectionState);
-});
-peer.addEventListener('signalingstatechange', function (e) {
-    console.log('# singnal: ' + e.target.signalingState);
-});
 
 enter.onclick = function () {
     localStorage._pong_name = login.name.value;
@@ -228,49 +256,6 @@ addEventListener('beforeunload', function () {
     post(null, 'exit', {source_id: client_id}, false);
 });
 
-function channel(name) {
-    var data = peer.createDataChannel(name, {
-        reliable: true,
-        ordered: true,
-        maxRetransmitTime: 3000
-    });
-
-    listen_channel(data);
-
-    return data;
-}
-
-function listen_channel(data) {
-    data.sendObject = function (object) {
-        this.send(JSON.stringify(object));
-    };
-
-    data.addEventListener('open', function (e) {
-        this.sendObject({
-            agent: browser
-        });
-    });
-
-    data.addEventListener('close', function () {
-
-    });
-
-    data.addEventListener('error', function () {
-
-    });
-
-    data.addEventListener('message', function (e) {
-        console.log(this.label + ': ' + e.data);
-    });
-}
-
-peer.addEventListener('datachannel', function (e) {
-    var data = e.channel;
-    listen_channel(data);
-    channels.push(data);
-});
-
-
 var xhr = new XMLHttpRequest();
 xhr.open('GET', '/api/pong/offer');
 //xhr.setRequestHeader('content-type', 'text/json');
@@ -282,29 +267,19 @@ xhr.onload = function () {
     catch (ex) {
     }
     if (message && message.source_id) {
-        //peer.target_id = message.source_id;
-        offer(message.source_id);
+        offer(message.source_id).then(_debug, _error);
         //if (message.candidates) {
         //    message.candidates.forEach(function (candidate) {
         //        candidate = new RTCIceCandidate(candidate);
         //        peer.addIceCandidate(candidate);
         //    });
         //}
-        //answer(message);
     }
     else {
-        capture(function () {
-            //offer().then(function (message) {
-            var message = {};
-            var publish = new XMLHttpRequest();
-            publish.open('POST', '/api/pong/offer');
-            publish.setRequestHeader('content-type', 'text/json');
-            //publish.onload = function () {
-            //    addEventListener('beforeunload', removeOffer);
-            //};
-            publish.send(JSON.stringify(message));
-            //})
-        });
+        var publish = new XMLHttpRequest();
+        publish.open('POST', '/api/pong/offer');
+        publish.setRequestHeader('content-type', 'text/json');
+        publish.send(JSON.stringify({}));
     }
 };
 xhr.send(null);
