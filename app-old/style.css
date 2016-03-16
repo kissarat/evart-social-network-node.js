@@ -1,0 +1,44 @@
+body {
+    position: fixed;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    flex-direction: column;
+}
+
+header {
+    width: 100%;
+    background-color: tomato;
+    height: 50px;
+}
+
+.hide-height {
+    height: 0;
+    transition: height 200ms;
+}
+
+.main {
+    flex: 1 100%;
+    display: flex;
+}
+
+aside {
+    width: 50px;
+    background-color: green;
+    transition: width 200ms;
+}
+
+aside.wide {
+    width: 150px;
+    transition: width 200ms;
+}
+
+article {
+    flex: 15;
+}
+
+.fold {
+    height: 20px;
+    background: url("/images/arrow.svg") center
+}

@@ -1,0 +1,23 @@
+{
+  "name": "socex",
+  "description": "",
+  "main": "index.html",
+  "authors": [
+    "Taras Labiak <kissarat@gmail.com>"
+  ],
+  "license": "ISC",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "dependencies": {
+    "faker": "*",
+    "webrtc-adapter": "0.2.*",
+    "components-font-awesome": "*",
+    "jquery": "^2",
+    "jquery-ui": "*",
+    "bootstrap": "*",
+    "underscore": "*",
+    "backbone": "*",
+    "marionette": "*"
+  }
+}

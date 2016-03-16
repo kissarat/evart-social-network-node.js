@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link type="text/css" rel="stylesheet" href="/lib/components-font-awesome/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/style.css"/>
+</head>
+<body>
+<header>
+    <div class="bar">
+        <div class="fa fa-times"></div>
+    </div>
+</header>
+<div class="main">
+<aside id="side_left" class="left wide">
+    <div class="fold"></div>
+</aside>
+<article>
+    Some content
+</article>
+<aside id="side_right" class="right wide">
+    <div class="fold fa fa-arrow-circle-o-right"></div>
+</aside>
+</div>
+<script src="/lib/jquery/dist/jquery.js"></script>
+<script src="/js/jquery.extend.js"></script>
+<script>
+    $(".fold").click(function() {
+        var side = this.parentNode;
+        side.classList.toggle('wide');
+        this.setAttribute('class', this.getAttribute('class').replace(/left|right/, function(str) {
+            return 'left' == str ? 'right' : 'left';
+        }));
+    });
+
+    $('.bar').each(function(i, tag) {
+        $('.fa-times', tag).click(function() {
+            var header = tag.parentNode;
+            header.classList.add('hide-height');
+            header.addEventListener('transitionend', function() {
+                this.remove();
+            });
+        });
+    });
+</script>
+</body>
+</html>

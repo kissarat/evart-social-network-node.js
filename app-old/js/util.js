@@ -184,6 +184,10 @@ function $fa(name, confirm_text, call) {
     return $new('div', {class: 'button fa fa-' + name}, call);
 }
 
+function $iter(selectors, cb) {
+    selectors.map($$).forEach(cb);
+}
+
 function $content(text) {
     var tag = document.createElement('div');
     tag.innerHTML = text;
@@ -642,13 +646,15 @@ Object.defineProperties(XMLHttpRequest.prototype, {
     }
 });
 
-Element.prototype.change = function () {
-    this.dispatchEvent(new Event('change'));
-};
+extend(Element.prototype, {
+    change: function () {
+        this.dispatchEvent(new Event('change'));
+    },
 
-Element.prototype.prependChild = function (child) {
-    this.insertBefore(child, this.firstChild);
-};
+    prependChild: function (child) {
+        this.insertBefore(child, this.firstChild);
+    }
+});
 
 function merge() {
     var o = {};
