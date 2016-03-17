@@ -6,3 +6,5 @@ App.addRegions
 
 App.on 'initialize:after', ->
   Backbone.history.start()
+
+  

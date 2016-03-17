@@ -18,6 +18,6 @@
     "bootstrap": "*",
     "underscore": "*",
     "backbone": "*",
-    "marionette": "*"
+    "marionette": "*",
   }
 }

@@ -10,15 +10,165 @@ body
   > *
     flex: 1
 
-#dock
-  position: fixed
-  width: 100vw
-  margin-left: 10px
-  margin-right: 10px
-  height: 180px
-  background: url("/images/dock.png") bottom no-repeat
-  background-size: 800px 80px
-  bottom: 0
+//colors
+$white: #fff
+$color_log_cabin_approx: #222
+$white_30: rgba(255, 255, 255, 0.3)
+$white_70: rgba(255, 255, 255, .7)
+$color_suva_gray_approx: #888
+$color_mine_shaft_approx: #333
+$color_celeste_approx: #ccc
+$color_mountain_mist_approx: #999
+$color_silver_chalice_approx: #aaa
+$black_75: rgba(0, 0, 0, .75)
+$white_50: rgba(255, 255, 255, .5)
 
-#main
-  background-color: white
+$red: #F94746
+$yellow: #FEC141
+$green: #36CF4B
+$grey: #F6F6F6
+
+//fonts
+$font: "Helvetica Neue", Helvetica, arial, sans-serif
+
+html
+  height: 100%
+  color: $white
+  background: $color_log_cabin_approx
+  background-image: -webkit-gradient(radial, 50% 0, 10, 50% 0, 400, from($white_30), to(rgba(255, 255, 255, 0)))
+  -webkit-background-image: radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
+  background-image: -moz-radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
+  background-repeat: no-repeat
+
+body
+  font-family: $font
+
+img
+  border: 0
+
+#dock-container
+  position: fixed
+  bottom: 0
+  text-align: center
+  width: 100%
+
+#dock
+  position: relative
+  display: inline-block
+  -webkit-perspective: 400
+  -moz-perspective: 400
+  .base
+    position: absolute
+    bottom: 0
+    width: 100%
+    height: 45px
+    z-index: -10
+    background-color: $color_suva_gray_approx
+    background-image: -webkit-gradient(linear, left top, left bottom, from($color_mine_shaft_approx), to($color_celeste_approx))
+    background-image: -webkit-linear-gradient(top, $color_mine_shaft_approx, $color_mountain_mist_approx)
+    background-image: -moz-linear-gradient(top, $color_mine_shaft_approx, $color_mountain_mist_approx)
+    opacity: .5
+    border-bottom: 2px $color_silver_chalice_approx solid
+    -webkit-transform-origin: 50% 100%
+    -webkit-transform: rotateX(55deg)
+    -moz-transform-origin: 50% 100%
+    -moz-transform: rotateX(55deg)
+    -o-transform-origin: 50% 100%
+    -o-transform: rotateX(55deg)
+
+  ul
+    font-size: 14px
+    padding: 0 30px
+    margin: 0
+
+  li
+    list-style-type: none
+    display: inline-block
+    position: relative
+    span
+      display: none
+      position: absolute
+      bottom: 140px
+      left: 0
+      width: 100%
+      background-color: $black_75
+      padding: 4px 0
+      //If you use compass, instead of the line below you could use + border-radius($radius, $vertical-radius)
+      border-radius: 12px
+      -webkit-border-radius: 12px
+      -moz-border-radius: 12px
+
+    &:hover
+      span
+        display: block
+
+      img
+        -webkit-transform: scale(2)
+        -moz-transform: scale(2)
+        -o-transform: scale(2)
+        margin: 0 2em 10px
+
+      + li img
+        -webkit-transform: scale(1.4)
+        -moz-transform: scale(1.4)
+        -o-transform: scale(1.4)
+        margin: 0 1.4em 10px
+
+    img
+      width: 64px
+      height: 64px
+      margin-bottom: 10px
+      -webkit-box-reflect: below 2px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.7, transparent), to($white_50))
+      -webkit-box-reflect: below 2px -webkit-linear-gradient(top, transparent, $white_30)
+      -webkit-transition: all 0.3s
+      -webkit-transform-origin: 50% 100%
+      -moz-transition: all 0.4s
+      -moz-transform-origin: 50% 100%
+      -o-transition: all 0.3s
+      -o-transform-origin: 50% 100%
+
+    &.prev img
+      -webkit-transform: scale(1.4)
+      -moz-transform: scale(1.4)
+      -o-transform: scale(1.4)
+      margin: 0 1.4em 10px
+
+.window
+  padding: 6px
+  //border: 0 solid transparent
+  height: calc(100vh - 120px)
+  display: flex
+  flex-flow: column
+  .controls
+    position: relative
+    background-color: rgba(0, 0, 0, 0.9)
+    border: 1px solid $grey
+    min-height: 21px
+    nav, .title
+      position: absolute
+      font-size: 13px
+      line-height: 21px
+    nav
+      display: inline-block
+      padding-left: 4px
+      [title=close]
+        color: $red
+      [title=minimize]
+        color: $yellow
+      [title=maximize]
+        color: $green
+    .title
+      width: 100%
+      text-align: center
+      margin: 0
+  .container
+    flex: 1 0 100%
+    background-color: $grey
+    //&:fullscreen
+    //  height: 100%
+    //  width: 100%
+    //  background-color: white
+
+  &.ui-draggable-dragging
+    opacity: 0.8
+    background: repeating-linear-gradient(45deg, rgba(246, 246, 246, 0.5), rgba(246, 246, 246, 0.5) 10px, rgba(128, 128, 128, 0.5) 10px, rgba(128, 128, 128, 0.5) 20px)
