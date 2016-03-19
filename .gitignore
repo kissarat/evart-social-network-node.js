@@ -6,9 +6,11 @@ app-old/images
 static/
 server/nginx/logs/
 server/mongodb/data/
+server/vkontakte.js*
 node_modules/
 server/node_modules/
 gulpfile.js*
 images/
 client/lib/
 client/*css*
+client/coffee/*.js*
