@@ -22,15 +22,17 @@ server = http.createServer (req, res) ->
     console.log access_token_url
     request access_token_url, (error, response, data) ->
       object = JSON.parse data
-      if object.error
-        res.end data
-      else
+      if !object.error
+        console.log object
         options =
-          expires: new Date(Date.now() + parseInt object.expires_in)
           path: '/'
+          httpOnly: false
+        object.expires_in = parseInt object.expires_in
+        if object.expires_in > 0
+          options.expires = new Date(Date.now() + 1000 * object.expires_in)
         cookies.set 'vk', object.access_token, options
         cookies.set 'vk_uid', object.user_id, options
-        res.end()
+      res.end data
   #if /^verify/.test url
 
 server.listen 8080

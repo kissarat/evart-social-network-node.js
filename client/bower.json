@@ -19,6 +19,7 @@
     "underscore": "*",
     "backbone": "*",
     "marionette": "*",
-    "jquery.cookie": "jquery-cookie#^1.4.1"
+    "jquery.cookie": "jquery-cookie#^1.4.1",
+    "lodash": "^4.6.1"
   }
 }
