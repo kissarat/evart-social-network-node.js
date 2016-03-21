@@ -1,8 +1,9 @@
-CREATE TYPE deativated AS ENUM ('deleted', 'banned');
+CREATE TYPE deactivated AS ENUM ('deleted', 'banned');
 
 CREATE TABLE subject (
   id BIGSERIAL PRIMARY KEY,
-  deactivated deativated,
+  name VARCHAR(80) NOT NULL,
+  deactivated deactivated,
   hidden BOOLEAN NOT NULL DEFAULT FALSE,
   photo_id BIGSERIAL,
   verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -42,7 +43,6 @@ CREATE TABLE "user" (
 CREATE TYPE group_type AS ENUM ('group', 'page', 'event');
 
 CREATE TABLE "group" (
-  name VARCHAR(80) NOT NULL,
   is_closed SMALLINT NOT NULL DEFAULT 0,
   type group_type NOT NULL DEFAULT 'group'
-);
+) INHERITS (subject);

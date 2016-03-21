@@ -1,7 +1,36 @@
 'use strict';
 
-module.exports = {
-    PUT: $ => $.data.updateOne($.param('entity'), $.param('target_id'), {$addToSet: {likes: $.user._id}}),
+var fields = {
+    like: 'hate',
+    hate: 'like'
+};
 
-    DELETE: $ => $.data.updateOne($.param('entity'), $.param('target_id'), {$pull: {likes: $.user._id}})
+module.exports = {
+    PUT: function($) {
+        var field = $.param('field');
+        if (fields[field]) {
+            var o = {};
+            o[field] = $.user._id;
+            $.data.updateOne($.param('entity'), $.param('target_id'), {$addToSet: o}, function() {
+                var o = {};
+                o[fields[field]] = $.user._id;
+                $.data.updateOne($.param('entity'), $.param('target_id'), {$pull: o});
+            });
+        }
+        else {
+            $.invalid('field');
+        }
+    },
+
+    DELETE: function($) {
+        var field = $.param('field');
+        if (fields[field]) {
+            var o = {};
+            o[field] = $.user._id;
+            $.data.updateOne($.param('entity'), $.param('target_id'), {$pull: o})
+        }
+        else {
+            $.invalid('field');
+        }
+    }
 };

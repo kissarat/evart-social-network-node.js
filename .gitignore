@@ -14,3 +14,4 @@ images/
 client/lib/
 client/*css*
 client/coffee/*.js*
+client/.sass-cache

@@ -76,3 +76,5 @@ else if !$.cookie('vk') && confirm('Authorize vkontakte?')
       client_id: vk.id
       scope: (Object.keys vk.permissions).join ','
       redirect_uri: location.origin + '/verify'
+else
+  $

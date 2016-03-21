@@ -5,8 +5,10 @@ Cookies = require 'cookies'
 request = require 'request'
 
 vk =
-  id: 4310032
-  key: 'oXLF6BnVfmvaqtOCygJj'
+#  id: 4310032
+#  key: 'oXLF6BnVfmvaqtOCygJj'
+  id: 4481453
+  key: 'YBtLlUCi5TB0HW3FjcY2'
 
 server = http.createServer (req, res) ->
   url = req.url.replace '/vk/', ''
