@@ -1,16 +1,14 @@
 gulp = require 'gulp'
+sass = require 'gulp-sass'
+coffee = require 'gulp-coffee'
 jsdom = (require 'jsdom').jsdom
 fs = require 'fs'
 _ = require 'underscore'
 minifier = require 'minifier'
 fse = require 'fs.extra'
-coffee = require 'gulp-coffee'
 
 
 gulp.task 'app', ->
-#  gulp.src 'client/coffee/*.coffee'
-#    .pipe coffee
-#    .pipe gulp.dest 'client/coffee'
   version = Date.now()
   string = fs.readFileSync 'client/index.html'
   string = string.toString('utf8').replace /\s*\n+\s*/mg, ' '
@@ -28,8 +26,8 @@ gulp.task 'app', ->
   fs.unlinkSync 'app/script.js'
   files = fs.readFileSync 'app/script.min.js'
   fs.unlinkSync 'app/script.min.js'
-#  string = files.toString 'utf8'
-  (document.getElementById 'script').innerHTML = "<script>\n//\t<![CDATA[\n#{files}\n//\t]]>\n</script>"
+  string = files.toString 'utf8'
+  (document.getElementById 'script').innerHTML = "<script>\n//\t<![CDATA[\n#{string}\n//\t]]>\n</script>"
   files = []
   _.each (document.querySelectorAll '[rel=stylesheet]'), (style) ->
     src = style.getAttribute 'href'
@@ -57,3 +55,16 @@ gulp.task 'app', ->
   fs.writeFileSync 'app/index.html', ('<!DOCTYPE html>\n' + string)
   fse.copy 'client/favicon.ico', 'app/favicon.ico', replace: true
   fse.copyRecursive 'client/images', 'app/images', Function()
+
+gulp.task 'translate', ->
+  gulp
+  .src 'client/*.sass'
+  .pipe sass()
+  .pipe gulp.dest 'client/'
+
+  gulp
+  .src 'client/coffee/*.coffee'
+  .pipe coffee()
+  .pipe gulp.dest 'client/coffee/'
+
+gulp.task 'default', ['translate', 'app']
