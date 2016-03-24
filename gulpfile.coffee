@@ -34,8 +34,9 @@ gulp.task 'app', ->
     if src
       files.push fs.readFileSync ('client' + src)
     document.head.removeChild style
-  files = files.join "\n"
-  fs.writeFileSync 'client/all.css', files
+  string = files.join "\n"
+  string = string.replace /\.\.\/fonts\//g, '/images/'
+  fs.writeFileSync 'client/all.css', string
   minifier.minify 'client/all.css'
   fs.unlinkSync 'client/all.css'
   style = document.createElement 'style'
@@ -55,6 +56,8 @@ gulp.task 'app', ->
   fs.writeFileSync 'app/index.html', ('<!DOCTYPE html>\n' + string)
   fse.copy 'client/favicon.ico', 'app/favicon.ico', replace: true
   fse.copyRecursive 'client/images', 'app/images', Function()
+  fse.copyRecursive 'client/lib/components-font-awesome/fonts', 'app/images', Function()
+  return
 
 gulp.task 'translate', ->
   gulp
