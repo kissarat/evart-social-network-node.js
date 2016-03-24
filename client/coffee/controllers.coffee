@@ -1,12 +1,9 @@
 @App.module "Controllers", (Controllers) ->
   class Controllers.User extends Marionette.Controller
     login: ->
-      console.log 'login'
+      console.log '11 login'
 
-  class Controllers.User.Router extends App.Router
-    controller: new Controllers.User()
-
-    appRouter:
+    routes:
       'login': 'login'
 
 #  Controllers.addInitializer ->

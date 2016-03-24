@@ -169,9 +169,10 @@ img
       width: 100%
       text-align: center
       margin: 0
-  .container
+  .view
     flex: 1 0 100%
     background-color: $grey
+    color: black
     //&:fullscreen
     //  height: 100%
     //  width: 100%
@@ -180,3 +181,26 @@ img
   &.ui-draggable-dragging
     opacity: 0.8
     background: repeating-linear-gradient(45deg, rgba(246, 246, 246, 0.5), rgba(246, 246, 246, 0.5) 10px, rgba(128, 128, 128, 0.5) 10px, rgba(128, 128, 128, 0.5) 20px)
+
+
+.container
+  .view
+    text-align: center
+  .view.error
+    display: flex
+    justify-content: center
+    align-items: center
+    flex-direction: column
+    .message-container
+      margin-bottom: 1em
+      width: auto
+      display: flex
+      color: red
+      justify-content: center
+      align-items: center
+      .fa
+        font-size: 3em
+      .text
+        margin-left: 1em
+        text-align: left
+

@@ -17,6 +17,14 @@
             App.start();
             statistics.load = Date.now() - statistics.start;
         });
+
+        function _instanceof(instance, clazz) {
+            return instance instanceof clazz;
+        }
+
+        function _is(child, parent) {
+            return child.__super__ && (child.__super__.constructor == parent || _is(child.__super__, parent))
+        }
     </script>
     <!--<link rel="stylesheet" type="text/css" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>-->
     <!--<link rel="stylesheet" type="text/css" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>-->
@@ -37,10 +45,7 @@
                 <div title="maximize" class="fa fa-plus-circle"></div>
             </nav>
         </div>
-        <div class="container">
-            <div class="container-inside">
-            </div>
-        </div>
+        <div class="container"></div>
     </div>
 </div>
 <div id="dock-container" style="display: none">
@@ -51,7 +56,15 @@
     </div>
 </div>
 
-<script type="text/template" id="login">
+<script type="text/template" id="view-error">
+    <h1></h1>
+    <div class="message-container">
+        <div class="fa fa-exclamation-circle"></div>
+        <div class="text"></div>
+    </div>
+</script>
+
+<script type="text/template" id="view-login">
     <form>
         <h1>Login</h1>
         <div class="form-group">
@@ -75,6 +88,7 @@
     <script src="/lib/bootstrap/dist/js/bootstrap.js"></script>
     <script src="/lib/underscore/underscore.js"></script>
     <script src="/lib/backbone/backbone.js"></script>
+    <script src="/lib/backbone.stickit/backbone.stickit.js"></script>
     <script src="/lib/marionette/lib/backbone.marionette.js"></script>
     <script src="/lib/jquery-ui/jquery-ui.js"></script>
     <script src="/lib/jquery-cookie/jquery.cookie.js"></script>
@@ -83,6 +97,7 @@
     <script src="/coffee/ui.js"></script>
     <script src="/coffee/models.js"></script>
     <script src="/coffee/controllers.js"></script>
+    <script src="/coffee/views.js"></script>
     <!--<script src="/coffee/vkontakte.js"></script>-->
 </div>
 </body>
