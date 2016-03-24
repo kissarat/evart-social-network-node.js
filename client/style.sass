@@ -1,11 +1,19 @@
+.fullpage
+  position: fixed
+  width: 100vw
+  height: 100vh
+
+
 body
   margin: 0
   background-color: green
 
+#boot-loading
+  @extend .fullpage
+  background: url("/images/loading.svg") no-repeat center
+
 #root
-  position: fixed
-  width: 100vw
-  height: 100vh
+  @extend .fullpage
   display: flex
   > *
     flex: 1

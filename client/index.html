@@ -2,9 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Last-Modified"/>
+    <meta name="robots" content="index,nofollow"/>
+    <meta name="contact" content="kissarat@gmail.com"/>
+    <meta name="author" content="Taras Labiak"/>
+    <meta name="document-state" content="Static" />
     <meta name="viewport"
           content="width=device-width height=device-height initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <script>
+        var statistics = {start: Date.now()};
+        addEventListener('load', function() {
+            App.start();
+            statistics.load = Date.now() - statistics.start;
+        });
+    </script>
     <!--<link rel="stylesheet" type="text/css" href="/lib/bootstrap/dist/css/bootstrap.min.css"/>-->
     <!--<link rel="stylesheet" type="text/css" href="/lib/bootstrap/dist/css/bootstrap-theme.min.css"/>-->
     <!--<link rel="stylesheet" type="text/css" href="/lib/jquery-ui/themes/smoothness/jquery-ui.min.css"/>-->
@@ -13,7 +25,8 @@
     <title>Socex</title>
 </head>
 <body>
-<div id="root">
+<div id="boot-loading"></div>
+<div id="root" style="display: none">
     <div id="main" class="window">
         <div class="controls">
             <h1 class="title">Share This</h1>
@@ -29,21 +42,31 @@
         </div>
     </div>
 </div>
-<div id="dock-container">
+<div id="dock-container" style="display: none">
     <div id="dock">
         <ul>
-            <li id="new_window"><span>Android</span><a><img src="/images/os/android.png"/></a></li>
-            <li id="arrange"><span>WebOS</span><a><img src="/images/os/palm.png"/></a></li>
-            <li><span>iPhone</span><a href="http://apple.com/iphone"><img src="/images/os/apple.png"/></a></li>
-            <li><span>Windows</span><a href="http://microsoft.com/windowsmobile"><img
-                    src="/images/os/windows7.png"/></a></li>
-            <li><span>Blackberry</span><a href="http://blackberry.com"><img src="/images/os/blackberry.png"/></a></li>
-            <li><span>Sony Ericsson</span><a href="http://sonyericsson.com"><img
-                    src="/images/os/sony-ericsson.png"/></a></li>
         </ul>
         <div class="base"></div>
     </div>
 </div>
+
+<script type="text/template" id="login">
+    <form>
+        <h1>Login</h1>
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" name="email"/>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input class="form-control" name="password" type="password"/>
+        </div>
+        <p>
+            <button data-action="submit" type="button">Login</button>
+            <span data-go="user/signup">Signup</span>
+        </p>
+    </form>
+</script>
 
 <div id="script">
     <script src="/lib/webrtc-adapter/adapter.js"></script>
@@ -53,10 +76,12 @@
     <script src="/lib/backbone/backbone.js"></script>
     <script src="/lib/marionette/lib/backbone.marionette.js"></script>
     <script src="/lib/jquery-ui/jquery-ui.js"></script>
-    <script src="/lib/jquery.cookie/jquery.cookie.js"></script>
+    <script src="/lib/jquery-cookie/jquery.cookie.js"></script>
     <!--<script src="/lib/faker/dist/faker.js"></script>-->
     <script src="/coffee/app.js"></script>
     <script src="/coffee/ui.js"></script>
+    <script src="/coffee/models.js"></script>
+    <script src="/coffee/controllers.js"></script>
     <!--<script src="/coffee/vkontakte.js"></script>-->
 </div>
 </body>

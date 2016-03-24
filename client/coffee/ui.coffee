@@ -29,44 +29,12 @@ window_handlers = (w) ->
         $(w).show()
       else
         $(w).toggle()
-#  w.resizable
-#    container: '#root'
-#    grid: 32
-#  w.draggable
-#    handle: '.controls'
-#    cursor: 'move'
-#    snap: [32, 32]
-#    grid: [32, 32]
-#    start: ->
-#      if !w.hasClass '.active'
-#        active = $('.window.active')
-#        active.removeClass('active')
-#        w.css('z-index', 1 + zIndex active)
-#        w.addClass('active')
-#    stop: ->
-#      $('.window')
-#      .toArray()
-#      .sort (a, b) -> zIndex(a) - zIndex(b)
-#      .forEach (w, i) ->
-#        w.style.zIndex = i
 
 window_handlers $('.window')
 
-window_number = 1
-
-$('#new_window').click ->
-  new_window = $('.window').last()
-  .clone()
-  .appendTo('#root')
-  new_window.find('.controls > .title').html(window_number += 1)
-  window_handlers new_window
-
-$('#arrange').click () ->
-  $('.window')
-  .toArray()
-  .sort (a, b) -> zIndex(a) - zIndex(b)
-  .forEach ((w) ->
-    w.style.removeProperty('left')
-    w.style.removeProperty('top')
-    $('#root').append(w)
-  )
+CYRILLIC_TO_LATIN = {
+  "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh", "з": "z", "и": "i", "й": "j",
+  "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f",
+  "х": "h", "ц": "c", "ч": "ch", "ш": "sh", "щ": "sch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu",
+  "я": "ya", '_': ''
+}

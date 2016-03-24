@@ -1,10 +1,18 @@
-@App = new Marionette.Application
+@App = new Marionette.Application()
 App.addRegions
-  leftRegion: '#left'
   mainRegion: '#main'
-  rightRegion: '#right'
 
-App.on 'initialize:after', ->
-  Backbone.history.start()
+App.on 'start', ->
+#  $('#boot-loading').hide()
+#  $('#root').show()
+  Backbone.history.start
+    pushState: true
+#  Backbone.history.navigate 'login', trigger: true
 
-  
+App.mainRegion.on 'show', (view) ->
+  document.title = if view.title then _.result(view.title) else 'Socex'
+
+App.navigate = (url) ->
+  Backbone.history.navigate url, trigger: true
+
+class App.Router extends Marionette.AppRouter
