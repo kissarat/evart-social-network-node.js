@@ -2,26 +2,38 @@
 
 require('colors');
 var MongoClient = require('mongodb').MongoClient;
+var god = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
 var fs = require('fs');
 var config = require(__dirname + '/config.json');
-var schema = require(__dirname + '/../app/schema.json');
+var old_schema = require(__dirname + '/../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
-var controllers_dir = fs.readdirSync(__dirname + '/controllers');
-var controllers = {};
+var modules_dir = fs.readdirSync(__dirname + '/modules');
+var modules = {};
 
-controllers_dir.forEach(function (file) {
+global.schema = {};
+
+modules_dir.forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
     if (match) {
-        controllers[match[1]] = require(__dirname + '/controllers/' + match[0]);
+        var module_name = match[1]
+        modules[module_name] = false === config.modules[module_name]
+            ? false
+            : require(__dirname + '/modules/' + match[0]);
     }
 });
 
+Object.keys(schema).forEach(function (name) {
+    console.log(name);
+    global[name] = god.model(name, schema[name])
+});
+
 var db;
+var o = god.createConnection(config.mongo);
 var subscribers = {};
 var server;
 var start;
@@ -93,7 +105,7 @@ MongoClient.connect(config.mongo, function (err, _db) {
                 }
             });
         });
-        call_controllers_method('_boot', {
+        call_modules_method('_boot', {
             server: server,
             socketServer: socketServer
         });
@@ -103,17 +115,20 @@ MongoClient.connect(config.mongo, function (err, _db) {
     console.log(startMessage.bgBlue.black);
 });
 
-function call_controllers_method(name, $) {
-    for (var i in controllers) {
-        var controller = controllers[i];
-        if (name in controller && controller[name] instanceof Function) {
-            controller[name]($);
+function call_modules_method(name, $) {
+    for (var i in modules) {
+        var module = modules[i];
+        if (module && name in module && module[name] instanceof Function) {
+            module[name]($);
         }
     }
 }
 
 function Context(req, db) {
+    this.config = config;
     this.db = db;
+    this.o = o;
+    this.model = o.model.bind(o);
     var raw_url = req.url.replace(/^\/api\//, '/');
     req.url = parse(raw_url);
     this.params = req.url.query;
@@ -242,8 +257,8 @@ Context.prototype = {
         }
     },
 
-    sendStatus: function (code) {
-        this.res.writeHead(code);
+    sendStatus: function (code, message, headers) {
+        this.res.writeHead(code, message, headers);
         this.res.end();
     },
 
@@ -296,7 +311,7 @@ Context.prototype = {
     },
 
     validate: function (object) {
-        return schema_validator.validate(object, schema);
+        return schema_validator.validate(object, old_schema);
     },
 
     getUserAgent: function () {
@@ -397,14 +412,19 @@ function serve($) {
             type: 'api',
             name: 'socex',
             version: 0.1,
-            dir: Object.keys(controllers)
+            dir: Object.keys(modules)
         });
     }
 
     var action;
     if ($.req.url.route.length >= 1) {
-        action = controllers[$.req.url.route[0]];
-        if (!action) {
+        action = modules[$.req.url.route[0]];
+        if (false === action) {
+            return $.send(405, {
+                error: 'Module disabled'
+            });
+        }
+        else if (!action) {
             return $.send(404, {
                 error: 'Route not found'
             });
@@ -426,11 +446,9 @@ function serve($) {
         else {
             var agent = $.getUserAgent();
             $.data.insertOne('client', agent, function (result) {
-                //if (result.insertedCount > 0) {
                 $.req.client_id = agent._id;
                 $.setCookie('cid', agent._id, $.COOKIE_AGE_FOREVER);
                 exec($, action);
-                //}
             });
         }
     }
@@ -461,7 +479,7 @@ function exec(_, action) {
         }
     }
 
-    if (_.user || /^.(pong|fake|user.(login|signup))/.test(_.req.url.original)) {
+    if (_.user || /^.(agent|pong|fake|user.(agent|login|signup))/.test(_.req.url.original)) {
         if (_.req.headers['content-length']) {
             receive(_.req, function (data) {
                 if (_.req.headers['content-type'].indexOf('json') > 0) {

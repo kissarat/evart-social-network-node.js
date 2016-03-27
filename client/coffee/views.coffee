@@ -6,10 +6,11 @@
       @view.stickit()
 
   class Views.Error extends Marionette.ItemView
+    template: '#view-error'
+
     behaviors:
       Bindings: {}
 
-    template: '#view-error'
     ui:
       status: 'h1'
       text: 'p'
@@ -17,6 +18,23 @@
     bindings:
       'h1': 'status'
       '.text': 'text'
+
+  class Views.Form extends Marionette.LayoutView
+    tagName: 'form'
+
+    behaviors:
+      Bindings: {}
+
+    bindings: ->
+      b = {}
+      @$el('[name]').each (i, input) ->
+        name = input.getAttribute('name')
+        b["[name=#{name}]"] = name
+      return b
+
+  #noinspection JSUnresolvedVariable
+  class Views.Login extends Views.Form
+    template: '#view-login'
 
   @show = (name, options) ->
     if options?

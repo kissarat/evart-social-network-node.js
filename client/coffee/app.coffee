@@ -11,9 +11,7 @@ App.addRegions
   mainRegion: '#main .container'
 
 App.on 'start', ->
-  $.post
-    url: '/api/agent',
-    complete: (xhr) ->
+  $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
       $('#boot-loading').hide()
       $('#root').show()
       if xhr.status < 400
@@ -32,7 +30,6 @@ boot = ->
     if _is(Controller, Marionette.Controller)
       controller = new Controller()
       new App.Router
-  #      new Marionette.AppRouter
         controller: controller
         appRoutes: controller.routes
       App.controllers[name.toLowerCase()] = controller
@@ -54,7 +51,7 @@ class App.Router extends Marionette.AppRouter
 
 if !DEV && window.addEventListener && navigator.sendBeacon
   addEventListener 'beforeunload', ->
-    navigator.sendBeacon '/api/statistics?v=' + version, JSON.stringify(statistics)
+    navigator.sendBeacon '/api/statistics', JSON.stringify(statistics)
 
 App.Behaviors = {}
 

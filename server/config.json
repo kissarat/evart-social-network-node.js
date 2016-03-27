@@ -4,6 +4,13 @@
   "socket": {
     "port": 8081
   },
-  "forever": 100036002436510,
-  "mongo": "mongodb://localhost:27017/socex"
+  "forever": 100000000000,
+  "mongo": "mongodb://localhost:27017/socex",
+  "auth": {
+    "length": 40
+  },
+  "modules": {
+    "photo": false,
+    "file": false
+  }
 }

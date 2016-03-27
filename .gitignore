@@ -5,6 +5,7 @@ app-old/lib/
 app-old/images
 static/
 server/nginx/logs/
+server/modules/*.js*
 server/mongodb/data/
 server/vkontakte.js*
 node_modules/
