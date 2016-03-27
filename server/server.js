@@ -12,6 +12,7 @@ var old_schema = require(__dirname + '/../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
+var code = require(__dirname + '/../../client/code.json')
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
 
@@ -60,7 +61,7 @@ MongoClient.connect(config.mongo, function (err, _db) {
         //}
         //catch (ex) {
         //    if (ex.invalid) {
-        //        res.writeHead(400);
+        //        res.writeHead(code.BAD_REQUEST);
         //        res.end(JSON.stringify(ex));
         //    }
         //    throw ex;
@@ -133,7 +134,6 @@ function Context(req, db) {
     req.url = parse(raw_url);
     this.params = req.url.query;
     req.cookies = qs.parse(req.headers.cookie, /;\s+/);
-    //console.log(req.cookies);
 
     if (req.url.query.auth) {
         req.auth = req.url.query.auth;
@@ -200,7 +200,7 @@ Context.prototype = {
     wrap: function (call) {
         return function (err, result) {
             if (err) {
-                this.send(500, {
+                this.send(code.INTERNAL_SERVER_ERROR, {
                     error: err
                 });
             }
@@ -212,7 +212,7 @@ Context.prototype = {
 
     answer: function (err, result) {
         if (err) {
-            this.send(500, {
+            this.send(code.INTERNAL_SERVER_ERROR, {
                 error: err.message
             });
         }
@@ -338,7 +338,7 @@ Context.prototype = {
 
     send: function () {
         var object;
-        var code = 200;
+        var code = code.OK;
         if (1 == arguments.length) {
             object = arguments[0];
         }
@@ -420,24 +420,24 @@ function serve($) {
     if ($.req.url.route.length >= 1) {
         action = modules[$.req.url.route[0]];
         if (false === action) {
-            return $.send(405, {
+            return $.send(code.METHOD_NOT_ALLOWED, {
                 error: 'Module disabled'
             });
         }
         else if (!action) {
-            return $.send(404, {
+            return $.send(code.NOT_FOUND, {
                 error: 'Route not found'
             });
         }
         action = action[$.req.url.route.length < 2 ? $.req.method : $.req.url.route[1]];
         if (!(action && action instanceof Function)) {
-            return $.send(404, {
+            return $.send(code.NOT_FOUND, {
                 error: 'Route not found'
             });
         }
     }
     if (!action) {
-        $.send(404, $.req.url);
+        $.send(code.NOT_FOUND, $.req.url);
     }
     else {
         if ($.req.client_id || 'poll' == $.req.url.route[0]) {
@@ -464,14 +464,14 @@ function exec(_, action) {
                 action(_);
             }
             else {
-                _.send(400, {
+                _.send(code.BAD_REQUEST, {
                     invalid: valid
                 });
             }
         }
         catch (ex) {
             if (ex.invalid) {
-                _.send(400, ex);
+                _.send(code.BAD_REQUEST, ex);
             }
             else {
                 throw ex;
@@ -488,7 +488,7 @@ function exec(_, action) {
                         _.params = _.merge(_.params, _.body);
                     }
                     catch (ex) {
-                        _.send(400, {
+                        _.send(code.BAD_REQUEST, {
                             error: ex.getMessage()
                         })
                     }
@@ -504,7 +504,7 @@ function exec(_, action) {
         }
     }
     else {
-        _.send(401, {
+        _.send(code.UNAUTHORIZED, {
             error: {
                 auth: 'required'
             }
@@ -548,7 +548,7 @@ function database($) {
                     cb(result)
                 }
                 else {
-                    $.sendStatus(404);
+                    $.sendStatus(code.NOT_FOUND);
                 }
             })
         }

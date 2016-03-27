@@ -32,6 +32,10 @@ global.schema.Agent = new god.Schema
 module.exports =
   POST: ($) ->
     agent = new Agent about: $.body
-    ($.model 'Agent').findOneAndUpdate auth: $.auth, agent, upsert: true, $.wrap ->
+    Agent.findOneAndUpdate auth: $.auth, agent, upsert: true, $.wrap ->
       $.setCookie 'auth', @auth, $.config.forever
-      $.send agent.toObject()
+      if agent.get('user_id')
+        User.findOneById agent.get('user_id'), $.wrap (user) ->
+          $.send user.toObject()
+      else
+        $.sendStatus code.UNAUTHORIZED

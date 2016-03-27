@@ -18,8 +18,8 @@ module.exports =
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
       conditions =
-        phone: $.post('login')
-        password: $.post('password')
+        phone: $.post 'login'
+        password: $.post 'password'
       User.find conditions, $.wrap (user) ->
         if user
           auth =

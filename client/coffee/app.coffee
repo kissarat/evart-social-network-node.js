@@ -14,14 +14,14 @@ App.on 'start', ->
   $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
       $('#boot-loading').hide()
       $('#root').show()
-      if xhr.status < 400
-        boot()
+      if xhr.status <= code.UNAUTHORIZED
+        boot xhr
       else
         App.Views.show 'Error',
           status: 'Server Error'
           text: 'Service Temporarily Unavailable'
 
-boot = ->
+boot = (xhr) ->
   App.controllers = {}
   if config.trace.history
     statistics.history = {}
@@ -32,9 +32,14 @@ boot = ->
       new App.Router
         controller: controller
         appRoutes: controller.routes
-      App.controllers[name.toLowerCase()] = controller
+      App.controllers[name] = controller
   Backbone.history.start
     pushState: true
+  if code.UNAUTHORIZED == xhr.status
+    App.navigate 'profile'
+  else
+    App.user = JSON.parse xhr.responseText
+    App.navigate 'login'
 
 
 App.mainRegion.on 'show', (view) ->
