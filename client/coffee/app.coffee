@@ -8,7 +8,7 @@ config =
 
 @App = new Marionette.Application()
 App.addRegions
-  mainRegion: '#main .container'
+  mainRegion: '#main .window-content'
 
 App.on 'start', ->
   $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
@@ -35,11 +35,10 @@ boot = (xhr) ->
       App.controllers[name] = controller
   Backbone.history.start
     pushState: true
-  if code.UNAUTHORIZED == xhr.status
-    App.navigate 'profile'
-  else
+  if code.UNAUTHORIZED != xhr.status
     App.user = JSON.parse xhr.responseText
-    App.navigate 'login'
+#  if '/' == location.pathname
+#    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
 
 
 App.mainRegion.on 'show', (view) ->
@@ -61,4 +60,3 @@ if !DEV && window.addEventListener && navigator.sendBeacon
 App.Behaviors = {}
 
 Marionette.Behaviors.behaviorsLookup = -> App.Behaviors
-

@@ -13,9 +13,6 @@ $('#dock').on 'mouseover', (e) ->
     ), false
   return
 
-zIndex = (e) ->
-  parseInt((if e.css then e.css('z-index') else e.style.zIndex)) || 0
-
 $('#root').sortable
   handle: '.title'
 
@@ -32,9 +29,22 @@ window_handlers = (w) ->
 
 window_handlers $('.window')
 
-CYRILLIC_TO_LATIN = {
-  "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh", "з": "z", "и": "i", "й": "j",
+TRANSLIT =
+  "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo", "ж": "zh", "з": "z", "и": "i", "й": "j",
   "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f",
-  "х": "h", "ц": "c", "ч": "ch", "ш": "sh", "щ": "sch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu",
-  "я": "ya", '_': ''
-}
+  "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "shch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu",
+  "я": "ya", '_': '', "ї": "yi", "ґ": "g", "є": "ie"
+
+
+ui_error = (message) ->
+  if 'object' == typeof message
+    message = JSON.stringify message
+    console.warn 'Message is object'
+  alert message
+
+$(document).ajaxError (_1, ajax) ->
+  if ajax.responseJSON && ajax.responseJSON.error
+    if ajax.responseJSON.error.message
+      ui_error ajax.responseJSON.error.message
+    else
+      ajax.responseJSON.error

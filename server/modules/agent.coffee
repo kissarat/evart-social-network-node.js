@@ -1,5 +1,7 @@
 rs = require 'randomstring'
 god = require 'mongoose'
+code = require __dirname + '/../../client/code.json'
+
 
 global.schema.Agent = new god.Schema
   auth:
@@ -28,14 +30,24 @@ global.schema.Agent = new god.Schema
     name: String
     version: Number
 
+  user:
+    type: god.Schema.Types.ObjectId
+    ref: 'User'
 
 module.exports =
   POST: ($) ->
-    agent = new Agent about: $.body
-    Agent.findOneAndUpdate auth: $.auth, agent, upsert: true, $.wrap ->
-      $.setCookie 'auth', @auth, $.config.forever
-      if agent.get('user_id')
-        User.findOneById agent.get('user_id'), $.wrap (user) ->
-          $.send user.toObject()
-      else
-        $.sendStatus code.UNAUTHORIZED
+    update = (agent) ->
+      status = if agent && agent.user then code.OK else code.UNAUTHORIZED
+      if !agent
+        agent = new Agent about: $.body
+      agent.time = Date.now()
+      agent.save $.wrap () ->
+        if code.UNAUTHORIZED == status
+          $.sendStatus status
+        else
+          $.send agent.user.toObject()
+
+    if $.req.cookies.auth
+      Agent.findOne auth: $.cookie.auth, $.wrap update
+    else
+      update()

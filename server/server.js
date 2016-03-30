@@ -12,7 +12,7 @@ var old_schema = require(__dirname + '/../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
-var code = require(__dirname + '/../../client/code.json')
+var code = require(__dirname + '/../client/code.json')
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
 
@@ -29,35 +29,29 @@ modules_dir.forEach(function (file) {
 });
 
 Object.keys(schema).forEach(function (name) {
-    console.log(name);
-    global[name] = god.model(name, schema[name])
+    var model = global[name] = god.model(name, schema[name]);
+    model.ensureIndexes();
 });
 
-var db;
-var o = god.createConnection(config.mongo);
+var o = god.connect(config.mongo);
 var subscribers = {};
 var server;
 var start;
 
-MongoClient.connect(config.mongo, function (err, _db) {
-    if (err) {
-        console.error(err);
-        process.exit();
-    }
-    db = _db;
+o.connection.on('error', function (err) {
+    console.log(err);
+});
 
+o.connection.on('open', function () {
     server = http.createServer(function (req, res) {
         //try {
-        var $ = new Context(req, _db);
+        var $ = new Context(req);
 
         $.res = res;
         $.subscribers = subscribers;
         $.COOKIE_AGE_FOREVER = config.forever;
 
-        $.authorize(function (user) {
-            $.user = user;
-            serve($);
-        });
+        $.authorize(() => serve($));
         //}
         //catch (ex) {
         //    if (ex.invalid) {
@@ -74,7 +68,6 @@ MongoClient.connect(config.mongo, function (err, _db) {
             var $ = new Context(socket.upgradeReq, _db);
             $.socket = socket;
             $.authorize(function (user) {
-                $.user = user;
                 if (user) {
                     var uid = user._id.toString();
                     var cid = $.req.client_id;
@@ -111,7 +104,9 @@ MongoClient.connect(config.mongo, function (err, _db) {
             socketServer: socketServer
         });
     });
+
     start = new Date();
+
     var startMessage = 'Started:\t' + start;
     console.log(startMessage.bgBlue.black);
 });
@@ -125,11 +120,9 @@ function call_modules_method(name, $) {
     }
 }
 
-function Context(req, db) {
+function Context(req) {
     this.config = config;
-    this.db = db;
     this.o = o;
-    this.model = o.model.bind(o);
     var raw_url = req.url.replace(/^\/api\//, '/');
     req.url = parse(raw_url);
     this.params = req.url.query;
@@ -198,11 +191,19 @@ Context.prototype = {
     },
 
     wrap: function (call) {
+        var self = this;
         return function (err, result) {
             if (err) {
-                this.send(code.INTERNAL_SERVER_ERROR, {
-                    error: err
-                });
+                if (err instanceof god.Error.ValidationError) {
+                    self.send(code.BAD_REQUEST, {
+                        invalid: err.errors
+                    });
+                }
+                else {
+                    self.send(code.INTERNAL_SERVER_ERROR, {
+                        error: err
+                    });
+                }
             }
             else {
                 call(result);
@@ -285,7 +286,7 @@ Context.prototype = {
     },
 
     post: function (name) {
-        return this._param(this.req.body, name);
+        return this._param(this.body, name);
     },
 
     has: function (name) {
@@ -338,12 +339,12 @@ Context.prototype = {
 
     send: function () {
         var object;
-        var code = code.OK;
+        var status = code.OK;
         if (1 == arguments.length) {
             object = arguments[0];
         }
         else if (2 == arguments.length) {
-            code = arguments[0];
+            status = arguments[0];
             object = arguments[1];
         }
         var data = JSON.stringify(object);
@@ -354,7 +355,7 @@ Context.prototype = {
 
         if (!this.res.finished) {
             if (2 == arguments.length) {
-                this.res.writeHead(code, {
+                this.res.writeHead(status, {
                     'content-type': 'text/json'
                     //'Access-Control-Allow-Origin': '*'
                 });
@@ -363,6 +364,11 @@ Context.prototype = {
                 this.res.setHeader('content-type', 'text/json');
             }
             this.res.end(data);
+
+            if (this.agent) {
+                this.agent.time = Date.now();
+                this.agent.save();
+            }
         }
 
         if ('GET' != this.req.method) {
@@ -370,7 +376,7 @@ Context.prototype = {
                 client_id: this.req.client_id,
                 route: this.req.url.route.length > 1 ? this.req.url.route : this.req.url.route[0],
                 method: this.req.method,
-                code: code,
+                code: status,
                 time: Date.now()
             };
             if (object) {
@@ -392,7 +398,13 @@ Context.prototype = {
 
     authorize: function (cb) {
         if (this.req.auth) {
-            this.data.findOne('user', {auth: this.req.auth}, cb);
+            var self = this;
+            User.findOne({auth: this.req.auth})
+                .setOptions({populate: 'user'})
+                .exec(this.wrap(function (err, agent) {
+                    self.agent = agent;
+                    cb(agent);
+                }));
         }
         else {
             cb();
@@ -401,77 +413,114 @@ Context.prototype = {
 
     get id() {
         return ObjectID(this.req.url.query.id);
+    },
+
+    get user() {
+        return this.agent ? this.agent.user : null;
+    },
+
+    get db() {
+        console.warn('MongoDB connection usage');
+        return this.o.connection;
+    },
+
+    model: function () {
+        this.o.apply(this.o, arguments);
     }
 };
 
 // -------------------------------------------------------------------------------
 
+function walk($, object, path) {
+    var route = path.shift() || $.req.method;
+    //var methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
+    if ('_' == route[0]) {
+        return false;
+    }
+    else if (route in object) {
+        object = object[route]
+        switch (typeof object) {
+            case 'object':
+                return walk($, object, path);
+            case 'function':
+                return exec($, object);
+            default:
+                return object;
+        }
+    }
+    else if ('_' in object) {
+        return object._($);
+    }
+    else {
+        return false;
+    }
+}
+
 function serve($) {
-    if ('' == $.req.url.route[0]) {
+    if (!$.req.url.route[0]) {
         return $.send({
             type: 'api',
             name: 'socex',
-            version: 0.1,
+            version: 0.2,
             dir: Object.keys(modules)
         });
     }
 
-    var action;
-    if ($.req.url.route.length >= 1) {
-        action = modules[$.req.url.route[0]];
-        if (false === action) {
-            return $.send(code.METHOD_NOT_ALLOWED, {
-                error: 'Module disabled'
-            });
-        }
-        else if (!action) {
-            return $.send(code.NOT_FOUND, {
-                error: 'Route not found'
-            });
-        }
-        action = action[$.req.url.route.length < 2 ? $.req.method : $.req.url.route[1]];
-        if (!(action && action instanceof Function)) {
-            return $.send(code.NOT_FOUND, {
-                error: 'Route not found'
-            });
-        }
-    }
-    if (!action) {
-        $.send(code.NOT_FOUND, $.req.url);
-    }
-    else {
-        if ($.req.client_id || 'poll' == $.req.url.route[0]) {
-            exec($, action);
-        }
-        else {
-            var agent = $.getUserAgent();
-            $.data.insertOne('client', agent, function (result) {
-                $.req.client_id = agent._id;
-                $.setCookie('cid', agent._id, $.COOKIE_AGE_FOREVER);
-                exec($, action);
-            });
-        }
+    var result = walk($, modules, $.req.url.route);
+
+    switch (typeof result) {
+        case 'object':
+            if (result instanceof god.Query) {
+                result = result.exec();
+            }
+            if (result instanceof Promise) {
+                result
+                    .then(function (r) {
+                        $.send(r.toObject ? r.toObject() : r);
+                    })
+                    .catch(function (r) {
+                        $.send(code.INTERNAL_SERVER_ERROR, r)
+                    });
+            }
+            else if (null === result) {
+                $.sendStatus(code.NOT_FOUND);
+            }
+            else {
+                //$.send(result);
+            }
+            break;
+        case 'boolean':
+            if (false === result) {
+                $.sendStatus(code.METHOD_NOT_ALLOWED);
+            }
+            break;
+        case 'number':
+            $.res.writeHead(result);
+            break;
+        case 'string':
+            $.res.end(result);
+            break;
     }
 }
 
 // -------------------------------------------------------------------------------
 
-function exec(_, action) {
+function exec($, action) {
     function call_action() {
         try {
-            var valid = _.validate(_.params);
+            var valid = $.validate($.params);
             if (valid) {
-                action(_);
+                action($);
             }
             else {
-                _.send(code.BAD_REQUEST, {
+                $.send(code.BAD_REQUEST, {
                     invalid: valid
                 });
             }
         }
         catch (ex) {
             if (ex.invalid) {
-                _.send(code.BAD_REQUEST, ex);
+                $.send(code.BAD_REQUEST, ex);
             }
             else {
                 throw ex;
@@ -479,22 +528,23 @@ function exec(_, action) {
         }
     }
 
-    if (_.user || /^.(agent|pong|fake|user.(agent|login|signup))/.test(_.req.url.original)) {
-        if (_.req.headers['content-length']) {
-            receive(_.req, function (data) {
-                if (_.req.headers['content-type'].indexOf('json') > 0) {
+    if ($.user || /^.(agent|pong|fake|user|login|user.code)/.test($.req.url.original)) {
+        if ($.req.headers['content-length']) {
+            receive($.req, function (data) {
+                if ($.req.headers['content-type'].indexOf('json') > 0) {
                     try {
-                        _.body = JSON.parse(data.toString('utf8'));
-                        _.params = _.merge(_.params, _.body);
+                        $.body = JSON.parse(data.toString('utf8'));
+                        $.params = $.merge($.params, $.body);
                     }
                     catch (ex) {
-                        _.send(code.BAD_REQUEST, {
+                        $.send(code.BAD_REQUEST, {
                             error: ex.getMessage()
                         })
                     }
                 }
                 else {
-                    _.data = data;
+                    throw 'data received';
+                    $.data = data;
                 }
                 call_action();
             });
@@ -504,7 +554,7 @@ function exec(_, action) {
         }
     }
     else {
-        _.send(code.UNAUTHORIZED, {
+        $.send(code.UNAUTHORIZED, {
             error: {
                 auth: 'required'
             }
