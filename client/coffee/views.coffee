@@ -29,19 +29,26 @@
       method: 'post'
 
     report: (name, message) ->
-      if @el[name]
-        @el[name].reportValidity message
+      if !message
+        message = name
+        name = null
+      if @el[name] || !name
+        field = if name then @el[name].parentNode else @el
+        $('<div></div>')
+        .attr('class', 'error')
+        .html(message)
+        .appendTo(field)
       else
         console.error name + ' field not found'
 
     events:
       'click button': (e) ->
         e.preventDefault()
+        @$el.find('.error').remove()
         @model.save null,
           error: (_1, ajax) =>
-            invalid = ajax.responseJSON.invalid
-            if code.BAD_REQUEST == ajax.status && invalid
-              for name, error of invalid
+            if code.BAD_REQUEST == ajax.status && ajax.responseJSON.invalid
+              for name, error of jax.responseJSON.invalid
                 @report name, error.message
             else if @error
               @error ajax
@@ -61,6 +68,10 @@
 
   class Views.Login extends Views.Form
     template: '#view-login'
+    error: (ajax) ->
+      if code.FORBIDDEN == ajax.status
+        @report 'Phone or password not found'
+
 
   class Views.Signup extends Views.Form
     template: '#view-signup'
@@ -73,7 +84,7 @@
 
     success: (data) ->
       if data.verified
-        App.navigate 'user/' + @model.id
+        App.navigate 'login'
       else
         @report 'code', 'Invalid code'
 

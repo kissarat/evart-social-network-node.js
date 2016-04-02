@@ -9,8 +9,9 @@ global.schema.User = new god.Schema
     unique: true
     trim: true
     match: /^\d{9,15}$/
-    index:
-      unique: true
+    unique: true
+#    index:
+#      unique: true
   password:
     type: String
     required: true
@@ -20,8 +21,9 @@ global.schema.User = new god.Schema
     match: /^[\w\._]{4,23}$/
     lowercase: true
     trim: true
-    index:
-      unique: true
+    unique: true
+#    index:
+#      unique: true
   code:
     type: String
     match: /^\d{6}$/
@@ -46,7 +48,7 @@ module.exports =
       conditions =
         phone: $.post 'login'
         password: $.post 'password'
-      User.find conditions, $.wrap (user) ->
+      User.findOne conditions, $.wrap (user) ->
         if user
           auth =
             user_id: user._id
@@ -54,7 +56,7 @@ module.exports =
           Agent.update auth: $.auth, $set: auth, $.wrap () ->
             $.send user.toObject()
         else
-        $.sendStatus code.FORBIDDEN
+          $.sendStatus code.FORBIDDEN
     return
 
   POST: ($) ->

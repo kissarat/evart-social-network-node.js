@@ -3,6 +3,7 @@
 require('colors');
 var MongoClient = require('mongodb').MongoClient;
 var god = require('mongoose');
+var uniqueValidator = require('mongoose-unique-validator')
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
@@ -15,6 +16,26 @@ var qs = require('querystring');
 var code = require(__dirname + '/../client/code.json')
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
+
+/*
+var mongo_errors = {
+    BAD_VALUE: 2,
+    UNKNOWN_ERROR: 8,
+    NAMESPACE_NOT_FOUND: 26,
+    EXCEEDED_TIME_LIMIT: 50,
+    COMMAND_NOT_FOUND: 59,
+    WRITE_CONCERN_ERROR: 64,
+    NOT_MASTER: 10107,
+    DUPLICATE_KEY: 11000,
+    DUPLICATE_KEY_UPDATE: 11001, // legacy before 2.6
+    DUPLICATE_KEY_CAPPED: 12582, // legacy before 2.6
+    UNRECOGNIZED_COMMAND: 13390, // mongos error before 2.4
+    NOT_MASTER_NO_SLAVE_OK: 13435,
+    NOT_MASTER_OR_SECONDARY: 13436,
+    CANT_OPEN_DB_IN_READ_LOCK: 15927
+};
+*/
+
 
 global.schema = {};
 
@@ -29,8 +50,9 @@ modules_dir.forEach(function (file) {
 });
 
 Object.keys(schema).forEach(function (name) {
+    schema[name].plugin(uniqueValidator);
     var model = global[name] = god.model(name, schema[name]);
-    model.ensureIndexes();
+    //model.ensureIndexes();
 });
 
 var o = god.connect(config.mongo);
@@ -199,6 +221,23 @@ Context.prototype = {
                         invalid: err.errors
                     });
                 }
+                //else if (err.code && err.errmsg) {
+                //    switch (err.code) {
+                //        case mongo_errors.DUPLICATE_KEY:
+                //            var errors = {};
+                //            var field = / (\w+)_1/.exec(err.errmsg);
+                //            errors[field[1]] = 'Duplicate value';
+                //            self.send(code.BAD_REQUEST, {
+                //                invalid: errors
+                //            });
+                //            break;
+                //        default:
+                //            self.send(code.INTERNAL_SERVER_ERROR, {
+                //                error: err
+                //            });
+                //            break;
+                //    }
+                //}
                 else {
                     self.send(code.INTERNAL_SERVER_ERROR, {
                         error: err

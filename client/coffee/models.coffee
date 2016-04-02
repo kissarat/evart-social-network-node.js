@@ -17,3 +17,4 @@
     urlRoot: '/api/user'
 
   class Models.Login extends Backbone.Model
+    urlRoot: '/api/user/login'
