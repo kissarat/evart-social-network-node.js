@@ -505,7 +505,7 @@ function serve($) {
         });
     }
 
-    var result = walk($, modules, $.req.url.route);
+    var result = walk($, modules, $.req.url.route.slice(0));
 
     switch (typeof result) {
         case 'object':
@@ -546,10 +546,16 @@ function serve($) {
 
 function exec($, action) {
     function call_action() {
+        if ($.req.headers['user-agent'] && $.req.headers['user-agent'].indexOf('PhantomJS') > 0) {
+            console.log('\t' + $.req.method + ' ' + $.req.url.original);
+            if ($.body) {
+                console.log($.body);
+            }
+        }
         try {
             var valid = $.validate($.params);
             if (valid) {
-                action($);
+                return action($);
             }
             else {
                 $.send(code.BAD_REQUEST, {
@@ -567,7 +573,7 @@ function exec($, action) {
         }
     }
 
-    if ($.user || /^.(agent|pong|fake|user|login|user.code)/.test($.req.url.original)) {
+    if ($.user || /^.(agent|pong|fake|login|user.(signup|verify))/.test($.req.url.original)) {
         if ($.req.headers['content-length']) {
             receive($.req, function (data) {
                 if ($.req.headers['content-type'].indexOf('json') > 0) {

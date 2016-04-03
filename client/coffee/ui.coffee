@@ -42,6 +42,18 @@ ui_error = (message) ->
     console.warn 'Message is object'
   alert message
 
+form_submit = (data) ->
+#   form = document.querySelector 'form.view'
+#  for k, v of data
+#    if form[k]
+#      form[k].value = v
+#  $('[type=submit]', form).click()
+  view = App.mainRegion.currentView
+  for k, v of data
+    view.model.set(k, v)
+  view.events.submit.call view
+  return
+
 $(document).ajaxError (_1, ajax) ->
   if ajax.responseJSON && ajax.responseJSON.error
     if ajax.responseJSON.error.message

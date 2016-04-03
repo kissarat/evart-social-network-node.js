@@ -37,15 +37,15 @@ global.schema.Agent = new god.Schema
 module.exports =
   POST: ($) ->
     update = (agent) ->
-      status = if agent && agent.user then code.OK else code.UNAUTHORIZED
       if !agent
         agent = new Agent about: $.body
       agent.time = Date.now()
       agent.save $.wrap () ->
-        if code.UNAUTHORIZED == status
-          $.sendStatus status
-        else
+        $.setCookie 'auth', agent._id, $.config.FOREVER
+        if agent.user
           $.send agent.user.toObject()
+        else
+          $.res.end()
 
     if $.req.cookies.auth
       Agent.findOne auth: $.cookie.auth, $.wrap update

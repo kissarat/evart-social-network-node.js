@@ -8,6 +8,11 @@
       @view.el.setAttribute 'class', @view.template.replace '#view-', 'view '
       @view.stickit()
 
+    onShow: ->
+      if window.callPhantom
+        callPhantom JSON.stringify
+          show: @view.template.replace '#view-', ''
+
   class Views.Error extends Marionette.ItemView
     template: '#view-error'
 
@@ -42,13 +47,14 @@
         console.error name + ' field not found'
 
     events:
-      'click button': (e) ->
-        e.preventDefault()
+      submit: (e) ->
+        if e
+          e.preventDefault()
         @$el.find('.error').remove()
         @model.save null,
           error: (_1, ajax) =>
             if code.BAD_REQUEST == ajax.status && ajax.responseJSON.invalid
-              for name, error of jax.responseJSON.invalid
+              for name, error of ajax.responseJSON.invalid
                 @report name, error.message
             else if @error
               @error ajax
