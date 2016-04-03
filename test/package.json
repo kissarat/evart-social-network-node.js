@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "casperjs": "^1.1.0-beta5",
+    "colors": "^1.1.2",
     "phantomjs": "^2.1.3"
   }
 }
