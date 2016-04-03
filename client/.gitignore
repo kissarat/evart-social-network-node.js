@@ -1,0 +1,4 @@
+lib/
+*.css*
+coffee/*.js*
+.sass-cache/
