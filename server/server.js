@@ -573,7 +573,7 @@ function exec($, action) {
         }
     }
 
-    if ($.user || /^.(agent|pong|fake|login|user.(signup|verify))/.test($.req.url.original)) {
+    if ($.user || /^.(agent|test|pong|fake|login|user)/.test($.req.url.original)) {
         if ($.req.headers['content-length']) {
             receive($.req, function (data) {
                 if ($.req.headers['content-type'].indexOf('json') > 0) {

@@ -76,8 +76,4 @@ module.exports =
       changes = $unset:
         code: ''
       User.update conditions, changes, $.wrap (result) ->
-        $.send verified: !!result.ok
-
-    _: ($) ->
-      User.findById $.param('user_id'), $.wrap (user) ->
-        $.send code: user.code
+        $.send verified: result.n > 0

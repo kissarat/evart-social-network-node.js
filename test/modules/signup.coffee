@@ -9,10 +9,15 @@ module.exports =
 
   user:
     _: ($) ->
-      if 200 == $.response.statusCode
-        @POST 'user/verify',
+      if 201 == $.response.statusCode
+        @POST 'test/code',
           user_id: $.post('_id')
-          code: '11111'
 
     verify: ($) ->
       console.log $.response.statusCode
+
+  test:
+    code: ($) ->
+      @POST 'user/verify',
+        user_id: $.params.user_id
+        code: $.post('code')

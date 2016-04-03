@@ -28,7 +28,8 @@ agent =
     options.headers.cookie = qs.stringify agent.cookies, '; '
     if !options.headers.cookie
       delete options.headers.cookie
-    if options.body
+    if options.params
+      options.body = JSON.stringify options.params
       options.headers['content-type'] = 'text/json'
       request options, (error, response, body) ->
         options.response = response
@@ -37,7 +38,6 @@ agent =
             options.response.body = JSON.parse body
           catch ex
             console.warn 'Unknown format'
-            body = null
 
         if error
           options.error = error
@@ -45,7 +45,6 @@ agent =
         options.post = (name) ->
           if this.response.body then this.response.body[name] else null
 
-#        console.log response.headers['set-cookie']
         if response.headers['set-cookie']
           for cookie in response.headers['set-cookie']
             for k, v of qs.parse cookie, /;\s+/
@@ -59,7 +58,6 @@ agent =
         if options.response.body
           console.log options.response.body
 #        console.log agent.cookies
-#        console.log response.headers
         cb.call(agent, options)
 
   cookies: {},
@@ -71,7 +69,7 @@ agent =
     options =
       url: url
       method: method
-      body: JSON.stringify data
+      params: data
     agent.request(options, cb)
 
   POST: (url, data, cb) ->
