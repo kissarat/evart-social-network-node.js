@@ -3,7 +3,6 @@
 require('colors');
 var MongoClient = require('mongodb').MongoClient;
 var god = require('mongoose');
-var uniqueValidator = require('mongoose-unique-validator')
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
@@ -50,9 +49,10 @@ modules_dir.forEach(function (file) {
 });
 
 Object.keys(schema).forEach(function (name) {
-    schema[name].plugin(uniqueValidator);
-    var model = global[name] = god.model(name, schema[name]);
-    //model.ensureIndexes();
+    var current = schema[name];
+    current.plugin(require('mongoose-unique-validator'));
+    current.plugin(require('mongoose-random'));
+    global[name] = god.model(name, current);
 });
 
 var o = god.connect(config.mongo);
@@ -573,8 +573,11 @@ function exec($, action) {
         }
     }
 
-    if ($.user || /^.(agent|test|pong|fake|login|user)/.test($.req.url.original)) {
-        if ($.req.headers['content-length']) {
+    var is_unauthoried_route = /^.(agent|test|pong|fake|login|user)/.test($.req.url.original);
+    var must_upload_route = /^.(photo)/.test($.req.url.original);
+
+    if ($.user || is_unauthoried_route) {
+        if ($.req.headers['content-length'] && !must_upload_route) {
             receive($.req, function (data) {
                 if ($.req.headers['content-type'].indexOf('json') > 0) {
                     try {

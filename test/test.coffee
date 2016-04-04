@@ -30,6 +30,7 @@ agent =
       delete options.headers.cookie
     if options.params
       options.body = JSON.stringify options.params
+#      console.log options.body
       options.headers['content-type'] = 'text/json'
       request options, (error, response, body) ->
         options.response = response

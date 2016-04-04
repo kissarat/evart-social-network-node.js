@@ -1,13 +1,10 @@
 faker = require 'faker'
 
-phone = null
-
 module.exports =
   _init: () ->
-    phone = '0000000' + faker.random.number()
     @POST 'user',
       domain: faker.internet.domainWord()
-      phone: phone
+      phone: '0000000' + faker.random.number()
       password: '1'
 
   user:
@@ -19,9 +16,7 @@ module.exports =
         console.log 'user._ invalid route'
 
     verify: ($) ->
-      @POST 'user/login',
-        login: phone
-        password: '1'
+      console.log $.response.statusCode
 
   test:
     code: ($) ->

@@ -51,7 +51,7 @@ module.exports =
       User.findOne conditions, $.wrap (user) ->
         if user
           auth =
-            user_id: user._id
+            user: user._id
             time: Date.now()
           Agent.update auth: $.auth, $set: auth, $.wrap () ->
             $.send user.toObject()
@@ -63,6 +63,7 @@ module.exports =
     if $.user
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
+#      console.log $.body
       user = new User $.body
       user.save $.wrap () ->
         $.send code.CREATED, _id: user._id
