@@ -438,12 +438,12 @@ Context.prototype = {
     authorize: function (cb) {
         if (this.req.auth) {
             var self = this;
-            User.findOne({auth: this.req.auth})
-                .setOptions({populate: 'user'})
-                .exec(this.wrap(function (err, agent) {
+            Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function(agent) {
+                if (agent) {
                     self.agent = agent;
-                    cb(agent);
-                }));
+                }
+                cb(agent);
+            }));
         }
         else {
             cb();

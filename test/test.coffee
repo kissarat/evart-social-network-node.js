@@ -10,8 +10,10 @@ if !fs.existsSync module + '.js'
   process.exit 1
 module = require module
 
+Array.prototype.shuffle = () -> this.sort () -> 0.5 - Math.random()
+
 agent =
-  prefix: 'http://localhost/api/'
+  host: 'localhost'
   cookies: {}
 
   request: (options, cb) ->
@@ -104,6 +106,7 @@ agent =
   DELETE: (url, data, cb) ->
     agent.send('POST', url, data, cb)
 
+agent.prefix = "http://#{agent.host}/api/"
 
 if 'function' == typeof module._anybody
   agent.query

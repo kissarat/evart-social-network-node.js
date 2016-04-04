@@ -9,8 +9,16 @@
   "auth": {
     "length": 40
   },
+  "photo": {
+    "width": 1536,
+    "quality": 74,
+    "thumb": {
+      "size": 128,
+      "cropsize": 256,
+      "quality": 80
+    }
+  },
   "modules": {
-    "photo": false,
     "file": false
   }
 }
