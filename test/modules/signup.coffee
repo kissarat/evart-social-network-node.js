@@ -16,12 +16,15 @@ module.exports =
         @POST 'test/code',
           user_id: $.post('_id')
       else
-        console.log 'user._ invalid route'
+        console.error 'user._ invalid route'
 
     verify: ($) ->
-      @POST 'user/login',
-        login: phone
-        password: '1'
+      if $.post('verified')
+        @POST 'user/login',
+          login: phone
+          password: '1'
+      else
+        console.error 'User is not verified'
 
   test:
     code: ($) ->

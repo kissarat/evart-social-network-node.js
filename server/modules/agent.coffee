@@ -41,7 +41,7 @@ module.exports =
         agent = new Agent about: $.body
       agent.time = Date.now()
       agent.save $.wrap () ->
-        $.setCookie 'auth', agent._id, $.config.FOREVER
+        $.setCookie 'auth', agent.auth, $.config.FOREVER
         if agent.user
           $.send agent.user.toObject()
         else

@@ -21,8 +21,6 @@
     "mmmagic": "^0.4.1",
     "mongodb": "^2.1.4",
     "mongoose": "^4.3.7",
-    "mongoose-random": "^0.1.1",
-    "mongoose-simple-random": "^0.3.3",
     "mongoose-unique-validator": "^1.0.2",
     "randomstring": "^1.1.4",
     "request": "^2.69.0",

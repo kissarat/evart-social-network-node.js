@@ -23,6 +23,9 @@ agent =
     cb = walk(module, options.url.split('/')) || () -> console.log 'undefined default handler'
     options.url = agent.prefix + options.url
 
+    if !options.method
+      options.method = 'GET'
+
     if !options.headers
       options.headers = {}
     options.headers.cookie = qs.stringify agent.cookies, '; '
@@ -30,36 +33,37 @@ agent =
       delete options.headers.cookie
     if options.params
       options.body = JSON.stringify options.params
-#      console.log options.body
+      console.log options.body.red
       options.headers['content-type'] = 'text/json'
-      request options, (error, response, body) ->
-        options.response = response
-        if body
-          try
-            options.response.body = JSON.parse body
-          catch ex
-            console.warn 'Unknown format'
 
-        if error
-          options.error = error
+    request options, (error, response, body) ->
+      options.response = response
+      if body
+        try
+          options.response.body = JSON.parse body
+        catch ex
+          console.warn 'Unknown format'
 
-        options.post = (name) ->
-          if this.response.body then this.response.body[name] else null
+      if error
+        options.error = error
 
-        if response.headers['set-cookie']
-          for cookie in response.headers['set-cookie']
-            for k, v of qs.parse cookie, /;\s+/
-              agent.cookies[k] = v
-              break
+      options.post = (name) ->
+        if this.response.body then this.response.body[name] else null
 
-        code = options.response.statusCode.toString()
-        code = if code >= 400 then code.red else code.green
-        method = if 'GET' != options.method then options.method.yellow else options.method
-        console.log code + ' ' + method + ' ' + options.url
-        if options.response.body
-          console.log options.response.body
-#        console.log agent.cookies
-        cb.call(agent, options)
+      if response.headers['set-cookie']
+        for cookie in response.headers['set-cookie']
+          for k, v of qs.parse cookie, /;\s+/
+            agent.cookies[k] = v
+            break
+
+      code = options.response.statusCode.toString()
+      code = if code >= 400 then code.red else code.green
+      method = if 'GET' != options.method then options.method.yellow else options.method
+      console.log code + ' ' + method + ' ' + options.url
+      if options.response.body
+        console.log options.response.body
+      console.log JSON.stringify(agent.cookies).yellow
+      cb.call(agent, options)
 
   cookies: {},
 

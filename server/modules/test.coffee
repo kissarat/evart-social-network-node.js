@@ -1,4 +1,4 @@
-random = (model, query, number, cb) ->
+random = (model, query, populate, number, cb) ->
   model.count query, (err, c) ->
     q = model.find query
     if !number
@@ -6,6 +6,8 @@ random = (model, query, number, cb) ->
     if number < c
       q.skip Math.round Math.random() * (c - number)
       q.limit number
+    populate.forEach (name) ->
+      q.populate(name)
     q.exec(cb)
 
 module.exports =
@@ -15,6 +17,13 @@ module.exports =
 
   random: ($) ->
     model = global[$.get('entity')]
-    query = if $.has 'query' then JSON.parse atob $.get 'query' else {}
-    random model, query, $.req.url.query.number, $.wrap (result) ->
+    if $.has 'query'
+      query = $.get 'query'
+      query = new Buffer query, 'base64'
+      query = JSON.parse query.toString()
+    if !query
+      query = {}
+    populate = if $.has 'populate' then $.get('populate').split '.' else []
+    random model, query, populate, $.req.url.query.number, $.wrap (result) ->
+      result.sort () -> 0.5 - Math.random()
       $.send result

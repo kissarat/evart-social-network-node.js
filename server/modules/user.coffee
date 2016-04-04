@@ -50,11 +50,22 @@ module.exports =
         password: $.post 'password'
       User.findOne conditions, $.wrap (user) ->
         if user
-          auth =
-            user: user._id
-            time: Date.now()
-          Agent.update auth: $.auth, $set: auth, $.wrap () ->
-            $.send user.toObject()
+          conditions = auth: $.req.auth
+          changeset =
+            $set:
+              user: user._id
+              time: Date.now()
+          Agent.update conditions, changeset, $.wrap (result) ->
+            if result.n > 0
+              $.send
+                _id: user._id
+                domain: user.domain
+                verified: user.verified
+            else
+              $.send code.INTERNAL_SERVER_ERROR, error:
+                message: 'Invalid result'
+                result: result
+                query: conditions
         else
           $.sendStatus code.FORBIDDEN
     return
@@ -74,7 +85,6 @@ module.exports =
       conditions =
         _id: $.post('user_id'),
         code: $.post('code')
-      changes = $unset:
-        code: ''
+      changes = $set: code: null
       User.update conditions, changes, $.wrap (result) ->
         $.send verified: result.n > 0

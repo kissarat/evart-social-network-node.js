@@ -51,7 +51,6 @@ modules_dir.forEach(function (file) {
 Object.keys(schema).forEach(function (name) {
     var current = schema[name];
     current.plugin(require('mongoose-unique-validator'));
-    current.plugin(require('mongoose-random'));
     global[name] = god.model(name, current);
 });
 
@@ -146,6 +145,7 @@ function Context(req) {
     this.config = config;
     this.o = o;
     var raw_url = req.url.replace(/^\/api\//, '/');
+    console.log(raw_url);
     req.url = parse(raw_url);
     this.params = req.url.query;
     req.cookies = qs.parse(req.headers.cookie, /;\s+/);
