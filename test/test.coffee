@@ -59,23 +59,31 @@ agent =
             agent.cookies[k] = v
             break
 
-      if !has_callback
+      if has_callback
+#        console.log 'callback'
+      else
         code = options.response.statusCode.toString()
         code = if code >= 400 then code.red else code.green
         method = if 'GET' != options.method then options.method.yellow else options.method
-        console.log code + ' ' + method + ' ' + options.url
+        url = options.url
+        if options.qs
+          url += '?' + qs.stringify options.qs
+        console.log code + ' ' + method + ' ' + url
         if options.response.body
           console.log options.response.body
 #      console.log JSON.stringify(agent.cookies).yellow
       cb.call(agent, options)
 
-  query: (q, cb) ->
+  query: (q) ->
     if q.query
       q.query = new Buffer(JSON.stringify q.query).toString('base64')
     options =
       url: 'test/random'
       qs: q
-    @request options, if options.callback then options.callback else null
+    cb = if q.callback then q.callback else null
+    if cb
+      delete q.callback
+    @request options, cb
 
   GET: (url, cb) ->
     agent.request({url: url}, cb)
@@ -98,14 +106,17 @@ agent =
 
 
 if 'function' == typeof module._anybody
-  @query
+  agent.query
     entity: 'Agent'
     query: user: $exists: true
     number: 1
     populate: 'user'
-    callback: (agents) ->
+    callback: (options) ->
+      agents = options.response.body
       if agents.length > 0
         agent.agent = agents[0]
+        agent.user = agents[0].user
+        module._anybody agent
       else
         console.error 'No user exists'
 

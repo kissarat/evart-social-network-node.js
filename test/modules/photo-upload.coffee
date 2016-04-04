@@ -1,7 +1,9 @@
 faker = require 'faker'
 
 module.exports =
-  _init: () ->
+  _anybody: ($) ->
+    console.log $.user.domain
+
   test:
     random: ($) ->
       '1'
