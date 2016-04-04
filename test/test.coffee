@@ -12,15 +12,18 @@ module = require module
 
 agent =
   prefix: 'http://localhost/api/'
+  cookies: {}
 
-  request: (options) ->
+  request: (options, cb) ->
     walk = (o, route) ->
       name = route.shift()
       switch typeof o[name]
         when 'object' then walk(o[name], route)
         when 'function' then o[name]
         when 'undefined' then o._
-    cb = walk(module, options.url.split('/')) || () -> console.log 'undefined default handler'
+    has_callback = 'function' == typeof cb
+    if !has_callback
+      cb = walk(module, options.url.split('/')) || () -> console.log 'undefined default handler'
     options.url = agent.prefix + options.url
 
     if !options.method
@@ -56,16 +59,23 @@ agent =
             agent.cookies[k] = v
             break
 
-      code = options.response.statusCode.toString()
-      code = if code >= 400 then code.red else code.green
-      method = if 'GET' != options.method then options.method.yellow else options.method
-      console.log code + ' ' + method + ' ' + options.url
-      if options.response.body
-        console.log options.response.body
-      console.log JSON.stringify(agent.cookies).yellow
+      if !has_callback
+        code = options.response.statusCode.toString()
+        code = if code >= 400 then code.red else code.green
+        method = if 'GET' != options.method then options.method.yellow else options.method
+        console.log code + ' ' + method + ' ' + options.url
+        if options.response.body
+          console.log options.response.body
+#      console.log JSON.stringify(agent.cookies).yellow
       cb.call(agent, options)
 
-  cookies: {},
+  query: (q, cb) ->
+    if q.query
+      q.query = new Buffer(JSON.stringify q.query).toString('base64')
+    options =
+      url: 'test/random'
+      qs: q
+    @request options, if options.callback then options.callback else null
 
   GET: (url, cb) ->
     agent.request({url: url}, cb)
@@ -86,11 +96,25 @@ agent =
   DELETE: (url, data, cb) ->
     agent.send('POST', url, data, cb)
 
-module.agent = () ->
-  module._init.call agent
 
-agent.POST 'agent',
-  start: Date.now()
-  test: true
-  agent:
-    os: {}
+if 'function' == typeof module._anybody
+  @query
+    entity: 'Agent'
+    query: user: $exists: true
+    number: 1
+    populate: 'user'
+    callback: (agents) ->
+      if agents.length > 0
+        agent.agent = agents[0]
+      else
+        console.error 'No user exists'
+
+else
+  module.agent = () ->
+    module._init.call agent
+
+  agent.POST 'agent',
+    start: Date.now()
+    test: true
+    agent:
+      os: {}
