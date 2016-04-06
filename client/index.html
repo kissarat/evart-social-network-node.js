@@ -14,7 +14,6 @@
         var statistics = {start: Date.now()};
 
         addEventListener('load', function () {
-            App.start();
             statistics.load = Date.now() - statistics.start;
         });
     </script>
@@ -99,6 +98,8 @@
         <button type="submit">Verify</button>
     </section>
 </script>
+
+<script type="text/template" id="view-settings" data-src="/templates/settings.html"></script>
 
 <div id="script">
     <script src="/data.js"></script>

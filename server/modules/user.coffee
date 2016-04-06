@@ -35,6 +35,34 @@ global.schema.User = new god.Schema
   created:
     type: Date
     default: Date.now
+
+  skype:
+    type: String
+
+  email:
+    type: String
+
+  country:
+    type: String
+
+  city:
+    type: String
+
+  address:
+    type: String
+
+  name:
+    type: String
+
+  birthday:
+    type: Date
+
+  languages:
+    type: String
+
+  about:
+    type: String
+
   verified:
     type: Boolean
     get: ->

@@ -53,9 +53,20 @@ class App.Router extends Marionette.AppRouter
       statistics.history[_.now()] = [name].concat args
     return Marionette.AppRouter.prototype.execute.apply(@, arguments)
 
-if !DEV && window.addEventListener && navigator.sendBeacon
-  addEventListener 'beforeunload', ->
-    navigator.sendBeacon '/api/statistics', JSON.stringify(statistics)
+addEventListener 'load', () ->
+  if DEV
+    deferreds = []
+    $('[type="text/template"][data-src]').each (i, script) ->
+      deferreds.push $.get script.src, (template) ->
+        script.innerHTML = template
+        script.removeAttribute 'data-src'
+    $.when(deferreds).then () ->
+      console.log 'Views loaded'
+      App.start()
+  else if window.addEventListener && navigator.sendBeacon
+    addEventListener 'beforeunload', ->
+      navigator.sendBeacon '/api/statistics', JSON.stringify(statistics)
+    App.start()
 
 App.Behaviors = {}
 
