@@ -94,6 +94,8 @@
       else
         @report 'code', 'Invalid code'
 
+  class Views.Settings extends Marionette.ItemView
+    template: '#view-settings'
 
   @show = (name, options) ->
     if options?

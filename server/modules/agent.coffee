@@ -47,7 +47,7 @@ module.exports =
         else
           $.res.end()
 
-    if $.req.cookies.auth
-      Agent.findOne auth: $.cookie.auth, $.wrap update
+    if $.req.auth
+      Agent.findOne auth: $.auth, $.wrap update
     else
       update()

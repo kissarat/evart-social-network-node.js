@@ -6,6 +6,9 @@
     signup: ->
       App.mainRegion.show new App.Views.Signup model: new App.Models.User
 
+    settings: ->
+      App.mainRegion.show new App.Views.Settings model: new App.Models.User
+
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
 

@@ -25,6 +25,19 @@ boot = (xhr) ->
   App.controllers = {}
   if config.trace.history
     statistics.history = {}
+  templates = {}
+  routes = {}
+  $('[type="text/template"]').each (i, template) ->
+    method = template.id.replace 'view-', ''
+    routes['template/' + method] = method
+    templates[method] = () ->
+      App.mainRegion.show new (Marionette.ItemView.extend
+        attributes:
+          class: 'view'
+        template: '#' + template.id)
+  new App.Router
+    controller: new (Marionette.Controller.extend templates)
+    appRoutes: routes
   for name of App.Controllers
     Controller = App.Controllers[name]
     if _is(Controller, Marionette.Controller)
@@ -57,7 +70,7 @@ addEventListener 'load', () ->
   if DEV
     deferreds = []
     $('[type="text/template"][data-src]').each (i, script) ->
-      deferreds.push $.get script.src, (template) ->
+      deferreds.push $.get script.dataset.src, (template) ->
         script.innerHTML = template
         script.removeAttribute 'data-src'
     $.when(deferreds).then () ->

@@ -6,6 +6,7 @@ fs = require 'fs'
 _ = require 'underscore'
 minifier = require 'minifier'
 fse = require 'fs.extra'
+S = require 'string'
 
 
 gulp.task 'app', ->
@@ -20,6 +21,9 @@ gulp.task 'app', ->
       files.push fs.readFileSync ('client' + script.getAttribute 'src')
   files.push "}).call(this, #{version});\n"
   files = files.join "\n"
+  _.each (document.querySelectorAll '[data-src]'), (script) ->
+    script.innerHTML = fs.readFileSync ('client' + script.getAttribute 'data-src')
+    script.removeAttribute 'data-src'
   fse.mkdirpSync 'app'
   fs.writeFileSync 'app/script.js', files
   minifier.minify 'app/script.js'
@@ -53,7 +57,20 @@ gulp.task 'app', ->
       break
     comment.parentNode.removeChild comment
   string = document.documentElement.outerHTML
-  fs.writeFileSync 'app/index.html', ('<!DOCTYPE html>\n' + string)
+  string = '<!DOCTYPE html>\n' + string
+  fs.writeFileSync 'app/index.html', string
+  fs.readdirSync('client/language').filter((name) -> /\.json$/.test name).forEach (name) ->
+    language = name.split('.')[0]
+    s = S(string)
+    _(JSON.parse fs.readFileSync 'client/language/' + name)
+    .chain()
+    .pairs()
+    .sortBy((e) -> e[0].length)
+    .reverse()
+    .each (t) ->
+      s = s.replaceAll(t[0], t[1])
+    fs.writeFileSync "app/index.#{language}.html", s.s
+
   fse.copy 'client/favicon.ico', 'app/favicon.ico', replace: true
   fse.copyRecursive 'client/images', 'app/images', Function()
   fse.copyRecursive 'client/lib/components-font-awesome/fonts', 'app/images', Function()
