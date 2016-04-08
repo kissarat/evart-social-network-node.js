@@ -6,6 +6,13 @@
         e.preventDefault()
         App.navigate this.getAttribute 'href'
       @view.el.setAttribute 'class', @view.template.replace '#view-', 'view '
+      el = @view.el
+      if dictionary
+        ['h1', 'span', 'label', 'button', 'a'].forEach (name) ->
+          _.each el.querySelectorAll(name), (elements) ->
+            text = elements.childNodes.item 0
+            if 1 == elements.childNodes.length && Node.TEXT_NODE == text.nodeType
+              text.textContent = T text.textContent
       @view.stickit()
 
     onShow: ->
@@ -41,7 +48,7 @@
         field = if name then @el[name].parentNode else @el
         $('<div></div>')
         .attr('class', 'error')
-        .html(message)
+        .html(T message)
         .appendTo(field)
       else
         console.error name + ' field not found'

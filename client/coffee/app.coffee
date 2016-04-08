@@ -10,12 +10,23 @@ config =
 App.addRegions
   mainRegion: '#main .window-content'
 
+window.dictionary = null
+window.T = (name) -> name
+
 App.on 'start', ->
   $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
       $('#boot-loading').hide()
       $('#root').show()
       if xhr.status <= code.UNAUTHORIZED
-        boot xhr
+        language = $.cookie 'lang'
+        if language
+          document.documentElement.setAttribute 'lang', language
+          $.getJSON "/languages/#{language}.json", (_dict) ->
+            window.dictionary = _dict
+            window.T = (name) -> dictionary[name] || name
+            boot xhr
+        else
+          boot xhr
       else
         App.Views.show 'Error',
           status: 'Server Error'

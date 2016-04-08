@@ -56,21 +56,14 @@ gulp.task 'app', ->
     if !comment
       break
     comment.parentNode.removeChild comment
+  fse.mkdirp 'app/languages'
   string = document.documentElement.outerHTML
   string = '<!DOCTYPE html>\n' + string
   fs.writeFileSync 'app/index.html', string
-  fs.readdirSync('client/language').filter((name) -> /\.json$/.test name).forEach (name) ->
+  fs.readdirSync('client/languages').filter((name) -> /\.json$/.test name).forEach (name) ->
     language = name.split('.')[0]
-    s = S(string)
-    _(JSON.parse fs.readFileSync 'client/language/' + name)
-    .chain()
-    .pairs()
-    .sortBy((e) -> e[0].length)
-    .reverse()
-    .each (t) ->
-      s = s.replaceAll(t[0], t[1])
-    fs.writeFileSync "app/index.#{language}.html", s.s
-
+    dictionary = JSON.parse fs.readFileSync 'client/languages/' + name
+    fs.writeFileSync "app/languages/#{language}.json", JSON.stringify dictionary
   fse.copy 'client/favicon.ico', 'app/favicon.ico', replace: true
   fse.copyRecursive 'client/images', 'app/images', Function()
   fse.copyRecursive 'client/lib/components-font-awesome/fonts', 'app/images', Function()
