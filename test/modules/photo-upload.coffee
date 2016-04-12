@@ -31,7 +31,3 @@ module.exports =
               console.error chunk.toString()
         req.end data
     upload()
-
-  test:
-    random: ($) ->
-      '1'

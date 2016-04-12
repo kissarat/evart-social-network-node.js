@@ -11,6 +11,9 @@ random = (model, query, populate, number, cb) ->
     q.exec(cb)
 
 module.exports =
+#  _before: ($) ->
+#    console.log($.req.url.query)
+
   code: ($) ->
     User.findById $.param('user_id'), $.wrap (user) ->
       $.send code: user.code
@@ -27,3 +30,4 @@ module.exports =
     random model, query, populate, $.req.url.query.number, $.wrap (result) ->
       result.sort () -> 0.5 - Math.random()
       $.send result
+    return

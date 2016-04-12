@@ -477,9 +477,15 @@ function walk($, object, path) {
         return false;
     }
     else if (route in object) {
-        object = object[route]
+        object = object[route];
         switch (typeof object) {
             case 'object':
+                if (!$.module) {
+                    $.module = object;
+                    if ('function' == typeof $.module._before) {
+                        $.module._before($);
+                    }
+                }
                 return walk($, object, path);
             case 'function':
                 return exec($, object);
@@ -512,7 +518,7 @@ function serve($) {
             if (result instanceof god.Query) {
                 result = result.exec();
             }
-            if (result instanceof Promise) {
+            if ('Promise' == result.constructor.name) {
                 result
                     .then(function (r) {
                         $.send(r.toObject ? r.toObject() : r);
@@ -594,11 +600,11 @@ function exec($, action) {
                     throw 'data received';
                     $.data = data;
                 }
-                call_action();
+                return call_action();
             });
         }
         else {
-            call_action();
+            return call_action();
         }
     }
     else {

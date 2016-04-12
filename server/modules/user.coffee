@@ -2,6 +2,7 @@ rs = require 'randomstring'
 god = require 'mongoose'
 code = require __dirname + '/../../client/code.json'
 
+
 global.schema.User = new god.Schema
   phone:
     type: String
@@ -107,6 +108,12 @@ module.exports =
       user.save $.wrap () ->
         $.send code.CREATED, _id: user._id
     return
+
+  GET: ($) ->
+    if $.has 'id'
+      User.findOne $.param 'id'
+    else
+      User.find()
 
   verify:
     POST: ($) ->

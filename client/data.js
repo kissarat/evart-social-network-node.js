@@ -8,6 +8,14 @@ function _is(child, parent) {
     return child.__super__ && (child.__super__.constructor == parent || _is(child.__super__, parent))
 }
 
+function _get(name) {
+    var regex = new RegExp(name + '=([^&]+)');
+    if (regex.test(location.search)) {
+        return regex.exec(location.search)[1];
+    }
+    return null
+}
+
 var CTRL = 0x100;
 var ALT = 0x200;
 var SHIFT = 0x400;

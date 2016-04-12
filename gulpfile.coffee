@@ -69,15 +69,22 @@ gulp.task 'app', ->
   fse.copyRecursive 'client/lib/components-font-awesome/fonts', 'app/images', Function()
   return
 
+
+translate_coffee = (dir) ->
+  gulp
+  .src dir + '*.coffee'
+  .pipe coffee()
+  .pipe gulp.dest dir
+
 gulp.task 'translate', ->
   gulp
   .src 'client/*.sass'
   .pipe sass()
   .pipe gulp.dest 'client/'
 
-  gulp
-  .src 'client/coffee/*.coffee'
-  .pipe coffee()
-  .pipe gulp.dest 'client/coffee/'
+  translate_coffee 'client/coffee/'
+  translate_coffee 'server/modules/'
+  translate_coffee 'test/'
+  translate_coffee 'test/modules/'
 
 gulp.task 'default', ['translate', 'app']

@@ -40,11 +40,12 @@ boot = (xhr) ->
   routes = {}
   $('[type="text/template"]').each (i, template) ->
     method = template.id.replace 'view-', ''
+    className = (_get('class') || '').replace('.', ' ') + ' view'
     routes['template/' + method] = method
     templates[method] = () ->
       App.mainRegion.show new (Marionette.ItemView.extend
         attributes:
-          class: 'view'
+          class: className
         template: '#' + template.id)
   new App.Router
     controller: new (Marionette.Controller.extend templates)
@@ -80,7 +81,7 @@ class App.Router extends Marionette.AppRouter
 addEventListener 'load', () ->
   if DEV
     deferreds = []
-    $('[type="text/template"][data-src]').each (i, script) ->
+    $('[data-src]').each (i, script) ->
       deferreds.push $.get script.dataset.src, (template) ->
         script.innerHTML = template
         script.removeAttribute 'data-src'

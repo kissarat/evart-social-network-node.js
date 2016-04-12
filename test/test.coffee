@@ -57,9 +57,11 @@ agent =
 
       if response.headers['set-cookie']
         for cookie in response.headers['set-cookie']
-          for k, v of qs.parse cookie, /;\s+/
-            agent.cookies[k] = v
-            break
+          cookie = /^(\w+)=([^;]+)/.exec cookie
+          if cookie
+            agent.cookies[cookie[1]] = cookie[2]
+          else
+            console.error 'Invalid Set-Cookie header'
 
       if has_callback
 #        console.log 'callback'
