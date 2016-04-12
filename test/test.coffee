@@ -42,6 +42,9 @@ agent =
       options.headers['content-type'] = 'text/json'
 
     request options, (error, response, body) ->
+      if error
+        console.log error
+        return
       options.response = response
       if body
         try
@@ -58,7 +61,13 @@ agent =
       if response.headers['set-cookie']
         for cookie in response.headers['set-cookie']
           cookie = /^(\w+)=([^;]+)/.exec cookie
+#          if cookie
+#            for k, v of cookie
+#              if k.toLowerCase() not in ['path', 'expire']
+#                agent.cookies[k] = v
+#                break
           if cookie
+            console.log cookie.slice(1).join('=')
             agent.cookies[cookie[1]] = cookie[2]
           else
             console.error 'Invalid Set-Cookie header'
@@ -74,8 +83,8 @@ agent =
           url += '?' + qs.stringify options.qs
         console.log code + ' ' + method + ' ' + url
         if options.response.body
-          console.log options.response.body
-#      console.log JSON.stringify(agent.cookies).yellow
+          console.log JSON.stringify options.response.body
+      console.log JSON.stringify(agent.cookies).yellow
       cb.call(agent, options)
 
   query: (q) ->
@@ -121,7 +130,8 @@ if 'function' == typeof module._anybody
       if agents.length > 0
         agent.agent = agents[0]
         agent.user = agents[0].user
-        module._anybody agent
+        agent.cookies['auth'] = agent.agent.auth
+        module._anybody.call agent, options
       else
         console.error 'No user exists'
 

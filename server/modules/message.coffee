@@ -21,7 +21,9 @@ global.schema.Message = god.Schema
     type: Boolean
     default: false
 
-  text: String
+  text:
+    type: String
+    required: true
 
 
 module.exports =

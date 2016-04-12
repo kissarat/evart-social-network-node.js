@@ -1,16 +1,18 @@
 faker = require 'faker'
 
 module.exports =
-  _anybody: ($) ->
-    $.GET 'user'
+  _anybody: () ->
+    @GET 'user'
 
   user: ($) ->
-    ids = $.response.body.forEach((user) -> user._id).shuffle()
-    for id of ids
+    receivers = $.response.body
+    for receiver of receivers
       data =
-        target: id
+        target: receiver
         text: faker.lorem.sentences()
-      $.POST '/api/message', data
+      console.log data
+      @POST 'message', data
+    return
 
   message: ($) ->
     console.log $.response.toString().yellow
