@@ -99,6 +99,30 @@ module.exports =
           $.sendStatus code.FORBIDDEN
     return
 
+  logout: ($) ->
+    conditions =
+      user:
+        $exists: true
+      auth: $.req.auth
+    change =
+      $unset:
+        user: ''
+    Agent.update conditions, change
+
+  status: ($) ->
+    conditions = auth: $.req.auth
+    Agent.findOne(conditions).populate('user').exec $.wrap (agent) ->
+      result = found: false
+      if agent
+        result.agent_id = agent._id
+        if agent.user
+          result.user_id = agent.user._id
+          result.domain = agent.user.domain
+          result.phone = agent.user.phone
+          result.found = true
+      $.send result
+    return
+
   POST: ($) ->
     if $.user
       $.sendStatus code.FORBIDDEN, 'User is authorized'

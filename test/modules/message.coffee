@@ -6,13 +6,13 @@ module.exports =
 
   user: ($) ->
     receivers = $.response.body
-    for receiver of receivers
+    for receiver in receivers
       data =
-        target: receiver
+        target: receiver._id
         text: faker.lorem.sentences()
-      console.log data
       @POST 'message', data
     return
 
   message: ($) ->
-    console.log $.response.toString().yellow
+#    console.log $.response.toString().yellow
+    process.exit()

@@ -38,7 +38,7 @@ agent =
       delete options.headers.cookie
     if options.params
       options.body = JSON.stringify options.params
-      console.log options.body.red
+#      console.log options.body.red
       options.headers['content-type'] = 'text/json'
 
     request options, (error, response, body) ->
@@ -83,8 +83,8 @@ agent =
           url += '?' + qs.stringify options.qs
         console.log code + ' ' + method + ' ' + url
         if options.response.body
-          console.log JSON.stringify options.response.body
-      console.log JSON.stringify(agent.cookies).yellow
+          console.log (JSON.stringify options.response.body).magenta
+#      console.log JSON.stringify(agent.cookies).yellow
       cb.call(agent, options)
 
   query: (q) ->

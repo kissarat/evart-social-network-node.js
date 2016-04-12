@@ -30,7 +30,7 @@ module.exports =
   POST: ($) ->
     message = new Message $.body
     message.source = $.user._id
-    message.save null, $.answer
+    message.save $.answer
 
   GET: ($) ->
     target_id = $.get('target_id')
