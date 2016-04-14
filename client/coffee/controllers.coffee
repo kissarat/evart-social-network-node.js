@@ -12,6 +12,13 @@
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
 
+    routes:
+      'login': 'login'
+      'signup': 'signup'
+      'verify/:id': 'verify'
+
+
+  class Controllers.Message extends Marionette.Controller
     dialog: (target_id) ->
       dialog = new App.Models.MessageList()
       dialog.params =
@@ -20,18 +27,12 @@
       draft = new App.Models.Message
         target: target_id
         text: localStorage.getItem 'draft_' + target_id
-      draftView = new App.Views.Message model: draft
+      draftView = new App.Views.Editor model: draft
       dialog.fetch()
       layout = new App.Layouts.Dialog()
-      layout.render()
-      layout.showChildView 'dialog',  dialogView
-      layout.showChildView 'editor', draftView
       App.mainRegion.show layout
+      layout.showChildView 'dialog', dialogView
+      layout.showChildView 'editor', draftView
 
     routes:
-      'login': 'login'
-      'signup': 'signup'
-      'verify/:id': 'verify'
-      'dialog/:target': 'dialog'
-
-
+      'dialog/:target_id': 'dialog'

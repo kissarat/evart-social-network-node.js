@@ -121,9 +121,8 @@
       @$el.attr('id', @model.get '_id')
       @ui.info.attr('data-id', @model.get 'source')
       if @model.get 'source'
-        @ui.avatar.attr 'src', '/api/photo/avatar?id=' + @model.get 'source'
-      if
-      @model.get('source') == App.user._id
+        @ui.avatar.attr 'src', '/api/photo/avatar?id=' + @model.get('source')._id
+      if @model.get('source') == App.user._id
         @$el.addClass 'me'
       if @model.get('unread')
         @$el.addClass 'unread'
@@ -140,14 +139,24 @@
     childView: Views.Message
     childViewContainer: '.messages'
 
+    onRender: () ->
+      App.dialog = @
+
+    onDestroy: () ->
+      App.dialog = null
+
   class Views.Editor extends Views.Form
     template: '#view-message-editor'
+
+    ui:
+      text: '.text'
 
     success: () ->
       target = @model.get 'target'
       if target._id
         target = target._id
       localStorage.removeItem 'draft_' + target
+      @model.set 'text', ''
 
   class Views.Settings extends Marionette.ItemView
     template: '#view-settings'

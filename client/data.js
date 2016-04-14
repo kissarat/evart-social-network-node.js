@@ -206,15 +206,18 @@ var browser = {
     statistics.agent = browser;
 })();
 
-var geo;
-navigator.geolocation.watchPosition(function (p) {
-    var c = p.coords;
-    var geo = [c.latitude, c.longitude];
 
-    if (c.altitude) {
-        geo.push(c.altitude);
-    }
-});
+window.geo = null;
+if (navigator.geolocation.watchPosition) {
+    navigator.geolocation.watchPosition(function (p) {
+        var c = p.coords;
+        window.geo = [c.latitude, c.longitude];
+
+        if (c.altitude) {
+            window.geo.push(c.altitude);
+        }
+    });
+}
 
 Object.freeze(KeyCode);
 Object.freeze(emoji);

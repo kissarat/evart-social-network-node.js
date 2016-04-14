@@ -59,7 +59,10 @@ boot = (xhr) ->
         appRoutes: controller.routes
       App.controllers[name] = controller
   if code.UNAUTHORIZED != xhr.status
-    App.user = JSON.parse xhr.responseText
+    try
+      App.user = JSON.parse xhr.responseText
+    catch ex
+      console.warn 'User is not authorized'
 #  if '/' == location.pathname
 #    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
   Backbone.history.start
@@ -96,3 +99,10 @@ addEventListener 'load', () ->
 App.Behaviors = {}
 
 Marionette.Behaviors.behaviorsLookup = -> App.Behaviors
+
+addEventListener 'unload', () ->
+  if App.mainRegion.currentView.editor
+    model = App.mainRegion.currentView.editor.currentView.model
+    text = model.get('text')
+    if text && text.trim()
+      localStorage.setItem 'draft_' + model.get('target'), text
