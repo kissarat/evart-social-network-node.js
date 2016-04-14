@@ -58,12 +58,12 @@ boot = (xhr) ->
         controller: controller
         appRoutes: controller.routes
       App.controllers[name] = controller
-  Backbone.history.start
-    pushState: true
   if code.UNAUTHORIZED != xhr.status
     App.user = JSON.parse xhr.responseText
 #  if '/' == location.pathname
 #    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
+  Backbone.history.start
+    pushState: true
 
 
 App.mainRegion.on 'show', (view) ->

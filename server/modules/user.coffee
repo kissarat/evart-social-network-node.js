@@ -26,6 +26,7 @@ global.schema.User = new god.Schema
     unique: true
 #    index:
 #      unique: true
+
   code:
     type: String
     match: /^\d{6}$/

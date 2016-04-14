@@ -2,24 +2,31 @@
     <div class="info">
         <img class="avatar"/>
         <div class="time"></div>
+        <div class="ip"></div>
     </div>
     <div class="text"></div>
 </script>
 
 <script type="text/template" id="view-dialog">
     <div class="messages"></div>
-    <div class="editor">
-        <div>
-        <textarea placeholder="Message..."></textarea>
+</script>
+
+<script type="text/template" id="view-message-editor">
+    <div>
+        <textarea name="message" placeholder="Message..."></textarea>
         <img class="avatar"/>
-        </div>
-        <div class="buttons">
-            <button type="submit">Send</button>
-            <button type="button">Photo</button>
-            <button type="button">Video</button>
-            <button type="button">File</button>
-        </div>
     </div>
+    <div class="buttons">
+        <button type="submit">Send</button>
+        <button type="button">Photo</button>
+        <button type="button">Video</button>
+        <button type="button">File</button>
+    </div>
+</script>
+
+<script type="text/template" id="view-dialog-layout">
+    <div class="dialog"></div>
+    <div class="editor"></div>
 </script>
 
 <!--script type="text/template" id="view-dialog">

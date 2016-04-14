@@ -26,11 +26,18 @@ global.schema.Message = god.Schema
     type: String
     required: true
 
+  ip:
+    type: String
+
+  geo:
+    type: Array
+
 
 module.exports =
   POST: ($) ->
     message = new Message $.body
     message.source = $.user._id
+    message.ip = $.req.connection.remoteAddress
     message.save $.answer
 
   GET: ($) ->
@@ -41,6 +48,8 @@ module.exports =
         {source: me, target: target_id},
         {source: target_id, target: me}
       ]
+    .populate('source', '_id domain avatar')
+    .populate('target', '_id domain avatar')
 
   read: ($) ->
     if $.has('id')

@@ -16,12 +16,22 @@
       dialog = new App.Models.MessageList()
       dialog.params =
         target_id: target_id
+      dialogView = new App.Views.Dialog collection: dialog
+      draft = new App.Models.Message
+        target: target_id
+        text: localStorage.getItem 'draft_' + target_id
+      draftView = new App.Views.Message model: draft
       dialog.fetch()
-      App.mainRegion.show new App.Views.Dialog collection: dialog
-
+      layout = new App.Layouts.Dialog()
+      layout.render()
+      layout.showChildView 'dialog',  dialogView
+      layout.showChildView 'editor', draftView
+      App.mainRegion.show layout
 
     routes:
       'login': 'login'
       'signup': 'signup'
       'verify/:id': 'verify'
       'dialog/:target': 'dialog'
+
+

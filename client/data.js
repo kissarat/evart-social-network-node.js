@@ -206,9 +206,28 @@ var browser = {
     statistics.agent = browser;
 })();
 
+var geo;
+navigator.geolocation.watchPosition(function (p) {
+    var c = p.coords;
+    var geo = [c.latitude, c.longitude];
+
+    if (c.altitude) {
+        geo.push(c.altitude);
+    }
+});
 
 Object.freeze(KeyCode);
 Object.freeze(emoji);
 Object.freeze(SocketReadyState);
 Object.freeze(browser);
 Object.freeze(code);
+
+/*
+addEventListener('load', function () {
+    var _trace = Marionette.Error.prototype.captureStackTrace;
+    Marionette.Error.prototype.captureStackTrace = function () {
+        _trace.call(this);
+        console.error(this);
+    };
+});
+*/

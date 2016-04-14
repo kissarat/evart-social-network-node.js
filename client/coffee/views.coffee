@@ -111,15 +111,19 @@
       info: '.info'
       avatar: '.avatar'
       time: '.time'
+      ip: '.ip'
 
     bindings:
       '.text': 'text'
+      '.ip': 'ip'
 
     onRender: () ->
       @$el.attr('id', @model.get '_id')
       @ui.info.attr('data-id', @model.get 'source')
-      @ui.avatar.attr 'src', '/api/photo/avatar?id=' + @model.get 'source'
-      if @model.get('source') == App.user._id
+      if @model.get 'source'
+        @ui.avatar.attr 'src', '/api/photo/avatar?id=' + @model.get 'source'
+      if
+      @model.get('source') == App.user._id
         @$el.addClass 'me'
       if @model.get('unread')
         @$el.addClass 'unread'
@@ -128,15 +132,22 @@
             if result.nModified > 0
               @$el.removeClass 'unread'
         , 3000
-      @ui.time.html new Date(@model.get 'time').toLocaleTimeString()
-
+      @ui.time.html moment.utc(@model.get 'time').fromNow()
       return
-
 
   class Views.Dialog extends Marionette.CollectionView
     template: '#view-dialog'
     childView: Views.Message
     childViewContainer: '.messages'
+
+  class Views.Editor extends Views.Form
+    template: '#view-message-editor'
+
+    success: () ->
+      target = @model.get 'target'
+      if target._id
+        target = target._id
+      localStorage.removeItem 'draft_' + target
 
   class Views.Settings extends Marionette.ItemView
     template: '#view-settings'
