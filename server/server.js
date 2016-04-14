@@ -515,7 +515,7 @@ function serve($) {
 
     switch (typeof result) {
         case 'object':
-            if (result instanceof god.Query) {
+            if (result instanceof god.Query || result instanceof god.Aggregate) {
                 result = result.exec();
             }
             if ('Promise' == result.constructor.name) {

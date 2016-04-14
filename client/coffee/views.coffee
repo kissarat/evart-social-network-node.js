@@ -5,7 +5,7 @@
       @view.$el.one (e) ->
         e.preventDefault()
         App.navigate this.getAttribute 'href'
-      @view.el.setAttribute 'class', @view.template.replace '#view-', 'view '
+      @view.$el.addClass @view.template.replace '#view-', 'view '
       el = @view.el
       if dictionary
         ['h1', 'span', 'label', 'button', 'a'].forEach (name) ->
@@ -100,6 +100,43 @@
         App.navigate 'login'
       else
         @report 'code', 'Invalid code'
+
+  class Views.Message extends Marionette.ItemView
+    template: '#view-message'
+
+    behaviors:
+      Bindings: {}
+
+    ui:
+      info: '.info'
+      avatar: '.avatar'
+      time: '.time'
+
+    bindings:
+      '.text': 'text'
+
+    onRender: () ->
+      @$el.attr('id', @model.get '_id')
+      @ui.info.attr('data-id', @model.get 'source')
+      @ui.avatar.attr 'src', '/api/photo/avatar?id=' + @model.get 'source'
+      if @model.get('source') == App.user._id
+        @$el.addClass 'me'
+      if @model.get('unread')
+        @$el.addClass 'unread'
+        setTimeout () =>
+          $.get '/api/message/read?id=' + @model.get('_id'), (result) =>
+            if result.nModified > 0
+              @$el.removeClass 'unread'
+        , 3000
+      @ui.time.html new Date(@model.get 'time').toLocaleTimeString()
+
+      return
+
+
+  class Views.Dialog extends Marionette.CollectionView
+    template: '#view-dialog'
+    childView: Views.Message
+    childViewContainer: '.messages'
 
   class Views.Settings extends Marionette.ItemView
     template: '#view-settings'

@@ -1,6 +1,7 @@
 rs = require 'randomstring'
 god = require 'mongoose'
 code = require __dirname + '/../../client/code.json'
+ObjectID = require('mongodb').ObjectID
 
 
 global.schema.User = new god.Schema
@@ -134,6 +135,9 @@ module.exports =
     return
 
   GET: ($) ->
+    if $.has 'ids'
+      ids = $.param('ids').split('.').map (id) -> ObjectID(id)
+      User.find id: $in: ids
     if $.has 'id'
       User.findOne $.param 'id'
     else

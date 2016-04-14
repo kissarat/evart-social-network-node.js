@@ -43,11 +43,12 @@ module.exports =
       agent.save $.wrap () ->
         $.setCookie 'auth', agent.auth, $.config.FOREVER
         if agent.user
-          $.send agent.user.toObject()
+          User.findOne agent.user, $.wrap (user) ->
+            $.send user.toObject()
         else
           $.res.end()
 
     if $.req.auth
-      Agent.findOne auth: $.auth, $.wrap update
+      Agent.findOne auth: $.req.auth, $.wrap update
     else
       update()
