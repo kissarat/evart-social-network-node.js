@@ -206,6 +206,11 @@ var browser = {
     statistics.agent = browser;
 })();
 
+function register(target, listeners) {
+    for(var name in listeners) {
+        target.addEventListener(name, listeners[name])
+    }
+}
 
 window.geo = null;
 if (navigator.geolocation.watchPosition) {
@@ -217,6 +222,7 @@ if (navigator.geolocation.watchPosition) {
             window.geo.push(c.altitude);
         }
     });
+    
 }
 
 Object.freeze(KeyCode);

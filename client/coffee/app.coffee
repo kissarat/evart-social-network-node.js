@@ -5,13 +5,18 @@ if DEV
 config =
   trace:
     history: true
+  socket:
+    address: 'ws://' + location.hostname + '/socket'
+    wait: 800
 
 @App = new Marionette.Application()
 App.addRegions
   mainRegion: '#main .window-content'
 
-window.dictionary = null
-window.T = (name) -> name
+@App.config = config
+
+@dictionary = null
+@T = (name) -> name
 
 App.on 'start', ->
   $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
@@ -61,6 +66,7 @@ boot = (xhr) ->
   if code.UNAUTHORIZED != xhr.status
     try
       App.user = JSON.parse xhr.responseText
+      App.trigger 'login'
     catch ex
       console.warn 'User is not authorized'
 #  if '/' == location.pathname

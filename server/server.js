@@ -16,32 +16,12 @@ var code = require(__dirname + '/../client/code.json')
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
 
-/*
-var mongo_errors = {
-    BAD_VALUE: 2,
-    UNKNOWN_ERROR: 8,
-    NAMESPACE_NOT_FOUND: 26,
-    EXCEEDED_TIME_LIMIT: 50,
-    COMMAND_NOT_FOUND: 59,
-    WRITE_CONCERN_ERROR: 64,
-    NOT_MASTER: 10107,
-    DUPLICATE_KEY: 11000,
-    DUPLICATE_KEY_UPDATE: 11001, // legacy before 2.6
-    DUPLICATE_KEY_CAPPED: 12582, // legacy before 2.6
-    UNRECOGNIZED_COMMAND: 13390, // mongos error before 2.4
-    NOT_MASTER_NO_SLAVE_OK: 13435,
-    NOT_MASTER_OR_SECONDARY: 13436,
-    CANT_OPEN_DB_IN_READ_LOCK: 15927
-};
-*/
-
-
 global.schema = {};
 
 modules_dir.forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
     if (match) {
-        var module_name = match[1]
+        var module_name = match[1];
         modules[module_name] = false === config.modules[module_name]
             ? false
             : require(__dirname + '/modules/' + match[0]);
@@ -86,7 +66,7 @@ o.connection.on('open', function () {
     server.listen(config.port, config.host, function () {
         var socketServer = new ws.Server(config.socket);
         socketServer.on('connection', function (socket) {
-            var $ = new Context(socket.upgradeReq, _db);
+            var $ = new Context(socket.upgradeReq, o.connection);
             $.socket = socket;
             $.authorize(function (user) {
                 if (user) {
