@@ -12,9 +12,14 @@
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
 
+    profile: () ->
+      App.mainRegion.show new App.Views.Profile model: new App.Models.User App.user
+
     routes:
       'login': 'login'
       'signup': 'signup'
+      'profile': 'profile'
+      'settings': 'settings'
       'verify/:id': 'verify'
 
 

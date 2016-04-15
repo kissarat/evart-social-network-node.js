@@ -6,6 +6,9 @@
     urlRoot: ->
       return '/api/' + @constructor.name.toLowerCase()
 
+    toString: ->
+      return this.get('_id')
+
   class Models.Error extends Backbone.Model
 
   class Models.User extends Models.Base

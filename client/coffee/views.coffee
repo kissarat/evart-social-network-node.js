@@ -95,11 +95,39 @@
   class Views.Verify extends Views.Form
     template: '#view-code'
 
+  class Views.Profile extends Views.Form
+    template: '#view-profile'
+
+    ui:
+      avatar: '.avatar'
+
+    bindings:
+      '.domain': 'domain'
+
+    onRender: () ->
+      @ui.avatar.attr 'src', App.avatarUrl @model.id
+
     success: (data) ->
       if data.verified
         App.navigate 'login'
       else
         @report 'code', 'Invalid code'
+
+  class Views.Settings extends Marionette.ItemView
+    template: '#view-settings'
+
+    ui:
+      avatar: '.avatar'
+
+    events:
+      'change [name=avatar]': 'loadAvatar'
+      
+    loadAvatar: (e) ->
+      file = e.target.files[0]
+      if file
+        App.upload('/api/photo', file).then (photo) =>
+          $.post '/api/user/avatar', {photo_id: photo._id}, (result) =>
+            @ui.avatar.attr 'src', App.avatarUrl result.user_id
 
   class Views.Message extends Marionette.ItemView
     template: '#view-message'
@@ -121,7 +149,7 @@
       @$el.attr('id', @model.get '_id')
       @ui.info.attr('data-id', @model.get 'source')
       if @model.get 'source'
-        @ui.avatar.attr 'src', '/api/photo/avatar?id=' + @model.get('source')._id
+        @ui.avatar.attr 'src', App.avatarUrl App.id @model.get('source')
       if @model.get('source') == App.user._id
         @$el.addClass 'me'
       if @model.get('unread')
@@ -156,10 +184,9 @@
       if target._id
         target = target._id
       localStorage.removeItem 'draft_' + target
-      @model.set 'text', ''
-
-  class Views.Settings extends Marionette.ItemView
-    template: '#view-settings'
+      App.dialog.collection.add @model
+      @model = new App.Models.Message target
+      @ui.text.html('')
 
   @show = (name, options) ->
     if options?

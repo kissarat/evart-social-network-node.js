@@ -19,4 +19,9 @@ App.pull = () ->
 
 pull = () -> App.pull()
 
-App.on 'login', pull
+register App,
+  login: pull
+
+  message: (message) ->
+    if App.dialog
+      App.dialog.collection.add message

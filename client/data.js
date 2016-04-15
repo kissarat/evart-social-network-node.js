@@ -208,7 +208,7 @@ var browser = {
 
 function register(target, listeners) {
     for(var name in listeners) {
-        target.addEventListener(name, listeners[name])
+        (target.addEventListener || target.on) (name, listeners[name])
     }
 }
 

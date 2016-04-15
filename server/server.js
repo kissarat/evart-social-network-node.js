@@ -353,7 +353,12 @@ Context.prototype = {
         if (age) {
             cookie += '; expires=' + new Date(Date.now() + age).toUTCString();
         }
-        this.res.setHeader('set-cookie', cookie);
+        if (this.res.headersSent) {
+            console.error(`Setting cookie when headers sent ${name}=${value}`);
+        }
+        else {
+            this.res.setHeader('set-cookie', cookie);
+        }
     },
 
     send: function () {
@@ -539,8 +544,7 @@ function exec($, action) {
             }
         }
         try {
-            var valid = $.validate($.params);
-            if (valid) {
+            if ($.validate($.params).valid) {
                 return action($);
             }
             else {
@@ -564,8 +568,19 @@ function exec($, action) {
 
     if ($.user || is_unauthoried_route) {
         if ($.req.headers['content-length'] && !must_upload_route) {
-            receive($.req, function (data) {
-                if ($.req.headers['content-type'].indexOf('json') > 0) {
+            return receive($.req, function (data) {
+                if ($.req.headers['content-type'].indexOf('x-www-form-urlencoded') > 0) {
+                    try {
+                        $.body = qs.parse(data.toString('utf8'));
+                        $.params = $.merge($.params, $.body);
+                    }
+                    catch (ex) {
+                        $.send(code.BAD_REQUEST, {
+                            error: ex.getMessage()
+                        })
+                    }
+                }
+                else if ($.req.headers['content-type'].indexOf('json') > 0) {
                     try {
                         $.body = JSON.parse(data.toString('utf8'));
                         $.params = $.merge($.params, $.body);
@@ -685,20 +700,28 @@ function database($) {
 
 function receive(readable, call) {
     var chunks = [];
-    readable.on('data', function (chunk) {
-        chunks.push(chunk);
-    });
-    readable.on('end', function () {
-        var data;
-        if (0 == chunks.length) {
-            data = new Buffer();
-        }
-        else if (1 == chunks.length) {
-            data = chunks[0];
-        }
-        else {
-            data = Buffer.concat(chunks);
-        }
-        call(data);
-    });
+    return new Promise(function (resolve, reject) {
+        readable.on('data', function (chunk) {
+            chunks.push(chunk);
+        });
+        readable.on('end', function () {
+            var data;
+            if (0 == chunks.length) {
+                data = new Buffer();
+            }
+            else if (1 == chunks.length) {
+                data = chunks[0];
+            }
+            else {
+                data = Buffer.concat(chunks);
+            }
+            if (call) {
+                resolve(call(data));
+            }
+            else {
+                resolve(data)
+            }
+        });
+        readable.on('error', reject)
+    })
 }

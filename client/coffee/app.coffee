@@ -78,9 +78,6 @@ boot = (xhr) ->
 App.mainRegion.on 'show', (view) ->
   document.title = if view.title then _.result(view.title) else 'Socex'
 
-App.navigate = (url) ->
-  return Backbone.history.navigate url, trigger: true
-
 class App.Router extends Marionette.AppRouter
   execute: (cb, args, name) ->
     if config.trace.history
@@ -112,3 +109,24 @@ addEventListener 'unload', () ->
     text = model.get('text')
     if text && text.trim()
       localStorage.setItem 'draft_' + model.get('target'), text
+
+App.navigate = (url) ->
+  return Backbone.history.navigate url, trigger: true
+
+App.avatarUrl = (id) ->
+  return '/api/user/avatar?id=' + id
+
+App.id = (object) ->
+  if object._id
+    return object._id
+  if 'object' == typeof object then object.get('_id') else object
+
+App.upload = (url, file) ->
+  xhr = new XMLHttpRequest()
+  xhr.open 'POST', url
+  xhr.send file
+  new Promise (resolve, reject) ->
+    xhr.onload = () ->
+      resolve JSON.parse xhr.responseText
+    xhr.onerror = reject
+  

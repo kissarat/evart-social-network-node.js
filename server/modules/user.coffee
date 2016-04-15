@@ -35,6 +35,11 @@ global.schema.User = new god.Schema
       rs.generate
         length: 6
         charset: 'numeric'
+
+  avatar:
+    type: god.Schema.Types.ObjectId
+    ref: 'Photo'
+
   created:
     type: Date
     default: Date.now
@@ -152,3 +157,21 @@ module.exports =
       changes = $set: code: null
       User.update conditions, changes, $.wrap (result) ->
         $.send verified: result.n > 0
+
+  avatar:
+    GET: ($) ->
+      User.findOne $.param('id'), $.wrap (user) ->
+        if user
+          $.sendStatus code.MOVED_TEMPORARILY, 'Avatar found',
+            location: if user.avatar then "/photo/#{user.avatar}.jpg" else "/images/avatar.jpg"
+        else
+          $.sendStatus code.NOT_FOUND, 'User not found'
+
+    POST: ($) ->
+      User.findOneAndUpdate({_id: $.user._id}, {avatar: $.param('photo_id')}).select('_id avatar').exec $.wrap (user) ->
+        if user
+          $.send
+            user_id: user._id
+            photo_id: user.avatar
+        else
+          $.sendStatus code.NOT_FOUND

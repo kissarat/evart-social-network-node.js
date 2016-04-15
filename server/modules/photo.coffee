@@ -21,14 +21,6 @@ global.schema.Photo = new god.Schema
     type: String
 
 module.exports =
-  avatar: ($) ->
-    User.findOne $.param('id'), $.wrap (user) ->
-      if user
-        $.sendStatus code.MOVED_TEMPORARILY, 'Avatar found',
-          location: if user.avatar then "/photo/#{user.avatar}.jpg" else "/images/avatar.jpg"
-      else
-        $.sendStatus code.NOT_FOUND, 'User not found'
-
   POST: ($) ->
     tmpfile = '/tmp/' + process.hrtime().join('') + '.jpg'
     stream = fs.createWriteStream tmpfile
