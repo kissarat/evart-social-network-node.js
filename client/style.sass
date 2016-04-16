@@ -234,20 +234,35 @@ form
   .avatar
     max-width: 128px
     max-height: 128px
+  > div > *
+    display: inline-block
 
 .message
-  display: flex
-  flex-direction: row
-  &.me
+  .top
+    display: flex
     align-items: flex-end
-  .avatar
-    max-width: 64px
-    max-height: 64px
-  .time
-    font-size: 0.7em
-  .ip
-    color: white
+    > *
+      cursor: pointer
+  .middle
+    display: flex
+    flex-direction: row
+    &.me
+      align-items: flex-end
+    .avatar
+      max-width: 64px
+      max-height: 64px
+    .time
+      font-size: 0.7em
+    .ip
+      color: white
 
 .preview
   max-width: 128px
   max-height: 128px
+
+#corner-panel
+  position: fixed
+  display: flex
+  top: 30px
+  right: 10px
+  z-index: 1

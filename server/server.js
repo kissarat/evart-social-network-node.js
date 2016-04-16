@@ -128,7 +128,14 @@ function Context(req) {
     console.log(raw_url);
     req.url = parse(raw_url);
     this.params = req.url.query;
-    req.cookies = qs.parse(req.headers.cookie, /;\s+/);
+    // req.cookies = qs.parse(req.headers.cookie, /;\s+/);
+    req.cookies = {};
+    if ('string' == typeof req.headers.cookie) {
+        req.headers.cookie.split(/;\s+/).forEach(function (item) {
+            var parts = item.split('=');
+            req.cookies[parts[0].trim()] = parts[1].trim();
+        });
+    }
 
     if (req.url.query.auth) {
         req.auth = req.url.query.auth;
@@ -423,7 +430,7 @@ Context.prototype = {
     authorize: function (cb) {
         if (this.req.auth) {
             var self = this;
-            Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function(agent) {
+            Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function (agent) {
                 if (agent) {
                     self.agent = agent;
                 }
@@ -436,7 +443,15 @@ Context.prototype = {
     },
 
     get id() {
-        return ObjectID(this.req.url.query.id);
+        if (!('id' in this.req)) {
+            try {
+                this.req.id = ObjectID(this.req.url.query.id);
+            }
+            catch (ex) {
+                this.req.id = null
+            }
+        }
+        return this.req.id;
     },
 
     get user() {
@@ -471,7 +486,7 @@ function walk($, object, path) {
                         $.module._before($);
                     }
                 }
-                return walk($, object, path);
+                return walk($, object, path, route);
             case 'function':
                 return exec($, object);
             default:
@@ -496,7 +511,13 @@ function serve($) {
         });
     }
 
-    var result = walk($, modules, $.req.url.route.slice(0));
+    var path = $.req.url.route.slice(0);
+    var last = path[path.length - 1];
+    if (last && /^[a-z0-9]{24}$/.exec(last)) {
+        $.req.id = ObjectID(last);
+        path.pop();
+    }
+    var result = walk($, modules, path);
 
     switch (typeof result) {
         case 'object':
@@ -506,7 +527,15 @@ function serve($) {
             if ('Promise' == result.constructor.name) {
                 result
                     .then(function (r) {
-                        $.send(r.toObject ? r.toObject() : r);
+                        if (r) {
+                            $.send(r.toObject ? r.toObject() : r);
+                        }
+                        else if (arguments.length > 0 && undefined === r) {
+                            console.error('Undefined promise result');
+                        }
+                        else {
+                            $.sendStatus(code.NOT_FOUND);
+                        }
                     })
                     .catch(function (r) {
                         $.send(code.INTERNAL_SERVER_ERROR, r)
@@ -514,9 +543,6 @@ function serve($) {
             }
             else if (null === result) {
                 $.sendStatus(code.NOT_FOUND);
-            }
-            else {
-                //$.send(result);
             }
             break;
         case 'boolean':
@@ -530,6 +556,8 @@ function serve($) {
         case 'string':
             $.res.end(result);
             break;
+        default:
+            $.send(result);
     }
 }
 

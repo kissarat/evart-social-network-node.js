@@ -37,18 +37,21 @@ global.schema.Agent = new god.Schema
 module.exports =
   POST: ($) ->
     update = (agent) ->
-      if !agent
+      if not agent
         agent = new Agent about: $.body
+        if $.req.auth
+          agent.auth = $.req.auth
       agent.time = Date.now()
       agent.save $.wrap () ->
-        $.setCookie 'auth', agent.auth, $.config.FOREVER
+        if not $.req.auth
+          $.setCookie 'auth', agent.auth, $.config.FOREVER
         if agent.user
-          User.findOne agent.user, $.wrap (user) ->
-            $.send user.toObject()
+          $.send agent.user.toObject()
         else
           $.res.end()
 
     if $.req.auth
-      Agent.findOne auth: $.req.auth, $.wrap update
+      Agent.findOne(auth: $.req.auth).populate('user').exec $.wrap update
     else
       update()
+    return

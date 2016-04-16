@@ -71,8 +71,12 @@ boot = (xhr) ->
       console.warn 'User is not authorized'
 #  if '/' == location.pathname
 #    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
+  need_login = '/login' != location.pathname and not App.user
   Backbone.history.start
     pushState: true
+    silent: need_login
+  if need_login
+    App.navigate 'login'
 
 
 App.mainRegion.on 'show', (view) ->
@@ -129,4 +133,26 @@ App.upload = (url, file) ->
     xhr.onload = () ->
       resolve JSON.parse xhr.responseText
     xhr.onerror = reject
-  
+
+Object.defineProperties App,
+  language:
+    set: (value) ->
+      $.cookie 'lang', value
+    get: () ->
+      $.cookie('lang') || document.documentElement.getAttribute 'lang'
+
+$('#select-language')
+  .val(App.language)
+.change (e) ->
+  $.cookie 'lang', e.target.value,
+    expires: 365
+    path: '/'
+  location.reload()
+
+App.on 'login', () ->
+  $('#corner-panel .domain').html(App.user.domain)
+  .append $('<span> (logout)</span>')
+  .css('cursor', 'pointer')
+  .click () ->
+    $.get '/api/user/logout', () ->
+      App.navigate 'login'

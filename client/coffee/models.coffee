@@ -12,9 +12,10 @@
   class Models.Error extends Backbone.Model
 
   class Models.User extends Models.Base
+    urlRoot: '/api/user'
 
   class Models.UserList extends Backbone.Collection
-    urlRoot: '/api/user'
+#    urlRoot: '/api/user'
 #    @findByIds: (ids) ->
 #      userList = new Models.UserList()
 #      $.getJSON '/api/user?ids=' + ids.join('.'), (data) ->

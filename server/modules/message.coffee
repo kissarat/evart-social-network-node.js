@@ -51,6 +51,9 @@ module.exports =
     .populate('source', '_id domain avatar')
     .populate('target', '_id domain avatar')
 
+  DELETE: ($) ->
+    Message.remove _id: $.id
+
   read: ($) ->
     if $.has('id')
       Message.update {_id: $.param('id')}, {unread: 0}

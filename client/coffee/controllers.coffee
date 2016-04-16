@@ -7,7 +7,9 @@
       App.mainRegion.show new App.Views.Signup model: new App.Models.User
 
     settings: ->
-      App.mainRegion.show new App.Views.Settings model: new App.Models.User
+      user = new App.Models.User _id: App.user._id
+      user.fetch()
+      App.mainRegion.show new App.Views.Settings model: user
 
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id

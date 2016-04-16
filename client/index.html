@@ -25,6 +25,15 @@
 </head>
 <body>
 <div id="boot-loading"></div>
+
+<div id="corner-panel">
+    <div class="domain"></div>
+    <select id="select-language">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+    </select>
+</div>
+
 <div id="root" style="display: none">
     <div id="main" class="window">
         <div class="controls">
@@ -100,7 +109,8 @@
 </script>
 
 <script type="text/template" id="view-profile">
-    <img class="avatar" />
+    <a href="settings">Settings</a>
+    <img class="avatar"/>
     <div class="domain"></div>
 </script>
 

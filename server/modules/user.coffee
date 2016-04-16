@@ -65,6 +65,9 @@ global.schema.User = new god.Schema
   birthday:
     type: Date
 
+  relationship:
+    type: Number
+
   languages:
     type: String
 
@@ -82,8 +85,15 @@ module.exports =
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
       conditions =
-        phone: $.post 'login'
         password: $.post 'password'
+      login = $.post('login').replace /[\(\)\s]/, ''
+      if '@' in login
+        conditions.email = login
+      else if /^[\d\-]+$/.exec login
+        login = login.replace '-', ''
+        conditions.phone = login
+      else
+        conditions.domain = login
       User.findOne conditions, $.wrap (user) ->
         if user
           conditions = auth: $.req.auth
@@ -92,18 +102,16 @@ module.exports =
               user: user._id
               time: Date.now()
           Agent.update conditions, changeset, $.wrap (result) ->
-            if result.n > 0
+            if result.nModified > 0
               $.send
                 _id: user._id
                 domain: user.domain
                 verified: user.verified
             else
               $.send code.INTERNAL_SERVER_ERROR, error:
-                message: 'Invalid result'
-                result: result
-                query: conditions
+                message: 'Unregistered agent'
         else
-          $.sendStatus code.FORBIDDEN
+          $.sendStatus code.UNAUTHORIZED
     return
 
   logout: ($) ->
@@ -134,18 +142,20 @@ module.exports =
     if $.user
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
-#      console.log $.body
       user = new User $.body
       user.save $.wrap () ->
         $.send code.CREATED, _id: user._id
     return
 
+  PATCH: ($) ->
+    User.findOneAndUpdate {_id: $.id}, {$set: $.body}, {new: true}
+
   GET: ($) ->
-    if $.has 'ids'
+    if $.id
+      User.findOne $.id
+    else if $.has 'ids'
       ids = $.param('ids').split('.').map (id) -> ObjectID(id)
       User.find id: $in: ids
-    if $.has 'id'
-      User.findOne $.param 'id'
     else
       User.find()
 
