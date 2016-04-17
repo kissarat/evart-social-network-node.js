@@ -14,8 +14,8 @@
             text = elements.childNodes.item 0
             if 1 == elements.childNodes.length && Node.TEXT_NODE == text.nodeType
               text.textContent = T text.textContent
-#      @view.$el.find(':input').change (e) =>
-#        @view.model.set e.target.getAttribute('name'), e.target.value
+      #      @view.$el.find(':input').change (e) =>
+      #        @view.model.set e.target.getAttribute('name'), e.target.value
       @view.stickit()
 
     onShow: ->
@@ -42,6 +42,33 @@
 
     attributes:
       method: 'post'
+
+    behaviors:
+      Bindings: {}
+
+    bindings: ->
+      b = {}
+      @$el.find('[name]').each (i, input) ->
+        name = input.getAttribute('name')
+
+        if 'file' == input.type
+          console.warn 'File input: ' + name
+        else
+          field = name
+          if 'SELECT' == input.tagName
+            labels = ["None selected", "Single", "In a relationship", "Engaged", "Married", "In love",
+              "It's complicated", "Actively searching"]
+            options = [];
+            for i, label of labels
+              options.push
+                value: i
+                label: T label
+            field =
+              observe: name
+              selectOptions: collection: options
+
+          b["[name=#{name}]"] = field
+      return b
 
     report: (name, message) ->
       if !message
@@ -74,20 +101,6 @@
         success: (model, data) =>
           if @success
             @success data, model
-
-    behaviors:
-      Bindings: {}
-
-    bindings: ->
-      b = {}
-      @$el.find('[name]').each (i, input) ->
-        name = input.getAttribute('name')
-
-        if 'file' == input.type
-          console.warn 'File input: ' + name
-        else
-          b["[name=#{name}]"] = name
-      return b
 
   class Views.Login extends Views.Form
     template: '#view-login'
@@ -153,7 +166,8 @@
           $.post '/api/user/avatar', {photo_id: photo._id}, (result) ->
             @ui.avatar.attr 'src', App.avatarUrl result.user_id
 
-    success: () ->
+    success: (data) ->
+      App.user = data
       App.navigate 'profile'
 
     onRender: () ->

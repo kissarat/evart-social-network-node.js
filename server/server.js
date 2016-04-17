@@ -208,23 +208,6 @@ Context.prototype = {
                         invalid: err.errors
                     });
                 }
-                //else if (err.code && err.errmsg) {
-                //    switch (err.code) {
-                //        case mongo_errors.DUPLICATE_KEY:
-                //            var errors = {};
-                //            var field = / (\w+)_1/.exec(err.errmsg);
-                //            errors[field[1]] = 'Duplicate value';
-                //            self.send(code.BAD_REQUEST, {
-                //                invalid: errors
-                //            });
-                //            break;
-                //        default:
-                //            self.send(code.INTERNAL_SERVER_ERROR, {
-                //                error: err
-                //            });
-                //            break;
-                //    }
-                //}
                 else {
                     self.send(code.INTERNAL_SERVER_ERROR, {
                         error: err
@@ -440,6 +423,16 @@ Context.prototype = {
         else {
             cb();
         }
+    },
+    
+    just: function (object, keys) {
+        var result = {};
+        for (var key in object) {
+            if (keys.indexOf(key) >= 0) {
+                result[key] = object[key];
+            }
+        }
+        return result;
     },
 
     get id() {

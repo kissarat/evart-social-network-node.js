@@ -142,22 +142,26 @@ module.exports =
     if $.user
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
-      user = new User $.body
+      data = $.just $.body, ['domain', 'phone', 'password']
+      user = new User data
       user.save $.wrap () ->
         $.send code.CREATED, _id: user._id
     return
 
   PATCH: ($) ->
-    User.findOneAndUpdate {_id: $.id}, {$set: $.body}, {new: true}
+    data = $.just $.body, ["name", "city", "country", "address", "phone",
+      "password", "avatar", "name", "birthday", "languages", "relationship"]
+    User.findOneAndUpdate {_id: $.id}, {$set: data}, {new: true}
 
   GET: ($) ->
+    selection = '_id name city country address phone avatar name birthday languages'
     if $.id
-      User.findOne $.id
+      User.findOne($.id).select selection
     else if $.has 'ids'
       ids = $.param('ids').split('.').map (id) -> ObjectID(id)
-      User.find id: $in: ids
+      User.find(_id: $in: ids).select selection
     else
-      User.find()
+      User.find().select selection
 
   verify:
     POST: ($) ->

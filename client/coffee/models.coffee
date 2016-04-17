@@ -15,11 +15,6 @@
     urlRoot: '/api/user'
 
   class Models.UserList extends Backbone.Collection
-#    urlRoot: '/api/user'
-#    @findByIds: (ids) ->
-#      userList = new Models.UserList()
-#      $.getJSON '/api/user?ids=' + ids.join('.'), (data) ->
-#        userList.add
 
   class Models.Verify extends Backbone.Model
     urlRoot: '/api/user/verify'
@@ -32,4 +27,3 @@
   class Models.MessageList extends Backbone.Collection
     url: () ->
       '/api/message?' + $.param @params
-
