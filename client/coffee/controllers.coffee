@@ -81,6 +81,27 @@
           @currentView.middle.currentView.collection
     region
 
+  App.selectVideo = (params, region) ->
+    if not params
+      params = owner_id: App.user._id
+    videoList = new App.Models.VideoList()
+    videoList.params = params
+    videoListView = new App.Views.VideoList collection: videoList
+    upload = new App.Views.LoadVideo()
+    upload.on 'add', (video) ->
+#      videoList.add video
+      videoList.trigger 'select', video
+    App.thresome region,
+      top: upload
+      middle: videoListView
+    videoListView.on 'childview:select', (video) ->
+      @collection.trigger 'select', video.model
+    Object.defineProperties region,
+      collection:
+        get: () ->
+          @currentView.middle.currentView.collection
+    region
+
 
   class Controllers.Video extends Marionette.Controller
     index: () ->

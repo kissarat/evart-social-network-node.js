@@ -189,7 +189,6 @@
       ip: '.ip'
       top: '.top'
       middle: '.middle'
-      bottom: '.bottom'
       photos: '.photos'
 
     bindings:
@@ -372,26 +371,30 @@
     ui:
       image: 'img'
 
-    attributes:
-      class: 'thumbnail'
+#    attributes:
+#      class: 'thumbnail'
 
     bindings:
       '.title': 'title'
 
     events:
-      'click img': 'show'
+      'click img': 'select'
 
     behaviors:
       Bindings: {}
-      
-    show: () ->
-      App.navigate 'video/' + @model.get '_id'
+
+    select: () ->
+#      App.navigate 'video/' + @model.get '_id'
+      @trigger 'select', @model
 
     onRender: () ->
       @ui.image.attr 'src', @model.get 'thumbnail_url'
 
   class Views.VideoList extends Marionette.CollectionView
     childView: Views.VideoThumbnail
+
+    @create: (videos) ->
+      new Views.VideoList collection: new App.Models.VideoList videos
 
   class Views.Video extends Marionette.ItemView
     template: '#view-video'

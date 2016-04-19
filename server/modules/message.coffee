@@ -25,6 +25,11 @@ global.schema.Message = god.Schema
     type: god.Schema.Types.ObjectId
     ref: 'Video'
 
+  videos: [
+    type: god.Schema.Types.ObjectId
+    ref: 'Video'
+  ]
+
   time:
     type: Date,
     required: true
@@ -70,6 +75,7 @@ module.exports =
       r
       .populate('source', '_id domain avatar')
       .populate('target', '_id domain avatar')
+      .populate('videos', '_id thumbnail_url thumbnail_width thumbnail_height')
     else
       $.sendStatus code.BAD_REQUEST
       return
