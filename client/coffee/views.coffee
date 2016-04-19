@@ -295,7 +295,49 @@
     onRender: () ->
       @ui.image.attr 'src', "/photo/#{@model.get '_id'}.jpg"
 
+  class Views.LoadVideo extends Marionette.ItemView
+    template: '#view-load-video'
+
+    ui:
+      url: 'input'
+      preview: '.video-preview'
+
+    events:
+      'change input': 'paste'
+      'click button': 'add'
+
+    paste: () ->
+      $.getJSON '/api/video?url=' + @ui.url.val(), (video) =>
+        @model = new App.Models.Video video
+        @model.set 'url', @ui.url.val()
+        @ui.preview.html video.html
+
+    add: () ->
+      $.post '/api/video?url=' + @model.get('url'), @model.toJSON(), () =>
+        @ui.url.html ''
+        @ui.preview.html ''
+        @trigger 'add', @model
+
   class Views.PhotoList extends Marionette.CollectionView
     template: '#view-photo-list'
     childView: Views.Photo
-#    childContainer: '.photos'
+
+  class Views.Video extends Marionette.ItemView
+    template: '#view-video'
+    ui:
+      image: 'img'
+
+    attributes:
+      class: 'thumbnail'
+
+    bindings:
+      '.title': 'title'
+
+    behaviors:
+      Bindings: {}
+
+    onRender: () ->
+      @ui.image.attr 'src', @model.get 'thumbnail_url'
+
+  class Views.VideoList extends Marionette.CollectionView
+    childView: Views.Video

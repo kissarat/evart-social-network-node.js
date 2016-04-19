@@ -28,15 +28,24 @@
     url: () ->
       '/api/message?' + $.param @params
 
+  window.reverse_time = (a, b) ->
+    if a.get('time') < b.get('time')
+      1
+    else if a.get('time') > b.get('time')
+      -1
+    else
+      0
+
   class Models.Photo extends Models.Base
 
   class Models.PhotoList extends Backbone.Collection
     url: () ->
       '/api/photo?' + $.param @params
-    comparator: (a, b) ->
-      if a.get('time') < b.get('time')
-        1
-      else if a.get('time') > b.get('time')
-        -1
-      else
-        0
+    comparator: reverse_time
+
+  class Models.Video extends Models.Base
+
+  class Models.VideoList extends Backbone.Collection
+    url: () ->
+      '/api/video?' + $.param @params
+    comparator: reverse_time

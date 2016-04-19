@@ -63,3 +63,22 @@
 
     routes:
       'photos': 'photos'
+
+
+  class Controllers.Video extends Marionette.Controller
+    videos: () ->
+      videoList = new App.Models.VideoList()
+      videoList.params = owner_id: App.user._id
+      videoListView = new App.Views.VideoList collection: videoList
+      upload = new App.Views.LoadVideo()
+      upload.on 'add', (video) ->
+        videoList.add video
+      videoList.fetch()
+      layout = new App.Layouts.Thresome()
+      App.mainRegion.show layout
+      layout.showChildView 'top', upload
+      layout.showChildView 'middle', videoListView
+      return
+
+    routes:
+      'videos': 'videos'

@@ -521,7 +521,7 @@ function serve($) {
                 result
                     .then(function (r) {
                         if (r) {
-                            $.send(r.toObject ? r.toObject() : r);
+                            $.send(r.toObject ? r.  toObject() : r);
                         }
                         else if (arguments.length > 0 && undefined === r) {
                             console.error('Undefined promise result');
