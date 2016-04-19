@@ -16,6 +16,11 @@ global.schema.Message = god.Schema
     type: god.Schema.Types.ObjectId
     ref: 'Photo'
 
+  photos: [
+    type: god.Schema.Types.ObjectId
+    ref: 'Photo'
+  ]
+
   video:
     type: god.Schema.Types.ObjectId
     ref: 'Video'
@@ -80,29 +85,47 @@ module.exports =
 
   dialogs: ($) ->
     me = $.user._id
-#    console.log $.user._id.constructor.name
+    #    console.log $.user._id.constructor.name
 
     Message.aggregate [
-      {$sort: time: -1},
-      {$match: target: me}
+      {
+        $sort:
+          time: -1
+      },
+      {
+        $match:
+          target: me
+      }
       {
         $group:
           _id: '$source'
-          text: $first: '$text'
-          time: $first: '$time'
-          unread: $sum: '$unread'
+          text:
+            $first: '$text'
+          time:
+            $first: '$time'
+          unread:
+            $sum: '$unread'
       }
     ]
     .exec $.wrap (source_messages) ->
       Message.aggregate [
-        {$sort: time: -1},
-        {$match: source: me},
+        {
+          $sort:
+            time: -1
+        },
+        {
+          $match:
+            source: me
+        },
         {
           $group:
             _id: '$target'
-            text: $first: '$text'
-            time: $first: '$time'
-            unread: $sum: '$unread'
+            text:
+              $first: '$text'
+            time:
+              $first: '$time'
+            unread:
+              $sum: '$unread'
         }
       ]
       .exec $.wrap (target_messages) ->

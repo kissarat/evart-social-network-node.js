@@ -190,6 +190,7 @@
       top: '.top'
       middle: '.middle'
       bottom: '.bottom'
+      photos: '.photos'
 
     bindings:
       '.text': 'text'
@@ -201,6 +202,7 @@
       @ui.info.attr('data-id', source_id)
       if source_id
         @ui.avatar.attr 'src', '/api/user/avatar?id=' + source_id
+      @ui.photos.append (Views.PhotoList.create @model.get 'photos').$el
       if source_id == App.user._id
         @$el.addClass 'me'
         $('<div class="fa fa-times"></div>')
@@ -224,7 +226,7 @@
 
   class Views.Dialog extends Marionette.CollectionView
     template: '#view-dialog'
-    childView: Views.Message
+#    childView: App.Layouts.MessageLayout
     childViewContainer: '.messages'
 
     onRender: () ->
@@ -233,8 +235,33 @@
     onDestroy: () ->
       App.dialog = null
 
-  class Views.Editor extends Views.Form
+    @build: (id, target, layout) ->
+      messageList = new App.Models.MessageList()
+      messageList.params = {}
+      messageList.params[target + '_id'] = id
+      messageListView = new App.Views.Dialog collection: messageList
+      draft =
+        text: localStorage.getItem 'draft_' + id
+      draft[target] = id
+      draft = new App.Models.Message draft
+      editor = new App.Views.Editor model: draft
+      editorLayout = new App.Layouts.EditorLayout model: draft
+      messageList.fetch()
+      layout.showChildView 'middle', messageListView
+      layout.showChildView 'bottom', editorLayout
+      editorLayout.showChildView 'editor', editor
+#      editor.$('[data-type]').click (e) ->
+#        container = editor.ui.attachments.find("[data-list=#{e.target.dataset.list}]")
+#        if 0 == container.length
+#          $('<div></div>')
+#          .attr('data-list', e.target.dataset.list)
+#          .appendTo editor.ui.attachments
+
+  class Views.Editor extends Marionette.ItemView
     template: '#view-message-editor'
+
+    behaviors:
+      Bindings: {}
 
     ui:
       text: '.text'
@@ -274,7 +301,7 @@
       if file
         App.upload('/api/photo', file).then (photo, e) =>
           if photo
-            @trigger 'uploaded', photo
+            @trigger 'uploaded', new App.Models.Photo photo
           else
             message =
               switch e.target.status
@@ -285,21 +312,19 @@
         console.warn 'No file selected'
 
   class Views.PhotoThumbnail extends Marionette.ItemView
-    template: '#view-photo'
-    ui:
-      image: 'img'
+    template: '#view-photo-thumbnail'
+#    ui:
+#      image: '.photo-thumbnail'
 
     attributes:
-      class: 'thumbnail'
+      class: 'photo-thumbnail thumbnail'
 
     events:
-      'click img': 'show'
-
-    show: () ->
-      App.navigate 'photo/' + @model.get '_id'
+      'click': () ->
+        @trigger 'select'
 
     onRender: () ->
-      @ui.image.attr 'src', "/photo/#{@model.get '_id'}.jpg"
+      @$el.css 'background-image', "url(/photo/#{@model.get '_id'}.jpg)"
 
   class Views.Photo extends Marionette.ItemView
     template: '#view-photo'
@@ -338,6 +363,9 @@
   class Views.PhotoList extends Marionette.CollectionView
     template: '#view-photo-list'
     childView: Views.PhotoThumbnail
+
+    @create: (ids) ->
+      new Views.PhotoList collection: new App.Models.PhotoList _.map ids, (id) -> _id: id
 
   class Views.VideoThumbnail extends Marionette.ItemView
     template: '#view-video-thumbnail'

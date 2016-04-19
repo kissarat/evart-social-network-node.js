@@ -1,4 +1,4 @@
-<script type="text/template" id="view-message">
+<script type="text/template" id="view-message-layout">
     <div class="top"></div>
     <div class="middle">
         <div class="info">
@@ -8,7 +8,7 @@
         </div>
         <div class="text"></div>
     </div>
-    <div class="bottom"></div>
+    <div class="photos"></div>
 </script>
 
 <script type="text/template" id="view-dialog">
@@ -20,12 +20,22 @@
         <textarea name="text" placeholder="Message..."></textarea>
         <img class="avatar"/>
     </div>
+</script>
+
+<script type="text/template" id="view-editor-layout">
+    <div class="editor"></div>
     <div class="buttons">
         <button type="submit">Send</button>
-        <button type="button">Photo</button>
-        <button type="button">Video</button>
-        <button type="button">File</button>
+        <button type="button" data-type="photo" data-list="photos">Photo</button>
+        <button type="button" data-type="video" data-list="videos">Video</button>
+        <button type="button" data-type="file" data-list="files">File</button>
     </div>
+    <div class="attachments">
+        <div data-list="photos"></div>
+        <div data-list="videos"></div>
+        <div data-list="files"></div>
+    </div>
+    <div class="selection"></div>
 </script>
 
 <script type="text/template" id="view-dialog-layout">

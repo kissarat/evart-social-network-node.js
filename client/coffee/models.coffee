@@ -11,6 +11,7 @@
 
   class Models.Error extends Backbone.Model
 
+
   class Models.User extends Models.Base
     urlRoot: '/api/user'
 
