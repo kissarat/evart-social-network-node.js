@@ -26,28 +26,32 @@
 
 
   class Controllers.Message extends Marionette.Controller
-    dialog: (target_id) ->
-      dialog = new App.Models.MessageList()
-      dialog.params =
-        target_id: target_id
-      dialogView = new App.Views.Dialog collection: dialog
-      draft = new App.Models.Message
-        target: target_id
-        text: localStorage.getItem 'draft_' + target_id
-      draftView = new App.Views.Editor model: draft
-      dialog.fetch()
-      layout = new App.Layouts.Dialog()
+    index: (target_id) ->
+      layout = new App.Layouts.Thresome()
       App.mainRegion.show layout
-      layout.showChildView 'dialog', dialogView
-      layout.showChildView 'editor', draftView
+      Controllers.Message.Index target_id, 'target', layout
       return
 
+    @Index: (id, target, layout) ->
+      messageList = new App.Models.MessageList()
+      messageList.params = {}
+      messageList.params[target + '_id'] = id
+      messageListView = new App.Views.Dialog collection: messageList
+      draft =
+        text: localStorage.getItem 'draft_' + id
+      draft[target] = id
+      draft = new App.Models.Message draft
+      draftView = new App.Views.Editor model: draft
+      messageList.fetch()
+      layout.showChildView 'middle', messageListView
+      layout.showChildView 'bottom', draftView
+
     routes:
-      'dialog/:target_id': 'dialog'
+      'dialog/:target_id': 'index'
 
 
   class Controllers.Photo extends Marionette.Controller
-    photos: () ->
+    index: () ->
       photoList = new App.Models.PhotoList()
       photoList.params = owner_id: App.user._id
       photoListView = new App.Views.PhotoList collection: photoList
@@ -61,12 +65,22 @@
       layout.showChildView 'middle', photoListView
       return
 
+    view: (id) ->
+      $.getJSON '/api/photo?id=' + id, (photo) =>
+        photo = new App.Models.Photo photo
+        photoView = new App.Views.Photo model: photo
+        layout = new App.Layouts.Thresome()
+        App.mainRegion.show layout
+        layout.showChildView 'top', photoView
+        Controllers.Message.Index id, 'photo', layout
+
     routes:
-      'photos': 'photos'
+      'photos': 'index'
+      'photo/:id': 'view'
 
 
   class Controllers.Video extends Marionette.Controller
-    videos: () ->
+    index: () ->
       videoList = new App.Models.VideoList()
       videoList.params = owner_id: App.user._id
       videoListView = new App.Views.VideoList collection: videoList
@@ -80,5 +94,15 @@
       layout.showChildView 'middle', videoListView
       return
 
+    view: (id) ->
+      $.getJSON '/api/video?id=' + id, (video) =>
+        video = new App.Models.Video video
+        videoView = new App.Views.Video model: video
+        layout = new App.Layouts.Thresome()
+        App.mainRegion.show layout
+        layout.showChildView 'top', videoView
+        Controllers.Message.Index id, 'video', layout
+
     routes:
-      'videos': 'videos'
+      'videos': 'index'
+      'video/:id': 'view'

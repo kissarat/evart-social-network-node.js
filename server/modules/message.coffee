@@ -11,7 +11,14 @@ global.schema.Message = god.Schema
   target:
     type: god.Schema.Types.ObjectId
     ref: 'User'
-    required: true
+
+  photo:
+    type: god.Schema.Types.ObjectId
+    ref: 'Photo'
+
+  video:
+    type: god.Schema.Types.ObjectId
+    ref: 'Video'
 
   time:
     type: Date,
@@ -41,15 +48,26 @@ module.exports =
     message.save $.answer
 
   GET: ($) ->
-    target_id = $.get('target_id')
-    me = $.user._id
-    Message.find
-      $or: [
-        {source: me, target: target_id},
-        {source: target_id, target: me}
-      ]
-    .populate('source', '_id domain avatar')
-    .populate('target', '_id domain avatar')
+    r = null
+    if $.has 'target_id'
+      target_id = $.param 'target_id'
+      me = $.user._id
+      r = Message.find
+        $or: [
+          {source: me, target: target_id},
+          {source: target_id, target: me}
+        ]
+    else if $.has 'video_id'
+      r = Message.find video: $.param 'video_id'
+    else if $.has 'photo_id'
+      r = Message.find photo: $.param 'photo_id'
+    if r
+      r
+      .populate('source', '_id domain avatar')
+      .populate('target', '_id domain avatar')
+    else
+      $.sendStatus code.BAD_REQUEST
+      return
 
   DELETE: ($) ->
     Message.remove _id: $.id

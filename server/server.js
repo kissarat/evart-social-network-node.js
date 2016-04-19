@@ -370,12 +370,12 @@ Context.prototype = {
         if (!this.res.finished) {
             if (2 == arguments.length) {
                 this.res.writeHead(status, {
-                    'content-type': 'text/json'
+                    'content-type': 'text/json; charset=utf-8'
                     //'Access-Control-Allow-Origin': '*'
                 });
             }
             else {
-                this.res.setHeader('content-type', 'text/json');
+                this.res.setHeader('content-type', 'text/json; charset=utf-8');
             }
             this.res.end(data);
 

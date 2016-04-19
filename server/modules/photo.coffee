@@ -67,6 +67,10 @@ module.exports =
 
 
   GET: ($) ->
-    conditions =
-      owner: $.param 'owner_id'
-    Photo.find conditions
+    if $.has 'owner_id'
+      Photo.find owner: $.param 'owner_id'
+    else if $.has 'id'
+      Photo.findOne $.id
+    else
+      $.sendStatus code.BAD_REQUEST
+      return

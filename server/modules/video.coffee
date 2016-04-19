@@ -54,6 +54,8 @@ module.exports =
       Video.find owner: $.param 'owner_id'
     else if $.has 'url'
       load($)
+    else if $.has 'id'
+      Video.findOne $.id
     else
       $.sendStatus code.BAD_REQUEST
       return

@@ -284,13 +284,30 @@
       else
         console.warn 'No file selected'
 
+  class Views.PhotoThumbnail extends Marionette.ItemView
+    template: '#view-photo'
+    ui:
+      image: 'img'
+
+    attributes:
+      class: 'thumbnail'
+
+    events:
+      'click img': 'show'
+
+    show: () ->
+      App.navigate 'photo/' + @model.get '_id'
+
+    onRender: () ->
+      @ui.image.attr 'src', "/photo/#{@model.get '_id'}.jpg"
+
   class Views.Photo extends Marionette.ItemView
     template: '#view-photo'
     ui:
       image: 'img'
-    
+
     attributes:
-      class: 'thumbnail'
+      class: 'photo'
 
     onRender: () ->
       @ui.image.attr 'src', "/photo/#{@model.get '_id'}.jpg"
@@ -320,10 +337,10 @@
 
   class Views.PhotoList extends Marionette.CollectionView
     template: '#view-photo-list'
-    childView: Views.Photo
+    childView: Views.PhotoThumbnail
 
-  class Views.Video extends Marionette.ItemView
-    template: '#view-video'
+  class Views.VideoThumbnail extends Marionette.ItemView
+    template: '#view-video-thumbnail'
     ui:
       image: 'img'
 
@@ -333,11 +350,32 @@
     bindings:
       '.title': 'title'
 
+    events:
+      'click img': 'show'
+
     behaviors:
       Bindings: {}
+      
+    show: () ->
+      App.navigate 'video/' + @model.get '_id'
 
     onRender: () ->
       @ui.image.attr 'src', @model.get 'thumbnail_url'
 
   class Views.VideoList extends Marionette.CollectionView
-    childView: Views.Video
+    childView: Views.VideoThumbnail
+
+  class Views.Video extends Marionette.ItemView
+    template: '#view-video'
+
+    ui:
+      frame: '.frame'
+
+    bindings:
+      '.title': 'title'
+
+    behaviors:
+      Bindings: {}
+
+    onRender: () ->
+      @ui.frame.html @model.get 'html'
