@@ -130,8 +130,12 @@ App.upload = (url, file) ->
   xhr.open 'POST', url
   xhr.send file
   new Promise (resolve, reject) ->
-    xhr.onload = () ->
-      resolve JSON.parse xhr.responseText
+    xhr.onload = (e) ->
+      data = null
+      try
+        data = JSON.parse xhr.responseText
+      catch ex
+      resolve data, e
     xhr.onerror = reject
 
 Object.defineProperties App,

@@ -27,3 +27,16 @@
   class Models.MessageList extends Backbone.Collection
     url: () ->
       '/api/message?' + $.param @params
+
+  class Models.Photo extends Models.Base
+
+  class Models.PhotoList extends Backbone.Collection
+    url: () ->
+      '/api/photo?' + $.param @params
+    comparator: (a, b) ->
+      if a.get('time') < b.get('time')
+        1
+      else if a.get('time') > b.get('time')
+        -1
+      else
+        0

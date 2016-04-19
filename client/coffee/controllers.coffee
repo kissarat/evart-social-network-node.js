@@ -40,6 +40,26 @@
       App.mainRegion.show layout
       layout.showChildView 'dialog', dialogView
       layout.showChildView 'editor', draftView
+      return
 
     routes:
       'dialog/:target_id': 'dialog'
+
+
+  class Controllers.Photo extends Marionette.Controller
+    photos: () ->
+      photoList = new App.Models.PhotoList()
+      photoList.params = owner_id: App.user._id
+      photoListView = new App.Views.PhotoList collection: photoList
+      upload = new App.Views.Upload()
+      upload.on 'uploaded', (photo) ->
+        photoList.add photo
+      photoList.fetch()
+      layout = new App.Layouts.Thresome()
+      App.mainRegion.show layout
+      layout.showChildView 'top', upload
+      layout.showChildView 'middle', photoListView
+      return
+
+    routes:
+      'photos': 'photos'

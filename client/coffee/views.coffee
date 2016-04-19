@@ -165,6 +165,8 @@
         App.upload('/api/photo', file).then (photo) ->
           $.post '/api/user/avatar', {photo_id: photo._id}, (result) ->
             @ui.avatar.attr 'src', App.avatarUrl result.user_id
+      else
+        console.warn 'No file selected'
 
     success: (data) ->
       App.user = data
@@ -252,3 +254,48 @@
         model: if _instanceof(options, Backbone.Model) then options else new App.Models[name](options)
     view = new Views[name] options
     App.mainRegion.show view
+
+  window.error_message = (container, message) ->
+    $('<div></div>')
+    .addClass('error')
+    .html(message)
+    .appendTo container
+
+  class Views.Upload extends Marionette.ItemView
+    template: '#view-upload'
+    ui:
+      file: '[type=file]'
+
+    events:
+      'change [type=file]': 'upload'
+
+    upload: () ->
+      file = @ui.file[0].files[0]
+      if file
+        App.upload('/api/photo', file).then (photo, e) =>
+          if photo
+            @trigger 'uploaded', photo
+          else
+            message =
+              switch e.target.status
+                when code.REQUEST_TOO_LONG then 'is too large'
+                else 'unknown error'
+            error_message(@el, file.name + T ' ' + message)
+      else
+        console.warn 'No file selected'
+
+  class Views.Photo extends Marionette.ItemView
+    template: '#view-photo'
+    ui:
+      image: 'img'
+    
+    attributes:
+      class: 'thumbnail'
+
+    onRender: () ->
+      @ui.image.attr 'src', "/photo/#{@model.get '_id'}.jpg"
+
+  class Views.PhotoList extends Marionette.CollectionView
+    template: '#view-photo-list'
+    childView: Views.Photo
+#    childContainer: '.photos'
