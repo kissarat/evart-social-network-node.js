@@ -565,14 +565,14 @@ function exec($, action) {
             }
         }
         try {
-            if ($.validate($.params).valid) {
+            // if ($.validate($.params).valid) {
                 return action($);
-            }
-            else {
-                $.send(code.BAD_REQUEST, {
-                    invalid: valid
-                });
-            }
+            // }
+            // else {
+            //     $.send(code.BAD_REQUEST, {
+            //         invalid: valid
+            //     });
+            // }
         }
         catch (ex) {
             if (ex.invalid) {
@@ -588,7 +588,8 @@ function exec($, action) {
     var must_upload_route = /^.(photo)/.test($.req.url.original);
 
     if ($.user || is_unauthoried_route) {
-        if ($.req.headers['content-length'] && !must_upload_route) {
+        var size = $.req.headers['content-length'];
+        if (size && size > 0 && !must_upload_route) {
             return receive($.req, function (data) {
                 if ($.req.headers['content-type'].indexOf('x-www-form-urlencoded') > 0) {
                     try {
@@ -679,7 +680,7 @@ function database($) {
 
     $.data = {
         updateOne: function (entity, id, mods, cb) {
-            $.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
+            return $.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
         },
 
         find: function (entity, match, cb) {
@@ -710,7 +711,7 @@ function database($) {
             if (id instanceof ObjectID) {
                 id = {_id: id};
             }
-            $.collection(entity).findOne(id, resolve_callback(cb));
+            return $.collection(entity).findOne(id, resolve_callback(cb));
         },
 
         insertOne: function (entity, mods, cb) {

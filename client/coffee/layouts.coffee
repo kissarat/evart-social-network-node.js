@@ -83,10 +83,39 @@
       ip: '.ip'
       top: '.top'
       middle: '.middle'
+      like: '.fa-thumbs-up'
+      hate: '.fa-thumbs-down'
+
+    events:
+      'click .fa-thumbs-up': 'like'
+      'click .fa-thumbs-down': 'hate'
 
     bindings:
       '.text': 'text'
       '.ip': 'ip'
+
+    like: () ->
+      @_like 'like'
+
+    hate: () ->
+      @_like 'hate'
+
+    _like: (field) ->
+      $.ajax
+        type: if _.indexOf(@model.get(field), App.user._id) >= 0 then 'DELETE' else 'POST'
+        url:  '/api/like?' + $.param
+          entity: 'messages'
+          field: field
+          id: @model.get '_id'
+        success: (data) =>
+          @model.set 'like', data.like
+          @model.set 'hate', data.hate
+          @renderLikes()
+
+    renderLikes: () ->
+      @ui.like.html _.size @model.get 'like'
+      @ui.hate.html _.size @model.get 'hate'
+      return
 
     onRender: () ->
       @$el.attr('id', @model.get '_id')
@@ -123,6 +152,7 @@
               @$el.removeClass 'unread'
         , 3000
       @ui.time.html moment.utc(@model.get 'time').fromNow()
+      @renderLikes()
       return
 
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout

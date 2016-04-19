@@ -12,6 +12,16 @@ global.schema.Message = god.Schema
     type: god.Schema.Types.ObjectId
     ref: 'User'
 
+  like: [
+    type: god.Schema.Types.ObjectId
+    ref: 'User'
+  ]
+
+  hate: [
+    type: god.Schema.Types.ObjectId
+    ref: 'User'
+  ]
+
   photo:
     type: god.Schema.Types.ObjectId
     ref: 'Photo'
