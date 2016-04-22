@@ -24,10 +24,18 @@
     urlRoot: '/api/user/login'
 
   class Models.Message extends Models.Base
+    isPost: ->
+      not not @get 'owner'
+
+    getChildren: ->
+      new App.Models.MessageList @get 'children'
 
   class Models.MessageList extends Backbone.Collection
     url: () ->
       '/api/message?' + $.param @params
+
+    model: (attrs, options) ->
+      new App.Models.Message attrs, options
 
   window.reverse_time = (a, b) ->
     if a.get('time') < b.get('time')

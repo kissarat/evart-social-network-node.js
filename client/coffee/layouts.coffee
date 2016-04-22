@@ -81,11 +81,13 @@
       middle: '> .middle'
       like: '> .top .fa-thumbs-up'
       hate: '> .top .fa-thumbs-down'
+      comment: '> .middle .comment'
 
     events:
       'click > .top .fa-thumbs-up': 'like'
       'click > .top .fa-thumbs-down': 'hate'
       'click > .top .fa-share-alt': 'share'
+      'click > .middle .comment': 'renderComments'
 
     bindings:
       '> .middle .text': 'text'
@@ -117,22 +119,40 @@
     share: () ->
       $.post '/api/message?repost_id=' + @model.get '_id'
 
-    onRender: () ->
-      @$el.attr('id', @model.get '_id')
-      source_id = App.id @model.get 'source'
-#      @ui.info.attr('data-id', source_id)
-      if source_id
-        @ui.avatar.attr 'src', '/api/user/avatar?id=' + source_id
+    renderComments: () ->
+      @ui.comment.remove()
+      childrenView = new App.Layouts.Thresome()
+      @showChildView 'childrenRegion', childrenView
+      App.Views.Dialog.build @model.get('_id'), @model.getChildren(), childrenView
+
+    renderRepost: () ->
+      repost = @model.get 'repost'
+      if repost
+        repost = new App.Models.Message repost
+        repost.set 'isRepost', true
+        repostView = new Layouts.MessageLayout model: repost
+        @repost.show repostView
+
+    renderPhotos: () ->
       if _.size(@model.get 'photos') > 0
         photos = App.Views.PhotoList.create @model.get 'photos'
         @photos.show photos
         photos.on 'childview:select', (photo) ->
           App.navigate 'photo/' + photo.model.get '_id'
+
+    renderVideos: () ->
       if _.size(@model.get 'videos') > 0
         videos = App.Views.VideoList.create @model.get 'videos'
         videos.on 'childview:select', (video) ->
           App.navigate 'video/' + video.model.get '_id'
         @videos.show videos
+
+    onRender: () ->
+      @$el.attr('data-id', @model.get '_id')
+      source_id = App.id @model.get 'source'
+      @ui.info.attr('data-id', source_id)
+      if source_id
+        @ui.avatar.attr 'src', '/api/user/avatar?id=' + source_id
       if source_id == App.user._id
         @$el.addClass 'me'
         $('<div class="fa fa-times"></div>')
@@ -144,10 +164,6 @@
             success: () =>
               @el.remove()
 
-      if @model.get 'isRepost'
-        @ui.top.remove()
-#        @ui.text[0].innerHTML = @model.get 'text'
-
       if @model.get 'unread'
         @$el.addClass 'unread'
         setTimeout () =>
@@ -156,22 +172,22 @@
               @$el.removeClass 'unread'
         , 3000
       @ui.time.html moment.utc(@model.get 'time').fromNow()
-      @renderLikes()
 
-      repost = @model.get 'repost'
-      if repost
-        repost = new App.Models.Message repost
-        repost.set 'isRepost', true
-        repostView = new Layouts.MessageLayout model: repost
-        @repost.show repostView
+      if @model.get 'isRepost'
+        @ui.top.remove()
+      else
+        @renderLikes()
 
-      children = new App.Models.MessageList @model.get 'children'
-#      children.models.forEach (model) -> model.set 'text', 'aaa'
-      if children.length > 0
-        childrenView = new App.Layouts.Thresome()
-        @showChildView 'childrenRegion', childrenView
-        App.Views.Dialog.build @model.get('_id'), children, childrenView
-#        window.childrenRegion =
+      @renderPhotos()
+      @renderVideos()
+      @renderRepost()
+      if _.size(@model.get 'children') > 0
+        @renderComments()
+        @ui.comment.remove()
+
+      if not @model.isPost()
+        @ui.comment.remove()
+
       return
 
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout
