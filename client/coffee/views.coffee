@@ -14,8 +14,6 @@
             text = elements.childNodes.item 0
             if 1 == elements.childNodes.length && Node.TEXT_NODE == text.nodeType
               text.textContent = T text.textContent
-      #      @view.$el.find(':input').change (e) =>
-      #        @view.model.set e.target.getAttribute('name'), e.target.value
       @view.stickit()
 
     onShow: ->
@@ -195,66 +193,36 @@
       '.text': 'text'
       '.ip': 'ip'
 
-    onRender: () ->
-      @$el.attr('id', @model.get '_id')
-      source_id = App.id @model.get 'source'
-      @ui.info.attr('data-id', source_id)
-      if source_id
-        @ui.avatar.attr 'src', '/api/user/avatar?id=' + source_id
-      @ui.photos.append (Views.PhotoList.create @model.get 'photos').$el
-      if source_id == App.user._id
-        @$el.addClass 'me'
-        $('<div class="fa fa-times"></div>')
-        .appendTo(@ui.top)
-        .click () =>
-          $.ajax
-            url: '/api/message?id=' + @model.get '_id'
-            type: 'DELETE'
-            success: () =>
-              @el.remove()
-
-      if @model.get('unread')
-        @$el.addClass 'unread'
-        setTimeout () =>
-          $.get '/api/message/read?id=' + @model.get('_id'), (result) =>
-            if result.nModified > 0
-              @$el.removeClass 'unread'
-        , 3000
-      @ui.time.html moment.utc(@model.get 'time').fromNow()
-      return
-
   class Views.Dialog extends Marionette.CollectionView
     template: '#view-dialog'
 #    childView: App.Layouts.MessageLayout
     childViewContainer: '.messages'
 
-    onRender: () ->
-      App.dialog = @
-
-    onDestroy: () ->
-      App.dialog = null
+#    onRender: () ->
+#      App.dialog = @
+#
+#    onDestroy: () ->
+#      App.dialog = null
 
     @build: (id, target, layout) ->
-      messageList = new App.Models.MessageList()
-      messageList.params = {}
-      messageList.params[target + '_id'] = id
-      messageListView = new App.Views.Dialog collection: messageList
+      if 'string' == typeof target
+        messageList = new App.Models.MessageList()
+        messageList.params = {}
+        messageList.params[target + '_id'] = id
+        messageList.fetch()
+      else # if id
+        messageList = target
+        target = 'parent_id'
+      dialog = new App.Views.Dialog collection: messageList
       draft =
         text: localStorage.getItem 'draft_' + id
       draft[target] = id
       draft = new App.Models.Message draft
       editor = new App.Views.Editor model: draft
       editorLayout = new App.Layouts.EditorLayout model: draft
-      messageList.fetch()
-      layout.showChildView 'middle', messageListView
+      layout.showChildView 'middle', dialog
       layout.showChildView 'bottom', editorLayout
       editorLayout.showChildView 'editor', editor
-#      editor.$('[data-type]').click (e) ->
-#        container = editor.ui.attachments.find("[data-list=#{e.target.dataset.list}]")
-#        if 0 == container.length
-#          $('<div></div>')
-#          .attr('data-list', e.target.dataset.list)
-#          .appendTo editor.ui.attachments
 
   class Views.Editor extends Marionette.ItemView
     template: '#view-message-editor'
@@ -306,7 +274,7 @@
               switch e.target.status
                 when code.REQUEST_TOO_LONG then 'is too large'
                 else 'unknown error'
-            error_message(@el, file.name + T ' ' + message)
+            error_message(@el, file.name + ' ' + T  message)
       else
         console.warn 'No file selected'
 

@@ -14,8 +14,15 @@
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
 
-    profile: () ->
-      App.mainRegion.show new App.Views.Profile model: new App.Models.User App.user
+    profile: (id) ->
+      if not id
+        id = App.user._id
+      user = new App.Views.Profile model: new App.Models.User App.user
+      layout = new App.Layouts.Thresome()
+      App.mainRegion.show layout
+      App.Views.Dialog.build id, 'owner', layout
+      layout.showChildView 'top', user
+      return
 
     routes:
       'login': 'login'

@@ -23,8 +23,8 @@ App.on 'start', ->
       $('#boot-loading').hide()
       $('#root').show()
       if xhr.status <= code.UNAUTHORIZED
-        language = $.cookie 'lang'
-        if language
+        language = App.language
+        if language and 'en' != language
           document.documentElement.setAttribute 'lang', language
           $.getJSON "/languages/#{language}.json", (_dict) ->
             window.dictionary = _dict
@@ -121,6 +121,9 @@ App.avatarUrl = (id) ->
   return '/api/user/avatar?id=' + id
 
 App.id = (object) ->
+  if not object
+    console.warn 'Null id'
+    return null
   if object._id
     return object._id
   if 'object' == typeof object then object.get('_id') else object

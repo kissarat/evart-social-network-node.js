@@ -6,7 +6,7 @@
 
 body
   margin: 0
-  background-color: green
+  //background-color: green
 
 #boot-loading
   @extend .fullpage
@@ -42,11 +42,11 @@ $font: "Helvetica Neue", Helvetica, arial, sans-serif
 html
   height: 100%
   color: $white
-  background: $color_log_cabin_approx
-  background-image: -webkit-gradient(radial, 50% 0, 10, 50% 0, 400, from($white_30), to(rgba(255, 255, 255, 0)))
-  -webkit-background-image: radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
-  background-image: -moz-radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
-  background-repeat: no-repeat
+  //background: $color_log_cabin_approx
+  //background-image: -webkit-gradient(radial, 50% 0, 10, 50% 0, 400, from($white_30), to(rgba(255, 255, 255, 0)))
+  //-webkit-background-image: radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
+  //background-image: -moz-radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
+  //background-repeat: no-repeat
 
 body
   font-family: $font
@@ -171,7 +171,7 @@ img
       margin: 0
   .view
     flex: 1 0 100%
-    background-color: $grey
+    //background-color: $grey
     color: black
     //&:fullscreen
     //  height: 100%
@@ -184,11 +184,10 @@ img
 
 
 .window-content
-  //background-color: white
   overflow-y: scroll
   .view
     //text-align: center
-    padding: 12px
+    padding: 4px
   .view.error
     display: flex
     justify-content: center
@@ -243,6 +242,9 @@ form
     align-items: flex-end
     > *
       cursor: pointer
+  .children
+    background-color: lightgrey
+    padding-left: 8px
   .middle
     display: flex
     flex-direction: row

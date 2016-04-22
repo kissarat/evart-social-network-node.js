@@ -531,7 +531,10 @@ function serve($) {
                         }
                     })
                     .catch(function (r) {
-                        $.send(code.INTERNAL_SERVER_ERROR, r)
+                        $.send(code.INTERNAL_SERVER_ERROR, {error: {
+                            class: r.constructor.name,
+                            message: r.toString()
+                        }})
                     });
             }
             else if (null === result) {
@@ -565,12 +568,13 @@ function exec($, action) {
             }
         }
         try {
-            // if ($.validate($.params).valid) {
+            // var result = $.validate($.params);
+            // if ('valid' in result ? result.valid : result) {
                 return action($);
             // }
             // else {
             //     $.send(code.BAD_REQUEST, {
-            //         invalid: valid
+            //         invalid: result.errors
             //     });
             // }
         }

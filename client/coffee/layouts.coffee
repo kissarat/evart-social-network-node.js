@@ -1,11 +1,4 @@
 @App.module 'Layouts', (Layouts) ->
-  class Layouts.Dialog extends Marionette.LayoutView
-    template: '#view-dialog-layout'
-
-    regions:
-      dialog: '.dialog'
-      editor: '.editor'
-
   class Layouts.Thresome extends Marionette.LayoutView
     template: '#view-thresome-layout'
 
@@ -70,29 +63,33 @@
     template: '#view-message-layout'
 
     regions:
-      photos: '.photos'
-      videos: '.videos'
+      repost: '> .repost'
+      photos: '> .photos'
+      videos: '> .videos'
+      childrenRegion: '> .children'
 
     behaviors:
       Bindings: {}
 
     ui:
-      info: '.info'
-      avatar: '.avatar'
-      time: '.time'
-      ip: '.ip'
-      top: '.top'
-      middle: '.middle'
-      like: '.fa-thumbs-up'
-      hate: '.fa-thumbs-down'
+      info: '> .middle .info'
+      avatar: '> .middle .avatar'
+      time: '> .middle .time'
+      text: '> .middle .text'
+      ip: '> .middle .ip'
+      top: '> .top'
+      middle: '> .middle'
+      like: '> .top .fa-thumbs-up'
+      hate: '> .top .fa-thumbs-down'
 
     events:
-      'click .fa-thumbs-up': 'like'
-      'click .fa-thumbs-down': 'hate'
+      'click > .top .fa-thumbs-up': 'like'
+      'click > .top .fa-thumbs-down': 'hate'
+      'click > .top .fa-share-alt': 'share'
 
     bindings:
-      '.text': 'text'
-      '.ip': 'ip'
+      '> .middle .text': 'text'
+#      '> .middle .ip': 'ip'
 
     like: () ->
       @_like 'like'
@@ -117,10 +114,13 @@
       @ui.hate.html _.size @model.get 'hate'
       return
 
+    share: () ->
+      $.post '/api/message?repost_id=' + @model.get '_id'
+
     onRender: () ->
       @$el.attr('id', @model.get '_id')
       source_id = App.id @model.get 'source'
-      @ui.info.attr('data-id', source_id)
+#      @ui.info.attr('data-id', source_id)
       if source_id
         @ui.avatar.attr 'src', '/api/user/avatar?id=' + source_id
       if _.size(@model.get 'photos') > 0
@@ -144,7 +144,11 @@
             success: () =>
               @el.remove()
 
-      if @model.get('unread')
+      if @model.get 'isRepost'
+        @ui.top.remove()
+#        @ui.text[0].innerHTML = @model.get 'text'
+
+      if @model.get 'unread'
         @$el.addClass 'unread'
         setTimeout () =>
           $.get '/api/message/read?id=' + @model.get('_id'), (result) =>
@@ -153,6 +157,21 @@
         , 3000
       @ui.time.html moment.utc(@model.get 'time').fromNow()
       @renderLikes()
+
+      repost = @model.get 'repost'
+      if repost
+        repost = new App.Models.Message repost
+        repost.set 'isRepost', true
+        repostView = new Layouts.MessageLayout model: repost
+        @repost.show repostView
+
+      children = new App.Models.MessageList @model.get 'children'
+#      children.models.forEach (model) -> model.set 'text', 'aaa'
+      if children.length > 0
+        childrenView = new App.Layouts.Thresome()
+        @showChildView 'childrenRegion', childrenView
+        App.Views.Dialog.build @model.get('_id'), children, childrenView
+#        window.childrenRegion =
       return
 
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout
