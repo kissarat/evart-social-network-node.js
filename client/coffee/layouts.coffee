@@ -8,6 +8,9 @@
       bottom: '.bottom'
 
   App.thresome = (container, object) ->
+    if not _instanceof container, Marionette.LayoutView
+      object = container
+      container = App.mainRegion
     layout = new Layouts.Thresome()
     container.show layout
     for r, v of object
@@ -191,3 +194,5 @@
       return
 
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout
+
+  

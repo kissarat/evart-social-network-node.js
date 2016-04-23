@@ -1,7 +1,7 @@
 god = require 'mongoose'
 ObjectID = require('mongodb').ObjectID
 code = require __dirname + '/../../client/code.json'
-
+_ = require 'underscore'
 
 global.schema.Message = god.Schema
 #  type:
@@ -135,20 +135,26 @@ module.exports =
 
   dialogs: ($) ->
     me = $.user._id
-    #    console.log $.user._id.constructor.name
+    source_messages = null
+    target_messages = null
 
     Message.aggregate [
       {
         $sort:
           time: -1
-      },
+      }
       {
         $match:
-          target: me
+          source: me
+          target: $ne: null
       }
       {
         $group:
-          _id: '$source'
+          _id: '$target'
+          message_id:
+            $first: '$_id'
+          target:
+            $first: '$target'
           text:
             $first: '$text'
           time:
@@ -157,7 +163,10 @@ module.exports =
             $sum: '$unread'
       }
     ]
-    .exec $.wrap (source_messages) ->
+#    .then (source_messages) ->
+#    .populate('source', '_id domain')
+    .exec $.wrap (_source_messages) ->
+      source_messages = _source_messages
       Message.aggregate [
         {
           $sort:
@@ -165,11 +174,15 @@ module.exports =
         },
         {
           $match:
-            source: me
+            target: me
         },
         {
           $group:
-            _id: '$target'
+            _id: '$source'
+            message_id:
+              $first: '$_id'
+            target:
+              $first: '$target'
             text:
               $first: '$text'
             time:
@@ -178,7 +191,12 @@ module.exports =
               $sum: '$unread'
         }
       ]
-      .exec $.wrap (target_messages) ->
+#      .then (target_messages) ->
+#      .populate('source', '_id domain')
+      .exec $.wrap (_target_messages) ->
+        target_messages = _target_messages
+#        dialogs = _.uniq dialogs, false, (dialog, i, dialogs) ->
+#          _.findLastIndex(dialogs, (dialog) -> dialog.target) == i
         dialogs = source_messages.concat target_messages
         conditions =
           _id:
@@ -187,7 +205,31 @@ module.exports =
           users = {}
           for user in results
             users[user._id] = user.toJSON()
+
+          for dialog in source_messages
+            dialog.target = dialog._id
+#            dialog.source =
+#              _id: me
+#              domain: $.user.domain
+
+          for dialog in target_messages
+            dialog.source = dialog._id
+
+          dialogs.sort (a, b) ->
+            a = new Date(a.time).getTime()
+            b = new Date(b.time).getTime()
+            if a < b
+              1
+            else if a > b
+              -1
+            else
+              0
+
           for dialog in dialogs
-            dialog.user = users[dialog._id]
+            dialog.target = users[dialog.target]
+            dialog.source = users[dialog.source]
+            dialog._id = dialog.message_id
+            delete dialog.message_id
+
           $.send dialogs
     return

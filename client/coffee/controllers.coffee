@@ -38,8 +38,15 @@
       App.mainRegion.show layout
       App.Views.Dialog.build target_id, 'target', layout
       return
+      
+    dialogs: () ->
+      dialogs = new App.Models.MessageList
+      dialogs.url = '/api/message/dialogs'
+      App.thresome
+        middle: new App.Views.Dialog collection: dialogs
 
     routes:
+      'dialogs': 'dialogs'
       'dialog/:target_id': 'index'
 
 

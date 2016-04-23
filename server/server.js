@@ -553,7 +553,9 @@ function serve($) {
             $.res.end(result);
             break;
         default:
-            $.send(result);
+            if (undefined !== result) {
+                $.send(result);
+            }
     }
 }
 

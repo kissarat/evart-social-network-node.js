@@ -3,14 +3,11 @@
   class Models.Base extends Backbone.Model
     idAttribute: '_id'
 
-    urlRoot: ->
-      return '/api/' + @constructor.name.toLowerCase()
-
-    toString: ->
-      return this.get('_id')
+    urlRoot: -> '/api/' + @constructor.name.toLowerCase()
+    
+    toString: -> @get('_id')
 
   class Models.Error extends Backbone.Model
-
 
   class Models.User extends Models.Base
     urlRoot: '/api/user'
@@ -34,13 +31,20 @@
     url: () ->
       '/api/message?' + $.param @params
 
+#    fetch: (params) ->
+#      messageList = new Models.MessageList()
+#      messageList.params = params
+#      messageList.fetch()
+
     model: (attrs, options) ->
       new App.Models.Message attrs, options
 
   window.reverse_time = (a, b) ->
-    if a.get('time') < b.get('time')
+    a = new Date(a.get('time')).getTime()
+    b = new Date(b.get('time')).getTime()
+    if a < b
       1
-    else if a.get('time') > b.get('time')
+    else if a > b
       -1
     else
       0
