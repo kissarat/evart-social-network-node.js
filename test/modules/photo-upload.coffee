@@ -7,9 +7,10 @@ i = 0
 
 module.exports =
   _anybody: ($) ->
+    auth = @agent.auth
     files = fs.readdirSync(samples_dir)
     .shuffle()
-    upload = () ->
+    upload = () =>
       file = files.pop()
       if file
         file
@@ -19,14 +20,16 @@ module.exports =
           hostname: $.host
           path: '/api/photo'
           headers:
+            'content-type': 'image/jpeg'
             'content-length': data.length
-            cookie: 'auth=' + $.agent.auth
+            cookie: 'auth=' + auth
         req = http.request options, (res) ->
           i++
           console.log i + '\t' + res.statusCode.toString().yellow + ' ' + file
           if 201 == res.statusCode
             upload()
           else
+#            upload()
             res.on 'data', (chunk) ->
               console.error chunk.toString()
         req.end data

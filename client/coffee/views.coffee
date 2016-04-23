@@ -426,9 +426,14 @@
     ui:
       domain: '.domain'
       avatar: 'img'
+      buttons: '.buttons'
+      friendAdd: '.friend-add'
+      friendRemove: '.friend-remove'
 
     events:
       'click': 'open'
+      'click .friend-add': 'friend'
+      'click .friend-remove': 'friend'
 
     bindings:
       '.domain': 'domain'
@@ -436,19 +441,45 @@
     behaviors:
       Bindings: {}
 
+    friend: () ->
+      App.toggle App.user.friend, @model.get('_id')
+      url = '/api/user/list?' + $.param
+        id: App.user._id
+        target_id: @model.get('_id')
+        name: 'friend'
+      $.post(url).then (result) =>
+        @renderButtons()
+
+    renderButtons: () ->
+      @ui.buttons.find('button').each (i, button) ->
+        $(button).hide()
+
+      if App.user.friend.indexOf(@model.get('_id')) < 0
+        @ui.friendAdd.show()
+      else
+        @ui.friendRemove.show()
+
     onRender: () ->
       @ui.avatar.attr 'src', '/api/user/avatar?id=' + @model.get('_id')
 
-  class Views.UserList extends Marionette.CompositeView
-    template: '#view-user-list'
+      @renderButtons()
+
+#      buttons = @model.collection.buttons
+#      for name, button of buttons
+#        tag = $('<button></button>')
+#        .html(T button.label)
+#        .attr('data-name', name)
+#        .appendTo @ui.buttons
+#        if not button.click
+#          button.click = () =>
+#            url = '/api/user/list?' + $.param
+#              id: App.user._id
+#              target_id: @model.get('_id')
+#              name: name
+#            $.post(url).then (result) ->
+#              button.success.call @, result
+#        tag.click button.click
+
+  class Views.UserList extends Marionette.CollectionView
     childView: Views.UserItem
-    childViewContainer: '.users'
 
-    ui:
-      search: '[type=search]'
-
-    bindings:
-      '.search': 'search'
-
-    behaviors:
-      Bindings: {}

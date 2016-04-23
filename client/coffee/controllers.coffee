@@ -124,17 +124,18 @@
 
   App.selectUser = (params, region) ->
     userList = new App.Models.UserList()
-    userList.params = params
     userSearch = new Backbone.Model()
+    userList.params = userSearch
     userListView = new App.Views.UserList
-      model: userSearch
       collection: userList
+    layout = new App.Layouts.UserListLayout
+      model: userSearch
+    region.show layout
+    layout.showChildView 'users', userListView
     userList.fetch()
     userSearch.on 'change', () ->
-      userList.params = userSearch.attributes
       userList.fetch()
-    region.show userListView
-    userListView
+    layout
 
   class Controllers.Video extends Marionette.Controller
     index: () ->

@@ -12,7 +12,12 @@
   class Models.User extends Models.Base
     urlRoot: '/api/user'
 
+    isFriend: (other) ->
+      (other || App.user).friend.indexOf(@model.get('_id')) >= 0
+
   class Models.UserList extends Backbone.Collection
+    model: (attrs, options) ->
+      new App.Models.User attrs, options
 
   class Models.Verify extends Backbone.Model
     urlRoot: '/api/user/verify'
@@ -65,9 +70,6 @@
 
   class Models.UserList extends Backbone.Collection
     url: () ->
-      if @params
-        '/api/user?' + $.param @params
-      else
-        '/api/user'
-
+      '/api/user?' + $.param @params.attributes
+      
 #  class Models.UserSearch extends Backbone.Model

@@ -141,6 +141,15 @@ App.upload = (url, file) ->
       resolve data, e
     xhr.onerror = reject
 
+App.toggle = (array, element) ->
+  i = array.indexOf(element)
+  result = i < 0
+  if result
+    array.push element
+  else
+    array.splice i, 1
+  result
+
 Object.defineProperties App,
   language:
     set: (value) ->

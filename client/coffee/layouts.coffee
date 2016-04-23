@@ -193,6 +193,21 @@
 
       return
 
+  class Layouts.UserListLayout extends Marionette.LayoutView
+    template: '#view-user-list-layout'
+
+    regions:
+      users: '.users'
+
+    ui:
+      search: '[type=search]'
+
+    bindings:
+      '[type=search]': 'search'
+
+    behaviors:
+      Bindings: {}
+
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout
 
   

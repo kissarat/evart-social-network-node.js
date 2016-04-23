@@ -79,6 +79,17 @@ global.schema.User = new god.Schema
     get: ->
       !@code
 
+  friend: [
+    type: god.Schema.Types.ObjectId
+    ref: 'User'
+  ]
+
+  block: [
+    type: god.Schema.Types.ObjectId
+    ref: 'User'
+  ]
+
+
 module.exports =
   login: ($) ->
     if $.user
@@ -207,3 +218,45 @@ module.exports =
             photo_id: user.avatar
         else
           $.sendStatus code.NOT_FOUND
+
+  list:
+    GET: ($) ->
+      name = $.param 'name'
+      if not list_fields[name]
+        $.invalid 'name'
+      fields = {domain: 1}
+      fields[name] = 1
+      User.findOne($.id, fields)
+      .populate(name, '_id domain')
+
+    POST: ($) ->
+      name = $.param 'name'
+      target_id = $.param 'target_id'
+      opposite = list_fields[name]
+      if not opposite
+        $.invalid 'name'
+      User.find(target_id).then (target) ->
+        if target
+          User.findOne($.id).then (user) ->
+            result = {}
+            result[name] = toggle user[name], target_id
+            if not result[name]
+              result[opposite] = toggle user[opposite], target_id
+            user.save().then () ->
+              $.send result
+        else
+          $.invalid 'target_id'
+
+toggle = (array, element) ->
+  i = array.indexOf(element)
+  result = i < 0
+  if result
+    array.push element
+  else
+    array.splice i, 1
+  result
+
+list_fields =
+  friend: 'block'
+  block: 'friend'
+

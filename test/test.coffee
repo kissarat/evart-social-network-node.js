@@ -13,7 +13,8 @@ module = require module
 Array.prototype.shuffle = () -> this.sort () -> 0.5 - Math.random()
 
 agent =
-  host: 'localhost'
+  host: '52.27.219.103'
+#  host: 'localhost'
   cookies: {}
 
   request: (options, cb) ->
