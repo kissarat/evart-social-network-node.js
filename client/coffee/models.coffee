@@ -62,3 +62,12 @@
     url: () ->
       '/api/video?' + $.param @params
     comparator: reverse_time
+
+  class Models.UserList extends Backbone.Collection
+    url: () ->
+      if @params
+        '/api/user?' + $.param @params
+      else
+        '/api/user'
+
+#  class Models.UserSearch extends Backbone.Model

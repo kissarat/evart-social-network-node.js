@@ -149,19 +149,37 @@ module.exports =
     return
 
   PATCH: ($) ->
-    data = $.just $.body, ["name", "city", "country", "address", "phone",
+    data = $.just $.body, ["domain", "city", "country", "address", "phone",
       "password", "avatar", "name", "birthday", "languages", "relationship"]
     User.findOneAndUpdate {_id: $.id}, {$set: data}, {new: true}
 
   GET: ($) ->
-    selection = '_id name city country address phone avatar name birthday languages'
-    if $.id
-      User.findOne($.id).select selection
+    if $.has 'id'
+      return User.findOne($.param 'id').select('domain city country address phone'
+      + ' avatar name birthday languages relationship')
     else if $.has 'ids'
       ids = $.param('ids').split('.').map (id) -> ObjectID(id)
-      User.find(_id: $in: ids).select selection
+      r = User.find(_id: $in: ids)
     else
-      User.find().select selection
+      conditions = []
+      if $.has 'search'
+        search = $.param 'search'
+        search = search.replace /\s+/g, '.*'
+        conditions.push domain: $regex: search
+      ands = []
+      for param in ['country', 'city', 'sex', 'relationship']
+        if $.has param
+          condition = {}
+          condition[param] = $.param param
+          ands.push condition
+      if ands.length > 0
+        conditions.push $and: ands
+      if conditions.length > 0
+        r = User.find($or: conditions)
+      else
+        r = User.find()
+      console.log conditions
+    r.select '_id domain name'
 
   verify:
     POST: ($) ->

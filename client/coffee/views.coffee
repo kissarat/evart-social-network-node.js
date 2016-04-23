@@ -378,3 +378,77 @@
 
     onRender: () ->
       @ui.frame.html @model.get 'html'
+
+  class Views.LastMessage extends Marionette.ItemView
+    template: '#view-last-message'
+
+    bindings:
+      '.text': 'text'
+
+    ui:
+      domain: '.domain'
+      avatar: '.avatar'
+      time: '.time'
+      text: '.text'
+      unread: '.unread'
+      info: '.info'
+
+    events:
+      'click': 'open'
+
+    behaviors:
+      Bindings: {}
+
+    open: () ->
+      App.navigate 'dialog/' + @model.get('dialog_id')
+
+    onRender: () ->
+#      @ui.frame.html @model.get 'html'
+      source = @model.get('source')
+      @$el.attr('data-id', @model.get '_id')
+      @ui.info.attr('data-id', source._id)
+      @ui.avatar.attr 'src', '/api/user/avatar?id=' + source._id
+      unread = @model.get 'unread'
+      if unread > 0
+        @ui.unread.val unread
+      if @model.get('dialog_id') == source._id
+        @ui.domain.html source.domain
+      else
+        @ui.domain.html @model.get('target').domain
+
+  class Views.DialogList extends Marionette.CollectionView
+    template: '#view-dialog-list'
+    childView: Views.LastMessage
+    childViewContainer: '.dialogs'
+
+  class Views.UserItem extends Marionette.ItemView
+    template: '#view-user-item'
+    ui:
+      domain: '.domain'
+      avatar: 'img'
+
+    events:
+      'click': 'open'
+
+    bindings:
+      '.domain': 'domain'
+
+    behaviors:
+      Bindings: {}
+
+    onRender: () ->
+      @ui.avatar.attr 'src', '/api/user/avatar?id=' + @model.get('_id')
+
+  class Views.UserList extends Marionette.CompositeView
+    template: '#view-user-list'
+    childView: Views.UserItem
+    childViewContainer: '.users'
+
+    ui:
+      search: '[type=search]'
+
+    bindings:
+      '.search': 'search'
+
+    behaviors:
+      Bindings: {}

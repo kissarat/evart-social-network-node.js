@@ -153,18 +153,10 @@ module.exports =
           _id: '$target'
           message_id:
             $first: '$_id'
-          target:
-            $first: '$target'
-          text:
-            $first: '$text'
-          time:
-            $first: '$time'
-          unread:
-            $sum: '$unread'
+#          unread:
+#            $sum: '$unread'
       }
     ]
-#    .then (source_messages) ->
-#    .populate('source', '_id domain')
     .exec $.wrap (_source_messages) ->
       source_messages = _source_messages
       Message.aggregate [
@@ -181,55 +173,36 @@ module.exports =
             _id: '$source'
             message_id:
               $first: '$_id'
-            target:
-              $first: '$target'
-            text:
-              $first: '$text'
-            time:
-              $first: '$time'
             unread:
               $sum: '$unread'
         }
       ]
-#      .then (target_messages) ->
-#      .populate('source', '_id domain')
       .exec $.wrap (_target_messages) ->
         target_messages = _target_messages
+        dialogs_array = source_messages.concat target_messages
 #        dialogs = _.uniq dialogs, false, (dialog, i, dialogs) ->
 #          _.findLastIndex(dialogs, (dialog) -> dialog.target) == i
-        dialogs = source_messages.concat target_messages
+        dialogs = {}
         conditions =
           _id:
-            $in: dialogs.map((dialog) -> ObjectID(dialog._id))
-        User.find conditions, '_id domain', $.wrap (results) ->
-          users = {}
-          for user in results
-            users[user._id] = user.toJSON()
-
-          for dialog in source_messages
-            dialog.target = dialog._id
-#            dialog.source =
-#              _id: me
-#              domain: $.user.domain
-
-          for dialog in target_messages
-            dialog.source = dialog._id
-
-          dialogs.sort (a, b) ->
-            a = new Date(a.time).getTime()
-            b = new Date(b.time).getTime()
-            if a < b
-              1
-            else if a > b
-              -1
-            else
-              0
-
-          for dialog in dialogs
-            dialog.target = users[dialog.target]
-            dialog.source = users[dialog.source]
-            dialog._id = dialog.message_id
-            delete dialog.message_id
-
-          $.send dialogs
+            $in: []
+        for dialog in dialogs_array
+          dialogs[dialog.message_id] = dialog
+          conditions._id.$in.push ObjectID(dialog.message_id)
+        fields =
+          source: 1
+          target: 1
+          text: 1
+          time: 1
+        Message.find(conditions, fields)
+        .populate('source target', '_id domain')
+        .exec $.wrap (results) ->
+          messages = []
+          for message in results
+            message = message.toJSON()
+            dialog = dialogs[message._id]
+            message.unread = dialog.unread || 0
+            message.dialog_id = dialog._id
+            messages.push message
+          $.send messages
     return

@@ -8,7 +8,7 @@
       bottom: '.bottom'
 
   App.thresome = (container, object) ->
-    if not _instanceof container, Marionette.LayoutView
+    if not _instanceof container, Marionette.Region
       object = container
       container = App.mainRegion
     layout = new Layouts.Thresome()

@@ -24,11 +24,15 @@
       layout.showChildView 'top', user
       return
 
+    users: () ->
+      App.selectUser null, App.mainRegion
+
     routes:
       'login': 'login'
       'signup': 'signup'
       'profile': 'profile'
       'settings': 'settings'
+      'users': 'users'
       'verify/:id': 'verify'
 
 
@@ -38,12 +42,12 @@
       App.mainRegion.show layout
       App.Views.Dialog.build target_id, 'target', layout
       return
-      
+
     dialogs: () ->
       dialogs = new App.Models.MessageList
       dialogs.url = '/api/message/dialogs'
       App.thresome
-        middle: new App.Views.Dialog collection: dialogs
+        middle: new App.Views.DialogList collection: dialogs
 
     routes:
       'dialogs': 'dialogs'
@@ -76,7 +80,8 @@
 
   App.selectPhoto = (params, region) ->
     if not params
-      params = owner_id: App.user._id
+      params =
+        owner_id: App.user._id
     photoList = new App.Models.PhotoList()
     photoList.params = params
     photoListView = new App.Views.PhotoList collection: photoList
@@ -97,7 +102,8 @@
 
   App.selectVideo = (params, region) ->
     if not params
-      params = owner_id: App.user._id
+      params =
+        owner_id: App.user._id
     videoList = new App.Models.VideoList()
     videoList.params = params
     videoListView = new App.Views.VideoList collection: videoList
@@ -116,6 +122,19 @@
           @currentView.middle.currentView.collection
     region
 
+  App.selectUser = (params, region) ->
+    userList = new App.Models.UserList()
+    userList.params = params
+    userSearch = new Backbone.Model()
+    userListView = new App.Views.UserList
+      model: userSearch
+      collection: userList
+    userList.fetch()
+    userSearch.on 'change', () ->
+      userList.params = userSearch.attributes
+      userList.fetch()
+    region.show userListView
+    userListView
 
   class Controllers.Video extends Marionette.Controller
     index: () ->

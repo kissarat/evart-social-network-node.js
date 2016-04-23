@@ -236,7 +236,7 @@ form
   > div > *
     display: inline-block
 
-.message-layout
+.message-layout, .last-message
   .top
     display: flex
     align-items: flex-end
@@ -250,13 +250,21 @@ form
     flex-direction: row
     &.me
       align-items: flex-end
-    .avatar
-      max-width: 64px
-      max-height: 64px
-    .time
-      font-size: 0.7em
-    .ip
-      color: white
+  .time
+    font-size: 0.7em
+  .ip
+    color: white
+
+.avatar
+  max-width: 64px
+  max-height: 64px
+
+.last-message
+  cursor: pointer
+  display: flex
+  flex-direction: row
+  &:hover
+    background-color: ghostwhite
 
 .thumbnail
   max-width: 128px
