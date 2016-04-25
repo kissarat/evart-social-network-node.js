@@ -12,7 +12,7 @@ var old_schema = require(__dirname + '/../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
-var code = require(__dirname + '/../client/code.json')
+var code = require(__dirname + '/../client/code.json');
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
 
@@ -591,7 +591,7 @@ function exec($, action) {
     }
 
     var is_unauthoried_route = /^.(agent|test|pong|fake|login|user)/.test($.req.url.original);
-    var must_upload_route = /^.(photo)/.test($.req.url.original);
+    var must_upload_route = /^.(photo|file)/.test($.req.url.original);
 
     if ($.user || is_unauthoried_route) {
         var size = $.req.headers['content-length'];

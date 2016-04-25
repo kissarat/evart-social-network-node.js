@@ -13,8 +13,8 @@ module = require module
 Array.prototype.shuffle = () -> this.sort () -> 0.5 - Math.random()
 
 agent =
-  host: '52.27.219.103'
-#  host: 'localhost'
+#  host: '52.27.219.103'
+  host: 'client'
   cookies: {}
 
   request: (options, cb) ->
@@ -42,6 +42,7 @@ agent =
 #      console.log options.body.red
       options.headers['content-type'] = 'text/json'
 
+#    console.log options
     request options, (error, response, body) ->
       if error
         console.log error
@@ -52,6 +53,7 @@ agent =
           options.response.body = JSON.parse body
         catch ex
           console.warn 'Unknown format'
+          console.log body
 
       if error
         options.error = error
@@ -95,8 +97,7 @@ agent =
       url: 'test/random'
       qs: q
     cb = if q.callback then q.callback else null
-    if cb
-      delete q.callback
+    delete q.callback
     @request options, cb
 
   GET: (url, cb) ->
@@ -132,6 +133,7 @@ if 'function' == typeof module._anybody
         agent.agent = agents[0]
         agent.user = agents[0].user
         agent.cookies['auth'] = agent.agent.auth
+#        console.log agent
         module._anybody.call agent, options
       else
         console.error 'No user exists'

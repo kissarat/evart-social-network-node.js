@@ -49,9 +49,14 @@
       App.thresome
         middle: new App.Views.DialogList collection: dialogs
 
+#    chat: () ->
+#      chat = new App.Models.ChatLayout
+#      chat.showChildView
+
     routes:
       'dialogs': 'dialogs'
       'dialog/:target_id': 'index'
+#      'chat': 'chat'
 
 
   class Controllers.Photo extends Marionette.Controller

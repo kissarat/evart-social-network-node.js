@@ -264,19 +264,21 @@
       'change [type=file]': 'upload'
 
     upload: () ->
-      file = @ui.file[0].files[0]
-      if file
-        App.upload('/api/photo', file).then (photo, e) =>
-          if photo
-            @trigger 'uploaded', new App.Models.Photo photo
-          else
-            message =
-              switch e.target.status
-                when code.REQUEST_TOO_LONG then 'is too large'
-                else 'unknown error'
-            error_message(@el, file.name + ' ' + T  message)
-      else
-        console.warn 'No file selected'
+      files = _.toArray @ui.file[0].files
+      _upload = () =>
+        file = files.shift()
+        if file
+          App.upload('/api/photo', file).then (photo, e) =>
+            if photo
+              @trigger 'uploaded', new App.Models.Photo photo
+            else
+              message =
+                switch e.target.status
+                  when code.REQUEST_TOO_LONG then 'is too large'
+                  else 'unknown error'
+              error_message(@el, file.name + ' ' + T  message)
+          _upload()
+      _upload()
 
   class Views.PhotoThumbnail extends Marionette.ItemView
     template: '#view-photo-thumbnail'
@@ -328,7 +330,6 @@
         @trigger 'add', @model
 
   class Views.PhotoList extends Marionette.CollectionView
-    template: '#view-photo-list'
     childView: Views.PhotoThumbnail
 
     @create: (ids) ->
@@ -417,9 +418,7 @@
         @ui.domain.html @model.get('target').domain
 
   class Views.DialogList extends Marionette.CollectionView
-    template: '#view-dialog-list'
     childView: Views.LastMessage
-    childViewContainer: '.dialogs'
 
   class Views.UserItem extends Marionette.ItemView
     template: '#view-user-item'
@@ -429,17 +428,25 @@
       buttons: '.buttons'
       friendAdd: '.friend-add'
       friendRemove: '.friend-remove'
+      message: '.message'
 
     events:
       'click': 'open'
       'click .friend-add': 'friend'
       'click .friend-remove': 'friend'
+      'click .message': 'message'
+
+    triggers:
+      'click .add': 'add'
 
     bindings:
       '.domain': 'domain'
 
     behaviors:
       Bindings: {}
+
+    message: () ->
+      App.navigate 'dialog/' + @model.get('_id')
 
     friend: () ->
       App.toggle App.user.friend, @model.get('_id')
@@ -454,31 +461,20 @@
       @ui.buttons.find('button').each (i, button) ->
         $(button).hide()
 
-      if App.user.friend.indexOf(@model.get('_id')) < 0
-        @ui.friendAdd.show()
+      if @selection
+        @ui.add.show()
       else
-        @ui.friendRemove.show()
+        if App.user.friend.indexOf(@model.get('_id')) < 0
+          @ui.friendAdd.show()
+        else
+          @ui.friendRemove.show()
+        @ui.message.show()
+
 
     onRender: () ->
       @ui.avatar.attr 'src', '/api/user/avatar?id=' + @model.get('_id')
 
       @renderButtons()
-
-#      buttons = @model.collection.buttons
-#      for name, button of buttons
-#        tag = $('<button></button>')
-#        .html(T button.label)
-#        .attr('data-name', name)
-#        .appendTo @ui.buttons
-#        if not button.click
-#          button.click = () =>
-#            url = '/api/user/list?' + $.param
-#              id: App.user._id
-#              target_id: @model.get('_id')
-#              name: name
-#            $.post(url).then (result) ->
-#              button.success.call @, result
-#        tag.click button.click
 
   class Views.UserList extends Marionette.CollectionView
     childView: Views.UserItem

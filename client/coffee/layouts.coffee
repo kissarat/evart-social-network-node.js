@@ -208,6 +208,23 @@
     behaviors:
       Bindings: {}
 
+  class Layouts.ChatLayout extends Marionette.LayoutView
+    template: '#view-user-list-layout'
+
+    regions:
+      members: '.members'
+      selection: '.selection'
+
+    ui:
+      name: '[type=name]'
+
+    bindings:
+      '[type=name]': name
+
+    behaviors:
+      Bindings: {}
+
+
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout
 
   

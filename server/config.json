@@ -18,7 +18,5 @@
       "quality": 80
     }
   },
-  "modules": {
-    "file": false
-  }
+  "modules": {}
 }

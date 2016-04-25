@@ -76,6 +76,13 @@ global.schema.Message = god.Schema
     ref: 'Message'
   ]
 
+populate = (r) ->
+  r
+  .populate('source', '_id domain avatar')
+  .populate('target', '_id domain avatar')
+  .populate('videos', '_id thumbnail_url thumbnail_width thumbnail_height')
+  .populate('repost', '_id source target photos videos text')
+    .populate('children', '_id source target photos videos text time')
 
 module.exports =
   POST: ($) ->
@@ -111,15 +118,11 @@ module.exports =
       r = Message.find video: $.param 'video_id'
     else if $.has 'photo_id'
       r = Message.find photo: $.param 'photo_id'
+    # wall
     else if $.has 'owner_id'
       r = Message.find owner: $.param 'owner_id'
     if r
-      r
-      .populate('source', '_id domain avatar')
-      .populate('target', '_id domain avatar')
-      .populate('videos', '_id thumbnail_url thumbnail_width thumbnail_height')
-      .populate('repost', '_id source target photos videos text')
-      .populate('children', '_id source target photos videos text time')
+      populate r
     else
       $.sendStatus code.BAD_REQUEST
       return
@@ -132,6 +135,10 @@ module.exports =
       Message.update {_id: $.param('id')}, {unread: 0}
     else
       return false
+
+  feed: ($) ->
+    friends = $.user.friend.map (f) -> ObjectID f
+    Message.find {owner_id: {$in: friends}}
 
   dialogs: ($) ->
     me = $.user._id

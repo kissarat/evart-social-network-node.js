@@ -11,7 +11,11 @@ module.exports =
         target: receiver._id
         text: faker.lorem.sentences()
       @POST 'message', data
+      data =
+        owner: receiver._id
+        text: faker.lorem.sentences()
+      @POST 'message', data
+    return
 
   message: ($) ->
-#    console.log $.response.toString().yellow
     process.exit()
