@@ -12,14 +12,20 @@ global.schema.Message = god.Schema
     type: god.Schema.Types.ObjectId
     ref: 'User'
     required: true
+    index:
+      unique: false
 
   target:
     type: god.Schema.Types.ObjectId
     ref: 'User'
+    index:
+      unique: false
 
   owner:
     type: god.Schema.Types.ObjectId
     ref: 'User'
+    index:
+      unique: false
 
   like: [
     type: god.Schema.Types.ObjectId

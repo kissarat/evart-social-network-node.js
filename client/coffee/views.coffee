@@ -109,7 +109,7 @@
     success: (data) ->
       App.user = data
       App.trigger 'login'
-      App.navigate 'profile'
+#      App.navigate 'profile'
 
   class Views.Signup extends Views.Form
     template: '#view-signup'

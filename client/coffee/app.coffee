@@ -191,11 +191,12 @@ App.on 'login', () ->
   .click () ->
     $.get '/api/user/logout', () ->
       App.trigger 'logout'
-      App.navigate 'login'
   $('#dock-container').show()
+  App.navigate 'profile'
 
 App.on 'logout', () ->
   $('#dock-container').hide()
+  App.navigate 'login'
 
 App.showCounter = (name, value) ->
   icon = $('#dock [href="/' + name + '"]')
