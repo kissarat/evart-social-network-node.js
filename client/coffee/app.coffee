@@ -10,8 +10,27 @@ config =
     wait: 800
 
 @App = new Marionette.Application()
-App.addRegions
-  mainRegion: '#main .window-content'
+
+windowControls = (document.querySelector '#view-window').innerHTML
+
+window_handlers = () ->
+  @find('[title=close]').click () =>
+    $(@).hide()
+  @find('[title=maximize]').click () =>
+    $('.window').each (i, w) =>
+      if @.attr('id') == w.id
+        $(w).show()
+      else
+        $(w).toggle()
+
+regions = {}
+_.each document.querySelectorAll('#root > div'), (region) ->
+  id = region.id
+  region.classList.add 'window'
+  region.innerHTML = windowControls
+  regions[id + 'Region'] = "##{id} .window-content"
+  window_handlers.call $(region)
+App.addRegions regions
 
 @App.config = config
 
@@ -172,3 +191,14 @@ App.on 'login', () ->
   .click () ->
     $.get '/api/user/logout', () ->
       App.navigate 'login'
+
+App.showCounter = (name, value) ->
+  icon = $('#dock [href="/' + name + '"]')
+  counter = icon.find 'counter'
+  if 0 == counter.length and value
+    counter = $('<div class="counter"></div>')
+  if value
+    counter.html value
+    icon.append counter
+  else if counter
+    counter[0].remove()

@@ -1,33 +1,27 @@
-$('#dock').on 'mouseover', (e) ->
-  target = e.target
-  if target.getAttribute 'src'
-# check if it is img
-    li = target.parentNode.parentNode
-    prevLi = li.previousElementSibling
-    if prevLi
-      prevLi.className = 'prev'
-    target.addEventListener 'mouseout', (->
-      if prevLi
-        prevLi.removeAttribute 'class'
-      return
-    ), false
-  return
+icons = document.querySelectorAll('#dock a')
+_.each icons, (icon) ->
+  register icon,
+    click: (e) ->
+      e.preventDefault()
+      region = @getAttribute('data-open')
+      href = @getAttribute('href')
+      widget = App.widgets[href.slice(1)]
+      if region and widget
+        $('#' + region).show()
+        region = App[region + 'Region']
+        widget null, region
+      else
+        App.navigate href
+    mouseover: () ->
+      _.each document.querySelectorAll('#dock a.prev'), (prev) ->
+        prev.classList.remove 'prev'
+      if @getAttribute('href')
+        @classList.add 'prev'
+#    mouseout: () ->
+#      @classList.remove 'prev'
 
 $('#root').sortable
   handle: '.title'
-
-window_handlers = (w) ->
-  w.find('[title=close]').click () ->
-    w.remove()
-  w.find('[title=maximize]').click () ->
-    current = w[0]
-    $('.window').each (i, w) ->
-      if current == w
-        $(w).show()
-      else
-        $(w).toggle()
-
-window_handlers $('.window')
 
 TRANSLIT =
   "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo", "ж": "zh", "з": "z", "и": "i", "й": "j",

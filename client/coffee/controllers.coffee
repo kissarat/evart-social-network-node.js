@@ -177,3 +177,6 @@
     routes:
       'videos': 'index'
       'video/:id': 'view'
+
+  App.widgets =
+    videos: App.selectVideo

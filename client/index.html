@@ -35,25 +35,42 @@
 </div>
 
 <div id="root" style="display: none">
-    <div id="main" class="window">
-        <div class="controls">
-            <h1 class="title">Share This</h1>
-            <nav>
-                <div title="close" class="fa fa-times-circle"></div>
-                <!--<div title="minimize" class="fa fa-minus-circle"></div>-->
-                <div title="maximize" class="fa fa-plus-circle"></div>
-            </nav>
-        </div>
-        <div class="window-content"></div>
-    </div>
+    <div id="left" style="display: none"></div>
+    <div id="main"></div>
+    <div id="right" style="display: none"></div>
 </div>
-<div id="dock-container" style="display: none">
+<div id="dock-container">
     <div id="dock">
         <ul>
+            <li><a href="/feed" title="News"></a></li>
+            <li><a href="/profile" title="Profile"></a></li>
+            <li><a href="/feedback" title="Feedback" class="disabled"></a></li>
+            <li><a href="/dialogs" title="Messages"></a></li>
+            <li><a href="/phone" title="Call" class="disabled"></a></li>
+            <li><a href="/friends" title="Friends" class="disabled"></a></li>
+            <li><a href="/groups" title="Groups" class="disabled"></a></li>
+            <li><a href="/photos" title="Photos"></a></li>
+            <li><a href="/videos" title="Movies" data-open="left"></a></li>
+            <li><a href="/conference" title="Video" class="disabled"></a></li>
+            <li><a href="/audio" title="Music" data-open="right"></a></li>
+            <li><a href="/settings" title="Settings"></a></li>
         </ul>
         <div class="base"></div>
     </div>
 </div>
+
+<script type="text/template" id="view-window">
+    <div class="controls">
+        <h1 class="title">Share This</h1>
+        <nav>
+            <div title="close" class="fa fa-times-circle"></div>
+            <!--<div title="minimize" class="fa fa-minus-circle"></div>-->
+            <div title="maximize" class="fa fa-plus-circle"></div>
+        </nav>
+    </div>
+    <div class="window-content"></div>
+</script>
+
 
 <script type="text/template" id="view-error">
     <h1></h1>
@@ -207,7 +224,7 @@
     <script src="/lib/moment/moment.js"></script>
     <!--<script src="/lib/faker/dist/faker.js"></script>-->
     <script src="/coffee/override.js"></script>
-    <script src="/coffee/app.js">\</script>
+    <script src="/coffee/app.js"></script>
     <script src="/coffee/ui.js"></script>
     <script src="/coffee/models.js"></script>
     <script src="/coffee/views.js"></script>

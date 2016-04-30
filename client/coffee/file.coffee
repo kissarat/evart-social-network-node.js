@@ -52,13 +52,17 @@
       App.selectAudio {}, App.mainRegion
 
     routes:
-      'audios': 'index'
+      'audio': 'index'
 
   App.selectAudio = (params, region) ->
     fileList = new App.Models.FileList()
+    if not params
+      params = {}
     params.type = 'audio'
     fileList.params = params
     App.thresome region,
       top: new App.Views.Upload()
       middle: new App.Views.AudioList collection: fileList
+
+  App.widgets.audio = App.selectAudio
 
