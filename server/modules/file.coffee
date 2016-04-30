@@ -23,7 +23,7 @@ module.exports =
     temp = '/tmp/' + process.hrtime().join('')
     stream = fs.createWriteStream temp,
       flags: 'w'
-      mode: 0o600
+      mode: 0o644
       autoClose: true
     $.req.pipe stream
     fs.stat temp, $.wrap (stat) ->
@@ -56,7 +56,7 @@ module.exports =
       File.findOne($.param('id')).then (file) ->
         $.res.writeHead code.MOVED_PERMANENTLY,
           'content-type': file.mime
-          location: '/md5/' + file.md5 + '/' + file.name
+          location: '/md5/' + file.md5 + '/' + file.filename
         $.res.end()
     else
       owner_id = if $.has 'owner_id' then $.param 'owner_id' else $.user._id

@@ -14,14 +14,16 @@
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
 
-    profile: (id) ->
-      if not id
-        id = App.user._id
-      user = new App.Views.Profile model: new App.Models.User App.user
-      layout = new App.Layouts.Thresome()
-      App.mainRegion.show layout
-      App.Views.Dialog.build id, 'owner', layout
-      layout.showChildView 'top', user
+    profile: (domain) ->
+      if not domain
+        domain = App.user.domain
+      $.get '/api/user?domain=' + domain, (user) ->
+        user = new App.Models.User user
+        userView = new App.Views.Profile model: user
+        layout = new App.Layouts.Thresome()
+        App.mainRegion.show layout
+        App.Views.Dialog.build user.id, 'owner', layout
+        layout.showChildView 'top', userView
       return
 
     users: () ->
@@ -31,6 +33,7 @@
       'login': 'login'
       'signup': 'signup'
       'profile': 'profile'
+      'view/:domain': 'profile'
       'settings': 'settings'
       'users': 'users'
       'verify/:id': 'verify'
@@ -49,6 +52,9 @@
       App.thresome
         middle: new App.Views.DialogList collection: dialogs
 
+    feed: () ->
+      App.mainRegion.show App.Views.Dialog.feed()
+
 #    chat: () ->
 #      chat = new App.Models.ChatLayout
 #      chat.showChildView
@@ -56,6 +62,7 @@
     routes:
       'dialogs': 'dialogs'
       'dialog/:target_id': 'index'
+      'feed': 'feed'
 #      'chat': 'chat'
 
 

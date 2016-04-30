@@ -24,11 +24,13 @@ global.schema.Message = god.Schema
   like: [
     type: god.Schema.Types.ObjectId
     ref: 'User'
+    default: null
   ]
 
   hate: [
     type: god.Schema.Types.ObjectId
     ref: 'User'
+    default: null
   ]
 
   photo:
@@ -38,6 +40,7 @@ global.schema.Message = god.Schema
   photos: [
     type: god.Schema.Types.ObjectId
     ref: 'Photo'
+    default: null
   ]
 
   video:
@@ -47,6 +50,7 @@ global.schema.Message = god.Schema
   videos: [
     type: god.Schema.Types.ObjectId
     ref: 'Video'
+    default: null
   ]
 
   time:
@@ -74,6 +78,7 @@ global.schema.Message = god.Schema
   children: [
     type: god.Schema.Types.ObjectId
     ref: 'Message'
+    default: null
   ]
 
 populate = (r) ->
@@ -138,7 +143,8 @@ module.exports =
 
   feed: ($) ->
     friends = $.user.friend.map (f) -> ObjectID f
-    Message.find {owner_id: {$in: friends}}
+#    console.log friends
+    Message.find owner: $in: friends
 
   dialogs: ($) ->
     me = $.user._id

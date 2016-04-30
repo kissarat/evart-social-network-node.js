@@ -278,10 +278,10 @@ form
   z-index: 1
 
 .thumbnail
-    display: inline-block
-    img
-      max-width: 192px
-      max-height: 192px
+  display: inline-block
+  img
+    max-width: 192px
+    max-height: 192px
 
 .error
   color: red
@@ -297,3 +297,18 @@ form
   background-position: center
   background-repeat: no-repeat
   margin: 2px
+
+.audio > .title
+  display: flex
+  justify-content: space-between
+  .author:after
+      content: ' - '
+      text-align: left
+  .name
+    flex-grow: 1
+    margin-left: 2px
+    margin-right: 1em
+  .duration
+    margin-right: 1em
+  .bit_rate
+    color: grey

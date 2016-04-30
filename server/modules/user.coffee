@@ -165,12 +165,12 @@ module.exports =
     User.findOneAndUpdate {_id: $.id}, {$set: data}, {new: true}
 
   GET: ($) ->
-    if $.has 'id'
-      return User.findOne($.param 'id').select('domain city country address phone'
-      + ' avatar name birthday languages relationship')
+    params = ['id', 'domain']
+    if $.hasAny params
+      return User.findOne($.paramsObject params)
+      .select('domain city country address phone  avatar name birthday languages relationship')
     else if $.has 'ids'
-      ids = $.param('ids').split('.').map (id) -> ObjectID(id)
-      r = User.find(_id: $in: ids)
+      r = User.find(_id: $in: $.ids('ids'))
     else
       conditions = []
       if $.has 'search'
@@ -189,7 +189,6 @@ module.exports =
         r = User.find($or: conditions)
       else
         r = User.find()
-      console.log conditions
     r.select '_id domain name'
 
   verify:

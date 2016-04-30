@@ -4,16 +4,96 @@
     <meta charset="UTF-8">
     <title>URLs</title>
     <style type="text/css">
-        a {
+        .urls > a {
             display: block;
+        }
+
+        .dock a {
+            display: inline-block;
+            width: 72px;
+            height: 72px;
+            background: url("/images/icons.png") no-repeat;
+        }
+
+        .dock > [href="/feed"] {
+            background-position-x: 0;
+        }
+
+        .dock > [href="/profile"] {
+            background-position-x: calc(-78px * 1);
+        }
+
+        .dock > [href="/feedback"] {
+            background-position-x: calc(-78px * 2);
+        }
+
+        .dock > [href="/dialogs"] {
+            background-position-x: calc(-78px * 3);
+        }
+
+        .dock > [href="/phone"] {
+            background-position-x: calc(-78px * 4 + 1px);
+        }
+
+        .dock > [href="/friends"] {
+            background-position-x: calc(-78px * 5 + 1px);
+        }
+
+        .dock > [href="/groups"] {
+            background-position-x: calc(-78px * 6 + 2px);
+        }
+
+        .dock > [href="/photos"] {
+            background-position-x: calc(-78px * 7 + 2px);
+        }
+
+        .dock > [href="/videos"] {
+            background-position-x: calc(-78px * 8 + 2px);
+        }
+
+        .dock > [href="/conference"] {
+            background-position-x: calc(-78px * 9 + 3px);
+        }
+
+        .dock > [href="/audios"] {
+            background-position-x: calc(-78px * 10 + 4px);
+        }
+
+        .dock > [href="/settings"] {
+            background-position-x: calc(-78px * 11 + 4px);
+        }
+
+        .dock > .disabled {
+            cursor: default;
+            opacity: 0.3;
+            -webkit-filter: grayscale(100%);
+            -moz-filter: grayscale(100%);
+            filter: grayscale(100%);
         }
     </style>
 </head>
 <body>
-<a href="/profile">Profile</a>
-<a href="/settings">Settings</a>
-<a href="/dialogs">Dialogs</a>
-<a href="/videos">Videos</a>
-<a href="/photos">Photos</a>
+<div class="urls">
+    <a href="/profile">Profile</a>
+    <a href="/settings">Settings</a>
+    <a href="/dialogs">Dialogs</a>
+    <a href="/videos">Videos</a>
+    <a href="/photos">Photos</a>
+</div>
+<img src="/images/icons.png">
+<div class="dock">
+    <a href="/feed" title="News"></a>
+    <a href="/profile" title="Profile"></a>
+    <a href="/feedback" title="Feedback" class="disabled"></a>
+    <a href="/dialogs" title="Messages"></a>
+    <a href="/phone" title="Call" class="disabled"></a>
+    <a href="/friends" title="Friends" class="disabled"></a>
+    <a href="/groups" title="Groups" class="disabled"></a>
+    <a href="/photos" title="Photos"></a>
+    <a href="/videos" title="Movies"></a>
+    <a href="/conference" title="Video" class="disabled"></a>
+    <a href="/audios" title="Music" data-open="right"></a>
+    <a href="/settings" title="Settings"></a>
+</div>
 </body>
 </html>

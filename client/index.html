@@ -148,8 +148,10 @@
 </script>
 
 <script type="text/template" id="view-user-item">
-    <div class="domain"></div>
-    <img class="avatar"/>
+    <a>
+        <div class="domain"></div>
+        <img class="avatar"/>
+    </a>
     <div class="buttons">
         <button class="friend-add">Follow</button>
         <button class="friend-remove">Unfollow</button>
@@ -169,21 +171,22 @@
         <input name="name"/>
     </div>
     <!--<div class="form-group">-->
-        <!--<label>Avatar</label>-->
-        <!--<input name="avatar" type="file"/>-->
+    <!--<label>Avatar</label>-->
+    <!--<input name="avatar" type="file"/>-->
     <!--</div>-->
     <div class="members"></div>
     <div class="selection"></div>
 </script>
 
 <script type="text/template" id="view-audio">
-    <div>
+    <div class="title">
         <div class="author"></div>
         <div class="name"></div>
         <div class="duration"></div>
+        <div class="bit_rate"></div>
     </div>
-    <audio controls>
-        <source />
+    <audio controls preload="none">
+        <source/>
     </audio>
 </script>
 
@@ -204,15 +207,13 @@
     <script src="/lib/moment/moment.js"></script>
     <!--<script src="/lib/faker/dist/faker.js"></script>-->
     <script src="/coffee/override.js"></script>
-    <script src="/coffee/app.js">
-
-
-    </script>
+    <script src="/coffee/app.js">\</script>
     <script src="/coffee/ui.js"></script>
     <script src="/coffee/models.js"></script>
     <script src="/coffee/views.js"></script>
     <script src="/coffee/layouts.js"></script>
     <script src="/coffee/controllers.js"></script>
+    <script src="/coffee/file.js"></script>
     <script src="/coffee/socket.js"></script>
     <!--<script src="/coffee/vkontakte.js"></script>-->
 </div>

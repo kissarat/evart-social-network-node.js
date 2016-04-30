@@ -124,7 +124,7 @@ function call_modules_method(name, $) {
 function Context(req) {
     this.config = config;
     this.o = o;
-    var raw_url = req.url.replace(/^\/api\//, '/');
+    var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
     console.log(raw_url);
     req.url = parse(raw_url);
     this.params = req.url.query;
@@ -307,6 +307,30 @@ Context.prototype = {
             return true;
         }
         return false;
+    },
+
+    hasAny: function (array) {
+        for(var i = 0; i < array.length; i++) {
+            if (this.has(array[i])) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    paramsObject: function (array) {
+        var params = {};
+        for(var i = 0; i < array.length; i++) {
+            var name = array[i];
+            if (this.has(name)) {
+                params[name] = this.param(name);
+            }
+        }
+        return params;
+    },
+    
+    ids: function () {
+        return $.param('ids').split('.').map(function (id) { return ObjectID(id) });
     },
 
     merge: function () {

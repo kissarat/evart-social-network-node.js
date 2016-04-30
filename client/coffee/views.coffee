@@ -194,9 +194,9 @@
       '.ip': 'ip'
 
   class Views.Dialog extends Marionette.CollectionView
-    template: '#view-dialog'
+#    template: '#view-dialog'
 #    childView: App.Layouts.MessageLayout
-    childViewContainer: '.messages'
+#    childViewContainer: '.messages'
 
 #    onRender: () ->
 #      App.dialog = @
@@ -218,11 +218,21 @@
         text: localStorage.getItem 'draft_' + id
       draft[target] = id
       draft = new App.Models.Message draft
-      editor = new App.Views.Editor model: draft
+      editor = new Views.Editor model: draft
       editorLayout = new App.Layouts.EditorLayout model: draft
       layout.showChildView 'middle', dialog
       layout.showChildView 'bottom', editorLayout
       editorLayout.showChildView 'editor', editor
+
+    @feed: (url) ->
+      if not url
+        url = '/api-cache/message/feed'
+      messageList = new App.Models.MessageList()
+      dialog = new Views.Dialog collection: messageList
+      $.get url, (messages) ->
+        messageList.add messages
+      return dialog
+
 
   class Views.Editor extends Marionette.ItemView
     template: '#view-message-editor'
@@ -423,6 +433,7 @@
   class Views.UserItem extends Marionette.ItemView
     template: '#view-user-item'
     ui:
+      a: 'a'
       domain: '.domain'
       avatar: 'img'
       buttons: '.buttons'
@@ -473,7 +484,7 @@
 
     onRender: () ->
       @ui.avatar.attr 'src', '/api/user/avatar?id=' + @model.get('_id')
-
+      @ui.a.attr 'href', '/view/' + @model.get('domain')
       @renderButtons()
 
   class Views.UserList extends Marionette.CollectionView
