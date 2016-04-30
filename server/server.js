@@ -480,6 +480,12 @@ Context.prototype = {
         return this.o.connection;
     },
 
+    get skip() {
+        return this.has('skip') ? this.param('skip') : 0;
+    },
+    
+    limit: 10,
+
     model: function () {
         this.o.apply(this.o, arguments);
     }
@@ -539,6 +545,8 @@ function serve($) {
     switch (typeof result) {
         case 'object':
             if (result instanceof god.Query || result instanceof god.Aggregate) {
+                result.skip($.skip);
+                result.limit($.limit);
                 result = result.exec();
             }
             if ('Promise' == result.constructor.name) {
@@ -554,6 +562,7 @@ function serve($) {
                             $.sendStatus(code.NOT_FOUND);
                         }
                     })
+                    
                     .catch(function (r) {
                         $.send(code.INTERNAL_SERVER_ERROR, {error: {
                             class: r.constructor.name,

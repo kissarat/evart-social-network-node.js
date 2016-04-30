@@ -36,6 +36,10 @@
     url: () ->
       '/api/message?' + $.param @params
 
+    fetchNextPage: () ->
+      @params.skip = (@params.skip || 0) + 10
+      @fetch remove: false
+
 #    fetch: (params) ->
 #      messageList = new Models.MessageList()
 #      messageList.params = params
@@ -44,15 +48,7 @@
     model: (attrs, options) ->
       new App.Models.Message attrs, options
 
-  window.reverse_time = (a, b) ->
-    a = new Date(a.get('time')).getTime()
-    b = new Date(b.get('time')).getTime()
-    if a < b
-      1
-    else if a > b
-      -1
-    else
-      0
+    comparator: sort_time
 
   class Models.Photo extends Models.Base
 

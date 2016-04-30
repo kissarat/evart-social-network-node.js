@@ -317,6 +317,7 @@ form
     height: 72px
     background: url("/images/icons.png") no-repeat
     &.disabled
+      display: none
       cursor: default
       opacity: 0.3
       -webkit-filter: grayscale(100%)
@@ -362,3 +363,7 @@ form
 
 #left, #right
   flex: 1
+
+.dialog
+  height: 60vh
+  overflow-y: scroll

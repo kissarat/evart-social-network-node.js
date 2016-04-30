@@ -108,6 +108,7 @@
         when code.FORBIDDEN then App.navigate 'profile'
     success: (data) ->
       App.user = data
+      App.trigger 'login'
       App.navigate 'profile'
 
   class Views.Signup extends Views.Form
@@ -198,11 +199,17 @@
 #    childView: App.Layouts.MessageLayout
 #    childViewContainer: '.messages'
 
-#    onRender: () ->
-#      App.dialog = @
-#
-#    onDestroy: () ->
-#      App.dialog = null
+    events:
+      'scroll': 'scroll'
+
+    scroll: (e) ->
+      delta = e.target.scrollTop
+      if delta < 100
+        @collection.fetchNextPage()
+
+    onRender: () ->
+      @$el.addClass 'dialog'
+      App.collection = @collection
 
     @build: (id, target, layout) ->
       if 'string' == typeof target

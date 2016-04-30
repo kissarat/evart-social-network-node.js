@@ -14,14 +14,14 @@ config =
 windowControls = (document.querySelector '#view-window').innerHTML
 
 window_handlers = () ->
-  @find('[title=close]').click () =>
-    $(@).hide()
-  @find('[title=maximize]').click () =>
-    $('.window').each (i, w) =>
-      if @.attr('id') == w.id
-        $(w).show()
-      else
-        $(w).toggle()
+#  @find('[title=close]').click () =>
+#    $(@).hide()
+#  @find('[title=maximize]').click () =>
+#    $('.window').each (i, w) =>
+#      if @.attr('id') == w.id
+#        $(w).show()
+#      else
+#        $(w).toggle()
 
 regions = {}
 _.each document.querySelectorAll('#root > div'), (region) ->
@@ -39,22 +39,22 @@ App.addRegions regions
 
 App.on 'start', ->
   $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
-      $('#boot-loading').hide()
-      $('#root').show()
-      if xhr.status <= code.UNAUTHORIZED
-        language = App.language
-        if language and 'en' != language
-          document.documentElement.setAttribute 'lang', language
-          $.getJSON "/languages/#{language}.json", (_dict) ->
-            window.dictionary = _dict
-            window.T = (name) -> dictionary[name] || name
-            boot xhr
-        else
+    $('#boot-loading').hide()
+    $('#root').show()
+    if xhr.status <= code.UNAUTHORIZED
+      language = App.language
+      if language and 'en' != language
+        document.documentElement.setAttribute 'lang', language
+        $.getJSON "/languages/#{language}.json", (_dict) ->
+          window.dictionary = _dict
+          window.T = (name) -> dictionary[name] || name
           boot xhr
       else
-        App.Views.show 'Error',
-          status: 'Server Error'
-          text: 'Service Temporarily Unavailable'
+        boot xhr
+    else
+      App.Views.show 'Error',
+        status: 'Server Error'
+        text: 'Service Temporarily Unavailable'
 
 boot = (xhr) ->
   App.controllers = {}
@@ -88,8 +88,8 @@ boot = (xhr) ->
       App.trigger 'login'
     catch ex
       console.warn 'User is not authorized'
-#  if '/' == location.pathname
-#    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
+  #  if '/' == location.pathname
+  #    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
   need_login = '/login' != location.pathname and not App.user
   Backbone.history.start
     pushState: true
@@ -177,7 +177,7 @@ Object.defineProperties App,
       $.cookie('lang') || document.documentElement.getAttribute 'lang'
 
 $('#select-language')
-  .val(App.language)
+.val(App.language)
 .change (e) ->
   $.cookie 'lang', e.target.value,
     expires: 365
@@ -190,7 +190,12 @@ App.on 'login', () ->
   .css('cursor', 'pointer')
   .click () ->
     $.get '/api/user/logout', () ->
+      App.trigger 'logout'
       App.navigate 'login'
+  $('#dock-container').show()
+
+App.on 'logout', () ->
+  $('#dock-container').hide()
 
 App.showCounter = (name, value) ->
   icon = $('#dock [href="/' + name + '"]')
@@ -202,3 +207,24 @@ App.showCounter = (name, value) ->
     icon.append counter
   else if counter
     counter[0].remove()
+
+
+window.reverse_time = (a, b) ->
+  a = new Date(a.get('time')).getTime()
+  b = new Date(b.get('time')).getTime()
+  if a < b
+    1
+  else if a > b
+    -1
+  else
+    0
+
+window.sort_time = (a, b) ->
+  a = new Date(a.get('time')).getTime()
+  b = new Date(b.get('time')).getTime()
+  if a > b
+    1
+  else if a < b
+    -1
+  else
+    0

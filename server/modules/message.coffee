@@ -87,13 +87,15 @@ populate = (r) ->
   .populate('target', '_id domain avatar')
   .populate('videos', '_id thumbnail_url thumbnail_width thumbnail_height')
   .populate('repost', '_id source target photos videos text')
-    .populate('children', '_id source target photos videos text time')
+  .populate('children', '_id source target photos videos text time')
 
 module.exports =
   POST: ($) ->
     message = new Message $.body
     message.source = $.user._id
     message.ip = $.req.connection.remoteAddress
+#    if $.has 'target'
+      
     if $.has 'parent_id'
       parent_id = $.param 'parent_id'
       message.save () ->
@@ -127,6 +129,7 @@ module.exports =
     else if $.has 'owner_id'
       r = Message.find owner: $.param 'owner_id'
     if r
+      r.sort('-time')
       populate r
     else
       $.sendStatus code.BAD_REQUEST
@@ -170,6 +173,8 @@ module.exports =
 #            $sum: '$unread'
       }
     ]
+#    .skip($.skip)
+#    .limit($.limit / 2)
     .exec $.wrap (_source_messages) ->
       source_messages = _source_messages
       Message.aggregate [
@@ -190,6 +195,8 @@ module.exports =
               $sum: '$unread'
         }
       ]
+#      .skip($.skip)
+#      .limit($.limit / 2)
       .exec $.wrap (_target_messages) ->
         target_messages = _target_messages
         dialogs_array = source_messages.concat target_messages
