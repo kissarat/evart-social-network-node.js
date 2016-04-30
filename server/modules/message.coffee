@@ -146,7 +146,9 @@ module.exports =
 
   read: ($) ->
     if $.has('id')
-      Message.update {_id: $.param('id')}, {unread: 0}
+      Message.update {_id: $.param('id')}, {$set: unread: 0}
+    if $.has('target_id')
+      Message.update {target: $.param('target_id'), unread: 1}, {$set: unread: 0}, {multi: true}
     else
       return false
 
@@ -175,8 +177,8 @@ module.exports =
           _id: '$target'
           message_id:
             $first: '$_id'
-#          unread:
-#            $sum: '$unread'
+          unread:
+            $sum: '$unread'
       }
     ]
 #    .skip($.skip)

@@ -49,6 +49,10 @@
     dialogs: () ->
       dialogs = new App.Models.MessageList
       dialogs.url = '/api/message/dialogs'
+      sum = (a, b) -> a + b
+      dialogs.bind 'add change', () ->
+        App.showCounter('dialogs',
+          dialogs.map((d) -> if d.get('unread') > 0 then 1 else 0).reduce(sum, 0))
       App.thresome
         middle: new App.Views.DialogList collection: dialogs
 
@@ -84,7 +88,6 @@
         layout.showChildView 'top', photoView
         App.Views.Dialog.build id, 'photo', layout
         layout
-
 
     routes:
       'photos': 'index'

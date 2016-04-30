@@ -150,11 +150,11 @@
           App.navigate 'video/' + video.model.get '_id'
         @videos.show videos
 
-    onShow: () ->
+#    onShow: () ->
 #      last_model = _.max(@model.collection.models, (model) -> new Date(model.get('time')).getTime())
 #      if last_model.get('_id') == @model.get('id')
-      if @el.nextElementSibling
-        @el.scrollIntoView(false)
+#      if @el.nextElementSibling
+#        @el.scrollIntoView(false)
 
     onRender: () ->
       @$el.attr('data-id', @model.get '_id')
@@ -175,11 +175,6 @@
 
       if @model.get 'unread'
         @$el.addClass 'unread'
-        setTimeout () =>
-#          $.get '/api/message/read?target_id=' + @model.get('target'), (result) =>
-#            if result.nModified > 0
-#              @$el.removeClass 'unread'
-#        , 3000
       @ui.time.html moment.utc(@model.get 'time').fromNow()
 
       if @model.get 'isRepost'

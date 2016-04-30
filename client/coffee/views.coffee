@@ -207,9 +207,27 @@
       if delta < 100
         @collection.fetchNextPage()
 
+    onRenderCollection: () ->
+      images = @el.querySelectorAll('img')
+      i = images.length
+      _.each images, (image) =>
+        image.addEventListener 'load', () =>
+          i--
+          if 0 == i
+            lastChild = @children.findByIndex @children.length - 1
+            lastChild.el.scrollIntoView false
+            target_id = @collection.params.target_id
+            predicate = (m) ->
+              target_id == m.get('target')._id and m.get('unread') > 0
+            if target_id and @collection.models.some predicate
+              target_id = @collection.params.target_id
+              read = () ->
+                $.post '/api/message/read?target_id=' + target_id
+              setTimeout read, 2000
+
     onRender: () ->
       @$el.addClass 'dialog'
-      App.collection = @collection
+#      App.collection = @collection
 
     @build: (id, target, layout) ->
       if 'string' == typeof target
@@ -230,6 +248,14 @@
       layout.showChildView 'middle', dialog
       layout.showChildView 'bottom', editorLayout
       editorLayout.showChildView 'editor', editor
+
+#      if @collection.params.target_id
+#        target_id = @collection.params.target_id
+#        setTimeout () =>
+#          $.post '/api/message/read?target_id=' + target_id, (result) => 0
+#            if result.nModified > 0
+#              @$el.removeClass 'unread'
+#        , 3000
 
     @feed: (url) ->
       if not url

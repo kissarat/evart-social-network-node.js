@@ -391,7 +391,10 @@ Context.prototype = {
             return;
         }
 
-        if (!this.res.finished) {
+        if (this.res.finished) {
+            console.error('Response already send');
+        }
+        else {
             if (2 == arguments.length) {
                 this.res.writeHead(status, {
                     'content-type': 'text/json; charset=utf-8'
@@ -403,10 +406,10 @@ Context.prototype = {
             }
             this.res.end(data);
 
-            if (this.agent) {
-                this.agent.time = Date.now();
-                this.agent.save();
-            }
+            // if (this.agent) {
+            //     this.agent.time = Date.now();
+            //     this.agent.save();
+            // }
         }
 
         if ('GET' != this.req.method) {
