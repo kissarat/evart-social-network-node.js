@@ -200,14 +200,15 @@ App.on 'logout', () ->
 
 App.showCounter = (name, value) ->
   icon = $('#dock [href="/' + name + '"]')
-  counter = icon.find 'counter'
-  if 0 == counter.length and value
-    counter = $('<div class="counter"></div>')
-  if value
-    counter.html value
-    icon.append counter
-  else if counter.length > 0
-    counter[0].remove()
+  if icon.length > 0
+    counter = icon.find '.counter'
+    if 0 == counter.length and value
+      counter = $('<div class="counter"></div>')
+    if value
+      counter.html value
+      icon.append counter
+    else if counter.length > 0
+      counter[0].remove()
 
 
 window.reverse_time = (a, b) ->

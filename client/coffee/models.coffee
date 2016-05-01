@@ -67,5 +67,7 @@
   class Models.UserList extends Backbone.Collection
     url: () ->
       '/api/user?' + $.param @params.attributes
+
+  class Models.Dock extends Backbone.Model
       
 #  class Models.UserSearch extends Backbone.Model

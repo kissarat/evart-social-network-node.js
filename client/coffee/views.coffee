@@ -203,8 +203,7 @@
       'scroll': 'scroll'
 
     scroll: (e) ->
-      delta = e.target.scrollTop
-      if delta < 100
+      if @el.scrollTop < 100
         @collection.fetchNextPage()
 
     onRenderCollection: () ->
@@ -214,16 +213,24 @@
         image.addEventListener 'load', () =>
           i--
           if 0 == i
-            lastChild = @children.findByIndex @children.length - 1
-            lastChild.el.scrollIntoView false
+#            lastChild = @children.findByIndex @children.length - 1
+#            if not @lastId or @lastId != lastChild.model.get('_id')
+#              lastChild.el.scrollIntoView false
+#              @lastId = lastChild.model.get('_id')
+#              @firstChild = @children.findByIndex 0
+#            else if @firstChild
+#              @firstChild.el.scrollIntoView false
             target_id = @collection.params.target_id
-            predicate = (m) ->
-              target_id == m.get('target')._id and m.get('unread') > 0
+            predicate = (m) =>
+              target_id == m.get('source')._id and m.get('unread') > 0
             if target_id and @collection.models.some predicate
               target_id = @collection.params.target_id
-              read = () ->
-                $.post '/api/message/read?target_id=' + target_id
-              setTimeout read, 2000
+              read = () =>
+                $.post('/api/message/read?target_id=' + target_id).then (result) =>
+                  if result.nModified > 0
+                    @read = true
+              if not @read
+                setTimeout read, 2000
 
     onRender: () ->
       @$el.addClass 'dialog'
@@ -434,7 +441,7 @@
       avatar: '.avatar'
       time: '.time'
       text: '.text'
-      unread: '.unread'
+      unread: '.unread-count'
       info: '.info'
 
     events:
@@ -454,7 +461,8 @@
       @ui.avatar.attr 'src', '/api/user/avatar?id=' + source._id
       unread = @model.get 'unread'
       if unread > 0
-        @ui.unread.val unread
+        @ui.unread.html unread
+        @$el.addClass 'unread'
       if @model.get('dialog_id') == source._id
         @ui.domain.html source.domain
       else
@@ -523,3 +531,8 @@
   class Views.UserList extends Marionette.CollectionView
     childView: Views.UserItem
 
+  App.dock = new App.Models.Dock()
+  App.dock.on 'change', (changes) ->
+    for k of @attributes
+      App.showCounter k, @get(k)
+    return

@@ -231,6 +231,22 @@ Context.prototype = {
         }
     },
 
+    notifyOne: function (target_id, data) {
+        if ('string' != typeof data) {
+            data = JSON.stringify(data);
+        }
+        this.getSockets(target_id).forEach(function (socket) {
+            socket.send(data);
+        });
+    },
+    
+    getSockets: function (user_id) {
+        if (!user_id) {
+            user_id = this.user._id;
+        }
+        return subscribers[user_id.toString()] || [];
+    },
+
     notify: function (target_id, event) {
         var data = {};
         for (var key in event) {
@@ -392,7 +408,7 @@ Context.prototype = {
         }
 
         if (this.res.finished) {
-            console.error('Response already send');
+            console.error('Response already send', data);
         }
         else {
             if (2 == arguments.length) {
@@ -548,8 +564,10 @@ function serve($) {
     switch (typeof result) {
         case 'object':
             if (result instanceof god.Query || result instanceof god.Aggregate) {
-                result.skip($.skip);
-                result.limit($.limit);
+                if (0 === result.op.indexOf('find')) {
+                    result.skip($.skip);
+                    result.limit($.limit);
+                }
                 result = result.exec();
             }
             if ('Promise' == result.constructor.name) {

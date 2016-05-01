@@ -59,6 +59,9 @@ img
   bottom: 0
   text-align: center
   width: 100%
+  //temporary
+  transform: scale(0.5)
+  bottom: -25px
 
 #dock
   position: relative
@@ -365,5 +368,14 @@ form
   flex: 1
 
 .dialog
+  display: flex
+  flex-direction: column-reverse
   height: 60vh
   overflow-y: scroll
+  .message-layout
+    flex-basis: auto
+
+.unread
+  background-color: greenyellow
+  &:hover
+    background-color: green

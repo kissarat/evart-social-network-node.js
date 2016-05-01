@@ -202,12 +202,13 @@ module.exports =
 
   avatar:
     GET: ($) ->
-      User.findOne $.param('id'), $.wrap (user) ->
+      User.findOne $.id, $.wrap (user) ->
         if user
           $.sendStatus code.MOVED_TEMPORARILY, 'Avatar found',
             location: if user.avatar then "/photo/#{user.avatar}.jpg" else "/images/avatar.jpg"
         else
           $.sendStatus code.NOT_FOUND, 'User not found'
+      return
 
     POST: ($) ->
       User.findOneAndUpdate({_id: $.user._id}, {avatar: $.param('photo_id')}).select('_id avatar').exec $.wrap (user) ->

@@ -148,7 +148,12 @@ module.exports =
     if $.has('id')
       Message.update {_id: $.param('id')}, {$set: unread: 0}
     if $.has('target_id')
-      Message.update {target: $.param('target_id'), unread: 1}, {$set: unread: 0}, {multi: true}
+      conditions = {target: $.user._id, source: $.param('target_id')} #, unread: 1}
+      $.notifyOne(target_id, {
+        type: 'read',
+        target_id: conditions.source
+      });
+      Message.update conditions, {$set: unread: 0}, { multi: true }
     else
       return false
 
@@ -179,6 +184,8 @@ module.exports =
             $first: '$_id'
           unread:
             $sum: '$unread'
+          count:
+            $sum: 1
       }
     ]
 #    .skip($.skip)
@@ -201,6 +208,8 @@ module.exports =
               $first: '$_id'
             unread:
               $sum: '$unread'
+            count:
+              $sum: 1
         }
       ]
 #      .skip($.skip)
@@ -231,6 +240,9 @@ module.exports =
             dialog = dialogs[message._id]
             message.unread = dialog.unread || 0
             message.dialog_id = dialog._id
+            message.count = dialog.count
             messages.push message
           $.send messages
+        return
+      return
     return

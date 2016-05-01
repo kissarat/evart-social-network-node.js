@@ -47,14 +47,8 @@
       return
 
     dialogs: () ->
-      dialogs = new App.Models.MessageList
-      dialogs.url = '/api/message/dialogs'
-      sum = (a, b) -> a + b
-      dialogs.bind 'add change', () ->
-        App.showCounter('dialogs',
-          dialogs.map((d) -> if d.get('unread') > 0 then 1 else 0).reduce(sum, 0))
       App.thresome
-        middle: new App.Views.DialogList collection: dialogs
+        middle: new App.Views.DialogList collection: App.getDialogs()
 
     feed: () ->
       App.mainRegion.show App.Views.Dialog.feed()
@@ -183,3 +177,15 @@
 
   App.widgets =
     videos: App.selectVideo
+
+  App.getDialogs = () ->
+    if not App._dialogs
+      dialogs = new App.Models.MessageList
+      dialogs.url = '/api/message/dialogs'
+      sum = (a, b) -> a + b
+      dialogs.bind 'add change', () ->
+        App.dock.set('dialogs',
+          dialogs.map((d) -> if d.get('unread') > 0 then 1 else 0).reduce(sum, 0))
+      App._dialogs = dialogs
+    return App._dialogs
+
