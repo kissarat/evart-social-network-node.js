@@ -102,7 +102,8 @@ module.exports =
         conditions.email = login
       else if /^[\d\-]+$/.exec login
         login = login.replace '-', ''
-        conditions.phone = login
+      else if /^[0-9a-z]{24}$/i.exec login
+        conditions._id = ObjectID(login)
       else
         conditions.domain = login
       User.findOne conditions, $.wrap (user) ->

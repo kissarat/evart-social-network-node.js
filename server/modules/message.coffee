@@ -100,8 +100,8 @@ module.exports =
     message = new Message $.body
     message.source = $.user._id
     message.ip = $.req.connection.remoteAddress
-#    if $.has 'target'
-      
+    if message.target
+      $.notifyOne message.target, $.merge(message.toJSON(), type: 'message')
     if $.has 'parent_id'
       parent_id = $.param 'parent_id'
       message.save () ->
@@ -149,7 +149,7 @@ module.exports =
       Message.update {_id: $.param('id')}, {$set: unread: 0}
     if $.has('target_id')
       conditions = {target: $.user._id, source: $.param('target_id')} #, unread: 1}
-      $.notifyOne(target_id, {
+      $.notifyOne(conditions.source, {
         type: 'read',
         target_id: conditions.source
       });

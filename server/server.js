@@ -12,6 +12,7 @@ var old_schema = require(__dirname + '/../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
+var _ = require('underscore');
 var code = require(__dirname + '/../client/code.json');
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
@@ -68,10 +69,10 @@ o.connection.on('open', function () {
         socketServer.on('connection', function (socket) {
             var $ = new Context(socket.upgradeReq, o.connection);
             $.socket = socket;
-            $.authorize(function (user) {
-                if (user) {
-                    var uid = user._id.toString();
-                    var cid = $.req.client_id;
+            $.authorize(function (agent) {
+                if (agent.user) {
+                    var uid = agent.user._id.toString();
+                    var cid = agent._id.toString();
                     var subscriber = subscribers[uid];
                     if (!subscriber) {
                         subscribers[uid] = subscriber = {};
@@ -82,17 +83,20 @@ o.connection.on('open', function () {
                     }
                     socket.on('close', function () {
                         delete subscriber[cid];
+                        if (_.isEmpty(subscriber)) {
+                            delete subscribers[uid];
+                        }
                     });
                     subscriber[cid] = $;
-
+                    // console.log('AUTHORIZE_SOCKET', subscribers);
                     socket.on('message', function (message) {
                         message = JSON.parse(message);
+                        console.log('SOCKET', message);
                         if (!message.target_id) {
                             return;
                         }
                         message.source_id = user._id;
-                        $.notify(message.target_id, message);
-                        console.log(message);
+                        $.notifyOne(message.target_id, message);
                     });
                 }
                 else {
@@ -125,7 +129,7 @@ function Context(req) {
     this.config = config;
     this.o = o;
     var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
-    console.log(raw_url);
+    // console.log('URL', raw_url);
     req.url = parse(raw_url);
     this.params = req.url.query;
     // req.cookies = qs.parse(req.headers.cookie, /;\s+/);
@@ -235,16 +239,23 @@ Context.prototype = {
         if ('string' != typeof data) {
             data = JSON.stringify(data);
         }
-        this.getSockets(target_id).forEach(function (socket) {
+        var sockets = this.getSockets(target_id);
+        console.log('NOTIFY_ONE', Object.keys(sockets), data);
+        for(var agent_id in sockets) {
+            var socket = sockets[agent_id];
             socket.send(data);
-        });
+        }
+    },
+    
+    getSubscribers: function() {
+        return subscribers;
     },
     
     getSockets: function (user_id) {
         if (!user_id) {
             user_id = this.user._id;
         }
-        return subscribers[user_id.toString()] || [];
+        return subscribers[user_id.toString()] || {};
     },
 
     notify: function (target_id, event) {
@@ -454,11 +465,13 @@ Context.prototype = {
     },
 
     authorize: function (cb) {
+        // var constructor_name = this.socket ? 'socket' : 'http';
         if (this.req.auth) {
             var self = this;
             Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function (agent) {
                 if (agent) {
                     self.agent = agent;
+                    // console.log('AUTHORIZE', agent.auth, constructor_name);
                 }
                 cb(agent);
             }));
@@ -495,7 +508,7 @@ Context.prototype = {
     },
 
     get db() {
-        console.warn('MongoDB connection usage');
+        // console.warn('MongoDB connection usage');
         return this.o.connection;
     },
 
@@ -577,7 +590,7 @@ function serve($) {
                             $.send(r.toObject ? r.  toObject() : r);
                         }
                         else if (arguments.length > 0 && undefined === r) {
-                            console.error('Undefined promise result');
+                            // console.error('Undefined promise result');
                         }
                         else {
                             $.sendStatus(code.NOT_FOUND);

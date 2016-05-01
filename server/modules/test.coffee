@@ -31,3 +31,11 @@ module.exports =
       result.sort () -> 0.5 - Math.random()
       $.send result
     return
+
+  socket: ($) ->
+    subscribers = $.getSubscribers();
+    keys = {}
+    for user_id, subscriber of subscribers
+      keys[user_id] = Object.keys subscriber
+    $.send keys
+    return
