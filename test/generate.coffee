@@ -6,7 +6,7 @@ MongoClient.connect config.mongo, (err, db) ->
   generator = require __dirname + '/generators/' + generator
   i = 0
   generator db,
-    increment: () ->
+    increment: (step = 1000) ->
       i++
-      if 0 == i % 1000
+      if 0 == i % step
         console.log i
