@@ -4,20 +4,19 @@ _ = require 'underscore'
 users = []
 
 module.exports = (db, $) ->
-  cursor = db.collection('users').find({friend: {$ne: null}});
+  cursor = db.collection('users').find();
   iterate = () ->
-    cursor.each (err, user) ->
+    cursor.nextObject (err, user) ->
       if err
         console.error err
       else
         sample = _.sample(users, _.random(0, 500))
         $.increment()
-  #      console.log sample.length
         if users.friend
           iterate()
         else
           users.push user._id
           if users.length > 2000
             users.splice(_.random(0, users.length - 1), 1)
-          db.collection('users').updateOne {_id: user._id}, {$set: {friend: sample}}, iterate
+          db.collection('users').updateOne {_id: user._id}, {$set: {friend: sample}}, {upsert: false}, iterate
   iterate()

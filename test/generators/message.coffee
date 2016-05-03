@@ -7,7 +7,7 @@ module.exports = (db, $) ->
   usersCollection = db.collection('users')
   cursor = usersCollection.find({friend: {$ne: null}}, {_id: 1})
   insert_user_messages = () ->
-    cursor.each (err, user) ->
+    cursor.nextObject (err, user) ->
       if err or not user
         console.log err
         insert_user_messages()

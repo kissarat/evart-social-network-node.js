@@ -431,6 +431,7 @@ Context.prototype = {
             else {
                 this.res.setHeader('content-type', 'text/json; charset=utf-8');
             }
+            // console.log('SEND_DATA');
             this.res.end(data);
 
             // if (this.agent) {

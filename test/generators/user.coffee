@@ -5,9 +5,13 @@ module.exports = (db, $) ->
   aggregation = [
     {$sample: {size: 50000}}
   ]
+#  i = 200
   db.collection('users').aggregate aggregation, (err, users) ->
     users = _.map users, (u) -> u._id
     insert_user = () ->
+#      i--
+#      if i < 0
+#        process.exit()
       user =
         domain: [faker.internet.domainWord(), _.random(10000, 50000)].join('_')
         phone: process.hrtime().join('')

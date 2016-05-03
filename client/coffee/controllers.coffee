@@ -47,8 +47,10 @@
       return
 
     dialogs: () ->
-      App.thresome
-        middle: new App.Views.DialogList collection: App.getDialogs()
+      layout = new App.Layouts.Thresome()
+      dialogList = new App.Views.DialogList collection: App.getDialogs()
+      App.mainRegion.show layout
+      layout.middle.show dialogList
 
     feed: () ->
       App.mainRegion.show App.Views.Dialog.feed()
@@ -182,10 +184,13 @@
     if not App._dialogs
       dialogs = new App.Models.MessageList
       dialogs.url = '/api/message/dialogs'
-      sum = (a, b) -> a + b
-      dialogs.bind 'add change', () ->
-        App.dock.set('dialogs',
-          dialogs.map((d) -> if d.get('unread') > 0 then 1 else 0).reduce(sum, 0))
+      dialogs.on 'add', (model) ->
+        if model.get('unread') > 0
+          App.dock.set 'dialogs', App.dock.get('dialogs') + 1
+        model.on 'change:unread', () ->
+          App.dock.set 'dialogs', App.dock.get('dialogs')
+          + if 0 == model.get('unread') then -1 else 1
+      dialogs.fetch()
       App._dialogs = dialogs
     return App._dialogs
 

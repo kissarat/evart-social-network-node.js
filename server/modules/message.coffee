@@ -131,7 +131,7 @@ module.exports =
       r = Message.find video: $.param 'video_id'
     else if $.has 'photo_id'
       r = Message.find photo: $.param 'photo_id'
-    # wall
+# wall
     else if $.has 'owner_id'
       r = Message.find owner: $.param 'owner_id'
     if r
@@ -146,103 +146,91 @@ module.exports =
 
   read: ($) ->
     if $.has('id')
-      Message.update {_id: $.param('id')}, {$set: unread: 0}
+      Message.update {_id: $.param('id')}, {
+        $set:
+          unread: 0
+      }
     if $.has('target_id')
       conditions = {target: $.user._id, source: $.param('target_id')} #, unread: 1}
       $.notifyOne(conditions.source, {
         type: 'read',
         target_id: conditions.source
       });
-      Message.update conditions, {$set: unread: 0}, { multi: true }
+      Message.update conditions, {
+        $set:
+          unread: 0
+      }, {multi: true}
     else
       return false
 
   feed: ($) ->
     friends = $.user.friend.map (f) -> ObjectID f
-#    console.log friends
-    Message.find owner: $in: friends
+    #    console.log friends
+    Message.find owner:
+      $in: friends
 
   dialogs: ($) ->
     me = $.user._id
-    source_messages = null
-    target_messages = null
+    Message.aggregate dialogs_condition(me), $.wrap (result) ->
+      user_ids = []
+      dialogs = []
+      for dialog in result
+        if dialog._id.source.toString() != me.toString()
+          dialog_id = dialog._id.source
+        else
+          dialog_id = dialog._id.target
+        if not _.some(user_ids, (user_id) -> user_id.toString() == dialog_id.toString())
+          dialog.dialog_id = dialog_id
+          dialogs.push dialog
+          user_ids.push dialog_id
+      user_ids.push me
 
-    Message.aggregate [
-      {
-        $sort:
-          time: -1
-      }
-      {
-        $match:
+      $.collection('users').find {
+        _id:
+          $in: user_ids
+      }, {_id: 1, domain: 1}, $.wrap (reader) ->
+        reader.toArray $.wrap (users) ->
+          for dialog in dialogs
+            dialog.target = _.find users, (u) ->
+              u._id.toString() == dialog._id.target.toString()
+            dialog.source = _.find users, (u) ->
+              u._id.toString() == dialog._id.source.toString()
+            delete dialog._id
+          $.send dialogs
+    return
+
+dialogs_condition = (me) -> [
+  {
+    $match:
+      $or: [
+        {
           source: me
-          target: $ne: null
-      }
-      {
-        $group:
-          _id: '$target'
-          message_id:
-            $first: '$_id'
-          unread:
-            $sum: '$unread'
-          count:
-            $sum: 1
-      }
-    ]
-#    .skip($.skip)
-#    .limit($.limit / 2)
-    .exec $.wrap (_source_messages) ->
-      source_messages = _source_messages
-      Message.aggregate [
+        }
         {
-          $sort:
-            time: -1
-        },
-        {
-          $match:
-            target: me
-        },
-        {
-          $group:
-            _id: '$source'
-            message_id:
-              $first: '$_id'
-            unread:
-              $sum: '$unread'
-            count:
-              $sum: 1
+          target: me
         }
       ]
-#      .skip($.skip)
-#      .limit($.limit / 2)
-      .exec $.wrap (_target_messages) ->
-        target_messages = _target_messages
-        dialogs_array = source_messages.concat target_messages
-#        dialogs = _.uniq dialogs, false, (dialog, i, dialogs) ->
-#          _.findLastIndex(dialogs, (dialog) -> dialog.target) == i
-        dialogs = {}
-        conditions =
-          _id:
-            $in: []
-        for dialog in dialogs_array
-          dialogs[dialog.message_id] = dialog
-          conditions._id.$in.push ObjectID(dialog.message_id)
-        fields =
-          source: 1
-          target: 1
-          text: 1
-          time: 1
-        Message.find(conditions, fields)
-        .populate('source target', '_id domain')
-        .exec $.wrap (results) ->
-          messages = []
-          for message in results
-            message = message.toJSON()
-            dialog = dialogs[message._id]
-            message.unread = dialog.unread || 0
-            message.dialog_id = dialog._id
-            message.count = dialog.count
-            messages.push message
-          $.send messages
-        return
-      return
-    return
+  }
+  {
+    $sort:
+      time: -1
+  }
+  {
+    $group:
+      _id:
+        source: '$source'
+        target: '$target'
+      message_id:
+        $first: '$_id'
+      unread:
+        $sum: '$unread'
+      count:
+        $sum: 1
+      time:
+        $first: '$time'
+      text:
+        $first: '$text'
+  }
+]
+
+
