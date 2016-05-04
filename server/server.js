@@ -15,7 +15,44 @@ var qs = require('querystring');
 var _ = require('underscore');
 var code = require(__dirname + '/../client/code.json');
 var modules_dir = fs.readdirSync(__dirname + '/modules');
+var util = require('util');
 var modules = {};
+
+class HttpResponse extends Error {
+    constuctor (code, data) {
+        this.code = code;
+        this.data = data;
+    }
+
+    toString () {
+        return JSON.stringify(this.data);
+    }
+}
+
+class Forbidden extends HttpResponse {
+    constructor(forbidden) {
+        if (forbidden instanceof Array) {
+            forbidden = fields(arguments);
+        }
+        super(code.FORBIDDEN, {
+            forbidden: forbidden
+        })
+    }
+}
+
+function fields(array) {
+    var object = {};
+    // for(var i = 0; i < array.length; i++) {
+    //     var field = array[i];
+    //     object[field.name] = field.value;
+    // }
+    return object;
+}
+
+var globals = [HttpResponse, Forbidden, fields];
+globals.forEach(function (exception) {
+    global[exception.constructor.name] = exception;
+});
 
 global.schema = {};
 
@@ -402,6 +439,21 @@ Context.prototype = {
         }
     },
 
+    allowFields: function (user_fields, admin_fields) {
+        var denies = [];
+        for(var key in this.body) {
+            if (('admin' == this.user.type && admin_fields.indexOf(key) < 0) || user_fields.indexOf(key) < 0) {
+                denies.push({
+                    name: key,
+                    value: 'deny'
+                })
+            }
+        }
+        if (denies.length > 0) {
+            throw new Forbidden(denies);
+        }
+    },
+
     send: function () {
         var object;
         var status = code.OK;
@@ -676,12 +728,14 @@ function exec($, action) {
                         })
                     }
                 }
-                else if ($.req.headers['content-type'].indexOf('json') > 0) {
+                else if ($.req.headers['content-type'].indexOf('json') > 0 || 'test' == $.req.url.route[0]) {
                     try {
-                        $.body = JSON.parse(data.toString('utf8'));
+                        data = data.toString('utf8');
+                        $.body = JSON.parse(data);
                         $.params = $.merge($.params, $.body);
                     }
                     catch (ex) {
+                        console.log(ex);
                         $.send(code.BAD_REQUEST, {
                             error: ex.getMessage()
                         })

@@ -97,6 +97,7 @@ populate = (r) ->
 
 module.exports =
   POST: ($) ->
+    allowFields(user_fields, admin_fields);
     message = new Message $.body
     message.source = $.user._id
     message.ip = $.req.connection.remoteAddress
@@ -233,4 +234,5 @@ dialogs_condition = (me) -> [
   }
 ]
 
-
+user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos', 'video', 'videos', 'text', 'repost'];
+admin_fields = ['domain', 'type'];

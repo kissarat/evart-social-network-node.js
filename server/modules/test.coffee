@@ -39,3 +39,6 @@ module.exports =
       keys[user_id] = Object.keys subscriber
     $.send keys
     return
+
+  update: ($) ->
+    $.collection($.get('entity')).updateOne({_id: $.id}, {$set: $.body});

@@ -14,18 +14,25 @@ global.schema.User = new god.Schema
     unique: true
 #    index:
 #      unique: true
+
   password:
     type: String
     required: true
+
   domain:
     type: String
     required: true
     match: /^[\w\._]{4,23}$/
     lowercase: true
     trim: true
-    unique: true
-#    index:
-#      unique: true
+    index:
+      unique: true
+
+  type:
+    type: String
+    enum: ['user', 'group', 'admin']
+    index:
+      unique: false
 
   code:
     type: String
