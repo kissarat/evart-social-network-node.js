@@ -23,5 +23,10 @@ register App,
   login: pull
 
   message: (message) ->
-    if App.dialog
-      App.dialog.collection.add message
+    dialog = App.getDialogs().findWhere dialog_id: message.source
+    add = () -> dialog.get('messages').add message
+    App.dock.set('dialogs')
+    if dialog
+      add()
+    else
+

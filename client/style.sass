@@ -142,6 +142,8 @@ img
         margin: 0 1.4em 10px
 
 .window
+  position: fixed
+  height: 100%
   padding: 6px
   //border: 0 solid transparent
   //height: calc(100vh - 120px)
@@ -184,7 +186,8 @@ img
 
 
 .window-content
-  overflow-y: scroll
+  overflow: hidden
+  display: flex
   .view
     //text-align: center
     padding: 4px
@@ -369,11 +372,7 @@ form
 
 .dialog
   display: flex
-  flex-direction: column-reverse
-  height: 60vh
-  overflow-y: scroll
-  .message-layout
-    flex-basis: auto
+  flex-direction: column
 
 .unread
   background-color: greenyellow
@@ -382,3 +381,18 @@ form
 
 .admin
   display: none
+
+.loading
+  background: url("/images/loading.svg") no-repeat center
+  filter: invert(100%)
+  -webkit-filter: invert(100%)
+  width: inherit
+  height: 210px
+
+.threesome
+  display: flex
+  flex-direction: column
+  .middle
+    overflow-y: scroll
+    flex: 1
+

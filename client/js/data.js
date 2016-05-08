@@ -129,10 +129,18 @@ var code = {
     USE_PROXY: 305
 };
 
+var _feature_exists = function (name) {
+    return name in window;
+};
+
+var features = {
+    peer: ['RTCPeerConnection', 'RTCSessionDescription', 'RTCIceCandidate'].every(_feature_exists)
+};
+
+
 var browser = {
     os: {}
 };
-
 
 (function () {
     var b;
@@ -206,10 +214,21 @@ var browser = {
     statistics.agent = browser;
 })();
 
+window.isFirefox = window.InstallTrigger && 'Firefox' == browser.name;
+
 function register(target, listeners) {
     var _add = target.addEventListener || target.on;
     for(var name in listeners) {
         _add.call(target, name, listeners[name])
+    }
+}
+
+function react(target, getter, listeners) {
+    for(var name in listeners) {
+        var listener = listeners[name];
+        target.on(name, function () {
+           listener.apply(getter.apply(target, arguments), arguments); 
+        });
     }
 }
 

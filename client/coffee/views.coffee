@@ -54,13 +54,10 @@
         else
           field = name
           if 'SELECT' == input.tagName
-            labels = ["None selected", "Single", "In a relationship", "Engaged", "Married", "In love",
-              "It's complicated", "Actively searching"]
-            options = [];
-            for i, label of labels
-              options.push
-                value: i
-                label: T label
+            options = {}
+            _.each input.querySelectorAll('option'), (option) ->
+              option.innerHTML = T option.innerHTML
+              options[option.value] = T option.innerHTML
             field =
               observe: name
               selectOptions: collection: options
@@ -206,6 +203,9 @@
       if @el.scrollTop < 100
         @collection.fetchNextPage()
 
+    onRender: () ->
+      @$el.addClass 'dialog'
+
     onRenderCollection: () ->
       images = @el.querySelectorAll('img')
       i = images.length
@@ -232,9 +232,8 @@
               if not @read
                 setTimeout read, 2000
 
-    onRender: () ->
-      @$el.addClass 'dialog'
-#      App.collection = @collection
+#    onRender: () ->
+#      App.mainRegion.currentView.$el.addClass 'dialog-window'
 
     @build: (id, target, layout) ->
       if 'string' == typeof target
@@ -255,14 +254,10 @@
       layout.showChildView 'middle', dialog
       layout.showChildView 'bottom', editorLayout
       editorLayout.showChildView 'editor', editor
-
-#      if @collection.params.target_id
-#        target_id = @collection.params.target_id
-#        setTimeout () =>
-#          $.post '/api/message/read?target_id=' + target_id, (result) => 0
-#            if result.nModified > 0
-#              @$el.removeClass 'unread'
-#        , 3000
+      return {
+        messageList: messageList
+        layout: layout
+      }
 
     @feed: (url) ->
       if not url
@@ -471,6 +466,10 @@
   class Views.DialogList extends Marionette.CollectionView
     childView: Views.LastMessage
 
+#    onRender: () ->
+#      $('<div class="loading"></div>')
+#      .appendTo(@$el);
+
   class Views.UserItem extends Marionette.ItemView
     template: '#view-user-item'
     ui:
@@ -530,6 +529,26 @@
 
   class Views.UserList extends Marionette.CollectionView
     childView: Views.UserItem
+
+  class Views.Conference extends Marionette.ItemView
+    template: '#view-conference'
+
+    events:
+      '[data-action="fullscreen"]': 'fullscreen'
+      '[data-action="phone"]': 'phone'
+      '[data-action="microphone"]': 'microphone'
+      '[data-action="camera"]': 'camera'
+      '[data-action="mute"]': 'mute'
+
+    ui:
+      video: 'video'
+      audio: 'audio'
+      audioSource: 'audio > source'
+      fullscreen: '[data-action="fullscreen"]'
+      phone: '[data-action="phone"]'
+      microphone: '[data-action="microphone"]'
+      camera: '[data-action="camera"]'
+      mute: '[data-action="mute"]'
 
   App.dock = new App.Models.Dock()
   App.dock.on 'change', (changes) ->

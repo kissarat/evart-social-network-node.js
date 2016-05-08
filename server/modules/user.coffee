@@ -168,15 +168,14 @@ module.exports =
     return
 
   PATCH: ($) ->
-    data = $.just $.body, ["domain", "city", "country", "address", "phone",
-      "password", "avatar", "name", "birthday", "languages", "relationship"]
-    User.findOneAndUpdate {_id: $.id}, {$set: data}, {new: true}
+    data = $.allowFields(user_fields, admin_fields)
+    User.findByIdAndUpdate $.id, {$set: data}, {new: true}
 
   GET: ($) ->
     params = ['id', 'domain']
     if $.hasAny params
       return User.findOne($.paramsObject params)
-      .select('domain city country address phone  avatar name birthday languages relationship')
+      .select('domain type city country address phone avatar name birthday languages relationship')
     else if $.has 'ids'
       r = User.find(_id: $in: $.ids('ids'))
     else
@@ -268,3 +267,7 @@ list_fields =
   friend: 'block'
   block: 'friend'
 
+user_fields = ["city", "country", "address", "phone",
+  "password", "avatar", "name", "birthday", "languages", "relationship"];
+
+admin_fields = ['domain', 'type'];

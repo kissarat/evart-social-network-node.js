@@ -69,5 +69,9 @@
       '/api/user?' + $.param @params.attributes
 
   class Models.Dock extends Backbone.Model
+    addNumber: (name, number) ->
+      value = @get name
+      value += number
+      @set name, value
       
 #  class Models.UserSearch extends Backbone.Model

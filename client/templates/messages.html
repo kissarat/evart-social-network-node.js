@@ -57,6 +57,17 @@
     <div class="text"></div>
 </script>
 
-<script type="text/template" id="view-dialog-list">
-    <div class="dialogs"></div>
+<script type="text/template" id="view-conference">
+    <video></video>
+    <audio>
+        <source/>
+    </audio>
+    <div class="controls">
+        <div data-action="fullscreen" class="fa fa-arrows-alt"></div>
+        <div data-action="phone" class="fa fa-phone"></div>
+        <div data-action="microphone" class="fa fa-microphone"></div>
+        <div data-action="camera" class="fa fa-video-camera"></div>
+        <div data-action="mute" class="fa fa-volume-up" title="Mute"></div>
+        <input data-id="volume" type="range" max="10"/>
+    </div>
 </script>

@@ -7,52 +7,18 @@ var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
 var fs = require('fs');
-var config = require(__dirname + '/config.json');
-var old_schema = require(__dirname + '/../app-old/schema.json');
+var old_schema = require('../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
 var _ = require('underscore');
-var code = require(__dirname + '/../client/code.json');
+
+var config = require('./config.json');
+var code = require('./code');
+var errors = require('./errors');
+
 var modules_dir = fs.readdirSync(__dirname + '/modules');
-var util = require('util');
 var modules = {};
-
-class HttpResponse extends Error {
-    constuctor (code, data) {
-        this.code = code;
-        this.data = data;
-    }
-
-    toString () {
-        return JSON.stringify(this.data);
-    }
-}
-
-class Forbidden extends HttpResponse {
-    constructor(forbidden) {
-        if (forbidden instanceof Array) {
-            forbidden = fields(arguments);
-        }
-        super(code.FORBIDDEN, {
-            forbidden: forbidden
-        })
-    }
-}
-
-function fields(array) {
-    var object = {};
-    // for(var i = 0; i < array.length; i++) {
-    //     var field = array[i];
-    //     object[field.name] = field.value;
-    // }
-    return object;
-}
-
-var globals = [HttpResponse, Forbidden, fields];
-globals.forEach(function (exception) {
-    global[exception.constructor.name] = exception;
-});
 
 global.schema = {};
 
@@ -83,22 +49,21 @@ o.connection.on('error', function (err) {
 
 o.connection.on('open', function () {
     server = http.createServer(function (req, res) {
-        //try {
-        var $ = new Context(req);
+        try {
+            var $ = new Context(req);
+            $.res = res;
+            $.subscribers = subscribers;
+            $.COOKIE_AGE_FOREVER = config.forever;
 
-        $.res = res;
-        $.subscribers = subscribers;
-        $.COOKIE_AGE_FOREVER = config.forever;
-
-        $.authorize(() => serve($));
-        //}
-        //catch (ex) {
-        //    if (ex.invalid) {
-        //        res.writeHead(code.BAD_REQUEST);
-        //        res.end(JSON.stringify(ex));
-        //    }
-        //    throw ex;
-        //}
+            $.authorize(() => serve($));
+        }
+        catch (ex) {
+            if (ex.invalid) {
+                res.writeHead(code.BAD_REQUEST);
+                res.end(JSON.stringify(ex));
+            }
+            throw ex;
+        }
     });
 
     server.listen(config.port, config.host, function () {
@@ -129,11 +94,12 @@ o.connection.on('open', function () {
                     socket.on('message', function (message) {
                         message = JSON.parse(message);
                         console.log('SOCKET', message);
-                        if (!message.target_id) {
-                            return;
+                        if (message.target_id) {
+                            $.notifyOne(message.target_id, message);
                         }
-                        message.source_id = user._id;
-                        $.notifyOne(message.target_id, message);
+                        else {
+                            console.warn('NO_TARGET', message.target_id);
+                        }
                     });
                 }
                 else {
@@ -273,21 +239,22 @@ Context.prototype = {
     },
 
     notifyOne: function (target_id, data) {
+        data.time = new Date().toISOString();
         if ('string' != typeof data) {
             data = JSON.stringify(data);
         }
         var sockets = this.getSockets(target_id);
-        console.log('NOTIFY_ONE', Object.keys(sockets), data);
-        for(var agent_id in sockets) {
-            var socket = sockets[agent_id];
-            socket.send(data);
+        // console.log('NOTIFY_ONE', target_id, Object.keys(sockets), data);
+        for (var agent_id in sockets) {
+            var $ = sockets[agent_id];
+            $.socket.send(data);
         }
     },
-    
-    getSubscribers: function() {
+
+    getSubscribers: function () {
         return subscribers;
     },
-    
+
     getSockets: function (user_id) {
         if (!user_id) {
             user_id = this.user._id;
@@ -374,7 +341,7 @@ Context.prototype = {
     },
 
     hasAny: function (array) {
-        for(var i = 0; i < array.length; i++) {
+        for (var i = 0; i < array.length; i++) {
             if (this.has(array[i])) {
                 return true;
             }
@@ -384,17 +351,23 @@ Context.prototype = {
 
     paramsObject: function (array) {
         var params = {};
-        for(var i = 0; i < array.length; i++) {
+        for (var i = 0; i < array.length; i++) {
             var name = array[i];
             if (this.has(name)) {
                 params[name] = this.param(name);
             }
         }
+        if (params.id) {
+            params._id = params.id;
+            delete params.id
+        }
         return params;
     },
-    
+
     ids: function () {
-        return $.param('ids').split('.').map(function (id) { return ObjectID(id) });
+        return $.param('ids').split('.').map(function (id) {
+            return ObjectID(id)
+        });
     },
 
     merge: function () {
@@ -440,18 +413,13 @@ Context.prototype = {
     },
 
     allowFields: function (user_fields, admin_fields) {
-        var denies = [];
-        for(var key in this.body) {
-            if (('admin' == this.user.type && admin_fields.indexOf(key) < 0) || user_fields.indexOf(key) < 0) {
-                denies.push({
-                    name: key,
-                    value: 'deny'
-                })
+        var data = {};
+        for (var key in this.body) {
+            if (('admin' == this.user.type && admin_fields.indexOf(key) >= 0) || user_fields.indexOf(key) >= 0) {
+                data[key] = this.body[key];
             }
         }
-        if (denies.length > 0) {
-            throw new Forbidden(denies);
-        }
+        return data;
     },
 
     send: function () {
@@ -533,7 +501,7 @@ Context.prototype = {
             cb();
         }
     },
-    
+
     just: function (object, keys) {
         var result = {};
         for (var key in object) {
@@ -545,7 +513,7 @@ Context.prototype = {
     },
 
     get id() {
-        if (!('id' in this.req)) {
+        if (!('id' in this.req) && this.req.url.query.id) {
             try {
                 this.req.id = ObjectID(this.req.url.query.id);
             }
@@ -568,7 +536,7 @@ Context.prototype = {
     get skip() {
         return this.has('skip') ? this.param('skip') : 0;
     },
-    
+
     limit: 10,
 
     model: function () {
@@ -621,8 +589,8 @@ function serve($) {
 
     var path = $.req.url.route.slice(0);
     var last = path[path.length - 1];
-    if (last && /^[a-z0-9]{24}$/.exec(last)) {
-        $.req.id = ObjectID(last);
+    if (last && /^[a-z0-9]{24}$/.test(last)) {
+        $.req.url.query.id = last;
         path.pop();
     }
     var result = walk($, modules, path);
@@ -640,7 +608,7 @@ function serve($) {
                 result
                     .then(function (r) {
                         if (r) {
-                            $.send(r.toObject ? r.  toObject() : r);
+                            $.send(r.toObject ? r.toObject() : r);
                         }
                         else if (arguments.length > 0 && undefined === r) {
                             // console.error('Undefined promise result');
@@ -649,12 +617,14 @@ function serve($) {
                             $.sendStatus(code.NOT_FOUND);
                         }
                     })
-                    
+
                     .catch(function (r) {
-                        $.send(code.INTERNAL_SERVER_ERROR, {error: {
-                            class: r.constructor.name,
-                            message: r.toString()
-                        }})
+                        $.send(code.INTERNAL_SERVER_ERROR, {
+                            error: {
+                                class: r.constructor.name,
+                                message: r.toString()
+                            }
+                        })
                     });
             }
             else if (null === result) {
@@ -692,7 +662,7 @@ function exec($, action) {
         try {
             // var result = $.validate($.params);
             // if ('valid' in result ? result.valid : result) {
-                return action($);
+            return action($);
             // }
             // else {
             //     $.send(code.BAD_REQUEST, {
@@ -703,6 +673,9 @@ function exec($, action) {
         catch (ex) {
             if (ex.invalid) {
                 $.send(code.BAD_REQUEST, ex);
+            }
+            else if (ex instanceof errors.Response) {
+                $.send(ex.code, ex.data);
             }
             else {
                 throw ex;

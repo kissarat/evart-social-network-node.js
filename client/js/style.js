@@ -1,4 +1,4 @@
-function findStyle(selector, match) {
+function findStyleRules(selector, match) {
     if (false !== match) {
         match = true;
     }
@@ -20,7 +20,7 @@ function findStyle(selector, match) {
 
 App.on('login', function () {
     if ('admin' == App.user.type) {
-        var rule = findStyle('.admin');
-        rule.removeProperty('display');
+        var rule = findStyleRules('.admin')[0];
+        rule.style.removeProperty('display');
     }
 });

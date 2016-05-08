@@ -1,5 +1,6 @@
 var config = require(__dirname + '/../config.json');
 var MongoClient = require('mongodb').MongoClient;
+var utils = require('../utils');
 
 var docs = [
     ["users", {
@@ -17,59 +18,14 @@ var ids = {
 
 var db;
 
-class Iterator {
-    constructor(array = []) {
-        this.i = -1;
-        this.array = array;
-    }
-
-    get current() {
-        return this.array[this.i];
-    }
-
-    next() {
-        this.i++;
-        return this.current;
-    }
-
-    rewind() {
-        this.i = -1;
-    }
-
-    get complete() {
-        return this.i < this.array.length;
-    }
-}
-
-class WrapIterator extends Iterator {
-    constructor(array, wrap) {
-        super(array);
-        this.wrap = wrap;
-    }
-
-    get current() {
-        return this.wrap(super.current);
-    }
-}
-
-var iterator = new WrapIterator(docs, function (current) {
-    return {
-        get entity() {
-            return current[0];
-        },
-
-        get doc() {
-            return current[1];
-        }
-    }
-});
+var iterator = new utils.Iterator(docs);
 
 function remove() {
-    if (iterator.complete) {
+    if (iterator.can) {
         var record = iterator.next();
         var entity_ids = {};
-        ids[record.entity].forEach(function (id) {
-            entity_ids[id] = record.doc[id];
+        ids[record[0]].forEach(function (id) {
+            entity_ids[id] = record[1][id];
         });
         db.collection(record[0]).remove(entity_ids, function (err, result) {
             if (err) {
@@ -85,9 +41,9 @@ function remove() {
 }
 
 function insert() {
-    if (iterator.complete) {
+    if (iterator.can) {
         var record = iterator.next();
-        db.collection(record.entity).insert(record.doc, function (err, result) {
+        db.collection(record[0]).insert(record[1], function (err, result) {
             if (err) {
                 console.error(err);
             }

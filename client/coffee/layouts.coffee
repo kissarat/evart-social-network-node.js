@@ -2,6 +2,9 @@
   class Layouts.Thresome extends Marionette.LayoutView
     template: '#view-thresome-layout'
 
+    attributes:
+      class: 'threesome'
+
     regions:
       top: '.top'
       middle: '.middle'
@@ -59,8 +62,7 @@
       if _.size(@videoList) > 0
         @model.set 'videos', @videoList.pluck '_id'
       @model.set 'text', @$('textarea').val()
-      $.sendJSON 'POST', '/api/message', @model.toJSON(), () ->
-        console.log arguments
+      $.sendJSON 'POST', '/api/message', @model.toJSON()
 
   class Layouts.MessageLayout extends Marionette.LayoutView
     template: '#view-message-layout'

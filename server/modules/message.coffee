@@ -97,8 +97,7 @@ populate = (r) ->
 
 module.exports =
   POST: ($) ->
-    allowFields(user_fields, admin_fields);
-    message = new Message $.body
+    message = new Message $.allowFields(user_fields, admin_fields);
     message.source = $.user._id
     message.ip = $.req.connection.remoteAddress
     if message.target

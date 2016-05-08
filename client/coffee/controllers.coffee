@@ -43,7 +43,13 @@
     index: (target_id) ->
       layout = new App.Layouts.Thresome()
       App.mainRegion.show layout
-      App.Views.Dialog.build target_id, 'target', layout
+      result = App.Views.Dialog.build target_id, 'target', layout
+      dialogs = App.getDialogs();
+      dialogs.on 'add', (dialog) ->
+        if target_id == dialog.get('dialog_id')
+          dialog.set 'messages', result.messageList
+      conference = new App.Views.Conference()
+      result.layout.top.show conference
       return
 
     dialogs: () ->
@@ -184,6 +190,7 @@
     if not App._dialogs
       dialogs = new App.Models.MessageList
       dialogs.url = '/api/message/dialogs'
+      App.dock.set('dialogs', 0)
       dialogs.on 'add', (model) ->
         if model.get('unread') > 0
           App.dock.set 'dialogs', App.dock.get('dialogs') + 1
@@ -193,4 +200,3 @@
       dialogs.fetch()
       App._dialogs = dialogs
     return App._dialogs
-

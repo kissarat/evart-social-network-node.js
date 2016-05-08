@@ -8,6 +8,32 @@ config =
   socket:
     address: 'ws://' + location.hostname + '/socket'
     wait: 800
+  peer:
+    servers: [
+      urls: [
+        'stun:stun.l.google.com:19302',
+        'stun:stun2.l.google.com:19302',
+        'stun:stun3.l.google.com:19302',
+        'stun:stun.services.mozilla.com'
+      ]
+    ]
+    constants: [
+      DtlsSrtpKeyAgreement: true
+    ]
+
+features =
+  peer:
+    available: !!window.RTCPeerConnection
+  notification:
+    available: !!window.Notification
+
+debug =
+  trace: () ->
+    if DEV
+      console.log.apply console, arguments
+  error: () ->
+    if DEV
+      console.error.apply console, arguments
 
 @App = new Marionette.Application()
 
@@ -31,6 +57,14 @@ _.each document.querySelectorAll('#root > div'), (region) ->
   regions[id + 'Region'] = "##{id} .window-content"
   window_handlers.call $(region)
 App.addRegions regions
+
+#for name, region of App.getRegions()
+#  region.on 'show', () ->
+#    view = @currentView
+#    if _instanceof(view, App.Layouts.Thresome)
+#      view.middle.on 'show', () ->
+#        className = view.$el.attr('class')
+#        region.currentView.$el.addClass className + '-window'
 
 @App.config = config
 
@@ -210,6 +244,25 @@ App.showCounter = (name, value) ->
     else if counter.length > 0
       counter[0].remove()
 
+App.isFullscreen = () ->
+  !!document.fullScreenElement
+
+App.measure = (bytes) ->
+  sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  if 0 == bytes
+    '0 Byte'
+  else
+    i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+    return (bytes / Math.pow(1024, i)).toPrecision(4) + ' ' + sizes[i]
+
+App.random = (length) ->
+  bytes = new Uint8Array(length)
+  crypto.getRandomValues(bytes)
+  str = bytes2base64(bytes)
+  str = str.slice(0, -2)
+  str = str.replace(/\+/g, 'z')
+  str = str.replace(/\//g, 'Z')
+  return str
 
 window.reverse_time = (a, b) ->
   a = new Date(a.get('time')).getTime()
