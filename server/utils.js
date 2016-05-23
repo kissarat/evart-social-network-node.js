@@ -86,7 +86,7 @@ function idType(name) {
     };
 }
 
-function hash(data, cb) {
+function hash(data) {
     var algorithm = crypto.createHash('sha256');
     data += config.salt;
     algorithm.update(data);

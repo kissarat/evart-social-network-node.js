@@ -1,7 +1,7 @@
 module.exports =
   query: ($) ->
-    q = if $.has 'q' then $.param 'q' else {}
-    q = JSON.parse(new Buffer(q, 'base64'))
+    q = if $.has 'q' && $.param('q').trim() then q else false
+    q = if q then JSON.parse(new Buffer($.param 'q', 'base64')) else {}
     $.collection($.param 'c').find(q).skip($.skip).limit($.limit).toArray $.answer
 
   collections: ($) ->
@@ -12,3 +12,6 @@ module.exports =
     for k in $.param('s').split('.')
       s[k] = 1
     $.data.findOne $.param('c'), $.id, s, $.answer
+
+  DELETE: ($) ->
+    $.collection($.param 'c').remove({_id: $.id})

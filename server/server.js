@@ -1,14 +1,11 @@
 'use strict';
 
 require('colors');
-var MongoClient = require('mongodb').MongoClient;
 var god = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
 var fs = require('fs');
-// var old_schema = require('../app-old/schema.json');
-var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
 var _ = require('underscore');
@@ -583,7 +580,7 @@ function serve($) {
         return $.send({
             type: 'api',
             name: 'socex',
-            version: 0.2,
+            version: 0.3,
             dir: Object.keys(modules)
         });
     }

@@ -19,27 +19,27 @@
 <body>
 <div id="unavailable">Service is unavailable</div>
 <div id="root" style="display: none">
-<select id="collection"></select>
-<button id="showCollection" type="button">show</button>
-<form>
-    <fieldset>
-        <legend>Field</legend>
-        <input name="field"/>
-        <select name="operator">
-            <option value="equals">Equals</option>
-            <option value="contains">Contains</option>
-        </select>
-        <input name="value"/>
-    </fieldset>
-</form>
-<table>
-    <thead>
-    <tr>
-        <th class="action">Actions</th>
-    </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+    <select id="collection"></select>
+    <button id="showCollection" type="button">show</button>
+    <form>
+        <fieldset>
+            <legend>Field</legend>
+            <input name="field"/>
+            <select name="operator">
+                <option value="equals">Equals</option>
+                <option value="contains">Contains</option>
+            </select>
+            <input name="value"/>
+        </fieldset>
+    </form>
+    <table>
+        <thead>
+        <tr>
+            <th class="action">Actions</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 <script>
     var skip = 0;
@@ -58,10 +58,6 @@
                         .appendTo(thead);
             }
         }
-    }
-
-    function remove() {
-        this.parentNode.remove();
     }
 
     function $tr(object) {
@@ -88,15 +84,42 @@
             }
         }
 
+        $('<td>X</td>')
+                .click(function () {
+                    var params = $.param({
+                        c: collection.value,
+                        id: object._id
+                    });
+                    $.ajax({
+                        url: '/api/admin?' + params,
+                        type: 'DELETE',
+                        success: function () {
+                            query();
+                        }
+                    });
+                })
+                .appendTo(tr);
+
         return tr;
     }
 
-    var q = null;
     var field = $('[name=field]');
 
     var collection = document.getElementById('collection');
 
     function query(q) {
+        if (!q) {
+            q = location.hash.length > 0 ? decodeURIComponent(location.hash.slice(1)) : null;
+            if ('string' == typeof q && !q.trim()) {
+                q = null;
+            }
+        }
+        if ('string' == typeof q) {
+            q = q.replace('#', '').trim();
+        }
+        if (q) {
+            location.hash = encodeURIComponent(JSON.stringify(q));
+        }
         var params = {
             c: collection.value,
             skip: skip,
@@ -105,10 +128,12 @@
         if (q) {
             params.q = btoa(JSON.stringify(q));
         }
+
         var tbody = document.querySelector('tbody');
         $.getJSON('/api/admin/query?' + $.param(params), function (array) {
             thead.empty();
             tbody.innerHTML = '';
+            location.hash = $.param(q);
             array.forEach(function (doc) {
                 $thead(doc);
                 var tr = $tr(doc)[0];
@@ -126,7 +151,7 @@
         switch ($('[name=operator]').val()) {
             case 'equals':
                 q = {};
-                q[field.val()] = this.value;
+                q[field.val()] = $('[name=value]').val();
                 break;
             case 'contains':
                 q = {};
