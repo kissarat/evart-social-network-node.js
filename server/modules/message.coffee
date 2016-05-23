@@ -1,9 +1,13 @@
 god = require 'mongoose'
 ObjectID = require('mongodb').ObjectID
 code = require __dirname + '/../../client/code.json'
+utils = require '../utils'
 _ = require 'underscore'
 
+
 global.schema.Message = god.Schema
+  _id:  utils.idType('Message')
+
 #  type:
 #    type: String
 #    enum: ['wall']

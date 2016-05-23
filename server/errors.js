@@ -1,3 +1,5 @@
+'use strict';
+
 var code = require('./code');
 var utils = require('./utils');
 

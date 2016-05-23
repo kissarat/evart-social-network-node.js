@@ -12,9 +12,7 @@ S = require 'string'
 gulp.task 'app', ->
   version = Date.now()
   string = fs.readFileSync 'client/index.html'
-  string = string.toString('utf8').replace /\s*\n+\s*/mg, ' '
-  string = string.replace />\s*</mg, '><'
-  document = jsdom string
+  document = jsdom string.toString('utf8')
   files = ['\n(function(version){']
   _.each (document.querySelectorAll 'script'), (script) ->
     if script.getAttribute 'src'
@@ -58,6 +56,8 @@ gulp.task 'app', ->
     comment.parentNode.removeChild comment
   fse.mkdirp 'app/languages'
   string = document.documentElement.outerHTML
+#  string = string.replace /\s*\n+\s*/mg, ' '
+  string = string.replace />\s*</mg, '><'
   string = '<!DOCTYPE html>\n' + string
   fs.writeFileSync 'app/index.html', string
   fs.readdirSync('client/languages').filter((name) -> /\.json$/.test name).forEach (name) ->

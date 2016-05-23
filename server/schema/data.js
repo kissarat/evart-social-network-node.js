@@ -8,7 +8,7 @@ var docs = [
         "type": "admin",
         "phone": "380671541943",
         "email": "kissarat@gmail.com",
-        "password": "1"
+        "hash": "RMlDIlc4/ChTfFO8EeUnOo1OGNu5zdWBg2OKFvI7pP8="
     }]
 ];
 

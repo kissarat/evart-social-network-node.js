@@ -1,9 +1,12 @@
 rs = require 'randomstring'
 god = require 'mongoose'
+utils = require '../utils'
 code = require __dirname + '/../../client/code.json'
 
 
 global.schema.Agent = new god.Schema
+  _id: utils.idType('Agent')
+
   auth:
     type: String
     required: true
@@ -43,8 +46,8 @@ module.exports =
           agent.auth = $.req.auth
       agent.time = Date.now()
       agent.save $.wrap () ->
-        if not $.req.auth
-          $.setCookie 'auth', agent.auth, $.config.FOREVER
+        if (Math.random() > (1 - config.auth_generation)) and not $.req.auth
+          $.setCookie 'auth', agent.auth, config.FOREVER
         if agent.user
           $.send agent.user.toObject()
         else

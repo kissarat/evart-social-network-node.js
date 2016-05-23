@@ -35,6 +35,21 @@ class App.Peer extends Backbone.Events
   isClosed: () -> ['closed', 'disconnected', 'failed'].indexOf(@connection.iceConnectionState) >= 0
   isCompleted: () -> @isClosed and 'completed' == @connection.iceConnectionState
 
+  offer: (options) ->
+    @connection.createOffer(options)
+    .then (offer) =>
+      @connection.setLocalDescription(offer)
+
+  answer: (offer, options) ->
+    if not _instanceof(offer, RTCSessionDescription)
+      offer = new RTCSessionDescription
+      type: 'offer'
+      sdp: if 'string' == typeof offer then offer else offer.sdp
+    @connection.setRemoteDescription(offer).then () ->
+      @connection.createAnswer(options).then (answer) ->
+        @connection.setLocalDescription(answer)
+
+
   @makeMediaConstraints: (audio, video) ->
     audio = !!audio
     video = !!video

@@ -1,10 +1,13 @@
 rs = require 'randomstring'
 god = require 'mongoose'
-code = require __dirname + '/../../client/code.json'
 ObjectID = require('mongodb').ObjectID
+crypto = require 'crypto'
+utils = require '../utils'
 
 
 global.schema.User = new god.Schema
+  _id: utils.idType('User')
+
   phone:
     type: String
     required: true
@@ -16,6 +19,10 @@ global.schema.User = new god.Schema
 #      unique: true
 
   password:
+    type: String
+    required: true
+
+  hash:
     type: String
     required: true
 
@@ -96,14 +103,12 @@ global.schema.User = new god.Schema
     ref: 'User'
   ]
 
-
 module.exports =
   login: ($) ->
     if $.user
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
-      conditions =
-        password: $.post 'password'
+      conditions = hash: utils.hash $.post('password')
       login = $.post('login').replace /[\(\)\s]/, ''
       if '@' in login
         conditions.email = login
@@ -131,7 +136,7 @@ module.exports =
                 message: 'Unregistered agent'
         else
           $.sendStatus code.UNAUTHORIZED
-    return
+      return
 
   logout: ($) ->
     conditions =
@@ -162,6 +167,7 @@ module.exports =
       $.sendStatus code.FORBIDDEN, 'User is authorized'
     else
       data = $.just $.body, ['domain', 'phone', 'password']
+      data.hash = $.param 'password'
       user = new User data
       user.save $.wrap () ->
         $.send code.CREATED, _id: user._id

@@ -1,3 +1,5 @@
+crypto = require 'crypto'
+
 random = (model, query, populate, number, cb) ->
   model.count query, (err, c) ->
     q = model.find query
@@ -42,3 +44,19 @@ module.exports =
 
   update: ($) ->
     $.collection($.get('entity')).updateOne({_id: $.id}, {$set: $.body});
+
+  hashes: ($) ->
+    text = 'Hello World'
+    hashes = crypto.getHashes()
+    result = {}
+    f = () ->
+      if hash = hashes.shift()
+        algorithm = crypto.createHash hash
+        algorithm.on 'readable', () ->
+          result[hash] = algorithm.read().toString('base64')
+          f()
+        algorithm.write(text)
+        algorithm.end()
+      else
+        $.send result
+    f()

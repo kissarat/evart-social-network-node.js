@@ -9,6 +9,9 @@
   "auth": {
     "length": 40
   },
+  "salt": "P<Ch-ish0lier",
+  "auth_generation": 0.8,
+  "machine_id": 1,
   "photo": {
     "width": 1536,
     "quality": 74,

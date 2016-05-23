@@ -7,13 +7,14 @@ var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
 var fs = require('fs');
-var old_schema = require('../app-old/schema.json');
+// var old_schema = require('../app-old/schema.json');
 var schema_validator = require('jsonschema');
 var url_parse = require('url').parse;
 var qs = require('querystring');
 var _ = require('underscore');
 
-var config = require('./config.json');
+global.config = require('./config.json');
+global.code = require('../client/code.json');
 var code = require('./code');
 var errors = require('./errors');
 
@@ -382,7 +383,7 @@ Context.prototype = {
     },
 
     validate: function (object) {
-        return schema_validator.validate(object, old_schema);
+        return true; // schema_validator.validate(object, old_schema);
     },
 
     getUserAgent: function () {
@@ -764,7 +765,7 @@ function database($) {
     };
 
     function resolve_callback(cb) {
-        if (cb) {
+        if ('function' == typeof cb) {
             return $.wrap(result => {
                 if (result) {
                     cb(result)
@@ -774,6 +775,9 @@ function database($) {
                 }
             })
         }
+        // else if (cb) {
+        //     throw cb.constructor.name;
+        // }
         else {
             return $.answer;
         }
@@ -807,7 +811,7 @@ function database($) {
 
         findOne: function (entity, id, cb) {
             if (!id) {
-                id = $('id');
+                id = $.param('id');
             }
             if (id instanceof ObjectID) {
                 id = {_id: id};

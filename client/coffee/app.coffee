@@ -37,6 +37,9 @@ debug =
 
 @App = new Marionette.Application()
 
+App.config = config
+App.features = features
+
 windowControls = (document.querySelector '#view-window').innerHTML
 
 window_handlers = () ->
@@ -65,8 +68,6 @@ App.addRegions regions
 #      view.middle.on 'show', () ->
 #        className = view.$el.attr('class')
 #        region.currentView.$el.addClass className + '-window'
-
-@App.config = config
 
 @dictionary = null
 @T = (name) -> name
