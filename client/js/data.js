@@ -267,6 +267,10 @@ function logPromise(p) {
         });
 }
 
+function preventDefault(e) {
+    e.preventDefault();
+}
+
 Object.freeze(KeyCode);
 Object.freeze(emoji);
 Object.freeze(SocketReadyState);

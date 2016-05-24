@@ -44,6 +44,7 @@ extract = (agent) ->
   if agent.user
     result.user =
       _id: agent.user._id
+      type: agent.user.type
       domain: agent.user.domain
       verified: !!agent.user.code
   return result

@@ -35,6 +35,9 @@ global.schema.User = new god.Schema
     index:
       unique: true
 
+  status:
+    type: String
+
   type:
     type: String
     enum: ['user', 'group', 'admin']
@@ -93,12 +96,12 @@ global.schema.User = new god.Schema
     get: ->
       !@code
 
-  friend: [
+  follow: [
     type: god.Schema.Types.ObjectId
     ref: 'User'
   ]
 
-  block: [
+  deny: [
     type: god.Schema.Types.ObjectId
     ref: 'User'
   ]
@@ -148,7 +151,7 @@ module.exports =
         user: ''
     Agent.update conditions, change
 
-  status: ($) ->
+  info: ($) ->
     conditions = auth: $.req.auth
     Agent.findOne(conditions).populate('user').exec $.wrap (agent) ->
       result = found: false
@@ -161,6 +164,11 @@ module.exports =
           result.found = true
       $.send result
     return
+
+  status: ($) ->
+    status = $.param 'status'
+    status = status.trim().replace /\s+/g, ' '
+    User.update {_id: $.id}, {$set: status: status}
 
   POST: ($) ->
     if $.user
@@ -179,30 +187,23 @@ module.exports =
 
   GET: ($) ->
     params = ['id', 'domain']
-    if $.hasAny params
+    fields = 'domain status type city country address phone avatar name birthday languages relationship'
+    if $.hasAny(params) and not $.has 'list'
       return User.findOne($.paramsObject params)
-      .select('domain type city country address phone avatar name birthday languages relationship')
+      .select(fields)
     else if $.has 'ids'
-      r = User.find(_id: $in: $.ids('ids'))
+      return User.find(_id: $in: $.ids('ids'))
+      .select(fields)
     else
-      conditions = []
-      if $.has 'search'
-        search = $.param 'search'
-        search = search.replace /\s+/g, '.*'
-        conditions.push domain: $regex: search
-      ands = []
-      for param in ['country', 'city', 'sex', 'relationship']
-        if $.has param
-          condition = {}
-          condition[param] = $.param param
-          ands.push condition
-      if ands.length > 0
-        conditions.push $and: ands
-      if conditions.length > 0
-        r = User.find($or: conditions)
+      if $.has('domain') and $.has('list')
+        list_name = $.param 'list'
+        if list_name not in ['follow', 'deny']
+          $.invalid 'list', 'is not follow or deny'
+        User.findOne(domain: $.param 'domain').select(list_name).then (user) ->
+          return search($, user[list_name])
       else
-        r = User.find()
-    r.select '_id domain name'
+        return search($)
+      return
 
   verify:
     POST: ($) ->
@@ -218,7 +219,7 @@ module.exports =
       User.findOne $.id, $.wrap (user) ->
         if user
           $.sendStatus code.MOVED_TEMPORARILY, 'Avatar found',
-            location: if user.avatar then "/photo/#{user.avatar}.jpg" else "/images/avatar.jpg"
+            location: if user.avatar then "/photo/#{user.avatar}.jpg" else "/images/avatar.png"
         else
           $.sendStatus code.NOT_FOUND, 'User not found'
       return
@@ -270,10 +271,34 @@ toggle = (array, element) ->
   result
 
 list_fields =
-  friend: 'block'
-  block: 'friend'
+  follow: 'deny'
+  deny: 'follow'
 
 user_fields = ["city", "country", "address", "phone",
   "password", "avatar", "name", "birthday", "languages", "relationship"];
 
 admin_fields = ['domain', 'type'];
+
+search = ($, ids) ->
+#  new Promise (resolve, reject) ->
+  ORs = []
+  if $.has 'search'
+    search = $.param 'search'
+    search = search.replace /\s+/g, '.*'
+    for name in ['domain', 'surname']
+      d = {}
+      d[name] = $regex: search
+      ORs.push d
+  ands = {}
+  if ORs.length > 0
+    ands.$or = ORs
+  for param in ['country', 'city', 'sex', 'forename', 'relationship', 'type']
+    if $.has param
+      ands[param] = $.param param
+  fields = '_id type forename surname domain name type city address avatar sex'
+  if ids
+    ands._id = $in: ids.map (id) -> ObjectID(id)
+  r = User.find ands
+  r.select fields
+  r.exec $.wrap (users) ->
+    $.send users

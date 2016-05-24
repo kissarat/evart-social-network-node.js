@@ -704,11 +704,20 @@ function exec($, action) {
                         data = data.toString('utf8');
                         $.body = JSON.parse(data);
                         $.params = $.merge($.params, $.body);
+                        for(var key in $.params) {
+                            var value = $.params[key];
+                            if (value.replace) {
+                                $.params[key] = value
+                                    .replace(/</g, '&lt;')
+                                    .replace(/"([^"]+)"/g, '«$1»')
+                                    .replace(/"/g, '&quot;');
+                            }
+                        }
                     }
                     catch (ex) {
                         console.log(ex);
                         $.send(code.BAD_REQUEST, {
-                            error: ex.getMessage()
+                            error: ex
                         })
                     }
                 }

@@ -12,8 +12,19 @@
   class Models.User extends Models.Base
     urlRoot: '/api/user'
 
-    isFriend: (other) ->
-      (other || App.user).friend.indexOf(@model.get('_id')) >= 0
+    @getName: (model) ->
+      name = []
+      if model.get('name')
+        name.push model.get('name')
+      else
+        if model.get('forename')
+          name.push model.get('forename')
+        if model.get('surname')
+          name.push model.get('surname')
+      if name.length > 0
+        name = name.join(' ')
+      else
+        name = model.get('domain')
 
   class Models.UserList extends Backbone.Collection
     model: (attrs, options) ->

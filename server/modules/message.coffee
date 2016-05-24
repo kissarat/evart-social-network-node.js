@@ -168,10 +168,10 @@ module.exports =
       return false
 
   feed: ($) ->
-    friends = $.user.friend.map (f) -> ObjectID f
-    #    console.log friends
+    follows = $.user.follow.map (f) -> ObjectID f
+    #    console.log follows
     Message.find owner:
-      $in: friends
+      $in: follows
 
   dialogs: ($) ->
     me = $.user._id

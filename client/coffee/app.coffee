@@ -170,7 +170,7 @@ addEventListener 'load', () ->
     deferreds = []
     $('[data-src]').each (i, script) ->
       deferreds.push $.get script.dataset.src, (template) ->
-        script.innerHTML = template
+        script.innerHTML = template.replace />\s+</g, '><'
         script.removeAttribute 'data-src'
     $.when(deferreds).then () ->
       console.log 'Views loaded'
@@ -247,15 +247,12 @@ $('#select-language')
   location.reload()
 
 App.on 'login', () ->
-  $('#corner-panel .domain').html(App.user.domain)
-  .append $('<span> (logout)</span>')
-  .css('cursor', 'pointer')
-  .click () ->
-    $.get '/api/user/logout', () ->
-      App.trigger 'logout'
-  $('#dock-container').show()
   App.navigate 'profile'
 
+App.logout = () ->
+  $.get '/api/user/logout', () ->
+    App.trigger 'logout'
+  
 App.on 'logout', () ->
   $('#dock-container').hide()
   App.navigate 'login'

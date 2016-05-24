@@ -6,10 +6,13 @@
     signup: ->
       App.mainRegion.show new App.Views.Signup model: new App.Models.User
 
-    settings: ->
-      user = new App.Models.User _id: App.user._id
-      user.fetch()
-      App.mainRegion.show new App.Views.Settings model: user
+    settings: (domain) ->
+      if not domain
+        domain = App.user.domain
+      $.get '/api/user?domain=' + domain, (user) ->
+        user = new App.Models.User user
+        user.fetch()
+        App.mainRegion.show new App.Views.Settings model: user
 
     verify: (id) ->
       App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
@@ -29,14 +32,29 @@
     users: () ->
       App.selectUser null, App.mainRegion
 
+    index: (domain) ->
+      params =
+        domain: domain
+      if 1 == location.pathname.indexOf('follow')
+        params.list = 'follow'
+      if 1 == location.pathname.indexOf('denies')
+        params.list = 'deny'
+      params.type = if 1 == location.pathname.indexOf('groups') then 'group' else 'user'
+
+      App.selectUser params, App.mainRegion
+
     routes:
       'login': 'login'
       'signup': 'signup'
       'profile': 'profile'
       'view/:domain': 'profile'
       'settings': 'settings'
-      'users': 'users'
+      'edit/:domain': 'settings'
       'verify/:id': 'verify'
+      'users': 'users'
+      'follows/:domain': 'index'
+      'denies/:domain': 'index'
+      'de/:domain': 'index'
 
 
   class Controllers.Message extends Marionette.Controller
@@ -141,7 +159,7 @@
 
   App.selectUser = (params, region) ->
     userList = new App.Models.UserList()
-    userSearch = new Backbone.Model()
+    userSearch = new Backbone.Model params or {}
     userList.params = userSearch
     userListView = new App.Views.UserList
       collection: userList

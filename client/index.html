@@ -123,12 +123,6 @@
     </section>
 </script>
 
-<script type="text/template" id="view-profile">
-    <a href="settings">Settings</a>
-    <img class="avatar"/>
-    <div class="domain"></div>
-</script>
-
 <script type="text/template" id="view-upload">
     <input type="file" multiple/>
 </script>
@@ -163,16 +157,14 @@
 </script>
 
 <script type="text/template" id="view-user-item">
-    <a>
-        <div class="domain"></div>
-        <img class="avatar"/>
-    </a>
-    <div class="buttons">
-        <button class="friend-add">Follow</button>
-        <button class="friend-remove">Unfollow</button>
-        <button class="message">Message</button>
-        <button class="add">Add</button>
+    <div>
+        <div class="name"></div>
+        <div>
+            <span class="country"></span>
+            <span class="city"></span>
+        </div>
     </div>
+    <img class="avatar"/>
 </script>
 
 <script type="text/template" id="view-user-list-layout">
@@ -228,7 +220,7 @@
     <button type="button" class="dismiss">Dismiss</button>
 </script>
 
-<script type="text/template" id="view-settings" data-src="/templates/settings.html"></script>
+<div data-src="/templates/profile.html"></div>
 <div data-src="/templates/messages.html"></div>
 
 <div id="floating-window-container"></div>

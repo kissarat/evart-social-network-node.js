@@ -71,11 +71,11 @@
                     var filter = filters[key];
                     if (filter instanceof Array) {
                         filter.forEach(function (filter) {
-                            filter(value, td);
+                            filter(value, td, object);
                         });
                     }
                     else {
-                        filter(value, td);
+                        filter(value, td, object);
                     }
                 }
                 else {
@@ -137,16 +137,33 @@
 //            thead.remove();
 //            tbody.remove();
             location.hash = $.param(q);
-            array.forEach(function (doc) {
-                $thead(doc);
-                var tr = $tr(doc)[0];
-                if (tr instanceof HTMLElement) {
-                    tbody.appendChild(tr);
-                }
-                else {
-                    console.error(doc);
-                }
-            });
+            var columns = fields[q.c];
+            if(columns) {
+                columns = ['_id'].concat(columns);
+                thead.html(columns.map(function (d) { return `<th>${d}</th>` }).join('\n'));
+                var fragment = document.createDocumentFragment();
+                array.forEach(function (doc) {
+                    columns.forEach(function (column) {
+                        var td = document.createElement('td');
+                        if (column in doc) {
+                            td.innerHTML = doc[column];
+                        }
+                        fragment.appendChild(td)
+                    });
+                })
+            }
+            else {
+                array.forEach(function (doc) {
+                    $thead(doc);
+                    var tr = $tr(doc)[0];
+                    if (tr instanceof HTMLElement) {
+                        tbody.appendChild(tr);
+                    }
+                    else {
+                        console.error(doc);
+                    }
+                });
+            }
 //            table.appendChild(thead[0]);
 //            table.appendChild(tbody[0]);
         })
@@ -177,7 +194,7 @@
 
     var users = {};
 
-    function load_user(value, td) {
+    function load_user(value, td, object) {
         function found(user) {
             td.empty();
             $('<a></a>')
@@ -191,8 +208,16 @@
             found(users[value]);
         }
         else {
-            $.getJSON('/api/admin/entity?c=users&s=domain&id=' + value, found);
+            $.getJSON('/api/admin/entity?c=users&s=domain&id=' + object._id, found);
         }
+    }
+
+    function load_user_domain(value, td) {
+        $('<a></a>')
+                .attr('href', '/view/' + value)
+                .attr('target', '_blank')
+                .text(value)
+                .appendTo(td)
     }
 
     function time(value, td) {
@@ -204,9 +229,11 @@
 
     var filters = {
         _id: filter_id,
+        domain: load_user_domain,
         source: [filter_id, load_user],
         target: [filter_id, load_user],
         user: [filter_id, load_user],
+        avatar: filter_id,
         start: time,
         time: time,
         auth: filter_id
@@ -221,6 +248,10 @@
         $('#unavailable').hide();
         $('#root').show();
     });
+
+    var fields = {
+        users: ['domain', 'email', 'phone']
+    }
 </script>
 </body>
 </html>

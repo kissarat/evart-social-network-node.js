@@ -12,11 +12,13 @@ module.exports = (db, $) ->
       else
         sample = _.sample(users, _.random(0, 500))
         $.increment()
-        if users.friend
+        if users.follow
           iterate()
-        else
+        else if user._id
           users.push user._id
           if users.length > 2000
             users.splice(_.random(0, users.length - 1), 1)
-          db.collection('users').updateOne {_id: user._id}, {$set: {friend: sample}}, {upsert: false}, iterate
+          db.collection('users').updateOne {_id: user._id}, {$set: {follow: sample}}, {upsert: false}, iterate
+        else
+          iterate()
   iterate()

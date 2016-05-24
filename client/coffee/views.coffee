@@ -125,13 +125,48 @@
       Bindings: {}
 
     ui:
-      avatar: '.avatar'
+      avatar: '.big-avatar'
+      settings: '.settings'
+      status: '.status'
+
+    events:
+      'dragenter .big-avatar': preventDefault
+      'dragover .big-avatar': preventDefault
+      'drop .big-avatar': 'dropAvatar'
+      'click .settings': () -> App.navigate '/edit/' + @model.get('domain')
+      'change .status': 'changeStatus'
+      'keyup .status': 'keyupStatus'
+      'click .logout': () -> App.logout()
 
     bindings:
-      '.domain': 'domain'
+      '.name': 'name'
+      '.status': 'status'
+
+    changeStatus: () ->
+      $.sendJSON 'POST', '/api/user/status?id=' + @model.get('_id'), status: @model.get('status'), () =>
+        @ui.status.blur()
+
+    keyupStatus: (e) ->
+      if KeyCode.ENTER == e.keyCode
+        @changeStatus()
+
+    dropAvatar: (e) ->
+      e.preventDefault()
+      file = e.originalEvent.dataTransfer.files[0]
+      xhr = new XMLHttpRequest()
+      xhr.open 'POST', '/api/photo'
+      xhr.onload = () =>
+        if xhr.status < 300
+          response = JSON.parse xhr.responseText
+          $.post '/api/user/avatar?photo_id=' + response._id, () =>
+            @setAvatar()
+      xhr.send file
 
     onRender: () ->
-      @ui.avatar.attr 'src', App.avatarUrl @model.id
+      me = App.user
+      if @model.get('_id') == me._id or 'admin' == me.type
+        @ui.settings.show()
+      @setAvatar()
       for k, v of @model.attributes
         if '_' != k[0] and k not in ['domain', 'phone', 'password', 'avatar', 'created']
           if v
@@ -139,6 +174,9 @@
             $("<div><strong>#{label}</strong> <div class='value'>#{v}</div></div>")
             .attr('data-name', k)
             .appendTo @$el
+
+    setAvatar: () ->
+      @ui.avatar.css 'background-image', 'url("' + (App.avatarUrl @model.id) + '")'
 
     success: (data) ->
       if data.verified
@@ -167,7 +205,7 @@
 
     success: (data) ->
       App.user = data
-      App.navigate 'profile'
+      App.navigate '/view/' + @model.get('domain')
 
     onRender: () ->
       if @model.get 'avatar'
@@ -479,25 +517,13 @@
   class Views.UserItem extends Marionette.ItemView
     template: '#view-user-item'
     ui:
-      a: 'a'
-      domain: '.domain'
       avatar: 'img'
-      buttons: '.buttons'
-      friendAdd: '.friend-add'
-      friendRemove: '.friend-remove'
-      message: '.message'
+      name: '.name'
+      country: '.country'
+      city: '.city'
 
     events:
       'click': 'open'
-      'click .friend-add': 'friend'
-      'click .friend-remove': 'friend'
-      'click .message': 'message'
-
-    triggers:
-      'click .add': 'add'
-
-    bindings:
-      '.domain': 'domain'
 
     behaviors:
       Bindings: {}
@@ -505,33 +531,14 @@
     message: () ->
       App.navigate 'dialog/' + @model.get('_id')
 
-    friend: () ->
-      App.toggle App.user.friend, @model.get('_id')
-      url = '/api/user/list?' + $.param
-        id: App.user._id
-        target_id: @model.get('_id')
-        name: 'friend'
-      $.post(url).then (result) =>
-        @renderButtons()
-
-    renderButtons: () ->
-      @ui.buttons.find('button').each (i, button) ->
-        $(button).hide()
-
-      if @selection
-        @ui.add.show()
-      else
-        if App.user.friend.indexOf(@model.get('_id')) < 0
-          @ui.friendAdd.show()
-        else
-          @ui.friendRemove.show()
-        @ui.message.show()
-
-
     onRender: () ->
+      @ui.name.text App.Models.User.getName @model
       @ui.avatar.attr 'src', '/api/user/avatar?id=' + @model.get('_id')
-      @ui.a.attr 'href', '/view/' + @model.get('domain')
-      @renderButtons()
+      @ui.country.text @model.get('country')
+      @ui.city.text @model.get('city')
+
+    open: () ->
+      App.navigate '/view/' + @model.get('domain')
 
   class Views.UserList extends Marionette.CollectionView
     childView: Views.UserItem
