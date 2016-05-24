@@ -9,23 +9,30 @@ config =
     address: 'ws://' + location.hostname + '/socket'
     wait: 800
   peer:
-    servers: [
+    iceServers: [
+      {
+        urls: "stun:stun.services.mozilla.com",
+        username: "louis@mozilla.com",
+        credential: "webrtcdemo"
+      },
       urls: [
         'stun:stun.l.google.com:19302',
         'stun:stun2.l.google.com:19302',
         'stun:stun3.l.google.com:19302',
-        'stun:stun.services.mozilla.com'
+        'stun:stun.services.mozilla.com',
+        "stun:23.21.150.121"
       ]
     ]
-    constants: [
-      DtlsSrtpKeyAgreement: true
-    ]
+
 
 features =
   peer:
     available: !!window.RTCPeerConnection
   notification:
     available: !!window.Notification
+    enabled: false
+  fullscreen:
+    available: Element.prototype.requestFullscreen
 
 debug =
   trace: () ->
@@ -34,11 +41,26 @@ debug =
   error: () ->
     if DEV
       console.error.apply console, arguments
+  push: (name, element) ->
+    if DEV
+      if !@[name]
+        @[name] = []
+      @[name].push element
+
+window.addEventListener 'unload', () ->
+  storedConfig =
+    version: version
+    features: features
+    mode: if DEV then 'dev' else 'prod'
+    config: config
+  localStorage.setItem 'socex', JSON.stringify storedConfig
+
 
 @App = new Marionette.Application()
 
 App.config = config
 App.features = features
+App.debug = debug
 
 windowControls = (document.querySelector '#view-window').innerHTML
 
@@ -52,7 +74,8 @@ window_handlers = () ->
 #      else
 #        $(w).toggle()
 
-regions = {}
+regions =
+  floatingRegion: '#floating-window-container'
 _.each document.querySelectorAll('#root > div'), (region) ->
   id = region.id
   region.classList.add 'window'
@@ -119,7 +142,7 @@ boot = (xhr) ->
       App.controllers[name] = controller
   if code.UNAUTHORIZED != xhr.status
     try
-      App.user = JSON.parse xhr.responseText
+      App.agent = JSON.parse xhr.responseText
       App.trigger 'login'
     catch ex
       console.warn 'User is not authorized'
@@ -210,6 +233,10 @@ Object.defineProperties App,
       $.cookie 'lang', value
     get: () ->
       $.cookie('lang') || document.documentElement.getAttribute 'lang'
+
+  user:
+    get: () ->
+      if @agent and @agent.user then @agent.user else null
 
 $('#select-language')
 .val(App.language)

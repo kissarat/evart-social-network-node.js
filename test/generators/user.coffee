@@ -1,4 +1,5 @@
 faker = require 'faker'
+utils = require '../../server/utils'
 _ = require 'underscore'
 
 module.exports = (db, $) ->
@@ -15,7 +16,7 @@ module.exports = (db, $) ->
       user =
         domain: [faker.internet.domainWord(), _.random(10000, 50000)].join('_')
         phone: process.hrtime().join('')
-        password: '1'
+        hash: utils.hash '1'
       if users.length > 0
         user.freind = _.sample(users, _.random(1, 500))
       db.collection('users').insertOne user, (err, result) ->

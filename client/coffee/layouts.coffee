@@ -228,6 +228,30 @@
       Bindings: {}
 
 
-  App.Views.Dialog.prototype.childView = Layouts.MessageLayout
+  class Layouts.Window extends Marionette.LayoutView
+    template: '#view-window'
 
-  
+    ui:
+      title: '.title'
+      controls: '.window-controls'
+
+    regions:
+      controlsRegion: '.window-controls'
+      contentRegion: '.window-content'
+
+    @floats = {}
+
+    @openFloat: (controls = false) ->
+      w = new Layouts.Window()
+#      App.floatingRegion.show w
+      Layouts.Window.floats[w.cid] = w
+      w.$el.addClass 'float-window'
+      draggable = {}
+      if controls
+        draggable.handle = '.window-controls'
+      else
+        w.ui.controls.hide()
+      w.$el.draggable draggable
+      return w
+
+  App.Views.Dialog.prototype.childView = Layouts.MessageLayout

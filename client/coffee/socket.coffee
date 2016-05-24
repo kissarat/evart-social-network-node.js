@@ -8,16 +8,27 @@ App.pull = () ->
       console.log 'Socket connected at ' + new Date().toLocaleString()
 
     message: (e) ->
+      App.debug.push 'socket_pull', e.data
       try
         message = JSON.parse e.data
-        App.trigger message.type, message
       catch ex
-        console.log 'Cannot parse socket message'
+        return console.error 'INVALID_JSON', e.data
+      if message.type
+        App.trigger message.type, message
+      else
+        console.error 'UNKNOWN_MESSAGE', message
 
     close: () ->
       setTimeout pull, App.config.socket.wait
 
 pull = () -> App.pull()
+
+App.push = (message) ->
+  if 'string' != typeof message
+    message.source_id = App.user._id
+    message = JSON.stringify message
+  App.debug.push 'socket_push', message
+  @socket.send message
 
 register App,
   login: pull
@@ -31,7 +42,7 @@ register App,
 #    else
 
 notification_not_available = () ->
-  features.notification.available = false
+  App.features.notification.enabled = false
   console.warn 'Notification not available'
 
 App.notify = (title, options) ->
@@ -40,7 +51,7 @@ App.notify = (title, options) ->
   addEventListener: (event, cb) ->
     console.warn "LISTENER REGISTER"
 
-if App.features.notification.available
+if App.features.notification.available and App.features.notification.enabled
   Notification.requestPermission (permission) ->
     if 'granted' == permission
       App.notify = (title, options) ->

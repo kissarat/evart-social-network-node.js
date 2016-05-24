@@ -41,7 +41,6 @@ $font: "Helvetica Neue", Helvetica, arial, sans-serif
 
 html
   height: 100%
-  color: $white
   //background: $color_log_cabin_approx
   //background-image: -webkit-gradient(radial, 50% 0, 10, 50% 0, 400, from($white_30), to(rgba(255, 255, 255, 0)))
   //-webkit-background-image: radial-gradient(center top, circle, $white_30 0, rgba(255, 255, 255, 0) 50%)
@@ -143,10 +142,7 @@ img
 
 .window
   position: fixed
-  height: 100%
   padding: 6px
-  //border: 0 solid transparent
-  //height: calc(100vh - 120px)
   display: flex
   flex-flow: column
   .controls
@@ -184,6 +180,9 @@ img
     opacity: 0.8
     background: repeating-linear-gradient(45deg, rgba(246, 246, 246, 0.5), rgba(246, 246, 246, 0.5) 10px, rgba(128, 128, 128, 0.5) 10px, rgba(128, 128, 128, 0.5) 20px)
 
+#root .window
+  height: 100%
+
 
 .window-content
   overflow: scroll
@@ -211,6 +210,21 @@ img
 
 .window-content form.view
   text-align: left
+
+.float-window
+  position: fixed
+  top: 30%
+  left: 40%
+  background-color: white
+  z-index: 1
+  min-width: 120px
+  min-height: 80px
+  .window-controls
+    cursor: move
+    .fa
+      cursor: pointer
+  h1
+    font-size: 0
 
 form
   .error
@@ -396,3 +410,8 @@ form
     overflow-y: scroll
     flex: 1
 
+.conference-controls .fa
+  cursor: pointer
+
+video
+  background-color: black

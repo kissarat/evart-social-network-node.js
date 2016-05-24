@@ -1,43 +1,41 @@
 faker = require 'faker'
 _ = require 'underscore'
 
-users = null
-
 module.exports = (db, $) ->
-  usersCollection = db.collection('users')
-  cursor = usersCollection.find({friend: {$ne: null}}, {_id: 1})
-  insert_user_messages = () ->
-    cursor.nextObject (err, user) ->
-      if err or not user
-        console.log err
-        insert_user_messages()
-      else
-        targets = _.sample users, _.random 50, 500
-        messages = []
-        finish = Date.now()
-        start = finish - 1000 * 3600 * 24 * 365 * 5
-        insert_message = () ->
-          target = targets.pop()
+  conveyor = [
+    {
+      $sort:
+        _id: 1
+    }
+    {
+      $project:
+        _id: 1
+    }
+    {
+      $limit: 100
+    }
+  ]
+
+  db.collection('users').aggregate conveyor, (err, users) ->
+    loop_fn = () ->
+      sample = _.sample(users, _.random(2, users.length))
+      insert_message = () ->
+        source = sample.pop()
+        target = sample.pop()
+        if target
           message =
-            source: user._id
-            target: target
+            source: source._id
+            target: target._id
             text: faker.lorem.sentences()
-            time: new Date(_.random(start, finish)).toISOString()
+            time: new Date().toISOString()
+          #          console.log message
           db.collection('messages').insertOne message, (err, result) ->
             if err
               console.error err
             else
               $.increment()
-            if targets.length > 0
               insert_message()
-            else
-              insert_user_messages()
-        insert_message()
-  usersCollection.aggregate [{$sample: {size: _.random(500, 2000)}}], (err, array) ->
-    if err
-      console.error err
-      process.exit()
-    else
-      users = array.map (u) -> u._id
-#    console.log users.length
-    insert_user_messages()
+        else
+          loop_fn()
+      insert_message()
+    loop_fn()

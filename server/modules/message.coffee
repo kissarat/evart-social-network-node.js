@@ -176,6 +176,8 @@ module.exports =
   dialogs: ($) ->
     me = $.user._id
     Message.aggregate dialogs_condition(me), $.wrap (result) ->
+      if result.length <= 0
+        $.send []
       user_ids = []
       dialogs = []
       for dialog in result
@@ -189,12 +191,10 @@ module.exports =
           user_ids.push dialog_id
       user_ids.push me
 
-      $.collection('users').find {
-        _id:
-          $in: user_ids
-      }, {_id: 1, domain: 1}, $.wrap (reader) ->
+      $.collection('users').find {_id: $in: user_ids}, {_id: 1, domain: 1}, $.wrap (reader) ->
         reader.toArray $.wrap (users) ->
           for dialog in dialogs
+            console.log dialog
             dialog.target = _.find users, (u) ->
               u._id.toString() == dialog._id.target.toString()
             dialog.source = _.find users, (u) ->
@@ -205,14 +205,13 @@ module.exports =
 
 dialogs_condition = (me) -> [
   {
+    $match: target: $exists: true
+  }
+  {
     $match:
       $or: [
-        {
-          source: me
-        }
-        {
-          target: me
-        }
+        {source: me}
+        {target: me}
       ]
   }
   {

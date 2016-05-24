@@ -60,7 +60,8 @@
               options[option.value] = T option.innerHTML
             field =
               observe: name
-              selectOptions: collection: options
+              selectOptions:
+                collection: options
 
           b["[name=#{name}]"] = field
       return b
@@ -106,7 +107,7 @@
     success: (data) ->
       App.user = data
       App.trigger 'login'
-#      App.navigate 'profile'
+  #      App.navigate 'profile'
 
   class Views.Signup extends Views.Form
     template: '#view-signup'
@@ -192,9 +193,9 @@
       '.ip': 'ip'
 
   class Views.Dialog extends Marionette.CollectionView
-#    template: '#view-dialog'
-#    childView: App.Layouts.MessageLayout
-#    childViewContainer: '.messages'
+    #    template: '#view-dialog'
+    #    childView: App.Layouts.MessageLayout
+    #    childViewContainer: '.messages'
 
     events:
       'scroll': 'scroll'
@@ -251,6 +252,8 @@
       draft = new App.Models.Message draft
       editor = new Views.Editor model: draft
       editorLayout = new App.Layouts.EditorLayout model: draft
+      conference = new App.Views.Conference model: draft
+      layout.showChildView 'top', conference
       layout.showChildView 'middle', dialog
       layout.showChildView 'bottom', editorLayout
       editorLayout.showChildView 'editor', editor
@@ -268,6 +271,8 @@
         messageList.add messages
       return dialog
 
+  class Views.Video extends Marionette.ItemView
+    template: '#'
 
   class Views.Editor extends Marionette.ItemView
     template: '#view-message-editor'
@@ -320,8 +325,9 @@
               message =
                 switch e.target.status
                   when code.REQUEST_TOO_LONG then 'is too large'
-                  else 'unknown error'
-              error_message(@el, file.name + ' ' + T  message)
+                  else
+                    'unknown error'
+              error_message(@el, file.name + ' ' + T message)
           _upload()
       _upload()
 
@@ -466,9 +472,9 @@
   class Views.DialogList extends Marionette.CollectionView
     childView: Views.LastMessage
 
-#    onRender: () ->
-#      $('<div class="loading"></div>')
-#      .appendTo(@$el);
+  #    onRender: () ->
+  #      $('<div class="loading"></div>')
+  #      .appendTo(@$el);
 
   class Views.UserItem extends Marionette.ItemView
     template: '#view-user-item'
@@ -534,21 +540,67 @@
     template: '#view-conference'
 
     events:
-      '[data-action="fullscreen"]': 'fullscreen'
-      '[data-action="phone"]': 'phone'
-      '[data-action="microphone"]': 'microphone'
-      '[data-action="camera"]': 'camera'
-      '[data-action="mute"]': 'mute'
+      'click .fullscreen': 'fullscreen'
+      'click .phone': 'audioCall'
+      'click .microphone': 'microphone'
+      'click .camera': 'videoCall'
+      'click .mute': 'mute'
+      'click .hide': 'hide'
 
     ui:
       video: 'video'
       audio: 'audio'
       audioSource: 'audio > source'
-      fullscreen: '[data-action="fullscreen"]'
-      phone: '[data-action="phone"]'
-      microphone: '[data-action="microphone"]'
-      camera: '[data-action="camera"]'
-      mute: '[data-action="mute"]'
+      fullscreen: '.fullscreen'
+      phone: '.phone'
+      microphone: '.microphone'
+      camera: '.camera'
+      mute: '.mute'
+      hide: '.hide'
+
+    fullscreen: () ->
+      if App.features.fullscreen
+        @ui.video[0].requestFullscreen()
+      else
+        console.warn 'Fullscreen is not available'
+
+    hide: () ->
+      @ui.hide.toggleClass 'fa-angle-double-up'
+      @ui.hide.toggleClass 'fa-angle-double-down'
+      @ui.video.toggle()
+
+    audioCall: () ->
+      peer = App.Peer.find @model.params.target_id
+      peer.constraints = App.Peer.makeMediaConstraints true, false
+      peer.offer peer.constraints
+
+
+  class Views.IncomingCall extends Marionette.ItemView
+    template: '#view-incoming-call'
+
+    ui:
+      avatar: 'img'
+      name: 'h2'
+      answer: '.answer'
+      dismiss: '.dismiss'
+
+    events:
+      'click .answer': 'answer'
+      'click .dismiss': 'dismiss'
+
+    onRegion: () ->
+      @ui.avatar.attr 'src', App.avatarUrl @model.get('source_id')
+      @ui.name.text @model.get('name')
+
+    @openWindow: () ->
+      w = App.Layouts.Window.openFloat false
+      w.contentRegion = new Views.IncomingCall
+      App.floatingRegion.show w
+      
+    answer: () ->
+      peer = App.Peer.find @model.get('source_id')
+      peer.answer @model.get('sdp')
+      
 
   App.dock = new App.Models.Dock()
   App.dock.on 'change', (changes) ->

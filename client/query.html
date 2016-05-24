@@ -129,10 +129,13 @@
             params.q = btoa(JSON.stringify(q));
         }
 
+        var table = document.querySelector('table');
         var tbody = document.querySelector('tbody');
         $.getJSON('/api/admin/query?' + $.param(params), function (array) {
             thead.empty();
             tbody.innerHTML = '';
+//            thead.remove();
+//            tbody.remove();
             location.hash = $.param(q);
             array.forEach(function (doc) {
                 $thead(doc);
@@ -144,6 +147,8 @@
                     console.error(doc);
                 }
             });
+//            table.appendChild(thead[0]);
+//            table.appendChild(tbody[0]);
         })
     }
 

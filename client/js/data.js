@@ -218,31 +218,53 @@ window.isFirefox = window.InstallTrigger && 'Firefox' == browser.name;
 
 function register(target, listeners) {
     var _add = target.addEventListener || target.on;
-    for(var name in listeners) {
+    for (var name in listeners) {
         _add.call(target, name, listeners[name])
     }
 }
 
 function react(target, getter, listeners) {
-    for(var name in listeners) {
+    for (var name in listeners) {
         var listener = listeners[name];
-        target.on(name, function () {
-           listener.apply(getter.apply(target, arguments), arguments); 
-        });
+        target.on(name, (function () {
+            this.apply(getter.apply(target, arguments), arguments);
+        }).bind(listener));
     }
 }
 
 window.geo = null;
-if (navigator.geolocation.watchPosition) {
-    navigator.geolocation.watchPosition(function (p) {
-        var c = p.coords;
-        window.geo = [c.latitude, c.longitude];
+// if (navigator.geolocation.watchPosition) {
+//     navigator.geolocation.watchPosition(function (p) {
+//         var c = p.coords;
+//         window.geo = [c.latitude, c.longitude];
+//
+//         if (c.altitude) {
+//             window.geo.push(c.altitude);
+//         }
+//     });
+//    
+// }
 
-        if (c.altitude) {
-            window.geo.push(c.altitude);
-        }
-    });
-    
+
+var TRANSLIT = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo", "ж": "zh", "з": "z", "и": "i", "й": "j",
+    "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f",
+    "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "shch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu",
+    "я": "ya", '_': '', "ї": "yi", "ґ": "g", "є": "ie"
+};
+
+if (!('requestFullscreen' in Element.prototype)) {
+    Element.prototype.requestFullscreen =
+        Element.prototype.webkitRequestFullScreen || Element.prototype.mozRequestFullScreen;
+}
+
+function logPromise(p) {
+    return p.then(function (result) {
+            console.log('RESOLVE', result);
+        },
+        function (error) {
+            console.error('REJECT', error);
+        });
 }
 
 Object.freeze(KeyCode);
@@ -252,12 +274,12 @@ Object.freeze(browser);
 Object.freeze(code);
 
 /*
-addEventListener('load', function () {
-    var _trace = Marionette.Error.prototype.captureStackTrace;
-    Marionette.Error.prototype.captureStackTrace = function () {
-        _trace.call(this);
-        console.error(this);
-    };
-});
-*/
+ addEventListener('load', function () {
+ var _trace = Marionette.Error.prototype.captureStackTrace;
+ Marionette.Error.prototype.captureStackTrace = function () {
+ _trace.call(this);
+ console.error(this);
+ };
+ });
+ */
 
