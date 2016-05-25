@@ -1,0 +1,72 @@
+.message-layout, .last-message
+  .children
+    background-color: lightgrey
+    padding-left: 8px
+  .time
+    font-size: 0.7em
+  .ip
+    color: white
+
+.last-message
+  cursor: pointer
+  display: flex
+  flex-direction: row
+  &:hover
+    background-color: ghostwhite
+
+.dialog
+  display: flex
+  flex-direction: column
+
+.unread
+  background-color: greenyellow
+  &:hover
+    background-color: green
+
+.like-slider-container
+  width: 36px
+  height: 12px
+  border: 1px solid black
+  border-radius: 7px
+  text-align: center
+
+  .like-slider
+    width: 10px
+    height: 10px
+    line-height: 10px
+    border: 1px solid black
+    border-radius: 6px
+    margin: auto
+
+  &.like > .like-slider
+    float: right
+    &:before
+      content: '+'
+
+  &.hate > .like-slider
+    float: left
+    &:before
+      content: '-'
+
+.message-layout
+  .info
+    text-align: center
+    padding: 6px
+    > *
+      margin: auto
+    .avatar
+      margin-bottom: 6px
+  .content
+    display: flex
+
+.message-controls
+  border-top: 1px solid grey
+  text-align: right
+  > *
+    vertical-align: middle
+    display: inline-block
+  > button
+    background-color: transparent
+    border: none
+  .fa-reply
+    transform: scaleX(-1)

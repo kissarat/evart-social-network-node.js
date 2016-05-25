@@ -1,0 +1,51 @@
+
+.window
+  position: fixed
+  padding: 6px
+  display: flex
+  flex-flow: column
+  .view
+    flex: 1 0 100%
+    color: black
+
+.window-content
+  overflow: scroll
+  display: flex
+  .view
+    //text-align: center
+    padding: 4px
+  .view.error
+    display: flex
+    justify-content: center
+    align-items: center
+    flex-direction: column
+    .message-container
+      margin-bottom: 1em
+      width: auto
+      display: flex
+      color: red
+      justify-content: center
+      align-items: center
+      .fa
+        font-size: 3em
+      .text
+        margin-left: 1em
+        text-align: left
+
+.window-content form.view
+  text-align: left
+
+.float-window
+  position: fixed
+  top: 30%
+  left: 40%
+  background-color: white
+  z-index: 1
+  min-width: 120px
+  min-height: 80px
+  .window-controls
+    cursor: move
+    .fa
+      cursor: pointer
+  h1
+    font-size: 0

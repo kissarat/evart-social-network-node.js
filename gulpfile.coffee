@@ -24,6 +24,7 @@ gulp.task 'app', ->
     script.removeAttribute 'data-src'
   fse.mkdirpSync 'app'
   fs.writeFileSync 'app/script.js', files
+  console.log 'minify'
   minifier.minify 'app/script.js'
   fs.unlinkSync 'app/script.js'
   files = fs.readFileSync 'app/script.min.js'
@@ -78,9 +79,9 @@ translate_coffee = (dir) ->
 
 gulp.task 'translate', ->
   gulp
-  .src 'client/*.sass'
+  .src 'client/sass/*.sass'
   .pipe sass()
-  .pipe gulp.dest 'client/'
+  .pipe gulp.dest 'client/sass/'
 
   translate_coffee 'client/coffee/'
   translate_coffee 'server/modules/'

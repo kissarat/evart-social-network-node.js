@@ -65,16 +65,6 @@ App.debug = debug
 
 windowControls = (document.querySelector '#view-window').innerHTML
 
-window_handlers = () ->
-#  @find('[title=close]').click () =>
-#    $(@).hide()
-#  @find('[title=maximize]').click () =>
-#    $('.window').each (i, w) =>
-#      if @.attr('id') == w.id
-#        $(w).show()
-#      else
-#        $(w).toggle()
-
 regions =
   floatingRegion: '#floating-window-container'
 _.each document.querySelectorAll('#root > div'), (region) ->
@@ -82,7 +72,6 @@ _.each document.querySelectorAll('#root > div'), (region) ->
   region.classList.add 'window'
   region.innerHTML = windowControls
   regions[id + 'Region'] = "##{id} .window-content"
-  window_handlers.call $(region)
 App.addRegions regions
 
 #for name, region of App.getRegions()
@@ -249,6 +238,7 @@ $('#select-language')
 
 App.on 'login', () ->
   App.navigate 'profile'
+  $('#dock-container').show()
 
 App.logout = () ->
   $.get '/api/user/logout', () ->

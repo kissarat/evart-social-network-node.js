@@ -11,7 +11,7 @@
   "private": true,
   "dependencies": {
     "faker": "*",
-    "webrtc-adapter": "*",
+    "webrtc-adapter": "^0",
     "components-font-awesome": "*",
     "jquery": "^2",
     "jquery-ui": "*",

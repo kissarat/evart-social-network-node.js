@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>Evart Social Network</title>
     <meta charset="UTF-8">
     <meta http-equiv="Last-Modified"/>
     <meta name="robots" content="index,nofollow"/>
@@ -17,11 +18,11 @@
             statistics.load = Date.now() - statistics.start;
         });
     </script>
-    <!--<link rel="stylesheet" type="text/css" href="/lib/bootstrap/dist/css/bootstrap.css"/>-->
-    <!--<link rel="stylesheet" type="text/css" href="/lib/bootstrap/dist/css/bootstrap-theme.css"/>-->
     <link rel="stylesheet" type="text/css" href="/lib/components-font-awesome/css/font-awesome.css"/>
-    <link rel="stylesheet" type="text/css" href="/style.css">
-    <title>Socex</title>
+    <link rel="stylesheet" type="text/css" href="/sass/style.css">
+    <link rel="stylesheet" type="text/css" href="/sass/dock.css">
+    <link rel="stylesheet" type="text/css" href="/sass/message.css">
+    <link rel="stylesheet" type="text/css" href="/sass/window.css">
 </head>
 <body>
 <div id="boot-loading"></div>
@@ -35,9 +36,9 @@
 </div>
 
 <div id="root" style="display: none">
-    <div id="left" style="display: none"></div>
+    <div id="left"></div>
     <div id="main"></div>
-    <div id="right" style="display: none"></div>
+    <div id="right"></div>
 </div>
 <div id="dock-container" style="display: none">
     <div id="dock">
@@ -177,10 +178,6 @@
         <label>Name</label>
         <input name="name"/>
     </div>
-    <!--<div class="form-group">-->
-    <!--<label>Avatar</label>-->
-    <!--<input name="avatar" type="file"/>-->
-    <!--</div>-->
     <div class="members"></div>
     <div class="selection"></div>
 </script>
@@ -227,11 +224,10 @@
 
 <div id="script">
     <script src="/js/data.js"></script>
-    <script src="/lib/webrtc-adapter/out/adapter.js"></script>
+    <script src="/lib/webrtc-adapter/adapter.js"></script>
     <script src="/lib/jquery/dist/jquery.js"></script>
     <script src="/lib/jquery-ui/jquery-ui.js"></script>
     <script src="/lib/jquery-cookie/jquery.cookie.js"></script>
-    <!--<script src="/lib/bootstrap/dist/js/bootstrap.js"></script>-->
     <script src="/lib/underscore/underscore.js"></script>
     <script src="/lib/backbone/backbone.js"></script>
     <script src="/lib/backbone.stickit/backbone.stickit.js"></script>
