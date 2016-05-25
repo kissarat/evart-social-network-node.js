@@ -1,18 +1,24 @@
 <script type="text/template" id="view-message-layout">
-    <div class="top">
-        <div class="fa fa-thumbs-up"></div>
-        <div class="fa fa-thumbs-down"></div>
-        <div class="fa fa-share-alt"></div>
-    </div>
-    <div class="middle">
+    <div class="content">
         <div class="info">
-            <img class="avatar"/>
+            <div class="avatar"></div>
             <div class="time"></div>
             <div class="ip"></div>
-            <button class="comment">Comment</button>
         </div>
         <div class="text"></div>
         <div class="repost"></div>
+    </div>
+    <div class="message-controls">
+        <button type="button" class="comment">
+            <span class="fa fa-comment"></span>
+            <span>Comment</span>
+        </button>
+        <button type="button" class="share fa fa-reply"></button>
+        <div class="fa fa-thumbs-up"></div>
+        <div class="fa fa-thumbs-down"></div>
+        <div class="like-slider-container">
+            <div class="like-slider"></div>
+        </div>
     </div>
     <div class="photos"></div>
     <div class="videos"></div>

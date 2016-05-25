@@ -57,6 +57,7 @@ window.addEventListener 'unload', () ->
 
 
 @App = new Marionette.Application()
+window.App = @App
 
 App.config = config
 App.features = features
@@ -308,3 +309,28 @@ window.sort_time = (a, b) ->
     -1
   else
     0
+
+App.draggable = (source) ->
+  source.addEventListener 'dragstart', (e) ->
+    url = /"([^"]+)"/.exec source.style.backgroundImage
+    if url
+      url = location.origin + url[1]
+      e.dataTransfer.setData('URL', url)
+#      e.preventDefault()
+
+#  source.addEventListener 'dragover', (e) ->
+#    e.preventDefault()
+
+App.droppable = (target) ->
+  target.addEventListener 'dragover', (e) ->
+    console.log '1'
+#    e.preventDefault()
+
+  target.addEventListener 'drop', (e) ->
+    url = e.dataTransfer.getData('URL')
+    id = /([0-9a-z]{24})\.jpg/.exec(url || '')
+    if id
+      console.log id
+      url = target.getAttribute('data-change')
+#      $.sendJSON 'POST', url, {}, () ->
+#        target.style.backgroundImage = "url(/photo/#{id}.jpg)"

@@ -271,6 +271,15 @@ function preventDefault(e) {
     e.preventDefault();
 }
 
+Element.prototype.setBackground = function (id) {
+    if (id) {
+        this.style.backgroundImage = 'url("/photo/' + id + '.jpg")';
+    }
+    else if (this.style.backgroundImage) {
+        this.style.removeProperty('background-image');
+    }
+};
+
 Object.freeze(KeyCode);
 Object.freeze(emoji);
 Object.freeze(SocketReadyState);

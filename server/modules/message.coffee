@@ -117,9 +117,7 @@ module.exports =
         .then (repost) ->
           message.repost = if repost.repost then repost.repost else repost._id
           message.owner = message.source
-          message.save()
-      else
-        message.save()
+      message.save()
 
   GET: ($) ->
     r = null

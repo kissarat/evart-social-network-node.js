@@ -22,11 +22,11 @@
         domain = App.user.domain
       $.get '/api/user?domain=' + domain, (user) ->
         user = new App.Models.User user
-        userView = new App.Views.Profile model: user
+        profile = new App.Layouts.ProfileLayout model: user
         layout = new App.Layouts.Thresome()
-        App.mainRegion.show layout
+        App.mainRegion.show profile
+        profile.messagesRegion.show layout
         App.Views.Dialog.build user.id, 'owner', layout
-        layout.showChildView 'top', userView
       return
 
     users: () ->

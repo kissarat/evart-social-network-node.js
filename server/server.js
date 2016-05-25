@@ -67,6 +67,7 @@ o.connection.on('open', function () {
     server.listen(config.port, config.host, function () {
         var socketServer = new ws.Server(config.socket);
         socketServer.on('connection', function (socket) {
+            // console.log('SOCKET_CONNECTION');
             var $ = new Context(socket.upgradeReq, o.connection);
             $.socket = socket;
             $.authorize(function (agent) {
@@ -596,7 +597,7 @@ function serve($) {
     switch (typeof result) {
         case 'object':
             if (result instanceof god.Query || result instanceof god.Aggregate) {
-                if (0 === result.op.indexOf('find')) {
+                if ('find' == result.op) {
                     result.skip($.skip);
                     result.limit($.limit);
                 }
@@ -753,7 +754,7 @@ function parse(url) {
     if (a.query) {
         a.query = qs.parse(a.query);
         for (var i in a.query) {
-            if (/^\d+$/.test(a.query[i])) {
+            if (/^[1-9]\d+$/.test(a.query[i])) {
                 a.query[i] = parseFloat(a.query[i]);
             }
         }

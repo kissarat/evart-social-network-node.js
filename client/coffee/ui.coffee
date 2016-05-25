@@ -47,3 +47,4 @@ $(document).ajaxError (_1, ajax) ->
       ui_error ajax.responseJSON.error.message
     else
       ajax.responseJSON.error
+

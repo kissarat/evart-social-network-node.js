@@ -77,26 +77,38 @@
       Bindings: {}
 
     ui:
-      info: '> .middle .info'
-      avatar: '> .middle .avatar'
-      time: '> .middle .time'
-      text: '> .middle .text'
-      ip: '> .middle .ip'
-      top: '> .top'
-      middle: '> .middle'
-      like: '> .top .fa-thumbs-up'
-      hate: '> .top .fa-thumbs-down'
-      comment: '> .middle .comment'
+      content: '> .content'
+      info: '> .content .info'
+      avatar: '> .content .avatar'
+      time: '> .content .time'
+      text: '> .content .text'
+      ip: '> .content .ip'
+      controls: '> .message-controls'
+      likeSlider: '> .message-controls .like-slider-container'
+      like: '> .message-controls .fa-thumbs-up'
+      hate: '> .message-controls .fa-thumbs-down'
+      comment: '> .message-controls .comment'
 
     events:
-      'click > .top .fa-thumbs-up': 'like'
-      'click > .top .fa-thumbs-down': 'hate'
-      'click > .top .fa-share-alt': 'share'
-      'click > .middle .comment': 'renderComments'
+      'click > .message-controls .fa-thumbs-up': 'like'
+      'click > .message-controls .fa-thumbs-down': 'hate'
+      'click > .message-controls .fa-share-alt': 'share'
+      'click > .message-controls .comment': 'renderComments'
+      'click > .message-controls .like-slider-container': 'sliderClick'
 
     bindings:
-      '> .middle .text': 'text'
-#      '> .middle .ip': 'ip'
+      '> .content .text': 'text'
+#      '> .content .ip': 'ip'
+
+    setAvatar: (id) ->
+      @ui.avatar.css 'background-image', 'url("' + (App.avatarUrl id) + '")'
+
+    sliderClick: (e) ->
+      s = @ui.likeSlider
+      rect = s[0].getBoundingClientRect()
+      x = e.clientX - rect.left
+      s.toggleClass 'like', x > 24
+      s.toggleClass 'hate', x < 12
 
     like: () ->
       @_like 'like'
@@ -163,11 +175,11 @@
       source_id = App.id @model.get 'source'
       @ui.info.attr('data-id', source_id)
       if source_id
-        @ui.avatar.attr 'src', '/api/user/avatar?id=' + source_id
+        @setAvatar source_id
       if source_id == App.user._id
         @$el.addClass 'me'
         $('<div class="fa fa-times"></div>')
-        .appendTo(@ui.top)
+        .appendTo(@ui.controls)
         .click () =>
           $.ajax
             url: '/api/message?id=' + @model.get '_id'
@@ -180,7 +192,7 @@
       @ui.time.html moment.utc(@model.get 'time').fromNow()
 
       if @model.get 'isRepost'
-        @ui.top.remove()
+        @ui.controls.remove()
       else
         @renderLikes()
 
@@ -255,3 +267,76 @@
       return w
 
   App.Views.Dialog.prototype.childView = Layouts.MessageLayout
+
+  class Layouts.ProfileLayout extends Marionette.LayoutView
+    template: '#view-profile-layout'
+
+    regions:
+      messagesRegion: '.messages'
+
+    behaviors:
+      Bindings: {}
+
+    ui:
+      background: '.background'
+      header: 'header'
+      avatar: '.big-avatar'
+      settings: '.settings'
+      status: '.status'
+
+    events:
+      'dragenter .big-avatar': preventDefault
+      'dragover .big-avatar': preventDefault
+      'drop .big-avatar': 'dropAvatar'
+      'click .settings': () -> App.navigate '/edit/' + @model.get('domain')
+      'change .status': 'changeStatus'
+      'keyup .status': 'keyupStatus'
+      'click .logout': () -> App.logout()
+
+    bindings:
+      '.name': 'name'
+      '.status': 'status'
+
+    changeStatus: () ->
+      $.sendJSON 'POST', '/api/user/status?id=' + @model.get('_id'), status: @model.get('status'), () =>
+        @ui.status.blur()
+
+    keyupStatus: (e) ->
+      if KeyCode.ENTER == e.keyCode
+        @changeStatus()
+
+    dropAvatar: (e) ->
+      e.preventDefault()
+      file = e.originalEvent.dataTransfer.files[0]
+      xhr = new XMLHttpRequest()
+      xhr.open 'POST', '/api/photo'
+      xhr.onload = () =>
+        if xhr.status < 300
+          response = JSON.parse xhr.responseText
+          $.post '/api/user/change?field=avatar&value=' + response._id, () =>
+            @ui.avatar[0].setBackground response._id
+      xhr.send file
+
+    onRender: () ->
+      back = @ui.background[0]
+      back.setBackground @model.get 'background'
+      @ui.header.find('.photo').each (i, p) ->
+        r = (Math.round(Math.random() * 35))
+        r = ('000000000000000000000000' + r).slice(-24)
+        p.setAttribute('draggable', 'true')
+        p.style.backgroundImage = 'url("/photo/' + r + '.jpg")'
+        App.draggable p
+        p.addEventListener 'dragleave', (e) ->
+          $.sendJSON 'POST', '/api/user/change?field=background&value=' + r, {}, () ->
+            back.setBackground r
+      @setAvatar()
+
+
+    setAvatar: () ->
+      @ui.avatar.css 'background-image', 'url("' + (App.avatarUrl @model.id) + '")'
+
+    success: (data) ->
+      if data.verified
+        App.navigate 'login'
+      else
+        @report 'code', 'Invalid code'

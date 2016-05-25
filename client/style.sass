@@ -247,30 +247,19 @@ form
     display: none
 
 .avatar
+  width: 32px
+  height: 32px
   border-radius: 50%
+  background-size: cover
 
 .message-layout, .last-message
-  .top
-    display: flex
-    align-items: flex-end
-    > *
-      cursor: pointer
   .children
     background-color: lightgrey
     padding-left: 8px
-  .middle
-    display: flex
-    flex-direction: row
-    &.me
-      align-items: flex-end
   .time
     font-size: 0.7em
   .ip
     color: white
-
-.avatar
-  max-width: 64px
-  max-height: 64px
 
 .last-message
   cursor: pointer
@@ -417,6 +406,8 @@ video
   header
     padding: 32px 40px
     max-width: 400px
+    .photo
+      background-size: cover
   .background
     position: absolute
     background: url("http://www.hdwallpapers.in/download/fresh_nature-1280x720.jpg") no-repeat center
@@ -457,6 +448,7 @@ video
       text-align: center
     .right
       flex: 2.5
+      padding: 2px
       background-color: white
 
   .avatar-block
@@ -480,3 +472,60 @@ video
     background-size: cover
     width: 96px
     height: 96px
+
+.like-slider-container
+  width: 36px
+  height: 12px
+  border: 1px solid black
+  border-radius: 7px
+  text-align: center
+
+  .like-slider
+    width: 10px
+    height: 10px
+    line-height: 10px
+    border: 1px solid black
+    border-radius: 6px
+    margin: auto
+
+  &.like > .like-slider
+    float: right
+    &:before
+      content: '+'
+
+  &.hate > .like-slider
+    float: left
+    &:before
+      content: '-'
+
+.message-layout
+  .info
+    text-align: center
+    padding: 6px
+    > *
+      margin: auto
+    .avatar
+      margin-bottom: 6px
+  .content
+    display: flex
+
+.message-controls
+  border-top: 1px solid grey
+  text-align: right
+  > *
+    vertical-align: middle
+    display: inline-block
+  > button
+    background-color: transparent
+    border: none
+  .fa-reply
+    transform: scaleX(-1)
+
+[draggable]
+  -moz-user-select: none
+  -khtml-user-select: none
+  -webkit-user-select: none
+  user-select: none
+  /* Required to make elements draggable in old WebKit */
+  -khtml-user-drag: element
+  -webkit-user-drag: element

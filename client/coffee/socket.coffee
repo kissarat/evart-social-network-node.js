@@ -19,7 +19,8 @@ App.pull = () ->
         console.error 'UNKNOWN_MESSAGE', message
 
     close: () ->
-      setTimeout pull, App.config.socket.wait
+      if App.user
+        setTimeout pull, App.config.socket.wait
 
 pull = () -> App.pull()
 
@@ -32,6 +33,8 @@ App.push = (message) ->
 
 register App,
   login: pull
+
+  logout: () -> App.socket.close()
 
   message: (message) ->
     dialog = App.getDialogs().findWhere dialog_id: message.source

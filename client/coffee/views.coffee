@@ -118,72 +118,6 @@
   class Views.Verify extends Views.Form
     template: '#view-code'
 
-  class Views.Profile extends Marionette.ItemView
-    template: '#view-profile'
-
-    behaviors:
-      Bindings: {}
-
-    ui:
-      avatar: '.big-avatar'
-      settings: '.settings'
-      status: '.status'
-
-    events:
-      'dragenter .big-avatar': preventDefault
-      'dragover .big-avatar': preventDefault
-      'drop .big-avatar': 'dropAvatar'
-      'click .settings': () -> App.navigate '/edit/' + @model.get('domain')
-      'change .status': 'changeStatus'
-      'keyup .status': 'keyupStatus'
-      'click .logout': () -> App.logout()
-
-    bindings:
-      '.name': 'name'
-      '.status': 'status'
-
-    changeStatus: () ->
-      $.sendJSON 'POST', '/api/user/status?id=' + @model.get('_id'), status: @model.get('status'), () =>
-        @ui.status.blur()
-
-    keyupStatus: (e) ->
-      if KeyCode.ENTER == e.keyCode
-        @changeStatus()
-
-    dropAvatar: (e) ->
-      e.preventDefault()
-      file = e.originalEvent.dataTransfer.files[0]
-      xhr = new XMLHttpRequest()
-      xhr.open 'POST', '/api/photo'
-      xhr.onload = () =>
-        if xhr.status < 300
-          response = JSON.parse xhr.responseText
-          $.post '/api/user/avatar?photo_id=' + response._id, () =>
-            @setAvatar()
-      xhr.send file
-
-    onRender: () ->
-      me = App.user
-      if @model.get('_id') == me._id or 'admin' == me.type
-        @ui.settings.show()
-      @setAvatar()
-      for k, v of @model.attributes
-        if '_' != k[0] and k not in ['domain', 'phone', 'password', 'avatar', 'created']
-          if v
-            label = T k[0].toUpperCase() + k.slice 1
-            $("<div><strong>#{label}</strong> <div class='value'>#{v}</div></div>")
-            .attr('data-name', k)
-            .appendTo @$el
-
-    setAvatar: () ->
-      @ui.avatar.css 'background-image', 'url("' + (App.avatarUrl @model.id) + '")'
-
-    success: (data) ->
-      if data.verified
-        App.navigate 'login'
-      else
-        @report 'code', 'Invalid code'
-
   class Views.Settings extends Views.Form
     template: '#view-settings'
 
@@ -290,8 +224,6 @@
       draft = new App.Models.Message draft
       editor = new Views.Editor model: draft
       editorLayout = new App.Layouts.EditorLayout model: draft
-      conference = new App.Views.Conference model: draft
-      layout.showChildView 'top', conference
       layout.showChildView 'middle', dialog
       layout.showChildView 'bottom', editorLayout
       editorLayout.showChildView 'editor', editor

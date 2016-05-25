@@ -57,6 +57,10 @@ global.schema.User = new god.Schema
     type: god.Schema.Types.ObjectId
     ref: 'Photo'
 
+  background:
+    type: god.Schema.Types.ObjectId
+    ref: 'Photo'
+
   created:
     type: Date
     default: Date.now
@@ -123,7 +127,8 @@ module.exports =
         conditions.domain = login
       User.findOne conditions, $.wrap (user) ->
         if user
-          conditions = auth: $.req.auth
+          conditions =
+            auth: $.req.auth
           changeset =
             $set:
               user: user._id
@@ -168,7 +173,10 @@ module.exports =
   status: ($) ->
     status = $.param 'status'
     status = status.trim().replace /\s+/g, ' '
-    User.update {_id: $.id}, {$set: status: status}
+    User.update {_id: $.id}, {
+      $set:
+        status: status
+    }
 
   POST: ($) ->
     if $.user
@@ -187,12 +195,13 @@ module.exports =
 
   GET: ($) ->
     params = ['id', 'domain']
-    fields = 'domain status type city country address phone avatar name birthday languages relationship'
+    fields = 'domain status type city country address phone avatar background name birthday languages relationship'
     if $.hasAny(params) and not $.has 'list'
       return User.findOne($.paramsObject params)
       .select(fields)
     else if $.has 'ids'
-      return User.find(_id: $in: $.ids('ids'))
+      return User.find(_id:
+        $in: $.ids('ids'))
       .select(fields)
     else
       if $.has('domain') and $.has('list')
@@ -210,7 +219,8 @@ module.exports =
       conditions =
         _id: $.post('user_id'),
         code: $.post('code')
-      changes = $set: code: null
+      changes = $set:
+        code: null
       User.update conditions, changes, $.wrap (result) ->
         $.send verified: result.n > 0
 
@@ -224,15 +234,16 @@ module.exports =
           $.sendStatus code.NOT_FOUND, 'User not found'
       return
 
+  change:
     POST: ($) ->
-      User.findOneAndUpdate({_id: $.user._id}, {avatar: $.param('photo_id')}).select('_id avatar').exec $.wrap (user) ->
-        if user
-          $.send
-            user_id: user._id
-            photo_id: user.avatar
-        else
-          $.sendStatus code.NOT_FOUND
-
+      field = $.param 'field'
+      changes = {}
+      fields = ['avatar', 'background']
+      if field in fields
+        changes[field] = ObjectID($.param 'value')
+      else
+        $.invalid 'field', field
+      User.findOneAndUpdate({_id: $.user._id}, changes).select(fields.join ' ')
   list:
     GET: ($) ->
       name = $.param 'name'
@@ -287,7 +298,8 @@ search = ($, ids) ->
     search = search.replace /\s+/g, '.*'
     for name in ['domain', 'surname']
       d = {}
-      d[name] = $regex: search
+      d[name] =
+        $regex: search
       ORs.push d
   ands = {}
   if ORs.length > 0
@@ -297,7 +309,8 @@ search = ($, ids) ->
       ands[param] = $.param param
   fields = '_id type forename surname domain name type city address avatar sex'
   if ids
-    ands._id = $in: ids.map (id) -> ObjectID(id)
+    ands._id =
+      $in: ids.map (id) -> ObjectID(id)
   r = User.find ands
   r.select fields
   r.exec $.wrap (users) ->
