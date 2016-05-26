@@ -63,24 +63,13 @@ App.config = config
 App.features = features
 App.debug = debug
 
-windowControls = (document.querySelector '#view-window').innerHTML
-
-regions =
+App.addRegions
+  leftRegion: '#left'
+  addLeftRegion: '#root > .add.left'
+  mainRegion: '#main'
+  addRightRegion: '#root > .add.right'
+  rightRegion: '#right'
   floatingRegion: '#floating-window-container'
-_.each document.querySelectorAll('#root > div'), (region) ->
-  id = region.id
-  region.classList.add 'window'
-  region.innerHTML = windowControls
-  regions[id + 'Region'] = "##{id} .window-content"
-App.addRegions regions
-
-#for name, region of App.getRegions()
-#  region.on 'show', () ->
-#    view = @currentView
-#    if _instanceof(view, App.Layouts.Thresome)
-#      view.middle.on 'show', () ->
-#        className = view.$el.attr('class')
-#        region.currentView.$el.addClass className + '-window'
 
 @dictionary = null
 @T = (name) -> name

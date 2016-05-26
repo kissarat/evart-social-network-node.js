@@ -1,6 +1,6 @@
 .message-layout, .last-message
   .children
-    background-color: lightgrey
+    background-color: #BCBCBC
     padding-left: 8px
   .time
     font-size: 0.7em
@@ -25,17 +25,20 @@
 
 .like-slider-container
   width: 36px
-  height: 12px
-  border: 1px solid black
+  line-height: 12px
+  //border: 1px solid black
   border-radius: 7px
   text-align: center
+  background-color: #BCBCBC
+  border: none
 
   .like-slider
     width: 10px
     height: 10px
-    line-height: 10px
-    border: 1px solid black
-    border-radius: 6px
+    line-height: 12px
+    background-color: white
+    border-radius: 50%
+    border: 1px solid transparent
     margin: auto
 
   &.like > .like-slider
@@ -50,17 +53,26 @@
 
 .message-layout
   .info
-    text-align: center
-    padding: 6px
-    > *
-      margin: auto
-    .avatar
-      margin-bottom: 6px
+    border-bottom: 1px solid #BCBCBC
+    > div
+      background-color: #ECEFF4
+      text-align: center
+      padding: 6px
+      margin-bottom: 4px
+      .time
+        color: #BCBCBC
+        font-size: 0.5em
+      > *
+        margin: auto
+      .avatar
+        margin-bottom: 6px
   .content
     display: flex
+    .text
+      padding: 4px
 
 .message-controls
-  border-top: 1px solid grey
+  color: #BCBCBC
   text-align: right
   > *
     vertical-align: middle
@@ -68,5 +80,10 @@
   > button
     background-color: transparent
     border: none
+    color: #BCBCBC
   .fa-reply
     transform: scaleX(-1)
+
+.profile-relative
+  .unread
+    background-color: transparent

@@ -1,22 +1,3 @@
-$font: "Helvetica Neue", Helvetica, arial, sans-serif
-
-body
-  font-family: $font
-  margin: 0
-
-.fullpage
-  position: fixed
-  width: 100vw
-  height: 100vh
-
-#boot-loading
-  @extend .fullpage
-  background: url("/images/loading.svg") no-repeat center
-
-#root
-  @extend .fullpage
-  display: flex
-
 form
   .error
     color: red
@@ -47,13 +28,6 @@ form
   max-width: 128px
   max-height: 128px
 
-#corner-panel
-  position: fixed
-  display: flex
-  top: 30px
-  right: 10px
-  z-index: 1
-
 .thumbnail
   display: inline-block
   img
@@ -79,8 +53,8 @@ form
   display: flex
   justify-content: space-between
   .author:after
-      content: ' - '
-      text-align: left
+    content: ' - '
+    text-align: left
   .name
     flex-grow: 1
     margin-left: 2px
@@ -93,29 +67,6 @@ form
 .video-thumbnail > img
   max-width: 200px
 
-#main
-  flex: 2
-
-#left, #right
-  flex: 1
-
-.admin
-  display: none
-
-.loading
-  background: url("/images/loading.svg") no-repeat center
-  filter: invert(100%)
-  -webkit-filter: invert(100%)
-  width: inherit
-  height: 210px
-
-.threesome
-  display: flex
-  flex-direction: column
-  .middle
-    overflow-y: scroll
-    flex: 1
-
 .conference-controls .fa
   cursor: pointer
 
@@ -124,11 +75,41 @@ video
 
 .profile-relative
   position: relative
+  text-align: center
   header
+    text-align: left
+    margin: auto
     padding: 32px 40px
     max-width: 400px
     .photo
       background-size: cover
+    .informer
+      color: white
+      vertical-align: top
+      text-align: center
+      .value
+        margin-top: 18px
+      .label
+        margin: 8px auto auto
+        text-transform: uppercase
+        font-size: 6pt
+      &.audio
+        background-color: #EE3063
+      &.track
+        background-color: #4EA6FA
+      &.friends
+        background-color: #31356C
+      &.followers
+        background-color: #31ABE0
+      &.groups
+        background-color: #EE5A34
+      &.video
+        background-color: #8FC449
+    .avatar-block-placeholder
+      float: right
+      width: 104px
+      height: 144px
+      margin: 8px
   .background
     position: absolute
     background: url("http://www.hdwallpapers.in/download/fresh_nature-1280x720.jpg") no-repeat center
@@ -145,7 +126,7 @@ video
     height: 64px
   .title
     textarea
-      color: lightgrey
+      color: #BCBCBC
     vertical-align: top
     color: white
     display: inline-block
@@ -157,7 +138,7 @@ video
   .status
     margin-top: 0.3em
     font-size: 0.8em
-    color: lightgrey
+    color: #BCBCBC
     background-color: transparent
     border: none
     resize: none
@@ -169,23 +150,23 @@ video
       text-align: center
     .right
       flex: 2.5
-      padding: 2px
+      padding: 4px
       background-color: white
 
   .avatar-block
     display: inline-block
-    padding: 2px
+    padding: 4px
     background-color: white
     .buttons
       margin-top: 16px
-      background-color: lightgrey
-      border: 1px solid grey
+      background-color: #ECEFF4
+      border: 1px solid #BCBCBC
       border-radius: 2px
     button
       background-color: transparent
       border: none
-      color: grey
-      border-left: 1px solid grey
+      color: #BCBCBC
+      border-left: 1px solid #BCBCBC
     button:first-child
       border: none
 
@@ -194,11 +175,62 @@ video
     width: 96px
     height: 96px
 
-[draggable]
-  -moz-user-select: none
-  -khtml-user-select: none
-  -webkit-user-select: none
-  user-select: none
-  /* Required to make elements draggable in old WebKit */
-  -khtml-user-drag: element
-  -webkit-user-drag: element
+//@media (min-width: 1025px)
+
+@media (max-width: 1024px)
+  article
+    flex-flow: column
+    .left
+      margin-right: 8px
+      margin-bottom: 8px
+      .avatar-block
+        float: right
+  .profile-relative
+    header
+      padding: 16px 20px
+      .photo
+        display: none
+  .hiddable
+    display: none !important
+  .background
+    height: 300px
+
+@media (min-width: 769px) and (max-width: 1024px)
+  article
+    margin-top: -64px
+
+@media (max-width: 768px)
+  #left,
+  #root > .add.left,
+  #root > .add.right,
+  #right
+    display: none
+
+  .profile-relative
+    > *
+      width: 100vw
+      position: absolute
+      flex-flow: column
+    > article
+      margin-top: 8px
+
+@media (min-width: 341px) and (max-width: 768px)
+  .profile-relative > header
+    width: calc(100vw - 136px)
+
+@media (max-width: 400px)
+  .profile-relative
+    .title
+      width: 128px
+
+@media (min-width: 340px) and (max-width: 400px)
+  .profile-relative .avatar-block
+    margin-bottom: 64px
+
+@media (max-width: 340px)
+  .avatar-block
+    background-color: transparent !important
+    margin-top: 96px
+    border: none
+    .big-avatar
+      display: none

@@ -1,0 +1,67 @@
+$font: "Helvetica Neue", Helvetica, arial, sans-serif
+
+body
+  font-family: $font
+  margin: 0
+
+.fullpage
+  position: fixed
+  width: 100vw
+  height: 100vh
+
+#boot-loading
+  @extend .fullpage
+  background: url("/images/loading.svg") no-repeat center
+
+#root
+  @extend .fullpage
+  display: flex
+  > .add
+    position: relative
+    background-color: #ECEFF4
+    cursor: pointer
+    > div
+      vertical-align: middle
+      font-size: 20pt
+      font-weight: bold
+      color: white
+      margin: 4em 0.2em auto 0.2em
+
+#corner-panel
+  position: fixed
+  display: flex
+  top: 30px
+  right: 10px
+  z-index: 1
+
+#main
+  flex: 2
+
+#left, #right
+  flex: 1
+
+.admin
+  display: none
+
+.loading
+  background: url("/images/loading.svg") no-repeat center
+  filter: invert(100%)
+  -webkit-filter: invert(100%)
+  width: inherit
+  height: 210px
+
+.threesome
+  display: flex
+  flex-direction: column
+  .middle
+    overflow-y: scroll
+    flex: 1
+
+[draggable]
+  -moz-user-select: none
+  -webkit-user-select: none
+  user-select: none
+  -webkit-user-drag: element
+
+.vertical-menu
+  top: 4em

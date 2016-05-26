@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        table {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        td {
+            border: none;
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+<table border="0"></table>
+<script>
+    function a() {
+        return 4 * (Math.round(Math.random() * 16) % 5);
+    }
+
+//    function c() {
+//        return
+//    }
+
+    var max = Math.pow(2, 8);
+    var table = document.querySelector('table');
+    for (var i = 0; i < 16; i++) {
+        var tr = document.createElement('tr');
+        for (var j = 0; j < 16; j++) {
+            var td = document.createElement('td');
+            var r = a();
+            var b = a();
+            var g = a();
+            td.style.backgroundColor = '#' + r + r + r + r + r + r;
+            console.log(td.style.backgroundColor);
+            tr.appendChild(td);
+        }
+        table.appendChild(tr);
+    }
+</script>
+</body>
+</html>

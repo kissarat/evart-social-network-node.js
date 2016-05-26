@@ -539,7 +539,11 @@
     answer: () ->
       peer = App.Peer.find @model.get('source_id')
       peer.answer @model.get('sdp')
-      
+
+  class Views.VerticalMenu extends Marionette.ItemView
+    template: '#view-vertical-menu'
+    tagName: 'li'
+
 
   App.dock = new App.Models.Dock()
   App.dock.on 'change', (changes) ->

@@ -1,0 +1,157 @@
+
+<script type="text/template" id="view-window">
+    <div class="controls window-controls">
+        <h1 class="title"></h1>
+        <nav>
+            <div title="close" class="fa fa-times-circle"></div>
+            <div title="maximize" class="fa fa-plus-circle"></div>
+        </nav>
+    </div>
+    <div class="window-content"></div>
+</script>
+
+<script type="text/template" id="view-error">
+    <h1></h1>
+    <div class="message-container">
+        <div class="fa fa-exclamation-circle"></div>
+        <div class="text"></div>
+    </div>
+</script>
+
+<script type="text/template" id="view-login">
+    <h1>Signin</h1>
+    <div class="form-group">
+        <label>Login</label>
+        <input class="form-control" name="login"/>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input class="form-control" name="password" type="password"/>
+    </div>
+    <section class="buttons">
+        <button type="submit">Enter</button>
+        <a href="signup">Signup</a>
+    </section>
+</script>
+
+<script type="text/template" id="view-signup">
+    <h1>Signup</h1>
+    <div class="form-group">
+        <label>Login</label>
+        <input class="form-control" name="domain"/>
+    </div>
+    <div class="form-group">
+        <label>Phone</label>
+        <input class="form-control" name="phone" pattern="^\d{9,15}$"/>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input class="form-control" name="password" type="password"/>
+    </div>
+    <section class="buttons">
+        <button type="submit">Signup</button>
+    </section>
+</script>
+
+<script type="text/template" id="view-code">
+    <div class="form-group">
+        <label>Code</label>
+        <input class="form-control" name="code"/>
+    </div>
+    <section class="buttons">
+        <button type="submit">Verify</button>
+    </section>
+</script>
+
+<script type="text/template" id="view-upload">
+    <input type="file" multiple/>
+</script>
+
+<script type="text/template" id="view-photo">
+    <img/>
+</script>
+
+<script type="text/template" id="view-photo-thumbnail">
+</script>
+
+<script type="text/template" id="view-load-video">
+    <input/>
+    <button type="button">Add</button>
+    <div class="video-preview"></div>
+</script>
+
+<script type="text/template" id="view-video-thumbnail">
+    <div class="title"></div>
+    <img/>
+</script>
+
+<script type="text/template" id="view-video">
+    <div class="title"></div>
+    <div class="frame"></div>
+</script>
+
+<script type="text/template" id="view-thresome-layout">
+    <div class="top"></div>
+    <div class="middle"></div>
+    <div class="bottom"></div>
+</script>
+
+<script type="text/template" id="view-user-item">
+    <div>
+        <div class="name"></div>
+        <div>
+            <span class="country"></span>
+            <span class="city"></span>
+        </div>
+    </div>
+    <img class="avatar"/>
+</script>
+
+<script type="text/template" id="view-user-list-layout">
+    <input type="search" placeholder="Search"/>
+    <div class="users"></div>
+</script>
+
+<script type="text/template" id="view-chat-layout">
+    <div class="form-group">
+        <label>Name</label>
+        <input name="name"/>
+    </div>
+    <div class="members"></div>
+    <div class="selection"></div>
+</script>
+
+<script type="text/template" id="view-audio">
+    <div class="title">
+        <div class="author"></div>
+        <div class="name"></div>
+        <div class="duration"></div>
+        <div class="bit_rate"></div>
+    </div>
+    <audio controls preload="none">
+        <source/>
+    </audio>
+</script>
+
+<script type="text/template" id="view-conference">
+    <div class="conference-container">
+        <video class="conference-video"></video>
+
+        <div class="conference-controls">
+            <div class="fullscreen fa fa-arrows-alt"></div>
+            <div class="call fa fa-phone"></div>
+            <div class="microphone fa fa-microphone"></div>
+            <div class="camera fa fa-video-camera"></div>
+            <div class="mute fa fa-volume-up" title="Mute"></div>
+            <input data-id="volume" type="range" max="10"/>
+            <div class="hide fa fa-angle-double-up"></div>
+        </div>
+    </div>
+</script>
+
+<script type="text/template" id="view-incoming-call">
+    <img/>
+    <h2></h2>
+    <button type="button" class="answer">Answer</button>
+    <button type="button" class="dismiss">Dismiss</button>
+</script>
