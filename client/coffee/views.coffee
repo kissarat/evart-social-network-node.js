@@ -540,9 +540,17 @@
       peer = App.Peer.find @model.get('source_id')
       peer.answer @model.get('sdp')
 
+
   class Views.VerticalMenu extends Marionette.ItemView
     template: '#view-vertical-menu'
-    tagName: 'li'
+    tagName: 'ul'
+
+    ui:
+      messages: '[data-name=messages]'
+      video: '[data-name=video]'
+
+#    onRender: () ->
+#      console.log @ui.video
 
 
   App.dock = new App.Models.Dock()

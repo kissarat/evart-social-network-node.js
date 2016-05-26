@@ -65,9 +65,9 @@ App.debug = debug
 
 App.addRegions
   leftRegion: '#left'
-  addLeftRegion: '#root > .add.left'
+  addLeftRegion: '#root > .add.left > .region'
   mainRegion: '#main'
-  addRightRegion: '#root > .add.right'
+  addRightRegion: '#root > .add.right > .region'
   rightRegion: '#right'
   floatingRegion: '#floating-window-container'
 
