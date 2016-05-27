@@ -533,10 +533,29 @@ Context.prototype = {
     },
 
     get skip() {
-        return this.has('skip') ? this.param('skip') : 0;
+        var skip = null;
+        if (this.has('skip')) {
+            skip = this.get('skip');
+        }
+        // else if (this.has('page')) {
+        //     skip = (this.get('page') - 1) * this.limit;
+        // }
+        else {
+            skip = 0;
+        }
+        return skip;
     },
 
-    limit: 10,
+    get limit() {
+        return this.has('limit') ? this.get('limit') : 10;
+    },
+
+    get order() {
+        if (this.has('sort') && this.has('order')) {
+            return [this.get('sort'), 'asc' == this.get('order') ? 'ascedenting' : 'descdenting'];
+        }
+        return false;
+    },
 
     model: function () {
         this.o.apply(this.o, arguments);
@@ -598,8 +617,12 @@ function serve($) {
         case 'object':
             if (result instanceof god.Query || result instanceof god.Aggregate) {
                 if ('find' == result.op) {
+                    if (false !== sort) {
+                        result.sort(sort);
+                    }
                     result.skip($.skip);
                     result.limit($.limit);
+                    var sort = $.order;
                 }
                 result = result.exec();
             }

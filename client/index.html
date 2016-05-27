@@ -22,26 +22,38 @@
             statistics.load = Date.now() - statistics.start;
         });
     </script>
-    <link rel="stylesheet" type="text/css" href="/lib/components-font-awesome/css/font-awesome.css"/>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300&subset=latin,cyrillic' rel='stylesheet' type='text/css'><link rel="stylesheet" type="text/css" href="/lib/components-font-awesome/css/font-awesome.css"/>
     <link rel="stylesheet" type="text/css" href="/sass/app.css">
     <link rel="stylesheet" type="text/css" href="/sass/other.css">
     <link rel="stylesheet" type="text/css" href="/sass/dock.css">
     <link rel="stylesheet" type="text/css" href="/sass/message.css">
     <link rel="stylesheet" type="text/css" href="/sass/window.css">
+    <link rel="stylesheet" type="text/css" href="/sass/video.css">
 </head>
 <body>
 <div id="boot-loading"></div>
 
 <div id="corner-panel">
     <div class="domain"></div>
-    <select id="select-language">
+    <select id="select-language" title="Language">
         <option value="en">English</option>
         <option value="ru">Русский</option>
     </select>
 </div>
 
 <div id="root" style="display: none">
-    <div id="left"></div>
+    <div id="left">
+        <div class="panel">
+            <div class="controls">
+                <div class="menu fa fa-caret-left">
+                    <div class="menu region"></div>
+                </div>
+                <div class="close fa fa-times"></div>
+            </div>
+            <div class="content">
+            </div>
+        </div>
+    </div>
     <div class="add left">
         <div class="region"></div>
         <div class="plus">+</div>
@@ -85,6 +97,7 @@
 <div class="include" data-src="/templates/other.html"></div>
 <div class="include" data-src="/templates/profile.html"></div>
 <div class="include" data-src="/templates/messages.html"></div>
+<div class="include" data-src="/templates/video.html"></div>
 
 <div id="floating-window-container"></div>
 
@@ -97,6 +110,7 @@
     <script src="/lib/underscore/underscore.js"></script>
     <script src="/lib/backbone/backbone.js"></script>
     <script src="/lib/backbone.stickit/backbone.stickit.js"></script>
+    <script src="/lib/backbone.paginator/lib/backbone.paginator.js"></script>
     <script src="/lib/marionette/lib/backbone.marionette.js"></script>
     <script src="/lib/moment/moment.js"></script>
     <script src="/coffee/override.js"></script>
@@ -106,6 +120,7 @@
     <script src="/coffee/views.js"></script>
     <script src="/coffee/layouts.js"></script>
     <script src="/coffee/controllers.js"></script>
+    <script src="/coffee/video.js"></script>
     <script src="/coffee/file.js"></script>
     <script src="/coffee/socket.js"></script>
     <script src="/coffee/peer.js"></script>

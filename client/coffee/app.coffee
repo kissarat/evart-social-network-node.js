@@ -97,20 +97,6 @@ boot = (xhr) ->
   App.controllers = {}
   if config.trace.history
     statistics.history = {}
-  templates = {}
-  routes = {}
-  $('[type="text/template"]').each (i, template) ->
-    method = template.id.replace 'view-', ''
-    className = (_get('class') || '').replace('.', ' ') + ' view'
-    routes['template/' + method] = method
-    templates[method] = () ->
-      App.mainRegion.show new (Marionette.ItemView.extend
-        attributes:
-          class: className
-        template: '#' + template.id)
-  new App.Router
-    controller: new (Marionette.Controller.extend templates)
-    appRoutes: routes
   for name of App.Controllers
     Controller = App.Controllers[name]
     if _is(Controller, Marionette.Controller)
@@ -143,6 +129,30 @@ class App.Router extends Marionette.AppRouter
     if config.trace.history
       statistics.history[_.now()] = [name].concat args
     return Marionette.AppRouter.prototype.execute.apply(@, arguments)
+
+#class App.DefaultRouter extends App.Router
+#  appRoutes: () ->
+#    "#{@prefix}": 'index'
+#    "#{@prefix}/:id": 'view'
+
+class App.PageableCollection extends Backbone.PageableCollection
+  mode: 'infinite'
+
+  state:
+    order: -1
+    sortKey: '_id'
+    totalRecords: 100
+
+  queryParams:
+    pageSize: 'limit'
+    sortKey: 'sort'
+    currentPage: null
+    totalPages: null
+    totalRecords: null
+    directions:
+      "-1": 'desc'
+      "1": 'asc'
+    skip: () -> (@state.currentPage + 1) * @state.pageSize
 
 addEventListener 'load', () ->
   if DEV

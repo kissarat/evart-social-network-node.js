@@ -1,0 +1,22 @@
+//.layout-videos .list > div
+//  display: flex
+//  flex-flow: row
+//  flex-wrap: wrap
+//  flex-direction: row-reverse
+
+.thumbnail-video
+  display: inline-block
+  width: calc(50% - 4px)
+  vertical-align: top
+  margin: 2px
+  cursor: pointer
+  figcaption
+    font-size: 0.8em
+  &:hover
+    color: #4EA1D7
+  img
+    margin: -16px auto
+    width: 100%
+    clip-path: inset(16px 0)
+    -webkit-clip-path: inset(12% 0)
+    -moz-clip-path: inset(12% 0)

@@ -331,7 +331,6 @@
             back.setBackground r
       @setAvatar()
 
-
     setAvatar: () ->
       @ui.avatar.css 'background-image', 'url("' + (App.avatarUrl @model.id) + '")'
 

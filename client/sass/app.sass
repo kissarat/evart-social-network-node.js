@@ -1,8 +1,8 @@
-$font: "Helvetica Neue", Helvetica, arial, sans-serif
-
 body
-  font-family: $font
+  font-family: "Roboto", "Segoe UI", "Droid Sans", Ubuntu, sans-serif
   margin: 0
+  color: #9E9E9E
+  font-size: 12pt
 
 .fullpage
   position: fixed
@@ -71,6 +71,9 @@ body
 #left, #right
   flex: 1
 
+#left, #main, #right
+  overflow-y: scroll
+
 .admin
   display: none
 
@@ -96,3 +99,21 @@ body
 
 .vertical-menu
   top: 4em
+
+
+.panel
+  .controls
+    text-align: right
+    background-color: #E0E0E0
+    padding: 2px 6px
+    > *
+      vertical-align: top
+      font-size: 12px
+      line-height: 16px
+      margin-left: 2px
+      cursor: pointer
+    > .menu
+      font-size: 14px
+    .region.menu
+      width: 0
+      height: 0

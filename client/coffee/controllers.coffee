@@ -172,35 +172,6 @@
       userList.fetch()
     layout
 
-  class Controllers.Video extends Marionette.Controller
-    index: () ->
-      videoList = new App.Models.VideoList()
-      videoList.params =
-        owner_id: App.user._id
-      videoListView = new App.Views.VideoList collection: videoList
-      upload = new App.Views.LoadVideo()
-      upload.on 'add', (video) ->
-        videoList.add video
-      videoList.fetch()
-      layout = new App.Layouts.Thresome()
-      App.mainRegion.show layout
-      layout.showChildView 'top', upload
-      layout.showChildView 'middle', videoListView
-      return
-
-    view: (id) ->
-      $.getJSON '/api/video?id=' + id, (video) =>
-        video = new App.Models.Video video
-        videoView = new App.Views.Video model: video
-        layout = new App.Layouts.Thresome()
-        App.mainRegion.show layout
-        layout.showChildView 'top', videoView
-        App.Views.Dialog.build id, 'video', layout
-
-    routes:
-      'videos': 'index'
-      'video/:id': 'view'
-
   App.widgets =
     videos: App.selectVideo
 

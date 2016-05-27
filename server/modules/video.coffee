@@ -50,15 +50,17 @@ load = ($) ->
 
 module.exports =
   GET: ($) ->
-    if $.has 'owner_id'
-      Video.find owner: $.param 'owner_id'
-    else if $.has 'url'
+    if $.has 'url'
       load($)
+      return
     else if $.has 'id'
       Video.findOne $.id
-    else
-      $.sendStatus code.BAD_REQUEST
       return
+#    else
+#      if $.has 'owner_id'
+#        Video.find owner: $.param 'owner_id'
+#      else
+    Video.find()
 
   POST: ($) ->
     load($).then (video) ->
@@ -66,11 +68,3 @@ module.exports =
       video.url = $.param 'url'
       video.owner = $.user._id
       video.save()
-#      video.save $.wrap (result) ->
-#        if result.nModified > 0
-#          $.send code.CREATED, video.toObject()
-#        else
-#          $.send code.INTERNAL_SERVER_ERROR, result
-#    .catch (err) ->
-#      $.send code.INTERNAL_SERVER_ERROR, err
-#    return

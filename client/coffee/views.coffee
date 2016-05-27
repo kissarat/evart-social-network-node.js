@@ -7,6 +7,8 @@
         App.navigate this.getAttribute 'href'
         return
       @view.$el.addClass @view.template.replace '#view-', 'view '
+      @view.$el.addClass @view.template.replace '#thumbnail-', 'view thumbnail-'
+      @view.$el.addClass @view.template.replace '#layout-', 'view layout-'
       el = @view.el
       if dictionary
         ['h1', 'legend', 'span', 'label', 'button', 'a'].forEach (name) ->
@@ -14,12 +16,7 @@
             text = elements.childNodes.item 0
             if 1 == elements.childNodes.length && Node.TEXT_NODE == text.nodeType
               text.textContent = T text.textContent
-      @view.stickit()
-
-    onShow: ->
-      if window.callPhantom
-        callPhantom JSON.stringify
-          show: @view.template.replace '#view-', ''
+#      @view.stickit()
 
   class Views.Error extends Marionette.ItemView
     template: '#view-error'
@@ -355,51 +352,6 @@
 
     @create: (ids) ->
       new Views.PhotoList collection: new App.Models.PhotoList _.map ids, (id) -> _id: id
-
-  class Views.VideoThumbnail extends Marionette.ItemView
-    template: '#view-video-thumbnail'
-    ui:
-      image: 'img'
-
-#    attributes:
-#      class: 'thumbnail'
-
-    bindings:
-      '.title': 'title'
-
-    events:
-      'click img': 'select'
-
-    behaviors:
-      Bindings: {}
-
-    select: () ->
-#      App.navigate 'video/' + @model.get '_id'
-      @trigger 'select', @model
-
-    onRender: () ->
-      @ui.image.attr 'src', @model.get 'thumbnail_url'
-
-  class Views.VideoList extends Marionette.CollectionView
-    childView: Views.VideoThumbnail
-
-    @create: (videos) ->
-      new Views.VideoList collection: new App.Models.VideoList videos
-
-  class Views.Video extends Marionette.ItemView
-    template: '#view-video'
-
-    ui:
-      frame: '.frame'
-
-    bindings:
-      '.title': 'title'
-
-    behaviors:
-      Bindings: {}
-
-    onRender: () ->
-      @ui.frame.html @model.get 'html'
 
   class Views.LastMessage extends Marionette.ItemView
     template: '#view-last-message'
