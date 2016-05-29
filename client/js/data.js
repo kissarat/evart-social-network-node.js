@@ -280,6 +280,11 @@ Element.prototype.setBackground = function (id) {
     }
 };
 
+var Scroll = {
+    UP: false,
+    DOWN: true
+};
+
 Object.freeze(KeyCode);
 Object.freeze(emoji);
 Object.freeze(SocketReadyState);

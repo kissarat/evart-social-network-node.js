@@ -1,19 +1,35 @@
-//.layout-videos .list > div
-//  display: flex
-//  flex-flow: row
-//  flex-wrap: wrap
-//  flex-direction: row-reverse
+.layout-videos
+  .frame
+    text-align: center
+  .list
+    height: 100%
+    overflow-y: auto
+  .resize
+    height: 4px
+    color: grey
+  .search
+    background-color: #E0E0E0
+    > *
+      line-height: 28px
+      vertical-align: middle
+    .icon
+      padding-left: 2px
+      width: 26px
+      text-align: center
+    input
+      border: 2px solid #E0E0E0
+      border-radius: 0
+      line-height: 24px
+      width: calc(100% - 28px)
+      padding: 0
 
-.thumbnail-video
+.thumbnail-video figure
   display: inline-block
   width: calc(50% - 4px)
   vertical-align: top
   margin: 2px
-  cursor: pointer
   figcaption
     font-size: 0.8em
-  &:hover
-    color: #4EA1D7
   img
     margin: -16px auto
     width: 100%

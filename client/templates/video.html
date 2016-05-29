@@ -5,8 +5,10 @@
 </script>
 
 <script type="text/template" id="thumbnail-video">
-    <img alt="Undefined video"/>
-    <figcaption><span class="error">Preview loading error</span></figcaption>
+    <figure>
+        <img alt="Undefined video"/>
+        <figcaption><span class="error">Preview loading error</span></figcaption>
+    </figure>
 </script>
 
 <script type="text/template" id="view-video">
@@ -15,9 +17,10 @@
 </script>
 
 <script type="text/template" id="layout-videos">
-    <div class="current">
-        <div class="title"></div>
-        <div class="frame"></div>
+    <div class="current"></div>
+    <div class="search">
+        <div class="icon fa fa-search"></div>
+        <input type="search" placeholder="Video search..."/>
     </div>
     <div class="list"></div>
 </script>

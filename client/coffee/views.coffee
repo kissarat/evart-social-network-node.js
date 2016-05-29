@@ -16,7 +16,14 @@
             text = elements.childNodes.item 0
             if 1 == elements.childNodes.length && Node.TEXT_NODE == text.nodeType
               text.textContent = T text.textContent
-#      @view.stickit()
+      @view.stickit()
+
+  class App.Behaviors.PageableCollection extends Marionette.Behavior
+    onRender: () ->
+      @view.$el.scroll (e) =>
+        delta = @scrollHeight - @scrollX
+        if delta < 100
+          @view.collection.getNextPage()
 
   class Views.Error extends Marionette.ItemView
     template: '#view-error'

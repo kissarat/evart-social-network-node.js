@@ -22,6 +22,8 @@
     "jquery-cookie": "*",
     "backbone.stickit": "^0.9.2",
     "moment": "^2.12.0",
-    "backbone.paginator": "^2.0.5"
+    "backbone.paginator": "^2.0.5",
+    "backbone.validation": "backbone-validation#^0.11.5",
+    "backbone.radio": "^1.0.5"
   }
 }

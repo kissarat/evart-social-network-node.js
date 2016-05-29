@@ -1,11 +1,19 @@
-jQuery.extend jQuery,
-  sendJSON: (type, url, data, complete) ->
+jQuery.sendJSON = (type, url, data, complete) ->
     this.ajax
       type: type
       url: url
       contentType: 'application/json'
       data: JSON.stringify data
       complete: complete
+
+jQuery.fn.serialize = () ->
+  this[0].serialize()
+
+HTMLFormElement.prototype.serialize = () ->
+  result = {}
+  _.each @elements, (input) ->
+    result[input.getAttribute 'name'] = input.value
+  return result
 
 window.responses = {}
 

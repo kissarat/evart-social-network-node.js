@@ -1,8 +1,5 @@
 @App.module "Controllers", (Controllers, App) ->
   class Controllers.User extends Marionette.Controller
-    login: ->
-      App.mainRegion.show new App.Views.Login model: new App.Models.Login
-
     signup: ->
       App.mainRegion.show new App.Views.Signup model: new App.Models.User
 
@@ -44,7 +41,6 @@
       App.selectUser params, App.mainRegion
 
     routes:
-      'login': 'login'
       'signup': 'signup'
       'profile': 'profile'
       'view/:domain': 'profile'
@@ -54,7 +50,6 @@
       'users': 'users'
       'follows/:domain': 'index'
       'denies/:domain': 'index'
-      'de/:domain': 'index'
 
 
   class Controllers.Message extends Marionette.Controller

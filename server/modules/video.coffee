@@ -52,15 +52,15 @@ module.exports =
   GET: ($) ->
     if $.has 'url'
       load($)
-      return
     else if $.has 'id'
       Video.findOne $.id
-      return
-#    else
-#      if $.has 'owner_id'
-#        Video.find owner: $.param 'owner_id'
-#      else
-    Video.find()
+    else
+      s = {}
+      if $.has 'owner_id'
+        s.owner_id = $.param 'owner_id'
+      else if $.has 'q'
+        $.title = $regex: '.*' + $.get('q') + '.*'
+      Video.find s
 
   POST: ($) ->
     load($).then (video) ->

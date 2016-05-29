@@ -600,7 +600,7 @@ function serve($) {
         return $.send({
             type: 'api',
             name: 'socex',
-            version: 0.3,
+            version: 0.4,
             dir: Object.keys(modules)
         });
     }
@@ -777,7 +777,10 @@ function parse(url) {
     if (a.query) {
         a.query = qs.parse(a.query);
         for (var i in a.query) {
-            if (/^[1-9]\d+$/.test(a.query[i])) {
+            if (!a.query) {
+                delete a.query[i];
+            }
+            else if (/^[1-9]\d+$/.test(a.query[i])) {
                 a.query[i] = parseFloat(a.query[i]);
             }
         }

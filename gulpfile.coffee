@@ -24,9 +24,8 @@ gulp.task 'app', ->
     script.removeAttribute 'data-src'
   fse.mkdirpSync 'app'
   fs.writeFileSync 'app/script.js', files
-  console.log 'minify'
   minifier.minify 'app/script.js'
-  fs.unlinkSync 'app/script.js'
+#  fs.unlinkSync 'app/script.js'
   files = fs.readFileSync 'app/script.min.js'
   fs.unlinkSync 'app/script.min.js'
   string = files.toString 'utf8'
@@ -34,7 +33,7 @@ gulp.task 'app', ->
   files = []
   _.each (document.querySelectorAll '[rel=stylesheet]'), (style) ->
     src = style.getAttribute 'href'
-    if src
+    if src and src.indexOf('http') < 0
       files.push fs.readFileSync ('client' + src)
     document.head.removeChild style
   string = files.join "\n"

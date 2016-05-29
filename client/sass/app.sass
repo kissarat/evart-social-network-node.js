@@ -4,6 +4,12 @@ body
   color: #9E9E9E
   font-size: 12pt
 
+a
+  text-decoration: none
+  color: #9E9E9E
+  &:hover
+    color: #4EA1D7
+
 .fullpage
   position: fixed
   width: 100vw
@@ -71,8 +77,8 @@ body
 #left, #right
   flex: 1
 
-#left, #main, #right
-  overflow-y: scroll
+#root > * > *
+  height: 100vh
 
 .admin
   display: none
@@ -100,6 +106,8 @@ body
 .vertical-menu
   top: 4em
 
+.help-block
+  display: none
 
 .panel
   .controls

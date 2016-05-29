@@ -27,7 +27,7 @@
     <link rel="stylesheet" type="text/css" href="/sass/other.css">
     <link rel="stylesheet" type="text/css" href="/sass/dock.css">
     <link rel="stylesheet" type="text/css" href="/sass/message.css">
-    <link rel="stylesheet" type="text/css" href="/sass/window.css">
+    <!--<link rel="stylesheet" type="text/css" href="/sass/window.css">-->
     <link rel="stylesheet" type="text/css" href="/sass/video.css">
 </head>
 <body>
@@ -94,9 +94,9 @@
     </div>
 </div>
 
+<div class="include" data-src="/templates/user.html"></div>
 <div class="include" data-src="/templates/other.html"></div>
-<div class="include" data-src="/templates/profile.html"></div>
-<div class="include" data-src="/templates/messages.html"></div>
+<div class="include" data-src="/templates/message.html"></div>
 <div class="include" data-src="/templates/video.html"></div>
 
 <div id="floating-window-container"></div>
@@ -110,7 +110,9 @@
     <script src="/lib/underscore/underscore.js"></script>
     <script src="/lib/backbone/backbone.js"></script>
     <script src="/lib/backbone.stickit/backbone.stickit.js"></script>
+    <script src="/lib/backbone.validation/dist/backbone-validation.js"></script>
     <script src="/lib/backbone.paginator/lib/backbone.paginator.js"></script>
+    <script src="/lib/backbone.radio/build/backbone.radio.js"></script>
     <script src="/lib/marionette/lib/backbone.marionette.js"></script>
     <script src="/lib/moment/moment.js"></script>
     <script src="/coffee/override.js"></script>
@@ -120,6 +122,7 @@
     <script src="/coffee/views.js"></script>
     <script src="/coffee/layouts.js"></script>
     <script src="/coffee/controllers.js"></script>
+    <script src="/coffee/user.js"></script>
     <script src="/coffee/video.js"></script>
     <script src="/coffee/file.js"></script>
     <script src="/coffee/socket.js"></script>

@@ -63,6 +63,8 @@ App.config = config
 App.features = features
 App.debug = debug
 
+App.channels = {}
+
 App.addRegions
   leftRegion: '#left'
   addLeftRegion: '#root > .add.left > .region'
@@ -143,16 +145,21 @@ class App.PageableCollection extends Backbone.PageableCollection
     sortKey: '_id'
     totalRecords: 100
 
-  queryParams:
-    pageSize: 'limit'
-    sortKey: 'sort'
-    currentPage: null
-    totalPages: null
-    totalRecords: null
-    directions:
-      "-1": 'desc'
-      "1": 'asc'
-    skip: () -> (@state.currentPage + 1) * @state.pageSize
+  queryParams: () ->
+    params =
+      pageSize: 'limit'
+      sortKey: 'sort'
+      currentPage: null
+      totalPages: null
+      totalRecords: null
+      directions:
+        "-1": 'desc'
+        "1": 'asc'
+      skip: () -> (@state.currentPage + 1) * @state.pageSize
+    for k, v of @model.attributes
+      params[k] = () =>
+        @model.get(k)
+    return params
 
 addEventListener 'load', () ->
   if DEV
