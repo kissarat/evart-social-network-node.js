@@ -151,7 +151,7 @@ class App.PageableCollection extends Backbone.PageableCollection
   state:
     order: -1
     sortKey: '_id'
-    totalRecords: 100
+    totalRecords: 2000
 
   queryParams:
     pageSize: 'limit'
@@ -160,6 +160,14 @@ class App.PageableCollection extends Backbone.PageableCollection
     totalPages: null
     totalRecords: null
     skip: () -> (@state.currentPage - 1) * @state.pageSize
+
+  parseRecords: (records) ->
+    if 0 == records.length
+      @state.totalRecords = @fullCollection.length
+      @state.totalPages = Math.floor(@state.totalRecords / @state.limit)
+      @state.currentPage = @state.totalPages
+      @state.skip = (@state.currentPage - 1) * @state.limit
+    records
 
   delaySearch: (cb) ->
     @start = Date.now()

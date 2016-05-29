@@ -28,9 +28,6 @@
     queryModelInitial:
       q: ''
 
-    bindings:
-      PageableCollection: {}
-
   class Video.Thumbnail extends Marionette.ItemView
     template: '#thumbnail-video'
     tagName: 'a'
@@ -58,6 +55,9 @@
 
   class Video.ListView extends Marionette.CollectionView
     childView: Video.Thumbnail
+
+    behaviors:
+      Pageable: {}
 
   class Video.View extends Marionette.ItemView
     template: '#view-video'

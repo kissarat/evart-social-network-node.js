@@ -18,12 +18,13 @@
               text.textContent = T text.textContent
       @view.stickit()
 
-  class App.Behaviors.PageableCollection extends Marionette.Behavior
-    onRender: () ->
-      @view.$el.scroll (e) =>
-        delta = @scrollHeight - @scrollX
-        if delta < 100
-          @view.collection.getNextPage()
+  class App.Behaviors.Pageable extends Marionette.Behavior
+    onAttach: () ->
+      view = @view
+      @view.el.parentNode.addEventListener 'scroll', (e) =>
+        delta = e.target.scrollHeight - e.target.scrollTop
+        if delta < 500
+          view.collection.pageableCollection.getNextPage()
 
   class Views.Error extends Marionette.ItemView
     template: '#view-error'

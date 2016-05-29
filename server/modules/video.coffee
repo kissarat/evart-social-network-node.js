@@ -59,7 +59,7 @@ module.exports =
       if $.has('owner_id')
         s.owner_id = $.get('owner_id')
       else if q = $.search
-        s.title = $regex: q
+        s.title = q
       Video.find s
 
   POST: ($) ->
