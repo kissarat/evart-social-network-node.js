@@ -25,6 +25,9 @@
   class Video.List extends App.PageableCollection
     url: '/api/video'
 
+    queryModelInitial:
+      q: ''
+
     bindings:
       PageableCollection: {}
 
@@ -78,8 +81,9 @@
     template: '#layout-videos'
 
     initialize: () ->
-      @model = new Backbone.Model
-        q: ''
+      @model = new Backbone.Model()
+      @listRegion.on 'show', @setupModel
+      window.VIDEO_LAYOUT = @
 
     behaviors:
       Bindings: {}
@@ -99,18 +103,21 @@
       search: 'input'
 
     events:
-      'keydown @ui.search': 'search'
+      'keyup @ui.search': 'search'
+      'change @ui.search': 'search'
 
-#    search: (e) ->
-#      p = @listRegion.currentView.collection.pageableCollection
-#      p.state.q = e.target.value
-#      p.fetch()
+    getCollection: () ->
+      @listRegion.currentView.collection.pageableCollection
 
-    modelEvents:
-      'change': 'changeModel'
+    setupModel: () =>
+      @model = @getCollection().queryModel
+      @stickit()
 
-    changeModel: () ->
-      @listRegion.currentView.collection.pageableCollection.fetch()
+    search: (e) ->
+      if EmptyKeys.indexOf(e.keyCode) < 0
+        @ui.list.busy(true)
+        @getCollection().delaySearch () =>
+          @ui.list.busy(false)
 
   new Video.Router
     controller: new Video.Controller()

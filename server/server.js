@@ -556,6 +556,15 @@ Context.prototype = {
         }
         return false;
     },
+    
+    get search() {
+        if (this.has('q')) {
+            var q = this.get('q');
+            q = q.trim().replace(/[\+\s]+/g, '.*').toLowerCase();
+            return q ? new RegExp(`.*${q}.*`, 'i') : false;
+        }
+        return false;
+    },
 
     model: function () {
         this.o.apply(this.o, arguments);
@@ -598,10 +607,9 @@ function walk($, object, path) {
 function serve($) {
     if (!$.req.url.route[0]) {
         return $.send({
-            type: 'api',
-            name: 'socex',
+            api: 'socex',
             version: 0.4,
-            dir: Object.keys(modules)
+            dir: Object.keys(modules).filter(m => modules[m])
         });
     }
 
@@ -777,11 +785,12 @@ function parse(url) {
     if (a.query) {
         a.query = qs.parse(a.query);
         for (var i in a.query) {
-            if (!a.query) {
+            var value = a.query[i];
+            if (!value) {
                 delete a.query[i];
             }
-            else if (/^[1-9]\d+$/.test(a.query[i])) {
-                a.query[i] = parseFloat(a.query[i]);
+            else if (24 != value.length && /^\d+$/.test(value)) {
+                a.query[i] = parseFloat(value);
             }
         }
     }

@@ -3,6 +3,8 @@ if DEV
   version = statistics.start
 
 config =
+  search:
+    delay: 250
   trace:
     history: true
   socket:
@@ -140,26 +142,32 @@ class App.Router extends Marionette.AppRouter
 class App.PageableCollection extends Backbone.PageableCollection
   mode: 'infinite'
 
+  initialize: () ->
+    @queryModel = new Backbone.Model(@queryModelInitial)
+    Object.keys(@queryModelInitial).forEach (k) =>
+      @queryParams[k] = () =>
+        @queryModel.get(k).trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+
   state:
     order: -1
     sortKey: '_id'
     totalRecords: 100
 
-  queryParams: () ->
-    params =
-      pageSize: 'limit'
-      sortKey: 'sort'
-      currentPage: null
-      totalPages: null
-      totalRecords: null
-      directions:
-        "-1": 'desc'
-        "1": 'asc'
-      skip: () -> (@state.currentPage + 1) * @state.pageSize
-    for k, v of @model.attributes
-      params[k] = () =>
-        @model.get(k)
-    return params
+  queryParams:
+    pageSize: 'limit'
+    sortKey: 'sort'
+    currentPage: null
+    totalPages: null
+    totalRecords: null
+    skip: () -> (@state.currentPage - 1) * @state.pageSize
+
+  delaySearch: (cb) ->
+    @start = Date.now()
+    search = () =>
+      if Date.now() - @start >= App.config.search.delay
+        @fullCollection.reset()
+        @getFirstPage(success: cb)
+    setTimeout search, App.config.search.delay
 
 addEventListener 'load', () ->
   if DEV

@@ -21,5 +21,9 @@
       "quality": 80
     }
   },
-  "modules": {}
+  "modules": {
+    "admin": false,
+    "test": false,
+    "chat": false
+  }
 }

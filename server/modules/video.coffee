@@ -56,10 +56,10 @@ module.exports =
       Video.findOne $.id
     else
       s = {}
-      if $.has 'owner_id'
-        s.owner_id = $.param 'owner_id'
-      else if $.has 'q'
-        $.title = $regex: '.*' + $.get('q') + '.*'
+      if $.has('owner_id')
+        s.owner_id = $.get('owner_id')
+      else if q = $.search
+        s.title = $regex: q
       Video.find s
 
   POST: ($) ->

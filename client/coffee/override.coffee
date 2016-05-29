@@ -9,6 +9,9 @@ jQuery.sendJSON = (type, url, data, complete) ->
 jQuery.fn.serialize = () ->
   this[0].serialize()
 
+jQuery.fn.busy = (state) ->
+  this.toggleClass('busy', state)
+
 HTMLFormElement.prototype.serialize = () ->
   result = {}
   _.each @elements, (input) ->
