@@ -9,6 +9,12 @@
       @view.$el.addClass @view.template.replace '#view-', 'view '
       @view.$el.addClass @view.template.replace '#thumbnail-', 'view thumbnail-'
       @view.$el.addClass @view.template.replace '#layout-', 'view layout-'
+      @view.$el.addClass @view.template.replace '#form-', 'view form-'
+      template = $(@view.template)
+      cssClass = template.attr('data-class')
+      $('body').removeAttr('class')
+      if cssClass
+        $('body').addClass(cssClass)
       el = @view.el
       if dictionary
         ['h1', 'legend', 'span', 'label', 'button', 'a'].forEach (name) ->

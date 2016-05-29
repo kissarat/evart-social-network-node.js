@@ -1,7 +1,10 @@
 @App.module 'User', (User, App) ->
   class User.Controller extends Marionette.Controller
     login: ->
-      App.mainRegion.show new App.User.LoginForm model: new App.User.Login()
+      if App.user
+        App.navigate 'profile'
+      else
+        App.mainRegion.show new App.User.LoginForm model: new App.User.Login()
 
   class User.Router extends Marionette.AppRouter
     appRoutes:
@@ -25,6 +28,9 @@
     initialize: () ->
       Backbone.Validation.bind(this)
 
+    behaviors:
+      Bindings: {}
+
     events:
       'click [type=submit]': 'submit'
 
@@ -35,7 +41,11 @@
     login: () ->
       @model.set @el.serialize()
       if @model.isValid(true)
-        @model.save()
+        @model.save null, success: (model, data) ->
+          if data.verified
+            App.navigate '/code'
+          else
+          console.log arguments
 
     new User.Router
       controller: new User.Controller

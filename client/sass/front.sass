@@ -1,0 +1,85 @@
+.front
+  background: url("/images/front-bg.jpg") top
+  background-size: cover
+  height: 100vh
+  #left, #right, #root > .add, #dock
+    display: none
+  .form-login
+    position: absolute
+    display: inline-block
+    width: 50%
+    left: 50%
+    .title
+      color: white
+      font-size: 2em
+      text-transform: uppercase
+      .evart
+        font-weight: bold
+        font-size: 1.5em
+      .network
+        display: inline-block
+        font-size: 0.8em
+        background-color: #40A8FC
+        padding: 4px 6px
+    fieldset
+      display: inline-block
+      margin-top: 12px
+      padding: 8px 6px
+      border: 1px solid rgba(255, 255, 255, 0.6)
+      border-radius: 4px
+      background-color: rgba(255, 255, 255, 0.2)
+      > *
+        display: inline-block
+        input
+          border: 1px solid #9E9E9E
+          border-radius: 4px
+          width: 96px
+          margin: 4px 6px
+          padding: 4px 6px
+    .signup
+      display: inline-block
+      margin: 4em auto
+      color: white
+      border-radius: 4px
+      background-color: #FA6D21
+      a
+        display: block
+        margin: 12px 32px
+        color: white
+
+  .front-footer
+    height: 170px
+    position: fixed
+    bottom: 0
+    left: 0
+    right: 0
+    width: 100%
+    > .images
+      top: 45px
+      height: 125px
+      bottom: 0
+      position: relative
+      > *
+        position: absolute
+        bottom: 0
+      .left
+        height: 170px
+        width: 365px
+        right: 50%
+        z-index: 2
+        background: url("/images/front-bg-footer-left.png") bottom no-repeat
+        .copyright
+          margin-top: 120px
+          margin-left: 120px
+          font-size: 6pt
+          z-index: 3
+      .right
+        background-color: #E4E4E4
+        height: 125px
+        right: 0
+        left: 0
+        width: 100%
+        z-index: 1
+        text-align: right
+        img
+          z-index: 1
