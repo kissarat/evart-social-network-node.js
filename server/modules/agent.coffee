@@ -33,6 +33,17 @@ global.schema.Agent = new god.Schema
     name: String
     version: Number
 
+  code:
+    type: String
+    match: /^\d{6}$/
+    trim: true
+
+  phone:
+    type: String
+    unique: true
+    trim: true
+    match: /^\d{9,15}$/
+
   user:
     type: god.Schema.Types.ObjectId
     ref: 'User'
@@ -69,6 +80,5 @@ module.exports =
     return
 
   GET: ($) ->
-    
     $.send extract $.agent
 

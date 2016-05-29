@@ -1,6 +1,7 @@
 .front
-  background: url("/images/front-bg.jpg") top
-  background-size: cover
+  &.login
+    background: url("/images/front-bg.jpg") top
+    background-size: cover
   height: 100vh
   #left, #right, #root > .add, #dock
     display: none
@@ -47,39 +48,98 @@
         margin: 12px 32px
         color: white
 
-  .front-footer
-    height: 170px
-    position: fixed
+.front-footer
+  height: 170px
+  position: fixed
+  bottom: 0
+  left: 0
+  right: 0
+  width: 100%
+  > .images
+    top: 45px
+    height: 125px
     bottom: 0
-    left: 0
-    right: 0
-    width: 100%
-    > .images
-      top: 45px
-      height: 125px
+    position: relative
+    > *
+      position: absolute
       bottom: 0
-      position: relative
-      > *
-        position: absolute
-        bottom: 0
-      .left
-        height: 170px
-        width: 365px
-        right: 50%
-        z-index: 2
-        background: url("/images/front-bg-footer-left.png") bottom no-repeat
-        .copyright
-          margin-top: 120px
-          margin-left: 120px
-          font-size: 6pt
-          z-index: 3
-      .right
-        background-color: #E4E4E4
-        height: 125px
-        right: 0
-        left: 0
-        width: 100%
+    .left
+      height: 170px
+      width: 365px
+      right: 50%
+      z-index: 2
+      background: url("/images/front-bg-footer-left.png") bottom no-repeat
+      .copyright
+        margin-top: 120px
+        margin-left: 120px
+        font-size: 6pt
+        z-index: 3
+    .right
+      background-color: #E4E4E4
+      height: 125px
+      right: 0
+      left: 0
+      width: 100%
+      z-index: 1
+      text-align: right
+      img
         z-index: 1
-        text-align: right
-        img
-          z-index: 1
+
+@media (max-height: 500px)
+  .front-footer
+    display: none
+
+.front.signup
+  text-align: center
+  background-color: #F8F8F8
+
+.form-signup
+  display: inline-block
+  margin: auto
+  .step-container
+    position: relative
+    .line
+      margin: auto
+      position: absolute
+      top: 0
+      right: 12px
+      left: 12px
+      width: calc(100% - 48px)
+      height: 14px
+      border-bottom: 2px solid #CBD3DF
+      z-index: -1
+  .steps
+    display: flex
+    justify-content: space-between
+    > div
+      text-align: center
+      > div
+        margin: auto
+    .label
+      color: #CBD3DF
+      text-transform: uppercase
+    .circle
+      border-radius: 50%
+      border: 3px solid #F8F8F8
+      text-align: center
+      vertical-align: middle
+      background-color: #CBD3DF
+      color: white
+      font-size: 0.7em
+      width: 24px
+      line-height: 24px
+      z-index: 1
+  fieldset
+    display: none
+    border: none
+
+$steps: phone code personal
+@each $i in $steps
+  [data-step="#{$i}"] .#{$i}
+      display: block
+      input:before
+        content: '+'
+      .label
+        color: #207FE2
+      .circle
+        background-color: #207FE2

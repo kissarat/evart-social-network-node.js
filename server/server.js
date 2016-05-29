@@ -20,6 +20,8 @@ var modules = {};
 
 global.schema = {};
 
+var sessions = {};
+
 modules_dir.forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
     if (match) {

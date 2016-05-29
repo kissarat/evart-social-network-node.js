@@ -117,7 +117,8 @@ boot = (xhr) ->
       console.warn 'User is not authorized'
   #  if '/' == location.pathname
   #    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
-  need_login = '/login' != location.pathname and not App.user
+  route = location.pathname.split('/')[0]
+  need_login = route in ['login', 'signup'] and not App.user
   Backbone.history.start
     pushState: true
     silent: need_login

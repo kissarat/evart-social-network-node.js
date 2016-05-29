@@ -1,4 +1,4 @@
-<script type="text/template" id="form-login" data-class="front">
+<script type="text/template" id="form-login" data-class="front login">
     <div class="title">
         <div class="welcome">Welcome to</div>
         <div class="evart">Evart</div>
@@ -19,7 +19,58 @@
     </fieldset>
     <br/>
     <div class="signup">
-        <a href="signup">Signup</a>
+        <a href="/signup/phone">Signup</a>
+    </div>
+</script>
+
+<script type="text/template" id="form-signup" data-class="front signup">
+    <h1>Simple registration in 3 steps</h1>
+    <div class="step-container">
+        <div class="line"></div>
+        <div class="steps">
+            <div class="phone">
+                <div class="circle">1</div>
+                <div class="label">Step</div>
+            </div>
+            <div class="code">
+                <div class="circle">2</div>
+                <div class="label">Step</div>
+            </div>
+            <div class="personal">
+                <div class="circle">3</div>
+                <div class="label">Step</div>
+            </div>
+        </div>
+    </div>
+    <div class="fields">
+        <fieldset class="phone">
+            <span>+</span>
+            <input name="phone" placeholder="Phone"/>
+            <button type="button">Signup</button>
+        </fieldset>
+        <fieldset class="code">
+            <input name="code" class="Code" pattern="^\d{6}$" placeholder="Code"/>
+            <button type="button">Verify</button>
+        </fieldset>
+        <fieldset class="personal">
+            <div class="form-group">
+                <input class="form-control" name="login" placeholder="Login"/>
+                <span class="help-block">Your login, phone or user id</span>
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="email" placeholder="Email"/>
+                <span class="help-block">Your login, phone or user id</span>
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="forename" placeholder="First Name"/>
+                <span class="help-block">Your login, phone or user id</span>
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="forename" placeholder="Last Name"/>
+                <span class="help-block">Your login, phone or user id</span>
+            </div>
+            <button type="button">Signup</button>
+        </fieldset>
     </div>
 </script>
 

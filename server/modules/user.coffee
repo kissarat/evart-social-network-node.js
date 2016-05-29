@@ -224,6 +224,14 @@ module.exports =
       User.update conditions, changes, $.wrap (result) ->
         $.send verified: result.n > 0
 
+
+  phone: ($) ->
+    $.agent.phone = $.param('phone')
+    $.agent.code = rs.generate
+      length: 4
+      charset: 'numeric'
+    $.agent.save()
+
   avatar:
     GET: ($) ->
       User.findOne $.id, $.wrap (user) ->

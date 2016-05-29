@@ -120,9 +120,6 @@
       App.trigger 'login'
   #      App.navigate 'profile'
 
-  class Views.Signup extends Views.Form
-    template: '#view-signup'
-
     success: (data, model) ->
       App.navigate 'verify/' + model.id
 

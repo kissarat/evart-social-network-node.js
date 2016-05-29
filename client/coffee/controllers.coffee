@@ -1,8 +1,5 @@
 @App.module "Controllers", (Controllers, App) ->
   class Controllers.User extends Marionette.Controller
-    signup: ->
-      App.mainRegion.show new App.Views.Signup model: new App.Models.User
-
     settings: (domain) ->
       if not domain
         domain = App.user.domain
@@ -41,7 +38,6 @@
       App.selectUser params, App.mainRegion
 
     routes:
-      'signup': 'signup'
       'profile': 'profile'
       'view/:domain': 'profile'
       'settings': 'settings'
