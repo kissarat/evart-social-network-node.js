@@ -51,14 +51,15 @@ global.schema.Agent = new god.Schema
 extract = (agent) ->
   if agent.toObject
     agent = agent.toObject()
-  result = _id: agent._id
+  result =
+    _id: agent._id
+    auth: agent.auth
   if agent.user
     result.user =
       _id: agent.user._id
-      type: agent.user.type
       domain: agent.user.domain
-      verified: !!agent.user.code
-  return result
+      type: agent.user.type
+  result
 
 module.exports =
   POST: ($) ->

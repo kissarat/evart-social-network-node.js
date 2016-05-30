@@ -109,6 +109,11 @@ global.schema.User = new god.Schema
     ref: 'User'
   ]
 
+extract = (user) ->
+  success: true
+  _id: user._id
+  domain: user.domain
+
 module.exports =
   login: ($) ->
     if $.user
@@ -134,10 +139,7 @@ module.exports =
               time: Date.now()
           Agent.update conditions, changeset, $.wrap (result) ->
             if result.nModified > 0
-              $.send
-                _id: user._id
-                domain: user.domain
-                verified: user.verified
+              $.send extract result
             else
               $.send code.INTERNAL_SERVER_ERROR, error:
                 message: 'Unregistered agent'
@@ -225,11 +227,20 @@ module.exports =
 
   phone: ($) ->
     $.agent.phone = $.param('phone')
-    $.agent.code = rs.generate
-      length: 6
-      charset: 'numeric'
-    $.sendSMS $.agent.phone, 'Code: ' + $.agent.code, () ->
-      $.agent.save($.success)
+    if config.sms.enabled
+      $.agent.code = rs.generate
+        length: 6
+        charset: 'numeric'
+    User.findOne {phone: $.agent.phone}, $.wrap (user) ->
+      if user
+        $.send error: message: 'The phone number already registered'
+      else
+        save = () ->
+          $.agent.save($.success)
+        if config.sms.enabled
+          $.sendSMS $.agent.phone, 'Code: ' + $.agent.code, save
+        else
+          save()
     return
 
   code: ($) ->

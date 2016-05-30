@@ -115,16 +115,16 @@ boot = (xhr) ->
       App.trigger 'login'
     catch ex
       console.warn 'User is not authorized'
-  #  if '/' == location.pathname
-  #    App.navigate if code.UNAUTHORIZED == xhr.status then 'login' else 'profile'
-  route = location.pathname.split('/')[0]
-  need_login = route in ['login', 'signup'] and not App.user
+  route = location.pathname.split('/')
   Backbone.history.start
     pushState: true
-    silent: need_login
-  if need_login
-    App.navigate 'login'
-
+    root: '/'
+  if not App.user
+    if not route[1] in ['login', 'signup']
+      App.login()
+  else
+    $('body').removeAttr('class')
+    App.navigate('/profile')
 
 App.mainRegion.on 'show', (view) ->
   document.title = if view.title then _.result(view.title) else 'Socex'
@@ -259,17 +259,26 @@ $('#select-language')
     path: '/'
   location.reload()
 
-App.on 'login', () ->
-  App.navigate 'profile'
-  $('#dock-container').show()
+App.login = () ->
+  if App.user
+    App.trigger 'login'
+  else
+    $.getJSON '/api/agent', (agent) ->
+      App.agent = agent
+      if App.user
+        App.navigate 'profile'
+        $('#dock-container').show()
+        App.trigger 'login'
 
 App.logout = () ->
-  $.get '/api/user/logout', () ->
+  if App.user
+    $.getJSON '/api/user/logout', (response) ->
+      $('#dock-container').hide()
+      App.trigger 'logout'
+      App.navigate 'login'
+  else
     App.trigger 'logout'
-  
-App.on 'logout', () ->
-  $('#dock-container').hide()
-  App.navigate 'login'
+    App.navigate 'login'
 
 App.showCounter = (name, value) ->
   icon = $('#dock [href="/' + name + '"]')

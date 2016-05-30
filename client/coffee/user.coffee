@@ -1,10 +1,10 @@
 @App.module 'User', (User, App) ->
   class User.Controller extends Marionette.Controller
     login: ->
-      if App.user
-        App.navigate 'profile'
-      else
-        App.mainRegion.show new App.User.LoginForm model: new App.User.Login()
+      App.mainRegion.show new App.User.LoginForm model: new App.User.Login()
+
+    logout: () ->
+      App.logout()
 
     signup: (step) ->
       App.mainRegion.show new App.User.SignupForm model: new App.User.Signup()
@@ -12,6 +12,7 @@
   class User.Router extends Marionette.AppRouter
     appRoutes:
       'login': 'login'
+      'logout': 'logout'
       'signup/:step': 'signup'
 
   # Models
@@ -81,10 +82,7 @@
       @model.set @el.serialize()
       if @model.isValid(true)
         @model.save null, success: (model, data) ->
-          if data.verified
-            App.navigate '/code'
-          else
-            console.log arguments
+          App.login()
 
   class User.SignupForm extends Marionette.ItemView
     template: '#form-signup'
@@ -121,8 +119,8 @@
             if response.success
               App.navigate('/signup/code')
             else if response.error
-              message = if twilio.INVALID_NUMBER = response.error.code then T('Invalid phone number') else response.message
-              @$el.report('phone', message, 'error')
+              message = if twilio.INVALID_NUMBER = response.error.code then 'Invalid phone number' else response.error.message
+              @$el.report('phone', T(message), 'error')
 
     code: () ->
       if @model.isValid('code')

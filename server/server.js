@@ -197,12 +197,12 @@ function Context(req) {
 }
 
 Context.prototype = {
-    twilio: new twilio.RestClient(config.twilio.sid, config.twilio.token),
+    twilio: new twilio.RestClient(config.sms.sid, config.sms.token),
 
     sendSMS: function (phone, text, cb) {
         this.twilio.sms.messages.create({
             to: '+' + phone,
-            from: '+' + config.twilio.phone,
+            from: '+' + config.sms.phone,
             body: text
         }, this.wrap(cb))
     },
@@ -528,7 +528,10 @@ Context.prototype = {
             }));
         }
         else {
-            cb();
+            var agent = new Agent();
+            agent.save(this.wrap(function (agent) {
+                cb(agent);
+            }));
         }
     },
 

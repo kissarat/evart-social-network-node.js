@@ -6,7 +6,7 @@ var docs = [
     ["users", {
         "domain": "admin",
         "type": "admin",
-        "phone": "380671541943",
+        "phone": "380671234567",
         "email": "kissarat@gmail.com",
         "hash": "RMlDIlc4/ChTfFO8EeUnOo1OGNu5zdWBg2OKFvI7pP8="
     }]
