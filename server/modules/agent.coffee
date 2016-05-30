@@ -81,4 +81,3 @@ module.exports =
 
   GET: ($) ->
     $.send extract $.agent
-

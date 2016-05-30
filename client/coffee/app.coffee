@@ -347,3 +347,9 @@ App.droppable = (target) ->
       url = target.getAttribute('data-change')
 #      $.sendJSON 'POST', url, {}, () ->
 #        target.style.backgroundImage = "url(/photo/#{id}.jpg)"
+
+_.extend Backbone.Validation.callbacks,
+  valid: (view, attr, selector) ->
+    view.$el.report(attr, '', false)
+  invalid: (view, attr, error, selector) ->
+    view.$el.report(attr, error, false)

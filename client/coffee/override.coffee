@@ -1,16 +1,26 @@
 jQuery.sendJSON = (type, url, data, complete) ->
-    this.ajax
-      type: type
-      url: url
-      contentType: 'application/json'
-      data: JSON.stringify data
-      complete: complete
+  @ajax
+    type: type
+    url: url
+    contentType: 'application/json; charset=UTF-8'
+    dataType: 'json'
+    data: JSON.stringify data
+    complete: complete
 
 jQuery.fn.serialize = () ->
-  this[0].serialize()
+  @[0].serialize()
 
 jQuery.fn.busy = (state) ->
-  this.toggleClass('busy', state)
+  @toggleClass('busy', state)
+
+jQuery.fn.report = (name, messsage, cssClass) ->
+  helpBlock = @find("[name=#{name}]").parent().find(".help-block")
+  if 'string' == typeof cssClass
+    helpBlock.addClass(cssClass).show().html(messsage)
+  else if false == cssClass
+    helpBlock.attr('class', 'help-block').hide().empty()
+  else
+    helpBlock.attr('class', 'help-block').show().html(messsage)
 
 HTMLFormElement.prototype.serialize = () ->
   result = {}

@@ -9,6 +9,7 @@ var fs = require('fs');
 var url_parse = require('url').parse;
 var qs = require('querystring');
 var _ = require('underscore');
+var twilio = require('twilio');
 
 global.config = require('./config.json');
 global.code = require('../client/code.json');
@@ -196,6 +197,16 @@ function Context(req) {
 }
 
 Context.prototype = {
+    twilio: new twilio.RestClient(config.twilio.sid, config.twilio.token),
+
+    sendSMS: function (phone, text, cb) {
+        this.twilio.sms.messages.create({
+            to: '+' + phone,
+            from: '+' + config.twilio.phone,
+            body: text
+        }, this.wrap(cb))
+    },
+
     invalid: function invalid(name, value) {
         if (!value) {
             value = 'invalid';
@@ -236,6 +247,24 @@ Context.prototype = {
         }
         else {
             this.send(result);
+        }
+    },
+
+    success: function (err, result) {
+        if (err) {
+            if (err instanceof god.Error.ValidationError) {
+                this.send(code.BAD_REQUEST, {
+                    invalid: err.errors
+                });
+            }
+            else {
+                this.send(code.INTERNAL_SERVER_ERROR, {
+                    error: err
+                });
+            }
+        }
+        else {
+            this.send({success: !!result});
         }
     },
 
@@ -558,7 +587,7 @@ Context.prototype = {
         }
         return false;
     },
-    
+
     get search() {
         if (this.has('q')) {
             var q = this.get('q');

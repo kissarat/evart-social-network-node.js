@@ -25,5 +25,10 @@
     "admin": false,
     "test": false,
     "chat": false
+  },
+  "twilio": {
+    "sid": "ACa0f702412fccdc716b91bdb1576c135f",
+    "token": "41e6156eb10cbe9a9e744615c0890973",
+    "phone": "12014196015"
   }
 }

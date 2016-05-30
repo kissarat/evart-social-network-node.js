@@ -20,7 +20,6 @@ global.schema.User = new god.Schema
 
   password:
     type: String
-    required: true
 
   hash:
     type: String
@@ -224,13 +223,33 @@ module.exports =
       User.update conditions, changes, $.wrap (result) ->
         $.send verified: result.n > 0
 
-
   phone: ($) ->
     $.agent.phone = $.param('phone')
     $.agent.code = rs.generate
-      length: 4
+      length: 6
       charset: 'numeric'
-    $.agent.save()
+    $.sendSMS $.agent.phone, 'Code: ' + $.agent.code, () ->
+      $.agent.save($.success)
+    return
+
+  code: ($) ->
+    if $.param('code') == $.agent.code
+      $.agent.code = null
+      $.agent.save($.success)
+    else
+      success: false
+    return
+
+  personal: ($) ->
+    user = new User
+      phone: $.agent.phone
+      domain: $.param('domain')
+      email: $.param('email')
+      forename: $.param('surname')
+      surname: $.param('surname')
+      hash: utils.hash($.param('password'))
+    user.save($.success)
+    return
 
   avatar:
     GET: ($) ->
