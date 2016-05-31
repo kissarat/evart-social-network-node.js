@@ -1,23 +1,23 @@
 "use strict";
 var http = require('http');
 var fs = require('fs');
-var banlist_filename = __dirname + '/../client/banlist.conf';
+var blacklist_filename = __dirname + '/../client/blacklist.conf';
 var socket_filename = '/tmp/socex-ban.sock';
-// var banlist = [];
-var banlist_file = fs.openSync(banlist_filename, 'w');
+// var blacklist = [];
+var blacklist_file = fs.openSync(blacklist_filename, 'w');
 var not_found = fs.readFileSync(__dirname + '/../client/pages/404.html');
 var spawn = require('child_process').spawn;
 
 var server = http.createServer(function (req, res) {
     var ip = req.headers.ip;
-    // if (banlist.indexOf(ip) < 0) {
-        fs.write(banlist_file, `deny ${ip};\n`, function (err) {
+    // if (blacklist.indexOf(ip) < 0) {
+        fs.write(blacklist_file, `deny ${ip};\n`, function (err) {
             if (err) {
                 console.log(err);
             }
             else {
-                // banlist.push(ip);
-                fs.fsync(banlist_file, function (err) {
+                // blacklist.push(ip);
+                fs.fsync(blacklist_file, function (err) {
                     if (err) {
                         console.log(err);
                     }
@@ -41,12 +41,12 @@ function cleanup() {
 
 process.on('exit', cleanup);
 process.on('SIGINT', cleanup);
-fs.access(banlist_filename, fs.F_OK, function (err) {
+fs.access(blacklist_filename, fs.F_OK, function (err) {
     if (err) {
         console.error(err);
     } else {
-        // banlist = fs.readFileSync(banlist_filename);
-        // banlist = banlist.toString('utf8').split('\n').map(d => d.trim().slice(5).slice(-1));
+        // blacklist = fs.readFileSync(blacklist_filename);
+        // blacklist = blacklist.toString('utf8').split('\n').map(d => d.trim().slice(5).slice(-1));
     }
 
     fs.access(socket_filename, fs.F_OK, function (err) {

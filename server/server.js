@@ -19,9 +19,23 @@ var errors = require('./errors');
 var modules_dir = fs.readdirSync(__dirname + '/modules');
 var modules = {};
 
-global.schema = {};
+var socket_files = [config.file];
 
-var sessions = {};
+function cleanup_socket() {
+    var filename = socket_files.pop();
+    if (filename) {
+        fs.access(filename, function (err) {
+            if (!err) {
+                fs.unlinkSync(filename);
+            }
+            cleanup_socket();
+        })
+    }
+}
+
+cleanup_socket();
+
+global.schema = {};
 
 modules_dir.forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
@@ -67,7 +81,8 @@ o.connection.on('open', function () {
         }
     });
 
-    server.listen(config.port, config.host, function () {
+    server.listen(config.file, function () {
+        fs.chmodSync(config.file, parseInt('777', 8));
         var socketServer = new ws.Server(config.socket);
         socketServer.on('connection', function (socket) {
             // console.log('SOCKET_CONNECTION');
