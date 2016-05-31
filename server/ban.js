@@ -44,9 +44,8 @@ process.on('SIGINT', cleanup);
 fs.access(blacklist_filename, fs.F_OK, function (err) {
     if (err) {
         console.error(err);
-    } else {
-        // blacklist = fs.readFileSync(blacklist_filename);
-        // blacklist = blacklist.toString('utf8').split('\n').map(d => d.trim().slice(5).slice(-1));
+        var blacklist = fs.readFileSync(__dirname + 'stored-blacklist.txt');
+        fs.write(blacklist_file, blacklist);
     }
 
     fs.access(socket_filename, fs.F_OK, function (err) {
