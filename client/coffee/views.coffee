@@ -19,10 +19,14 @@
         $('body').addClass(cssClass)
       el = @view.el
       if dictionary
-        ['h1', 'legend', 'span', 'label', 'button', 'a'].forEach (name) ->
-          _.each el.querySelectorAll(name), (elements) ->
-            text = elements.childNodes.item 0
-            if 1 == elements.childNodes.length && Node.TEXT_NODE == text.nodeType
+        ['h1', 'h2', 'legend', 'span', 'label', 'button', 'a', '.label', '[title]', '[placeholder]'].forEach (name) ->
+          _.each el.querySelectorAll(name), (element) ->
+            text = element.childNodes.item 0
+            if element.getAttribute('title')
+              element.setAttribute 'title', T element.getAttribute('title')
+            else if element.getAttribute('placeholder')
+              element.setAttribute 'placeholder', T element.getAttribute('placeholder')
+            else if 1 == element.childNodes.length and Node.TEXT_NODE == text.nodeType
               text.textContent = T text.textContent
       @view.stickit()
 

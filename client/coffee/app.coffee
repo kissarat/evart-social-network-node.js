@@ -49,13 +49,13 @@ debug =
         @[name] = []
       @[name].push element
 
-window.addEventListener 'unload', () ->
-  storedConfig =
-    version: version
-    features: features
-    mode: if DEV then 'dev' else 'prod'
-    config: config
-  localStorage.setItem 'socex', JSON.stringify storedConfig
+#window.addEventListener 'unload', () ->
+#  storedConfig =
+#    version: version
+#    features: features
+#    mode: if DEV then 'dev' else 'prod'
+#    config: config
+#  localStorage.setItem 'socex', JSON.stringify storedConfig
 
 
 @App = new Marionette.Application()
@@ -124,7 +124,7 @@ boot = (xhr) ->
       App.login()
   else
     $('body').removeAttr('class')
-    App.navigate('/profile')
+#    App.navigate('/profile')
 
 App.mainRegion.on 'show', (view) ->
   document.title = if view.title then _.result(view.title) else 'Socex'
@@ -161,6 +161,12 @@ class App.PageableCollection extends Backbone.PageableCollection
     totalPages: null
     totalRecords: null
     skip: () -> (@state.currentPage - 1) * @state.pageSize
+
+  getName: () ->
+    @queryModel.get('type') || _.last @url.split('/')
+
+  getCache: () ->
+    App.cache[@getName()]
 
   parseRecords: (records) ->
     if 0 == records.length

@@ -27,7 +27,7 @@ ui_error = (message) ->
   if 'object' == typeof message
     message = JSON.stringify message
     console.warn 'Message is object'
-  alert message
+  console.error message
 
 form_submit = (data) ->
 #   form = document.querySelector 'form.view'

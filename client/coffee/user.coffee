@@ -30,6 +30,7 @@
       'view/:domain': 'profile'
 
   # Models
+
   class User.Login extends Backbone.Model
     url: '/api/user/login'
 
@@ -68,6 +69,23 @@
         required: true
       surname:
         required: true
+
+  class App.User.Model extends Backbone.Model
+    urlRoot: '/api/user'
+
+    @getName: (model) ->
+      name = []
+      if model.get('name')
+        name.push model.get('name')
+      else
+        if model.get('forename')
+          name.push model.get('forename')
+        if model.get('surname')
+          name.push model.get('surname')
+      if name.length > 0
+        name = name.join(' ')
+      else
+        name = model.get('domain')
 
   # Forms
 
@@ -130,7 +148,9 @@
       'invalid': 'invalid'
 
     phone: () ->
-      @model.set('phone', @model.get('phone').replace(/[^\d]/g, ''))
+      phone = @model.get('phone');
+      if phone
+        @model.set('phone', phone.replace(/[^\d]/g, ''))
       if @model.isValid('phone')
         if not _.find(codes, (code) => @model.get('phone').indexOf(code) == 0)
           @$el.report('phone', T('Phone number must starts with country code'), 'error')

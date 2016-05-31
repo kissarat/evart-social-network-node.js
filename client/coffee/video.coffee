@@ -10,7 +10,6 @@
       layout.currentRegion.show new Video.View()
       layout.listRegion.show listView
       list.getFirstPage()
-      window.g = listView
 
     view: (id) ->
       1

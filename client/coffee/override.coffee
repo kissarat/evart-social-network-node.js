@@ -30,6 +30,6 @@ HTMLFormElement.prototype.serialize = () ->
 
 window.responses = {}
 
-$(document).ajaxSuccess (event, xhr, settings) ->
-  if 'GET' == settings.type and 'json' == settings.dataType
-    responses[settings.url] = xhr.responseJSON
+#$(document).ajaxSuccess (event, xhr, settings) ->
+#  if 'GET' == settings.type and 'json' == settings.dataType
+#    responses[settings.url] = xhr.responseJSON
