@@ -4,4 +4,4 @@ lib/
 *.css*
 coffee/*.js*
 .sass-cache/
-banlist.txt
+banlist.conf
