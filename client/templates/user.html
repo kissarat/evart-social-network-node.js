@@ -1,4 +1,4 @@
-<script type="text/template" id="form-login" data-class="front login">
+<script type="text/template" id="form-login" data-class="front">
     <div class="title">
         <div class="welcome">Welcome to</div>
         <div class="evart">Evart</div>
@@ -18,69 +18,75 @@
         </section>
     </fieldset>
     <br/>
-    <div class="signup">
+    <div class="signup button">
         <a href="/signup/phone">Signup</a>
     </div>
 </script>
 
-<script type="text/template" id="form-signup" data-class="front signup">
-    <h1>Simple registration in 3 steps</h1>
-    <div class="step-container">
-        <div class="line"></div>
-        <div class="steps">
-            <div class="phone">
-                <div class="circle">1</div>
-                <div class="label">Step</div>
+<script type="text/template" id="layout-signup" data-class="front signup">
+    <div class="login-region"></div>
+    <div class="signup-region">
+        <form class="form-signup">
+            <h1>Simple registration in 3 steps</h1>
+            <h2>Fill all fields to register</h2>
+            <div class="step-container">
+                <div class="line"></div>
+                <div class="steps">
+                    <div class="phone">
+                        <div class="circle">1</div>
+                        <div class="label">Step</div>
+                    </div>
+                    <div class="code">
+                        <div class="circle">2</div>
+                        <div class="label">Step</div>
+                    </div>
+                    <div class="personal">
+                        <div class="circle">3</div>
+                        <div class="label">Step</div>
+                    </div>
+                </div>
             </div>
-            <div class="code">
-                <div class="circle">2</div>
-                <div class="label">Step</div>
+            <div class="fields">
+                <fieldset class="phone">
+                    <span>+</span>
+                    <input name="phone" placeholder="Phone"/>
+                    <button type="button">Signup</button>
+                    <div class="help-block"></div>
+                </fieldset>
+                <fieldset class="code">
+                    <input name="code" class="Code" placeholder="Code"/>
+                    <button type="button">Verify</button>
+                    <div class="help-block"></div>
+                </fieldset>
+                <fieldset class="personal">
+                    <div class="form-group">
+                        <input class="form-control" name="domain" placeholder="Login"/>
+                        <div class="help-block"></div>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" name="email" placeholder="Email"/>
+                        <div class="help-block"></div>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" name="password" placeholder="Password" type="password"/>
+                        <div class="help-block"></div>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" name="repeat" placeholder="Repeat Password" type="password"/>
+                        <div class="help-block"></div>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" name="forename" placeholder="First Name"/>
+                        <div class="help-block"></div>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" name="surname" placeholder="Last Name"/>
+                        <div class="help-block"></div>
+                    </div>
+                    <button type="button">Signup</button>
+                </fieldset>
             </div>
-            <div class="personal">
-                <div class="circle">3</div>
-                <div class="label">Step</div>
-            </div>
-        </div>
-    </div>
-    <div class="fields">
-        <fieldset class="phone">
-            <span>+</span>
-            <input name="phone" placeholder="Phone"/>
-            <button type="button">Signup</button>
-            <div class="help-block"></div>
-        </fieldset>
-        <fieldset class="code">
-            <input name="code" class="Code" placeholder="Code"/>
-            <button type="button">Verify</button>
-            <div class="help-block"></div>
-        </fieldset>
-        <fieldset class="personal">
-            <div class="form-group">
-                <input class="form-control" name="domain" placeholder="Login"/>
-                <div class="help-block"></div>
-            </div>
-            <div class="form-group">
-                <input class="form-control" name="email" placeholder="Email"/>
-                <div class="help-block"></div>
-            </div>
-            <div class="form-group">
-                <input class="form-control" name="password" placeholder="Password" type="password"/>
-                <div class="help-block"></div>
-            </div>
-            <div class="form-group">
-                <input class="form-control" name="repeat" placeholder="Repeat Password" type="password"/>
-                <div class="help-block"></div>
-            </div>
-            <div class="form-group">
-                <input class="form-control" name="forename" placeholder="First Name"/>
-                <div class="help-block"></div>
-            </div>
-            <div class="form-group">
-                <input class="form-control" name="surname" placeholder="Last Name"/>
-                <div class="help-block"></div>
-            </div>
-            <button type="button">Signup</button>
-        </fieldset>
+        </form>
     </div>
 </script>
 
@@ -136,7 +142,7 @@
                     <div class="big-avatar"></div>
                     <div class="buttons">
                         <button type="button" class="fa fa-pencil-square-o edit"></button>
-                        <button type="button" class="fa fa-bar-chart"></button>
+                        <button type="button" class="fa fa-bar-chart unavailable"></button>
                         <button type="button" class="fa fa-power-off logout"></button>
                     </div>
                 </div>

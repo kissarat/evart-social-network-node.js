@@ -1,13 +1,16 @@
 @App.module 'User', (User, App) ->
   class User.Controller extends Marionette.Controller
     login: ->
-      App.mainRegion.show new App.User.LoginForm model: new App.User.Login()
+      App.mainRegion.show new User.LoginForm model: new User.Login()
+      $(document.body).addClass('login')
 
     logout: () ->
       App.logout()
 
     signup: (step) ->
-      App.mainRegion.show new App.User.SignupForm model: new App.User.Signup()
+      signup = new User.SignupForm model: new User.Signup()
+      App.mainRegion.show signup
+      signup.loginRegion.show new User.LoginForm model: new User.Login()
 
   class User.Router extends Marionette.AppRouter
     appRoutes:
@@ -57,7 +60,7 @@
 
   # Forms
 
-  class User.LoginForm extends Marionette.ItemView
+  class User.LoginForm extends Marionette.LayoutView
     template: '#form-login'
     tagName: 'form'
 
@@ -84,23 +87,30 @@
         @model.save null, success: (model, data) ->
           App.login()
 
-  class User.SignupForm extends Marionette.ItemView
-    template: '#form-signup'
-    tagName: 'form'
+  class User.SignupForm extends Marionette.LayoutView
+    template: '#layout-signup'
 
     initialize: () ->
       Backbone.Validation.bind(this)
 
+    regions:
+      loginRegion: '.login-region'
+
     behaviors:
       Bindings: {}
 
+    ui:
+      form: '.form-signup'
+
     bindings:
-      '[name=phone]': 'phone'
-      '[name=code]': 'code'
-      '[name=login]': 'login'
-      '[name=email]': 'email'
-      '[name=forename]': 'forename'
-      '[name=surname]': 'surname'
+      '.form-signup [name=phone]': 'phone'
+      '.form-signup [name=code]': 'code'
+      '.form-signup [name=domain]': 'domain'
+      '.form-signup [name=email]': 'email'
+      '.form-signup [name=password]': 'password'
+      '.form-signup [name=repeat]': 'repeat'
+      '.form-signup [name=forename]': 'forename'
+      '.form-signup [name=surname]': 'surname'
 
     events:
       'click fieldset.phone button': 'phone'

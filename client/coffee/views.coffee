@@ -10,6 +10,8 @@
       @view.$el.addClass @view.template.replace '#thumbnail-', 'view thumbnail-'
       @view.$el.addClass @view.template.replace '#layout-', 'view layout-'
       @view.$el.addClass @view.template.replace '#form-', 'view form-'
+      @view.$('.unavailable').click () ->
+        alert T('This function is not available yet')
       template = $(@view.template)
       cssClass = template.attr('data-class')
       $('body').removeAttr('class')
@@ -108,23 +110,6 @@
         success: (model, data) =>
           if @success
             @success data, model
-
-  class Views.Login extends Views.Form
-    template: '#view-login'
-    error: (ajax) ->
-      switch ajax.status
-        when code.UNAUTHORIZED then @report 'Phone or password not found'
-        when code.FORBIDDEN then App.navigate 'profile'
-    success: (data) ->
-      App.user = data
-      App.trigger 'login'
-  #      App.navigate 'profile'
-
-    success: (data, model) ->
-      App.navigate 'verify/' + model.id
-
-  class Views.Verify extends Views.Form
-    template: '#view-code'
 
   class Views.Settings extends Views.Form
     template: '#view-settings'

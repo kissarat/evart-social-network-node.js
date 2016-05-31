@@ -40,7 +40,6 @@ global.schema.Agent = new god.Schema
 
   phone:
     type: String
-    unique: true
     trim: true
     match: /^\d{9,15}$/
 
