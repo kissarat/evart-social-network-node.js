@@ -1,7 +1,8 @@
 images/
-fonts/
+fonts/Roboto/*.ttf
+fonts/Panton/*.otf
 lib/
-*.css*
 coffee/*.js*
+sass/*.css
 .sass-cache/
 blacklist.conf
