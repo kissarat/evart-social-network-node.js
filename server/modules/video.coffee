@@ -1,7 +1,10 @@
 request = require 'request'
+utils = require '../utils'
 god = require 'mongoose'
 
 global.schema.Video = new god.Schema
+  _id:  utils.idType('Video')
+
   time:
     type: Date,
     required: true

@@ -133,7 +133,7 @@ module.exports =
       r = Message.find video: $.param 'video_id'
     else if $.has 'photo_id'
       r = Message.find photo: $.param 'photo_id'
-# wall
+    # wall
     else if $.has 'owner_id'
       r = Message.find owner: $.param 'owner_id'
     if r

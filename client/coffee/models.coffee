@@ -30,35 +30,6 @@
     model: (attrs, options) ->
       new App.Models.User attrs, options
 
-  class Models.Verify extends Backbone.Model
-    urlRoot: '/api/user/verify'
-
-  class Models.Login extends Backbone.Model
-    urlRoot: '/api/user/login'
-
-  class Models.Message extends Models.Base
-    isPost: ->
-      not not @get 'owner'
-
-    getChildren: ->
-      new App.Models.MessageList @get 'children'
-
-  class Models.MessageList extends Backbone.Collection
-    url: () ->
-      '/api/message?' + $.param @params
-
-    fetchNextPage: () ->
-      @params.skip = (@params.skip || 0) + 10
-      @fetch remove: false
-
-#    fetch: (params) ->
-#      messageList = new Models.MessageList()
-#      messageList.params = params
-#      messageList.fetch()
-
-    model: (attrs, options) ->
-      new App.Models.Message attrs, options
-
     comparator: sort_time
 
   class Models.Photo extends Models.Base

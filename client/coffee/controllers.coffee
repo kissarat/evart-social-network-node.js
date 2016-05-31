@@ -8,21 +8,6 @@
         user.fetch()
         App.mainRegion.show new App.Views.Settings model: user
 
-    verify: (id) ->
-      App.mainRegion.show new App.Views.Verify model: new App.Models.Verify user_id: id
-
-    profile: (domain) ->
-      if not domain
-        domain = App.user.domain
-      $.get '/api/user?domain=' + domain, (user) ->
-        user = new App.Models.User user
-        profile = new App.Layouts.ProfileLayout model: user
-        layout = new App.Layouts.Thresome()
-        App.mainRegion.show profile
-        profile.messagesRegion.show layout
-        App.Views.Dialog.build user.id, 'owner', layout
-      return
-
     users: () ->
       App.selectUser null, App.mainRegion
 
@@ -38,11 +23,8 @@
       App.selectUser params, App.mainRegion
 
     routes:
-      'profile': 'profile'
-      'view/:domain': 'profile'
       'settings': 'settings'
       'edit/:domain': 'settings'
-      'verify/:id': 'verify'
       'users': 'users'
       'follows/:domain': 'index'
       'denies/:domain': 'index'
