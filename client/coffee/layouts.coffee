@@ -22,23 +22,6 @@
       layout.showChildView r, v
     layout
 
-  class Layouts.EditorLayout extends Marionette.LayoutView
-    template: '#view-editor-layout'
-
-    regions:
-      editor: '.editor'
-      buttons: '.buttons'
-      attachments: '.attachments'
-      photos: 'div[data-list=photos]'
-      videos: 'div[data-list=videos]'
-      files: 'div[data-list=files]'
-      selection: '.selection'
-
-    events:
-      'click [data-type=photo]': 'selectPhoto'
-      'click [data-type=video]': 'selectVideo'
-      'click [type=submit]': 'submit'
-
     selectPhoto: () ->
       component = App.selectPhoto null, @selection
       component.collection.on 'select', (photo) =>

@@ -126,19 +126,11 @@ boot = (xhr) ->
     $('body').removeAttr('class')
 #    App.navigate('/profile')
 
-App.mainRegion.on 'show', (view) ->
-  document.title = if view.title then _.result(view.title) else 'Socex'
-
 class App.Router extends Marionette.AppRouter
   execute: (cb, args, name) ->
     if config.trace.history
       statistics.history[_.now()] = [name].concat args
     return Marionette.AppRouter.prototype.execute.apply(@, arguments)
-
-#class App.DefaultRouter extends App.Router
-#  appRoutes: () ->
-#    "#{@prefix}": 'index'
-#    "#{@prefix}/:id": 'view'
 
 class App.PageableCollection extends Backbone.PageableCollection
   mode: 'infinite'
@@ -147,7 +139,11 @@ class App.PageableCollection extends Backbone.PageableCollection
     @queryModel = new Backbone.Model(@queryModelInitial)
     Object.keys(@queryModelInitial).forEach (k) =>
       @queryParams[k] = () =>
-        @queryModel.get(k).trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+        value = @queryModel.get(k)
+        if value
+          value.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+        else
+          console.error k + ' is undefied'
 
   state:
     order: -1
@@ -162,18 +158,16 @@ class App.PageableCollection extends Backbone.PageableCollection
     totalRecords: null
     skip: () -> (@state.currentPage - 1) * @state.pageSize
 
-  getName: () ->
-    @queryModel.get('type') || _.last @url.split('/')
-
-  getCache: () ->
-    App.cache[@getName()]
-
   parseRecords: (records) ->
     if 0 == records.length
       @state.totalRecords = @fullCollection.length
-      @state.totalPages = Math.floor(@state.totalRecords / @state.limit)
-      @state.currentPage = @state.totalPages
-      @state.skip = (@state.currentPage - 1) * @state.limit
+      if @state.totalRecords > 0
+        @state.totalPages = Math.floor(@state.totalRecords / @state.limit)
+        @state.currentPage = @state.totalPages
+      else
+        @state.totalPages = 0
+        @state.currentPage = 1
+      console.log @state
     records
 
   delaySearch: (cb) ->
@@ -183,6 +177,14 @@ class App.PageableCollection extends Backbone.PageableCollection
         @fullCollection.reset()
         @getFirstPage(success: cb)
     setTimeout search, App.config.search.delay
+
+  getPage: (number) ->
+    if not @loading
+      @trigger('start')
+      @loading = true
+      super number, complete: () =>
+        @trigger('finish')
+        @loading = false
 
 addEventListener 'load', () ->
   if DEV
@@ -368,3 +370,12 @@ _.extend Backbone.Validation.callbacks,
     view.$el.report(attr, '', false)
   invalid: (view, attr, error, selector) ->
     view.$el.report(attr, error, false)
+
+    
+class App.Model extends Backbone.Model
+  initialize: () ->
+    if @nested
+      for name, model of @nested
+        value = @get(name)
+        if 'object' == typeof value
+          @set name, new model(value)

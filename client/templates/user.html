@@ -49,12 +49,12 @@
             <div class="fields">
                 <fieldset class="phone">
                     <span>+</span>
-                    <input name="phone" placeholder="Phone"/>
+                    <input name="phone" class="form-control" placeholder="Phone"/>
                     <button type="button">Signup</button>
                     <div class="help-block"></div>
                 </fieldset>
                 <fieldset class="code">
-                    <input name="code" class="Code" placeholder="Code"/>
+                    <input name="code" class="form-control" class="Code" placeholder="Code"/>
                     <button type="button">Verify</button>
                     <div class="help-block"></div>
                 </fieldset>
@@ -155,86 +155,55 @@
     </div>
 </script>
 
-<script type="text/template" id="view-settings" data-src="/templates/profile.html">
+<script type="text/template" id="form-edit">
+    <h1><span class="fa fa-users"></span><span class="title"></span></h1>
     <div class="form-group admin admin-field">
-        <label>Domain</label>
-        <input class="form-control" name="domain"/>
-    </div>
-    <div class="form-group admin admin-field">
-        <label>Type</label>
         <select class="form-control" name="type">
             <option value="user">User</option>
             <option value="group">Group</option>
             <option value="admin">Admin</option>
         </select>
     </div>
-    <fieldset>
-        <legend>Contacts</legend>
-        <div class="form-group">
-            <label>Name</label>
-            <input class="form-control" name="name"/>
+    <div class="form-group create-only field-domain">
+        <div class="form-control">
+            <span class="url"><span class="origin"></span>/view/</span>
+            <input name="domain" placeholder="address"/>
         </div>
-        <div class="form-group">
-            <label>City</label>
-            <input class="form-control" name="city"/>
-        </div>
-        <div class="form-group">
-            <label>Country</label>
-            <input class="form-control" name="country"/>
-        </div>
-        <div class="form-group">
-            <label>Address</label>
-            <input class="form-control" name="address"/>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend>Security</legend>
-        <div class="form-group">
-            <label>Phone</label>
-            <input class="form-control" name="phone"/>
-        </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input class="form-control" name="password" type="password"/>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend>Personal</legend>
-        <div class="form-group">
-            <label>Avatar</label>
-            <input class="form-control" name="avatar" type="file"/>
-            <img class="avatar preview"/>
-        </div>
-        <div class="form-group">
-            <label>Name</label>
-            <input class="form-control" name="name"/>
-        </div>
-        <div class="form-group">
-            <label>Birthday</label>
-            <input class="form-control" name="birthday"/>
-        </div>
-        <div class="form-group">
-            <label>Relationship</label>
-            <select class="form-control" name="relationship">
-                <option value="0">None selected</option>
-                <option value="1">Single</option>
-                <option value="2">In a relationship</option>
-                <option value="3">Engaged</option>
-                <option value="4">Married</option>
-                <option value="5">In love</option>
-                <option value="6">It's complicated</option>
-                <option value="7">Actively searching</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Languages</label>
-            <input class="form-control" name="languages"/>
-        </div>
-        <div class="form-group">
-            <label>About</label>
-            <textarea class="form-control" name="about"></textarea>
-        </div>
-    </fieldset>
+        <div class="help-block"></div>
+    </div>
+    <div class="form-group">
+        <input class="form-control" name="name" placeholder="Name"/>
+        <div class="help-block"></div>
+    </div>
+    <div class="form-group field-avatar">
+        <label>Avatar</label>
+        <input class="form-control" name="avatar" type="file"/>
+    </div>
+    <div class="form-group user-only">
+        <label>Birthday</label>
+        <input class="form-control" name="birthday"/>
+    </div>
+    <div class="form-group user-only">
+        <label>Relationship</label>
+        <select class="form-control" name="relationship">
+            <option value="0">None selected</option>
+            <option value="1">Single</option>
+            <option value="2">In a relationship</option>
+            <option value="3">Engaged</option>
+            <option value="4">Married</option>
+            <option value="5">In love</option>
+            <option value="6">It's complicated</option>
+            <option value="7">Actively searching</option>
+        </select>
+    </div>
+    <div class="form-group user-only">
+        <label>Languages</label>
+        <input class="form-control" name="languages"/>
+    </div>
+    <div class="form-group">
+        <textarea class="form-control" name="about" placeholder="About"></textarea>
+        <div class="help-block"></div>
+    </div>
     <section class="buttons">
         <button type="submit">Save</button>
     </section>

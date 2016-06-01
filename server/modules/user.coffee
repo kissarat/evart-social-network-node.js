@@ -10,25 +10,20 @@ global.schema.User = new god.Schema
 
   phone:
     type: String
-    required: true
-    unique: true
     trim: true
     match: /^\d{9,15}$/
-    unique: true
-#    index:
-#      unique: true
 
   password:
     type: String
 
   hash:
     type: String
-    required: true
+    match: /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$/
 
   domain:
     type: String
     required: true
-    match: /^[\w\._]{4,23}$/
+    match: /^[\w\._\-]{4,23}$/
     lowercase: true
     trim: true
     index:
@@ -42,15 +37,6 @@ global.schema.User = new god.Schema
     enum: ['user', 'group', 'admin']
     index:
       unique: false
-
-  code:
-    type: String
-    match: /^\d{6}$/
-    trim: true
-    default: ->
-      rs.generate
-        length: 6
-        charset: 'numeric'
 
   avatar:
     type: god.Schema.Types.ObjectId
@@ -180,14 +166,15 @@ module.exports =
     }
 
   POST: ($) ->
-    if $.user
-      $.sendStatus code.FORBIDDEN, 'User is authorized'
-    else
-      data = $.just $.body, ['domain', 'phone', 'password']
-      data.hash = $.param 'password'
-      user = new User data
-      user.save $.wrap () ->
-        $.send code.CREATED, _id: user._id
+    data = $.allowFields(group_fields, admin_fields)
+    data.type = 'group'
+    user = new User data
+    user.save $.wrap () ->
+      $.send code.CREATED,
+        success: true
+        _id: user._id
+        domain: user.domain
+        type: user.type
     return
 
   PATCH: ($) ->
@@ -215,17 +202,30 @@ module.exports =
         return search($)
       return
 
-  verify:
-    POST: ($) ->
-      conditions =
-        _id: $.post('user_id'),
-        code: $.post('code')
-      changes = $set:
-        code: null
-      User.update conditions, changes, $.wrap (result) ->
-        $.send verified: result.n > 0
+  exists:
+    GET: ($) ->
+      key = null
+      value = null
+      conditions = {}
+      for key in ['domain', 'phone', 'email']
+        if $.has(key)
+          value = $.get(key)
+          conditions[key] = value
+          break
+      if key and value
+        User.find(conditions, conditions).count $.wrap (result) ->
+          $.send
+            success: true
+            exists: result > 0
+            key: key
+            value: value
+      else
+        $.sendStatus code.BAD_REQUEST
+      return
 
   phone: ($) ->
+    if $.user
+      return $.sendStatus(code.FORBIDDEN, 'User is authorized');
     $.agent.phone = $.param('phone')
     if config.sms.enabled
       $.agent.code = rs.generate
@@ -244,6 +244,8 @@ module.exports =
     return
 
   code: ($) ->
+    if $.user
+      return $.sendStatus(code.FORBIDDEN, 'User is authorized');
     if $.param('code') == $.agent.code
       $.agent.code = null
       $.agent.save($.success)
@@ -252,6 +254,8 @@ module.exports =
     return
 
   personal: ($) ->
+    if $.user
+      return $.sendStatus(code.FORBIDDEN, 'User is authorized');
     user = new User
       phone: $.agent.phone
       domain: $.param('domain')
@@ -282,6 +286,7 @@ module.exports =
       else
         $.invalid 'field', field
       User.findOneAndUpdate({_id: $.user._id}, changes).select(fields.join ' ')
+
   list:
     GET: ($) ->
       name = $.param 'name'
@@ -325,11 +330,10 @@ list_fields =
 
 user_fields = ["city", "country", "address", "phone",
   "password", "avatar", "name", "birthday", "languages", "relationship"];
-
+group_fields = ["domain", "name", "about", "avatar"];
 admin_fields = ['domain', 'type'];
 
 search = ($, ids) ->
-#  new Promise (resolve, reject) ->
   ORs = []
   if $.has 'search'
     search = $.param 'search'

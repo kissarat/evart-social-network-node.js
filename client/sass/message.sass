@@ -1,11 +1,32 @@
-.message-layout, .last-message
+.layout-message, .last-message
+  .name
+    margin: 0 0 0 4px
+    font-size: 11pt
+    font-weight: 100
   .children
     background-color: #BCBCBC
     padding-left: 8px
-  .time
-    font-size: 0.7em
-  .ip
-    color: white
+  .info
+    min-width: 55px
+    .container
+      border-bottom: 1px solid #BCBCBC
+      > div
+        background-color: #ECEFF4
+        text-align: center
+        padding: 6px
+        margin-bottom: 4px
+        .time
+          color: #BCBCBC
+          font-size: 0.5em
+        > *
+          margin: auto
+        .avatar
+          margin-bottom: 6px
+  .content
+    display: flex
+    .text
+      font-size: 9pt
+      margin-left: 4px
 
 .last-message
   cursor: pointer
@@ -51,26 +72,6 @@
     &:before
       content: '-'
 
-.message-layout
-  .info
-    border-bottom: 1px solid #BCBCBC
-    > div
-      background-color: #ECEFF4
-      text-align: center
-      padding: 6px
-      margin-bottom: 4px
-      .time
-        color: #BCBCBC
-        font-size: 0.5em
-      > *
-        margin: auto
-      .avatar
-        margin-bottom: 6px
-  .content
-    display: flex
-    .text
-      padding: 4px
-
 .message-controls
   color: #BCBCBC
   text-align: right
@@ -89,3 +90,9 @@
     background-color: transparent
   article .right
     min-height: 30vh
+
+.avatar
+  width: 32px
+  height: 32px
+  border-radius: 50%
+  background-size: cover

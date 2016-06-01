@@ -1,28 +1,31 @@
 App.module 'Message', (Message, App) ->
   class Message.Controller extends Marionette.Controller
     wall: (id) ->
-      pageable = new Message.List
-      pageable.queryModel.set('type', 'wall')
-      pageable.queryModel.set('owner_id', id)
-      App.mainRegion.show new Message.ListView collection: pageable.fullCollection
-      pageable.getFirstPage()
+      wall = Message.ListView.wall(id)
+      wall.$el.addClass('scroll')
+      App.mainRegion.show wall
 
   class Message.Router extends App.Router
     appRoutes:
       'wall/:id': 'wall'
 
-  class Message.Model extends Backbone.Model
+  class Message.Model extends App.Model
+    nested:
+      source: App.User.Model
+      target: App.User.Model
+      video: App.Video.Model
+
     isPost: ->
       not not @get 'owner'
 
   class Message.List extends App.PageableCollection
-    url: '/api/message'
+    url: '/api-cache/message'
 
     queryModelInitial:
       owner_id: null
 
     model: (attrs, options) ->
-      new Message.Model attrs, options
+      new Message.Model(attrs, options)
 
   class Message.View extends Marionette.LayoutView
     template: '#layout-message'
@@ -37,12 +40,12 @@ App.module 'Message', (Message, App) ->
       Bindings: {}
 
     ui:
+      name: '> .content .name'
       content: '> .content'
       info: '> .content .info'
       avatar: '> .content .avatar'
       time: '> .content .time'
       text: '> .content .text'
-      ip: '> .content .ip'
       controls: '> .message-controls'
       likeSlider: '> .message-controls .like-slider-container'
       like: '> .message-controls .fa-thumbs-up'
@@ -78,7 +81,7 @@ App.module 'Message', (Message, App) ->
     _like: (field) ->
       $.ajax
         type: if _.indexOf(@model.get(field), App.user._id) >= 0 then 'DELETE' else 'POST'
-        url:  '/api/like?' + $.param
+        url: '/api/like?' + $.param
           entity: 'messages'
           field: field
           id: @model.get '_id'
@@ -124,6 +127,9 @@ App.module 'Message', (Message, App) ->
         @videos.show videos
 
     onRender: () ->
+      source = @model.get('source')
+      @ui.name.attr('href', '/view/' + source.get('domain'))
+      @ui.name.html(source.getName())
       @$el.attr('data-id', @model.get '_id')
       source_id = App.id @model.get 'source'
       @ui.info.attr('data-id', source_id)
@@ -156,8 +162,8 @@ App.module 'Message', (Message, App) ->
         @renderComments()
         @ui.comment.remove()
 
-      if not @model.isPost()
-        @ui.comment.remove()
+      #      if not @model.isPost()
+      #        @ui.comment.remove()
 
       return
 
@@ -166,5 +172,44 @@ App.module 'Message', (Message, App) ->
 
     behaviors:
       Pageable: {}
+
+    onRender: () ->
+      loading = null
+      @collection.pageableCollection.on 'start', () =>
+        if not loading
+          loading = $('
+      <div class="sk-three-bounce">
+        <div class="sk-child sk-bounce1"></div>
+        <div class="sk-child sk-bounce2"></div>
+        <div class="sk-child sk-bounce3"></div>
+      </div>').appendTo(@$el)
+      @collection.pageableCollection.on 'finish', () ->
+        if loading
+          loading.remove()
+          loading = null
+
+    @wall: (id) ->
+      pageable = new Message.List()
+      pageable.queryModel.set('type', 'wall')
+      pageable.queryModel.set('owner_id', id)
+      pageable.getFirstPage()
+      new Message.ListView collection: pageable.fullCollection
+
+  class Message.Editor extends Marionette.LayoutView
+    template: '#layout-editor'
+
+    regions:
+      editor: '.editor'
+      buttons: '.buttons'
+      attachments: '.attachments'
+      photos: 'div[data-list=photos]'
+      videos: 'div[data-list=videos]'
+      files: 'div[data-list=files]'
+      selection: '.selection'
+
+    events:
+      'click [data-type=photo]': 'selectPhoto'
+      'click [data-type=video]': 'selectVideo'
+      'click [type=submit]': 'submit'
 
   new Message.Router controller: new Message.Controller

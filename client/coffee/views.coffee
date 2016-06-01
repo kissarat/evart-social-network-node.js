@@ -1,7 +1,7 @@
 @App.module 'Views', (Views) ->
   class App.Behaviors.Bindings extends Marionette.Behavior
     onRender: ->
-      document.title = _.result(@view, 'title') || @view.constructor.name
+#      document.title = _.result(@view, 'title') || @view.constructor.name
       @view.$('a').click (e) ->
         e.preventDefault()
         App.navigate this.getAttribute 'href'
@@ -19,7 +19,7 @@
         $('body').addClass(cssClass)
       el = @view.el
       if dictionary
-        ['h1', 'h2', 'legend', 'span', 'label', 'button', 'a', '.label', '[title]', '[placeholder]'].forEach (name) ->
+        ['h1', 'h2', 'legend', 'span', 'label', 'button', 'option', 'a', '.label', '[title]', '[placeholder]'].forEach (name) ->
           _.each el.querySelectorAll(name), (element) ->
             text = element.childNodes.item 0
             if element.getAttribute('title')
@@ -33,7 +33,9 @@
   class App.Behaviors.Pageable extends Marionette.Behavior
     onAttach: () ->
       view = @view
-      @view.el.parentNode.addEventListener 'scroll', (e) =>
+      el = view.el.findParent (current) ->
+        current.classList.contains('scroll')
+      el.addEventListener 'scroll', (e) =>
         delta = e.target.scrollHeight - e.target.scrollTop
         if delta < 500
           view.collection.pageableCollection.getNextPage()
@@ -114,33 +116,6 @@
         success: (model, data) =>
           if @success
             @success data, model
-
-  class Views.Settings extends Views.Form
-    template: '#view-settings'
-
-    ui:
-      avatar: '.avatar'
-
-    events:
-      'change [name=avatar]': 'loadAvatar',
-      submit: 'submit'
-
-    loadAvatar: (e) ->
-      file = e.target.files[0]
-      if file
-        App.upload('/api/photo', file).then (photo) ->
-          $.post '/api/user/avatar', {photo_id: photo._id}, (result) ->
-            @ui.avatar.attr 'src', App.avatarUrl result.user_id
-      else
-        console.warn 'No file selected'
-
-    success: (data) ->
-      App.user = data
-      App.navigate '/view/' + @model.get('domain')
-
-    onRender: () ->
-      if @model.get 'avatar'
-        @ui.avatar.attr 'src', App.avatarUrl @model.id
 
   class Views.Message extends Marionette.ItemView
     template: '#view-message'

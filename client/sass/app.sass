@@ -1,8 +1,10 @@
+@import 'var.sass'
+
 body
-  font-family: "Roboto", "Segoe UI", "Droid Sans", Ubuntu, sans-serif
+  //font-family: "Roboto", "Segoe UI", "Droid Sans", Ubuntu, sans-serif
+  font: 10pt "Roboto", serif
   margin: 0
-  color: #9E9E9E
-  font-size: 12pt
+  color: #6F7579
 
 a
   text-decoration: none
@@ -19,14 +21,17 @@ a
   @extend .fullpage
   background: url("/images/loading.svg") no-repeat center
 
+.loading
+  background: url("/images/loading.svg") no-repeat center
+
 #root
   @extend .fullpage
   display: flex
   > .add
+    width: 26px
     background-color: #ECEFF4
     cursor: pointer
     .region
-      position: relative
       width: 0
       margin-top: 4em
       ul
@@ -47,11 +52,12 @@ a
           &:hover
             background-color: #ECEFF4
             color: #4EA1D7
-    &.left ul
-      right: 0
-      text-align: right
-      border-top-left-radius: 4px
-      border-bottom-left-radius: 4px
+    &.left
+      ul
+        right: 0
+        text-align: right
+        border-top-left-radius: 4px
+        border-bottom-left-radius: 4px
     &.right .region
       float: right
       ul
@@ -73,11 +79,12 @@ a
 
 #main
   flex: 2
+  text-align: center
 
 #left, #right
   flex: 1
 
-#root > * > *
+#root > :not(.add) > *
   height: 100vh
 
 .admin
@@ -128,3 +135,32 @@ a
     .region.menu
       width: 0
       height: 0
+
+.scroll
+  overflow-y: scroll
+
+@media (max-width: 768px)
+  #left,
+  #root > .add.left,
+  #root > .add.right,
+  #right
+    display: none
+
+[class*="-only"]
+  display: none
+
+.form-control
+  margin: 4px 6px
+  padding: 4px 6px
+
+button
+  background-color: #207FE2
+  color: white
+
+.form-control, button
+  border-radius: 4px
+  border: 1px solid #9E9E9E
+
+.buttons
+  text-align: right
+  padding-right: 4px

@@ -57,7 +57,7 @@ function nano100time() {
     return (start + (now[0] * 1000000000 + now[1])) / 100;
 }
 
-var entities = ['Agent', 'User', 'Message', 'Photo'];
+var entities = ['User', 'Message', 'Photo', 'Video', 'Agent'];
 
 function id12(name) {
     var now = process.hrtime();

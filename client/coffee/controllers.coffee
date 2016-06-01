@@ -1,13 +1,5 @@
 @App.module "Controllers", (Controllers, App) ->
   class Controllers.User extends Marionette.Controller
-    settings: (domain) ->
-      if not domain
-        domain = App.user.domain
-      $.get '/api/user?domain=' + domain, (user) ->
-        user = new App.Models.User user
-        user.fetch()
-        App.mainRegion.show new App.Views.Settings model: user
-
     users: () ->
       App.selectUser null, App.mainRegion
 
@@ -23,8 +15,6 @@
       App.selectUser params, App.mainRegion
 
     routes:
-      'settings': 'settings'
-      'edit/:domain': 'settings'
       'users': 'users'
       'follows/:domain': 'index'
       'denies/:domain': 'index'

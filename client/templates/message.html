@@ -1,14 +1,19 @@
 <script type="text/template" id="layout-message">
     <div class="content">
-        <div class="info">
+        <a class="info">
+            <div class="container">
             <div>
-            <div class="avatar"></div>
-            <div class="time"></div>
-            <div class="ip"></div>
+                <div class="avatar"></div>
+                <div class="time"></div>
+                <div class="ip"></div>
             </div>
+            </div>
+        </a>
+        <div class="message">
+            <a class="name"></a>
+            <div class="text"></div>
+            <div class="repost"></div>
         </div>
-        <div class="text"></div>
-        <div class="repost"></div>
     </div>
     <div class="message-controls">
         <button type="button" class="comment">
@@ -28,7 +33,7 @@
     <div class="children"></div>
 </script>
 
-<script type="text/template" id="view-editor-layout">
+<script type="text/template" id="layout-editor">
     <div class="editor">
         <textarea name="text" placeholder="Message..."></textarea>
         <img class="avatar"/>

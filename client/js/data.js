@@ -1,21 +1,5 @@
 "use strict";
 
-function _instanceof(instance, clazz) {
-    return instance instanceof clazz;
-}
-
-function _is(child, parent) {
-    return child.__super__ && (child.__super__.constructor == parent || _is(child.__super__, parent))
-}
-
-function _get(name) {
-    var regex = new RegExp(name + '=([^&]+)');
-    if (regex.test(location.search)) {
-        return regex.exec(location.search)[1];
-    }
-    return null
-}
-
 var CTRL = 0x100;
 var ALT = 0x200;
 var SHIFT = 0x400;
@@ -247,75 +231,13 @@ var browser = {
 
 window.isFirefox = window.InstallTrigger && 'Firefox' == browser.name;
 
-function register(target, listeners) {
-    var _add = target.addEventListener || target.on;
-    for (var name in listeners) {
-        _add.call(target, name, listeners[name])
-    }
-}
-
-function react(target, getter, listeners) {
-    for (var name in listeners) {
-        var listener = listeners[name];
-        target.on(name, (function () {
-            this.apply(getter.apply(target, arguments), arguments);
-        }).bind(listener));
-    }
-}
-
-window.geo = null;
-// if (navigator.geolocation.watchPosition) {
-//     navigator.geolocation.watchPosition(function (p) {
-//         var c = p.coords;
-//         window.geo = [c.latitude, c.longitude];
-//
-//         if (c.altitude) {
-//             window.geo.push(c.altitude);
-//         }
-//     });
-//    
-// }
-
 if (!('requestFullscreen' in Element.prototype)) {
     Element.prototype.requestFullscreen =
         Element.prototype.webkitRequestFullScreen || Element.prototype.mozRequestFullScreen;
 }
-
-function logPromise(p) {
-    return p.then(function (result) {
-            console.log('RESOLVE', result);
-        },
-        function (error) {
-            console.error('REJECT', error);
-        });
-}
-
-function preventDefault(e) {
-    e.preventDefault();
-}
-
-Element.prototype.setBackground = function (id) {
-    if (id) {
-        this.style.backgroundImage = 'url("/photo/' + id + '.jpg")';
-    }
-    else if (this.style.backgroundImage) {
-        this.style.removeProperty('background-image');
-    }
-};
 
 Object.freeze(KeyCode);
 Object.freeze(emoji);
 Object.freeze(SocketReadyState);
 Object.freeze(browser);
 Object.freeze(code);
-
-/*
- addEventListener('load', function () {
- var _trace = Marionette.Error.prototype.captureStackTrace;
- Marionette.Error.prototype.captureStackTrace = function () {
- _trace.call(this);
- console.error(this);
- };
- });
- */
-

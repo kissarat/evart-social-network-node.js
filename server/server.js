@@ -762,7 +762,7 @@ function exec($, action) {
         }
     }
 
-    var is_unauthoried_route = /^.(agent|test|pong|fake|login|user)/.test($.req.url.original);
+    var is_unauthoried_route = /^.(agent|user.(login|phone|code|personal|exists))/.test($.req.url.original);
     var must_upload_route = /^.(photo|file)/.test($.req.url.original);
 
     if ($.user || is_unauthoried_route) {

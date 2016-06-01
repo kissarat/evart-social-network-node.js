@@ -12,30 +12,42 @@
       App.mainRegion.show signup
       signup.loginRegion.show new User.LoginForm model: new User.Login()
 
-    profile: (domain) ->
+    view: (domain) ->
       if not domain
         domain = App.user.domain
       $.get '/api/user?domain=' + domain, (user) ->
         user = new App.User.Model user
-        profile = new App.User.Profile model: user
+        profile = new App.User.View model: user
+        profile.$el.addClass('scroll')
+        profile.$el.addClass(user.get('type'))
         App.mainRegion.show profile
+        profile.messagesRegion.show App.Message.ListView.wall(user.get('_id'))
       return
+
+    edit: (id) ->
+      model = new User.Model _id: id
+      model.fetch()
+      App.mainRegion.show new User.EditForm model: model
+
+    create: () ->
+      model = new User.Model type: App.route[0]
+      form = new User.EditForm model: model
+      App.mainRegion.show form
 
   class User.Router extends Marionette.AppRouter
     appRoutes:
       'login': 'login'
       'logout': 'logout'
       'signup/:step': 'signup'
-      'profile': 'profile'
-      'view/:domain': 'profile'
+      'profile': 'view'
+      'view/:id': 'view'
+      'edit/:id': 'edit'
+      'group/create': 'create'
 
   # Models
 
   class User.Login extends Backbone.Model
     url: '/api/user/login'
-
-    behaviors:
-      Bindings: {}
 
     validation:
       login:
@@ -43,7 +55,7 @@
         pattern: /^[\w\-_]|\d{9,16}|[0-9a-f]{24}$/i
       password:
         required: true
-#        pattern: /(?=.*[a-z])(?=.*\d)\w{8,}/i
+  #        pattern: /(?=.*[a-z])(?=.*\d)\w{8,}/i
 
   class User.Signup extends Backbone.Model
 
@@ -70,22 +82,32 @@
       surname:
         required: true
 
-  class App.User.Model extends Backbone.Model
+  class User.Model extends App.Model
     urlRoot: '/api/user'
 
-    @getName: (model) ->
+    validation:
+      domain:
+        pattern: /^[\w\._\-]{4,23}$/
+        required: true
+      phone:
+        pattern: /^\w{9,16}$/
+
+    toString: () ->
+      @getName()
+
+    getName: () ->
       name = []
-      if model.get('name')
-        name.push model.get('name')
+      if @get('name')
+        @get('name')
       else
-        if model.get('forename')
-          name.push model.get('forename')
-        if model.get('surname')
-          name.push model.get('surname')
+        if @get('forename')
+          name.push @get('forename')
+        if @get('surname')
+          name.push @get('surname')
       if name.length > 0
-        name = name.join(' ')
+        name.join(' ')
       else
-        name = model.get('domain')
+        @get('domain')
 
   # Forms
 
@@ -176,7 +198,7 @@
         data = {}
         for i in fields
           data[i] = @model.get(i)
-        $.sendJSON 'POST', '/api/user/personal',  data, (xhr) =>
+        $.sendJSON 'POST', '/api/user/personal', data, (xhr) =>
           result = xhr.responseJSON
           if result.success
             App.navigate '/login'
@@ -190,7 +212,64 @@
       step = _.last(step)
       @$el.attr('data-step', step)
 
-  class User.Profile extends Marionette.LayoutView
+  class App.User.EditForm extends Marionette.ItemView
+    template: '#form-edit'
+    tagName: 'form'
+
+    attributes:
+      class: 'scroll'
+
+    behaviors:
+      Bindings: {}
+
+    bindings:
+      '[name=type]': 'type'
+      '[name=name]': 'name'
+      '[name=phone]': 'phone'
+      '[name=domain]': 'domain'
+      '[name=email]': 'email'
+      '[name=about]': 'about'
+
+    ui:
+      title: 'h1 .title'
+      domain: '[name=domain]'
+      button: 'button'
+      avatar: '.field-avatar'
+      origin: '.origin'
+
+    events:
+#      'change [name=avatar]': 'loadAvatar'
+      'submit': 'submit'
+
+    submit: (e) ->
+      e.preventDefault()
+      $.sendJSON 'POST', '/api/user', @$el.serialize(), (xhr) ->
+        data = xhr.responseJSON
+        if data.success
+          App.navigate '/view/' + data.domain
+        else
+          alert T('Something wrong happend')
+
+    onRender: () ->
+      if @model.id
+        document.title = @model.getName() + ' - ' + T('Settings')
+      else
+        document.title = T('Create Group')
+        @ui.title.html document.title
+        @ui.button.html T('Create')
+        @ui.avatar.hide()
+        @$('.create-only').removeClass('create-only')
+        @ui.domain.change () =>
+          $.getJSON '/api/user/exists?domain=' + @ui.domain.val(), (data) =>
+            if data.success
+              @ui.domain.val(data.value)
+              if data.exists
+                @$el.report 'domain', T('Address already in use'), 'error'
+              else
+                @$el.report 'domain', '', false
+        @ui.origin.html(location.origin)
+
+  class User.View extends Marionette.LayoutView
     template: '#layout-profile'
 
     regions:
@@ -203,14 +282,14 @@
       background: '.background'
       header: 'header'
       avatar: '.big-avatar'
-      settings: '.settings'
+      edit: '.edit'
       status: '.status'
 
     events:
       'dragenter .big-avatar': preventDefault
       'dragover .big-avatar': preventDefault
       'drop .big-avatar': 'dropAvatar'
-      'click .settings': () -> App.navigate '/edit/' + @model.get('domain')
+      'click .edit': () -> App.navigate '/edit/' + @model.get('_id')
       'change .status': 'changeStatus'
       'keyup .status': 'keyupStatus'
       'click .logout': () -> App.logout()
@@ -240,6 +319,7 @@
       xhr.send file
 
     onRender: () ->
+      document.title = @model.getName()
       back = @ui.background[0]
       back.setBackground @model.get 'background'
       @ui.header.find('.photo').each (i, p) ->
