@@ -19,15 +19,16 @@
         $('body').addClass(cssClass)
       el = @view.el
       if dictionary
-        ['h1', 'h2', 'legend', 'span', 'label', 'button', 'option', 'a', '.label', '[title]', '[placeholder]'].forEach (name) ->
-          _.each el.querySelectorAll(name), (element) ->
-            text = element.childNodes.item 0
-            if element.getAttribute('title')
-              element.setAttribute 'title', T element.getAttribute('title')
-            else if element.getAttribute('placeholder')
-              element.setAttribute 'placeholder', T element.getAttribute('placeholder')
-            else if 1 == element.childNodes.length and Node.TEXT_NODE == text.nodeType
-              text.textContent = T text.textContent
+        ['h1', 'h2', 'legend', 'span', 'label', 'button', 'option', 'a', '.label', '[title]',
+          '[placeholder]'].forEach (name) ->
+            _.each el.querySelectorAll(name), (element) ->
+              text = element.childNodes.item 0
+              if element.getAttribute('title')
+                element.setAttribute 'title', T element.getAttribute('title')
+              else if element.getAttribute('placeholder')
+                element.setAttribute 'placeholder', T element.getAttribute('placeholder')
+              else if 1 == element.childNodes.length and Node.TEXT_NODE == text.nodeType
+                text.textContent = T text.textContent
       @view.stickit()
 
   class App.Behaviors.Pageable extends Marionette.Behavior
@@ -462,7 +463,7 @@
       w = App.Layouts.Window.openFloat false
       w.contentRegion = new Views.IncomingCall
       App.floatingRegion.show w
-      
+
     answer: () ->
       peer = App.Peer.find @model.get('source_id')
       peer.answer @model.get('sdp')
@@ -476,9 +477,29 @@
       messages: '[data-name=messages]'
       video: '[data-name=video]'
 
-#    onRender: () ->
-#      console.log @ui.video
+  #    onRender: () ->
+  #      console.log @ui.video
 
+  class Views.Alert extends Marionette.ItemView
+    template: '#view-alert'
+
+    ui:
+      message: '.message'
+
+    events:
+      'click .close': 'close'
+
+    close: () =>
+      @model.collection.remove(@model)
+
+    onRender: () ->
+      @$el.addClass('alert alert-' + @model.get('type'))
+      @ui.message.html @model.get('message')
+      if App.config.alert.duration > 0
+        setTimeout(@close, App.config.alert.duration)
+
+  class Views.AlertList extends Marionette.CollectionView
+    childView: Views.Alert
 
   App.dock = new App.Models.Dock()
   App.dock.on 'change', (changes) ->

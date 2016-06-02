@@ -43,25 +43,15 @@ addEventListener('load', function () {
         switch (ajax.status) {
             case code.UNAUTHORIZED:
                 App.navigate('/login');
+                break;
             default:
                 if (ajax.responseJSON && ajax.responseJSON.error) {
-                    if (ajax.responseJSON.error.message) {
-                        return ui_error(ajax.responseJSON.error.message);
-                    } else {
-                        return ajax.responseJSON.error;
-                    }
+                    var error = ajax.responseJSON.error;
+                    App.alert('danger', error.message ? error.message : error);
                 }
         }
     });
 });
-
-function ui_error(message) {
-    if ('object' === typeof message) {
-        message = JSON.stringify(message);
-        console.warn('Message is object');
-    }
-    return console.error(message);
-}
 
 function preventDefault(e) {
     e.preventDefault();

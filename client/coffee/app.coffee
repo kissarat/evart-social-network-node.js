@@ -10,6 +10,8 @@ config =
   socket:
     address: 'ws://' + location.hostname + '/socket'
     wait: 800
+  alert:
+    duration: 12000
   peer:
     iceServers: [
       {
@@ -73,6 +75,7 @@ App.addRegions
   mainRegion: '#main'
   addRightRegion: '#root > .add.right > .region'
   rightRegion: '#right'
+  alertRegion: '#alert'
   floatingRegion: '#floating-window-container'
 
 @dictionary = null
@@ -167,7 +170,6 @@ class App.PageableCollection extends Backbone.PageableCollection
       else
         @state.totalPages = 0
         @state.currentPage = 1
-      console.log @state
     records
 
   delaySearch: (cb) ->
@@ -345,15 +347,14 @@ App.draggable = (source) ->
 #    e.preventDefault()
 
 App.droppable = (target) ->
-  target.addEventListener 'dragover', (e) ->
-    console.log '1'
+#  target.addEventListener 'dragover', (e) ->
+#    console.log '1'
 #    e.preventDefault()
 
   target.addEventListener 'drop', (e) ->
     url = e.dataTransfer.getData('URL')
     id = /([0-9a-z]{24})\.jpg/.exec(url || '')
     if id
-      console.log id
       url = target.getAttribute('data-change')
 #      $.sendJSON 'POST', url, {}, () ->
 #        target.style.backgroundImage = "url(/photo/#{id}.jpg)"
@@ -372,3 +373,8 @@ class App.Model extends Backbone.Model
         value = @get(name)
         if 'object' == typeof value
           @set name, new model(value)
+
+App.alert = (type, message) ->
+  if not App.alertRegion.currentView
+    App.alertRegion.show new App.Views.AlertList collection: new Backbone.Collection()
+  App.alertRegion.currentView.collection.add new Backbone.Model {type: type, message: message}

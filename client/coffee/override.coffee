@@ -16,7 +16,6 @@ jQuery.fn.busy = (state) ->
 jQuery.fn.report = (name, message, cssClass) ->
   helpBlock = @find("[name=#{name}]").parent().find(".help-block")
   if 'string' == typeof cssClass
-    console.log name, message, cssClass
     helpBlock.addClass(cssClass).show().html(message)
   else if false == cssClass
     helpBlock.attr('class', 'help-block').hide().empty()

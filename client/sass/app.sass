@@ -161,3 +161,42 @@ button
 .buttons
   padding-right: 4px
   text-align: right
+
+#alert
+  position: fixed
+  top: 0
+  right: 0
+  left: 0
+  width: 100%
+  text-align: center
+  z-index: 2
+  > div
+    display: inline-block
+    margin: auto
+  .alert
+    display: flex
+    justify-content: space-between
+    align-items: center
+    background-color: white
+    padding: 4px 8px
+    min-width: 200px
+    //border-right: 1px solid $text_color
+    //border-bottom: 1px solid $text_color
+    //border-left: 1px solid $text_color
+  .alert-success
+    color: #3c763d
+    background-color: #dff0d8
+  .alert-info
+    color: #31708f
+    background-color: #d9edf7
+  .alert-warning
+    background-color: #fcf8e3
+    color: #8a6d3b
+  .alert-danger
+    background-color: #F2DEDE
+    color: #a94442
+  .close
+    color: $text_color
+    cursor: pointer
+
+

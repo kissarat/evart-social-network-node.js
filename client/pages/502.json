@@ -1,6 +1,6 @@
 {
-  "code": 502,
+  "code": "SERVICE_UNAVAILABLE",
   "error": {
-    "message": "API is unavailable"
+    "message": "Service is unavailable"
   }
 }
