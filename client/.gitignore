@@ -1,6 +1,5 @@
 images/
-fonts/Roboto/*.ttf
-fonts/Panton/*.otf
+fonts/
 lib/
 coffee/*.js*
 sass/*.css

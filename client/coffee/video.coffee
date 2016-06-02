@@ -14,10 +14,14 @@
     view: (id) ->
       1
 
+    unsupported: () ->
+      App.mainRegion.show new Video.PeerUnsupported()
+
   class Video.Router extends Marionette.AppRouter
     appRoutes:
       'video': 'index'
       'video/:id': 'view'
+      'peer-unsupported': 'unsupported'
 
   App.channels.video = Backbone.Radio.channel('video')
 
@@ -117,6 +121,18 @@
         @ui.list.busy(true)
         @getCollection().delaySearch () =>
           @ui.list.busy(false)
+
+  class Video.PeerUnsupported extends Marionette.ItemView
+    template: '#view-peer-unsupported'
+
+    attributes:
+      class: 'peer-unsupported'
+
+    ui:
+      text: '.text'
+
+    onRender: () ->
+      @ui.text.html T @ui.text.html().trim()
 
   new Video.Router
     controller: new Video.Controller()
