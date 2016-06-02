@@ -1,14 +1,14 @@
 @import 'var.sass'
 
 body
-  //font-family: "Roboto", "Segoe UI", "Droid Sans", Ubuntu, sans-serif
   font: 10pt "Roboto", serif
-  margin: 0
   color: #6F7579
+  margin: 0
+  //font-family: "Roboto", "Segoe UI", "Droid Sans", Ubuntu, sans-serif
 
 a
-  text-decoration: none
   color: #9E9E9E
+  text-decoration: none
   &:hover
     color: #4EA1D7
 
@@ -71,8 +71,8 @@ a
       margin: 4em 0.2em auto 0.2em
 
 #corner-panel
-  position: fixed
   display: flex
+  position: fixed
   top: 30px
   right: 10px
   z-index: 1
@@ -93,16 +93,16 @@ a
 .loading
   background: url("/images/loading.svg") no-repeat center
   filter: invert(100%)
-  -webkit-filter: invert(100%)
   width: inherit
   height: 210px
+  -webkit-filter: invert(100%)
 
 .threesome
   display: flex
   flex-direction: column
   .middle
-    overflow-y: scroll
     flex: 1
+    overflow-y: scroll
 
 [draggable]
   -moz-user-select: none
@@ -121,9 +121,9 @@ a
 
 .panel
   .controls
-    text-align: right
     background-color: #E0E0E0
     padding: 2px 6px
+    text-align: right
     > *
       vertical-align: top
       font-size: 12px
@@ -150,17 +150,17 @@ a
   display: none
 
 .form-control
-  margin: 4px 6px
   padding: 4px 6px
+  margin: 4px 6px
 
 button
   background-color: #207FE2
   color: white
 
 .form-control, button
-  border-radius: 4px
   border: 1px solid #9E9E9E
+  border-radius: 4px
 
 .buttons
-  text-align: right
   padding-right: 4px
+  text-align: right

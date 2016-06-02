@@ -1,31 +1,31 @@
 
 .window
-  position: fixed
-  padding: 6px
   display: flex
   flex-flow: column
+  position: fixed
+  padding: 6px
   .view
     flex: 1 0 100%
     color: black
 
 .window-content
-  overflow: scroll
   display: flex
+  overflow: scroll
   .view
-    //text-align: center
     padding: 4px
+    //text-align: center
   .view.error
     display: flex
-    justify-content: center
     align-items: center
+    justify-content: center
     flex-direction: column
     .message-container
+      display: flex
+      align-items: center
+      justify-content: center
+      color: red
       margin-bottom: 1em
       width: auto
-      display: flex
-      color: red
-      justify-content: center
-      align-items: center
       .fa
         font-size: 3em
       .text
@@ -40,9 +40,9 @@
   top: 30%
   left: 40%
   background-color: white
-  z-index: 1
   min-width: 120px
   min-height: 80px
+  z-index: 1
   .window-controls
     cursor: move
     .fa

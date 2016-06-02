@@ -1,8 +1,8 @@
 .layout-message, .last-message
   .name
-    margin: 0 0 0 4px
     font-size: 11pt
     font-weight: 100
+    margin: 0 0 0 4px
   .children
     background-color: #BCBCBC
     padding-left: 8px
@@ -29,9 +29,9 @@
       margin-left: 4px
 
 .last-message
-  cursor: pointer
   display: flex
   flex-direction: row
+  cursor: pointer
   &:hover
     background-color: ghostwhite
 
@@ -45,22 +45,22 @@
 //    background-color: green
 
 .like-slider-container
-  width: 36px
-  line-height: 12px
-  //border: 1px solid black
-  border-radius: 7px
-  text-align: center
   background-color: #BCBCBC
   border: none
+  border-radius: 7px
+  line-height: 12px
+  text-align: center
+  width: 36px
+  //border: 1px solid black
 
   .like-slider
+    background-color: white
+    margin: auto
+    border: 1px solid transparent
+    border-radius: 50%
+    line-height: 12px
     width: 10px
     height: 10px
-    line-height: 12px
-    background-color: white
-    border-radius: 50%
-    border: 1px solid transparent
-    margin: auto
 
   &.like > .like-slider
     float: right
@@ -92,7 +92,7 @@
     min-height: 30vh
 
 .avatar
+  background-size: cover
+  border-radius: 50%
   width: 32px
   height: 32px
-  border-radius: 50%
-  background-size: cover

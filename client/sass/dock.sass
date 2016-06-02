@@ -27,48 +27,48 @@ $grey: #F6F6F6
 
 @media (min-width: 1025px) and (max-width: 1360px)
   #dock-container
-    transform: scale(0.75)
     bottom: -8px
+    transform: scale(0.75)
 
 @media (max-width: 1024px)
   #dock-container
-    transform: scale(0.5)
     bottom: -16px
+    transform: scale(0.5)
 
 #dock
-  position: relative
   display: block
+  position: relative
   ul
     font-size: 14px
     padding: 0 30px
     margin: 0
 
   li
-    list-style-type: none
     display: inline-block
     position: relative
+    list-style-type: none
     span
       display: none
       position: absolute
       bottom: 140px
       left: 0
-      width: 100%
       background-color: $black_75
       padding: 4px 0
-      //If you use compass, instead of the line below you could use + border-radius($radius, $vertical-radius)
       border-radius: 12px
+      width: 100%
       -webkit-border-radius: 12px
       -moz-border-radius: 12px
+      //If you use compass, instead of the line below you could use + border-radius($radius, $vertical-radius)
 
     &:hover
       span
         display: block
 
       a
+        margin: 0 1.1em 10px
         -webkit-transform: scale(1.1)
         -moz-transform: scale(1.1)
         -o-transform: scale(1.1)
-        margin: 0 1.1em 10px
 
       + li a
         -webkit-transform: scale(1.0)
@@ -87,23 +87,23 @@ $grey: #F6F6F6
       -o-transition: all 0.3s
       -o-transform-origin: 50% 100%
       .prev
+        margin: 0 1.4em 10px
         -webkit-transform: scale(1.1)
         -moz-transform: scale(1.1)
         -o-transform: scale(1.1)
-        margin: 0 1.4em 10px
 
   a
     display: inline-block
+    background: url("/images/icons.png") no-repeat
     width: 72px
     height: 72px
-    background: url("/images/icons.png") no-repeat
     &.disabled
       display: none
       cursor: default
+      filter: grayscale(100%)
       opacity: 0.3
       -webkit-filter: grayscale(100%)
       -moz-filter: grayscale(100%)
-      filter: grayscale(100%)
   [href="/feed"]
     background-position: 0, 0
   [href="/profile"]
@@ -132,6 +132,6 @@ $grey: #F6F6F6
   .counter
     position: absolute
     background-color: darkblue
+    color: white
     padding: 2px 4px
     border: 2px
-    color: white
