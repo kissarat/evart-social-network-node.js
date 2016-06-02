@@ -205,13 +205,6 @@ App.Behaviors = {}
 
 Marionette.Behaviors.behaviorsLookup = -> App.Behaviors
 
-addEventListener 'unload', () ->
-  if App.mainRegion.currentView.editor
-    model = App.mainRegion.currentView.editor.currentView.model
-    text = model.get('text')
-    if text && text.trim()
-      localStorage.setItem 'draft_' + model.get('target'), text
-
 App.navigate = (url) ->
   return Backbone.history.navigate url, trigger: true
 

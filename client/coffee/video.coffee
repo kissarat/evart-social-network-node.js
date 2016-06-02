@@ -14,14 +14,14 @@
     view: (id) ->
       1
 
-    unsupported: () ->
-      App.mainRegion.show new Video.PeerUnsupported()
+    unsupported: (type) ->
+      App.mainRegion.show new Video.Unsupported()
 
   class Video.Router extends Marionette.AppRouter
     appRoutes:
       'video': 'index'
       'video/:id': 'view'
-      'peer-unsupported': 'unsupported'
+      'unsupported(/:type)': 'unsupported'
 
   App.channels.video = Backbone.Radio.channel('video')
 
@@ -122,8 +122,8 @@
         @getCollection().delaySearch () =>
           @ui.list.busy(false)
 
-  class Video.PeerUnsupported extends Marionette.ItemView
-    template: '#view-peer-unsupported'
+  class Video.Unsupported extends Marionette.ItemView
+    template: '#view-unsupported'
 
     attributes:
       class: 'peer-unsupported'
@@ -132,7 +132,12 @@
       text: '.text'
 
     onRender: () ->
-      @ui.text.html T @ui.text.html().trim()
+      type = App.route[1]
+      if 'peer' == type
+        text = "Unfortunately, your browser doesn't support video calling feature. You can use of the following browsers"
+      else
+        text = "Unfortunately, your browser doesn't supported. You can use of the following browsers"
+      @ui.text.html T(text)
 
   new Video.Router
     controller: new Video.Controller()

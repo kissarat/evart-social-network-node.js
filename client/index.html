@@ -32,8 +32,23 @@
     <link rel="stylesheet" type="text/css" href="/sass/message.css"/>
     <link rel="stylesheet" type="text/css" href="/sass/video.css"/>
 </head>
-<body class="front login">
-<div id="boot-loading"></div>
+<body class="login front" style="background: url('/images/unsupported.png') top no-repeat; background-size: 480px">
+<div id="boot-loading" style="display: none"></div>
+<script>
+    (function () {
+        var style = document.body.style;
+        var p = Element.prototype;
+        var supported = window.localStorage && style.removeProperty
+                && p.querySelector && p.getBoundingClientRect
+                && window.HTMLMediaElement && window.SVGElement && window.matchMedia;
+        if (supported) {
+            document.body.removeAttribute('style');
+            document.body.classList.add('front');
+            document.getElementById('boot-loading').style.removeProperty('display');
+        }
+    })()
+
+</script>
 
 <div id="corner-panel">
     <div class="domain"></div>
@@ -132,7 +147,7 @@
     <script src="/lib/backbone.radio/build/backbone.radio.js"></script>
     <script src="/lib/marionette/lib/backbone.marionette.js"></script>
     <script src="/lib/moment/moment.js"></script>
-    <script src="/coffee/override.js"></script>
+    <script src="/js/polyfills.js"></script>
     <script src="/coffee/app.js"></script>
     <script src="/js/build-ui.js"></script>
     <script src="/coffee/models.js"></script>
