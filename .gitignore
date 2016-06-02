@@ -4,3 +4,4 @@ app/
 static/
 node_modules/
 gulpfile.js*
+RecordRTC-master
