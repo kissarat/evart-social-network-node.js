@@ -59,7 +59,7 @@ class App.Peer
       App.debug.error 'No candidate'
 
   onAddStream: (e) ->
-    @on 'addstream', e
+    @trigger 'addstream', e
 
   trace: () ->
     connection: @connection.iceConnectionState
@@ -160,6 +160,10 @@ class App.Peer
         type: 'answer'
         sdp: message.sdp
       @connection.setRemoteDescription answer
+
+  trigger: (name, e) ->
+    super(name, e)
+    App.on('peer:' + name, @, e)
 
 App.on 'login', () ->
   react App, ((message) -> App.Peer.find(message.source_id)), App.Peer.remoteEvents

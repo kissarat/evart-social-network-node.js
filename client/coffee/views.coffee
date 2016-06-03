@@ -18,7 +18,7 @@
       if cssClass
         $('body').addClass(cssClass)
       el = @view.el
-      if dictionary
+      if App.dictionary
         ['h1', 'h2', 'legend', 'span', 'label', 'button', 'option', 'a', '.label', '[title]',
           '[placeholder]'].forEach (name) ->
             _.each el.querySelectorAll(name), (element) ->

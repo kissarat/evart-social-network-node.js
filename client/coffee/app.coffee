@@ -28,7 +28,6 @@ config =
       ]
     ]
 
-
 features =
   peer:
     available: !!window.RTCPeerConnection
@@ -51,19 +50,10 @@ debug =
         @[name] = []
       @[name].push element
 
-#window.addEventListener 'unload', () ->
-#  storedConfig =
-#    version: version
-#    features: features
-#    mode: if DEV then 'dev' else 'prod'
-#    config: config
-#  localStorage.setItem 'socex', JSON.stringify storedConfig
-
-
 @App = new Marionette.Application()
 window.App = @App
 
-App.config = config
+App.defaultConfig = defaultConfig
 App.features = features
 App.debug = debug
 
@@ -78,8 +68,8 @@ App.addRegions
   alertRegion: '#alert'
   floatingRegion: '#floating-window-container'
 
-@dictionary = null
-@T = (name) -> name
+App.dictionary = null
+window.T = (name) -> name
 
 App.on 'start', ->
   $.sendJSON 'POST', '/api/agent', statistics, (xhr) ->
@@ -91,7 +81,7 @@ App.on 'start', ->
         document.documentElement.setAttribute 'lang', language
         $.getJSON "/languages/#{language}.json", (_dict) ->
           window.dictionary = _dict
-          window.T = (name) -> dictionary[name] || name
+          window.T = (name) -> App.dictionary[name] || name
           boot xhr
       else
         boot xhr
@@ -188,20 +178,29 @@ class App.PageableCollection extends Backbone.PageableCollection
         @trigger('finish')
         @loading = false
 
-addEventListener 'load', () ->
-  if DEV
-    deferreds = []
-    $('[data-src]').each (i, script) ->
-      deferreds.push $.get script.dataset.src, (template) ->
-        script.innerHTML = template.replace />\s+</g, '><'
-        script.removeAttribute 'data-src'
-    $.when(deferreds).then () ->
-      console.log 'Views loaded'
-      App.start()
-  else if window.addEventListener && navigator.sendBeacon
-    addEventListener 'beforeunload', ->
-      navigator.sendBeacon '/api/statistics', JSON.stringify(statistics)
-    App.start()
+if window.supported
+  addEventListener 'load', () ->
+    $('#select-language')
+    .val(App.language)
+    .change (e) ->
+      $.cookie 'lang', e.target.value,
+        expires: 365
+        path: '/'
+      location.reload()
+
+    if DEV
+        deferreds = []
+        $('[data-src]').each (i, script) ->
+          deferreds.push $.get script.dataset.src, (template) ->
+            script.innerHTML = template.replace />\s+</g, '><'
+            script.removeAttribute 'data-src'
+        $.when(deferreds).then () ->
+          console.log 'Views loaded'
+          App.start()
+      else if window.addEventListener && navigator.sendBeacon
+        addEventListener 'beforeunload', ->
+          navigator.sendBeacon '/api/statistics', JSON.stringify(statistics)
+        App.start()
 
 App.Behaviors = {}
 
@@ -233,34 +232,6 @@ App.upload = (url, file) ->
       catch ex
       resolve data, e
     xhr.onerror = reject
-
-App.toggle = (array, element) ->
-  i = array.indexOf(element)
-  result = i < 0
-  if result
-    array.push element
-  else
-    array.splice i, 1
-  result
-
-Object.defineProperties App,
-  language:
-    set: (value) ->
-      $.cookie 'lang', value
-    get: () ->
-      $.cookie('lang') || document.documentElement.getAttribute 'lang'
-
-  user:
-    get: () ->
-      if @agent and @agent.user then @agent.user else null
-
-$('#select-language')
-.val(App.language)
-.change (e) ->
-  $.cookie 'lang', e.target.value,
-    expires: 365
-    path: '/'
-  location.reload()
 
 App.login = () ->
   if App.user
@@ -294,9 +265,6 @@ App.showCounter = (name, value) ->
       icon.append counter
     else if counter.length > 0
       counter[0].remove()
-
-App.isFullscreen = () ->
-  !!document.fullScreenElement
 
 App.measure = (bytes) ->
   sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']

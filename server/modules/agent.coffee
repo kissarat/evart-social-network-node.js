@@ -1,7 +1,8 @@
 rs = require 'randomstring'
 god = require 'mongoose'
 utils = require '../utils'
-code = require __dirname + '/../../client/code.json'
+code = require '../../client/code.json'
+client = require '../client.json'
 
 
 global.schema.Agent = new god.Schema
@@ -71,7 +72,9 @@ module.exports =
       agent.save $.wrap () ->
         if (Math.random() > (1 - config.auth_generation)) and not $.req.auth
           $.setCookie 'auth', agent.auth, config.FOREVER
-        $.send extract agent
+        agent = extract agent
+        agent.config = client
+        $.send agent
 
     if $.req.auth
       Agent.findOne(auth: $.req.auth).populate('user').exec $.wrap update

@@ -231,10 +231,45 @@ var browser = {
 
 window.isFirefox = window.InstallTrigger && 'Firefox' == browser.name;
 
-if (!('requestFullscreen' in Element.prototype)) {
-    Element.prototype.requestFullscreen =
-        Element.prototype.webkitRequestFullScreen || Element.prototype.mozRequestFullScreen;
-}
+  window.defaultConfig = {
+    search: {
+      delay: 250
+    },
+    trace: {
+      history: true
+    },
+    socket: {
+      address: 'ws://' + location.hostname + '/socket',
+      wait: 800
+    },
+    alert: {
+      duration: 12000
+    },
+    peer: {
+      iceServers: [
+        {
+          urls: "stun:stun.services.mozilla.com",
+          username: "louis@mozilla.com",
+          credential: "webrtcdemo"
+        }, {
+          urls: ['stun:stun.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302', 'stun:stun.services.mozilla.com', "stun:23.21.150.121"]
+        }
+      ]
+    }
+  };
+
+  window.features = {
+    peer: {
+      available: !!(window.RTCPeerConnection || window.webkitRTCPeerConnection)
+    },
+    notification: {
+      available: !!window.Notification,
+      enabled: false
+    },
+    fullscreen: {
+      available: Element.prototype.requestFullscreen
+    }
+  };
 
 Object.freeze(KeyCode);
 Object.freeze(emoji);

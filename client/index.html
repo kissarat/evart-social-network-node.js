@@ -32,20 +32,26 @@
     <link rel="stylesheet" type="text/css" href="/sass/message.css"/>
     <link rel="stylesheet" type="text/css" href="/sass/video.css"/>
 </head>
-<body class="login front" style="background: url('/images/unsupported.png') top no-repeat; background-size: 480px">
+<body style="background: url('/images/unsupported.png') top no-repeat; background-size: 480px">
 <div id="boot-loading" style="display: none"></div>
 <script>
     (function () {
         var style = document.body.style;
         var p = Element.prototype;
-        var supported = window.localStorage && style.removeProperty
-                && p.querySelector && p.getBoundingClientRect
-                && window.HTMLMediaElement && window.SVGElement && window.matchMedia;
+        var supported = ['HTMLMediaElement', 'SVGElement', 'HTMLCanvasElement', 'matchMedia',
+            'Uint8Array', 'FileReader', 'btoa', 'atob', 'Worker'];
+        supported = Array.prototype.every && supported.every(function (name) {
+                    return name in window
+                })
+                && window.localStorage && style.removeProperty && 'dataset' in HTMLElement.prototype
+                && p.querySelector && p.getBoundingClientRect && Function.prototype.bind
+                && Object.create && Object.defineProperty && Object.keys;
         if (supported) {
             document.body.removeAttribute('style');
-            document.body.classList.add('front');
+            document.body.setAttribute('class', 'front');
             document.getElementById('boot-loading').style.removeProperty('display');
         }
+        window.supported = supported;
     })()
 </script>
 
@@ -136,7 +142,7 @@
 
 <div id="script">
     <script src="/js/data.js"></script>
-    <script src="/lib/webrtc-adapter/adapter.js"></script>
+    <!--<script src="/lib/webrtc-adapter/adapter.js"></script>-->
     <script src="/lib/jquery/dist/jquery.js"></script>
     <script src="/lib/jquery-ui/jquery-ui.js"></script>
     <script src="/lib/jquery-cookie/jquery.cookie.js"></script>

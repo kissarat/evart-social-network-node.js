@@ -1,6 +1,9 @@
 "use strict";
 
 addEventListener('load', function () {
+    if (!window.supported) {
+        return;
+    }
     if (matchMedia('min-width(769px)')) {
         var leftMenu = new App.Views.VerticalMenu();
         leftMenu.$el.hide();
@@ -149,8 +152,6 @@ HTMLFormElement.prototype.serialize = function () {
     return result;
 };
 
-window.responses = {};
-
 Backbone.Model.prototype.toString = function () {
     return this.get('_id');
 };
@@ -185,6 +186,43 @@ Object.defineProperties(App, {
     route: {
         get: function () {
             return location.pathname.split('/').slice(1);
+        }
+    },
+
+    config: {
+        get: function () {
+            if (!this._config && this.agent && this.agent.config) {
+                var config = this.agent.config;
+                config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
+                var stun = config.peer.iceServers[0].urls.split(' ').map(function (address) {
+                    return 'stun:' + address;
+                });
+                config.peer.iceServers[0].urls = stun.concat(this.defaultConfig.peer.iceServers[0].urls);
+                this._config = config;
+            }
+            return this._config ? this._config : this.defaultConfig;
+        }
+    },
+
+    stunServers: {
+        get: function () {
+            return this.config.peer.iceServers[0].urls;
+        }
+    },
+
+    language: {
+        get: function () {
+            return $.cookie('lang') || document.documentElement.getAttribute('lang');
+        },
+
+        set: function(value) {
+            $.cookie('lang', value);
+        }
+    },
+
+    user: {
+        get: function () {
+            return this.agent && this.agent.user ? this.agent.user : null;
         }
     }
 });

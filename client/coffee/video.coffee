@@ -126,7 +126,7 @@
     template: '#view-unsupported'
 
     attributes:
-      class: 'peer-unsupported'
+      class: 'unsupported'
 
     ui:
       text: '.text'
@@ -134,9 +134,9 @@
     onRender: () ->
       type = App.route[1]
       if 'peer' == type
-        text = "Unfortunately, your browser doesn't support video calling feature. You can use of the following browsers"
+        text = "Unfortunately, your browser doesn't support video calling feature. You can use one of the following browsers"
       else
-        text = "Unfortunately, your browser doesn't supported. You can use of the following browsers"
+        text = "Unfortunately, your browser doesn't supported. You can use one of the following browsers"
       @ui.text.html T(text)
 
   new Video.Router
