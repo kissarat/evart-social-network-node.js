@@ -54,10 +54,19 @@ debug =
 window.App = @App
 
 App.defaultConfig = defaultConfig
-App.features = features
 App.debug = debug
 
 App.channels = {}
+
+class App.ModalRegion extends Marionette.Region
+  el: '#modal'
+
+  onShow: () ->
+    @$el.css('display', 'flex')
+
+  onEmpty: () ->
+    @$el.hide()
+
 
 App.addRegions
   leftRegion: '#left'
@@ -66,7 +75,11 @@ App.addRegions
   addRightRegion: '#root > .add.right > .region'
   rightRegion: '#right'
   alertRegion: '#alert'
+  modalRegion: App.ModalRegion
   floatingRegion: '#floating-window-container'
+
+#App.modalRegion.on 'view:attach', () ->
+#  console.log(arguments);
 
 App.dictionary = null
 window.T = (name) -> name

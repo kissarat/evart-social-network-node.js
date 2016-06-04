@@ -1,10 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<script type="text/template" id="view-conference">
+    <video class="conference-video"></video>
 
-</body>
-</html>
+    <div class="conference-controls">
+        <div class="fullscreen fa fa-arrows-alt"></div>
+        <div class="call fa fa-phone"></div>
+        <div class="microphone fa fa-microphone"></div>
+        <div class="camera fa fa-video-camera"></div>
+        <div class="mute fa fa-volume-up" title="Mute"></div>
+        <input data-id="volume" type="range" max="10"/>
+        <div class="hide fa fa-angle-double-up"></div>
+    </div>
+</script>
+
+<script type="text/template" id="view-incoming-call">
+    <div>
+    </div>
+    <img/>
+    <h2></h2>
+    <div class="buttons">
+        <div class="answer" title="Answer"></div>
+        <div class="dismiss" title="Dismiss"></div>
+    </div>
+</script>

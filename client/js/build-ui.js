@@ -182,47 +182,67 @@ function _get(name) {
     return null
 }
 
-Object.defineProperties(App, {
-    route: {
-        get: function () {
-            return location.pathname.split('/').slice(1);
-        }
-    },
-
-    config: {
-        get: function () {
-            if (!this._config && this.agent && this.agent.config) {
-                var config = this.agent.config;
-                config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
-                var stun = config.peer.iceServers[0].urls.split(' ').map(function (address) {
-                    return 'stun:' + address;
-                });
-                config.peer.iceServers[0].urls = stun.concat(this.defaultConfig.peer.iceServers[0].urls);
-                this._config = config;
+(function (app) {
+    Object.defineProperties(app, {
+        route: {
+            get: function () {
+                return location.pathname.split('/').slice(1);
             }
-            return this._config ? this._config : this.defaultConfig;
-        }
-    },
-
-    stunServers: {
-        get: function () {
-            return this.config.peer.iceServers[0].urls;
-        }
-    },
-
-    language: {
-        get: function () {
-            return $.cookie('lang') || document.documentElement.getAttribute('lang');
         },
 
-        set: function(value) {
-            $.cookie('lang', value);
-        }
-    },
+        config: {
+            get: function () {
+                if (!this._config && this.agent && this.agent.config) {
+                    var config = this.agent.config;
+                    config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
+                    var stun = config.peer.iceServers[0].urls.split(' ').map(function (address) {
+                        return 'stun:' + address;
+                    });
+                    config.peer.iceServers[0].urls = stun.concat(this.defaultConfig.peer.iceServers[0].urls);
+                    this._config = config;
+                }
+                return this._config ? this._config : this.defaultConfig;
+            }
+        },
 
-    user: {
-        get: function () {
-            return this.agent && this.agent.user ? this.agent.user : null;
+        features: {
+            get: function() {
+                if (!this._features) {
+                    Object.defineProperty(features.peer, 'enabled', {
+                        get: function () {
+                            return this.available && app.config.peer.enabled;
+                        },
+
+                        set: function (value) {
+                            app.config.peer.enabled = value;
+                        }
+                    });
+                    this._features = features;
+                }
+                return this._features;
+            }
+        },
+
+        stunServers: {
+            get: function () {
+                return this.config.peer.iceServers[0].urls;
+            }
+        },
+
+        language: {
+            get: function () {
+                return $.cookie('lang') || document.documentElement.getAttribute('lang');
+            },
+
+            set: function(value) {
+                $.cookie('lang', value);
+            }
+        },
+
+        user: {
+            get: function () {
+                return this.agent && this.agent.user ? this.agent.user : null;
+            }
         }
-    }
-});
+    });    
+})(App);

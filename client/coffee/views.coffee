@@ -332,6 +332,9 @@
   class Views.LastMessage extends Marionette.ItemView
     template: '#view-last-message'
 
+    behaviors:
+      Bindings: {}
+
     bindings:
       '.text': 'text'
 
@@ -345,9 +348,6 @@
 
     events:
       'click': 'open'
-
-    behaviors:
-      Bindings: {}
 
     open: () ->
       App.navigate 'dialog/' + @model.get('dialog_id')
@@ -402,72 +402,6 @@
 
   class Views.UserList extends Marionette.CollectionView
     childView: Views.UserItem
-
-  class Views.Conference extends Marionette.ItemView
-    template: '#view-conference'
-
-    events:
-      'click .fullscreen': 'fullscreen'
-      'click .phone': 'audioCall'
-      'click .microphone': 'microphone'
-      'click .camera': 'videoCall'
-      'click .mute': 'mute'
-      'click .hide': 'hide'
-
-    ui:
-      video: 'video'
-      audio: 'audio'
-      audioSource: 'audio > source'
-      fullscreen: '.fullscreen'
-      phone: '.phone'
-      microphone: '.microphone'
-      camera: '.camera'
-      mute: '.mute'
-      hide: '.hide'
-
-    fullscreen: () ->
-      if App.features.fullscreen
-        @ui.video[0].requestFullscreen()
-      else
-        console.warn 'Fullscreen is not available'
-
-    hide: () ->
-      @ui.hide.toggleClass 'fa-angle-double-up'
-      @ui.hide.toggleClass 'fa-angle-double-down'
-      @ui.video.toggle()
-
-    audioCall: () ->
-      peer = App.Peer.find @model.params.target_id
-      peer.constraints = App.Peer.makeMediaConstraints true, false
-      peer.offer peer.constraints
-
-
-  class Views.IncomingCall extends Marionette.ItemView
-    template: '#view-incoming-call'
-
-    ui:
-      avatar: 'img'
-      name: 'h2'
-      answer: '.answer'
-      dismiss: '.dismiss'
-
-    events:
-      'click .answer': 'answer'
-      'click .dismiss': 'dismiss'
-
-    onRegion: () ->
-      @ui.avatar.attr 'src', App.avatarUrl @model.get('source_id')
-      @ui.name.text @model.get('name')
-
-    @openWindow: () ->
-      w = App.Layouts.Window.openFloat false
-      w.contentRegion = new Views.IncomingCall
-      App.floatingRegion.show w
-
-    answer: () ->
-      peer = App.Peer.find @model.get('source_id')
-      peer.answer @model.get('sdp')
-
 
   class Views.VerticalMenu extends Marionette.ItemView
     template: '#view-vertical-menu'

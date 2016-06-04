@@ -37,7 +37,7 @@ if (!navigator.mediaDevices.getUserMedia && navigator.webkitGetUserMedia) {
     }
 }
 
-if (window.webkitRTCPeerConnection) {
+if (!window.RTCPeerConnection && window.webkitRTCPeerConnection) {
     window.RTCPeerConnection = window.webkitRTCPeerConnection;
     (function () {
         var webkitCreateOffer = this.createOffer;
@@ -57,3 +57,4 @@ if (window.webkitRTCPeerConnection) {
         }
     }).call(RTCPeerConnection.prototype);
 }
+
