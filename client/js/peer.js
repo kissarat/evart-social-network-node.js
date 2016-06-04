@@ -16,12 +16,47 @@ App.module('Peer', function (Peer, App) {
             } else {
                 App.navigate('/unsupported/peer');
             }
+        },
+
+        presentation: function () {
+            // PDFJS.getDocument('/images/ipad_user_guide.pdf').then(function (pdf) {
+            //     pdf.getPage(1).then(function (page) {
+            //         var pdfView = new PDFJS.PDFPageView({
+            //             container: document.querySelector('#main'),
+            //             id: 1,
+            //             scale: 1,
+            //             defaultViewport: page.getViewport(1),
+            //             textLayerFactory: new PDFJS.DefaultTextLayerFactory(),
+            //             annotationLayerFactory: new PDFJS.DefaultAnnotationLayerFactory()
+            //         });
+            //         pdfView.setPdfPage(page);
+            //         return pdfView.draw();
+            //     var presentationView = new Peer.Presentation({
+            //         model: new Backbone.Model()
+            //     });
+            //     App.mainRegion.show(presentationView);
+            //     var viewport = page.getViewport(2);
+            //     console.log(viewport);
+            //     var canvas = presentationView.ui.canvas[0];
+            //     var context = canvas.getContext('2d');
+            //     page.render({
+            //         canvasContext: context,
+            //         viewport: viewport
+            //     });
+            // });
+            // });
+
+            var presentationView = new Peer.Presentation({
+                model: new Backbone.Model()
+            });
+            App.mainRegion.show(presentationView);
         }
     });
 
     Peer.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'phone/:id': 'phone'
+            'phone/:id': 'phone',
+            'presentation': 'presentation'
         }
     });
 
@@ -105,7 +140,7 @@ App.module('Peer', function (Peer, App) {
             this.set('stream', e.stream);
             // TODO
             // setTimeout(function () {
-                document.querySelector('#modal video').srcObject = e.stream;
+            document.querySelector('#modal video').srcObject = e.stream;
             // }, 3000);
             this.trigger('addstream', e.stream);
         },
@@ -375,9 +410,9 @@ App.module('Peer', function (Peer, App) {
             'click .dismiss': 'dismiss'
         },
 
-        onRegion: function () {
+        onRender: function () {
             this.ui.avatar.attr('src', App.avatarUrl(this.model.get('target_id')));
-            return this.ui.name.text(this.model.get('name'));
+            this.ui.name.text(this.model.get('name'));
         },
 
         answer: function () {
@@ -390,6 +425,32 @@ App.module('Peer', function (Peer, App) {
             App.modalRegion.show(new Peer.IncomingCall({
                 model: peer
             }));
+        }
+    });
+
+    Peer.Presentation = Marionette.ItemView.extend({
+        template: '#view-presentation',
+        tagName: 'iframe',
+
+        behaviors: {
+            Bindings: {}
+        },
+
+        ui: {
+            // canvas: 'canvas'
+        },
+
+        events: {},
+
+        onRender: function () {
+            this.el.src = '/pdf.js/web/viewer.html?file=http://localhost/images/ipad_user_guide.pdf';
+        },
+
+        onShow: function () {
+            // var canvas = this.ui.canvas[0];
+            // var box = canvas.getBoundingClientRect();
+            // canvas.width = box.width * devicePixelRatio;
+            // canvas.height = box.height * devicePixelRatio;
         }
     });
 
