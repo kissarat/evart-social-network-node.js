@@ -104,5 +104,3 @@
         w.ui.controls.hide()
       w.$el.draggable draggable
       return w
-
-  App.Views.Dialog.prototype.childView = Layouts.MessageLayout

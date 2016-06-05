@@ -6,10 +6,12 @@
         e.preventDefault()
         App.navigate this.getAttribute 'href'
         return
-      @view.$el.addClass @view.template.replace '#view-', 'view '
-      @view.$el.addClass @view.template.replace '#thumbnail-', 'view thumbnail-'
-      @view.$el.addClass @view.template.replace '#layout-', 'view layout-'
-      @view.$el.addClass @view.template.replace '#form-', 'view form-'
+      clazz = @view.template
+      .replace('#thumbnail-', 'view thumbnail-')
+      .replace('#layout-', 'view layout-')
+      .replace('#form-', 'view form-')
+      .replace('#view-', 'view ')
+      @view.$el.addClass clazz
       @view.$('.unavailable').click () ->
         alert T('This function is not available yet')
       template = $(@view.template)
@@ -55,69 +57,6 @@
       'h1': 'status'
       '.text': 'text'
 
-  class Views.Form extends Marionette.LayoutView
-    tagName: 'form'
-
-    attributes:
-      method: 'post'
-
-    behaviors:
-      Bindings: {}
-
-    bindings: ->
-      b = {}
-      @$el.find('[name]').each (i, input) ->
-        name = input.getAttribute('name')
-
-        if 'file' == input.type
-          console.warn 'File input: ' + name
-        else
-          field = name
-          if 'SELECT' == input.tagName
-            options = {}
-            _.each input.querySelectorAll('option'), (option) ->
-              option.innerHTML = T option.innerHTML
-              options[option.value] = T option.innerHTML
-            field =
-              observe: name
-              selectOptions:
-                collection: options
-
-          b["[name=#{name}]"] = field
-      return b
-
-    report: (name, message) ->
-      if !message
-        message = name
-        name = null
-      if @el[name] || !name
-        field = if name then @el[name].parentNode else @el
-        $('<div></div>')
-        .attr('class', 'error')
-        .html(T message)
-        .appendTo(field)
-      else
-        console.error name + ' field not found'
-
-    events:
-      submit: 'submit'
-
-    submit: (e) ->
-      if e
-        e.preventDefault()
-      @$el.find('.error').remove()
-      @model.save null,
-        patch: !@model.isNew()
-        error: (_1, ajax) =>
-          if code.BAD_REQUEST == ajax.status && ajax.responseJSON.invalid
-            for name, error of ajax.responseJSON.invalid
-              @report name, error.message
-          else if @error
-            @error ajax
-        success: (model, data) =>
-          if @success
-            @success data, model
-
   class Views.Message extends Marionette.ItemView
     template: '#view-message'
 
@@ -136,86 +75,6 @@
     bindings:
       '.text': 'text'
       '.ip': 'ip'
-
-  class Views.Dialog extends Marionette.CollectionView
-    #    template: '#view-dialog'
-    #    childView: App.Layouts.MessageLayout
-    #    childViewContainer: '.messages'
-
-    events:
-      'scroll': 'scroll'
-
-    scroll: (e) ->
-      if @el.scrollTop < 100
-        @collection.fetchNextPage()
-
-    onRender: () ->
-      @$el.addClass 'dialog'
-
-    onRenderCollection: () ->
-      images = @el.querySelectorAll('img')
-      i = images.length
-      _.each images, (image) =>
-        image.addEventListener 'load', () =>
-          i--
-          if 0 == i
-#            lastChild = @children.findByIndex @children.length - 1
-#            if not @lastId or @lastId != lastChild.model.get('_id')
-#              lastChild.el.scrollIntoView false
-#              @lastId = lastChild.model.get('_id')
-#              @firstChild = @children.findByIndex 0
-#            else if @firstChild
-#              @firstChild.el.scrollIntoView false
-            target_id = @collection.params.target_id
-            predicate = (m) =>
-              target_id == m.get('source')._id and m.get('unread') > 0
-            if target_id and @collection.models.some predicate
-              target_id = @collection.params.target_id
-              read = () =>
-                $.post('/api/message/read?target_id=' + target_id).then (result) =>
-                  if result.nModified > 0
-                    @read = true
-              if not @read
-                setTimeout read, 2000
-
-#    onRender: () ->
-#      App.mainRegion.currentView.$el.addClass 'dialog-window'
-
-    @build: (id, target, layout) ->
-      if 'string' == typeof target
-        messageList = new App.Models.MessageList()
-        messageList.params = {}
-        messageList.params[target + '_id'] = id
-        messageList.fetch()
-      else # if id
-        messageList = target
-        target = 'parent_id'
-      dialog = new App.Views.Dialog collection: messageList
-      draft =
-        text: localStorage.getItem 'draft_' + id
-      draft[target] = id
-      draft = new App.Models.Message draft
-      editor = new Views.Editor model: draft
-      editorLayout = new App.Layouts.EditorLayout model: draft
-      layout.showChildView 'middle', dialog
-      layout.showChildView 'bottom', editorLayout
-      editorLayout.showChildView 'editor', editor
-      return {
-        messageList: messageList
-        layout: layout
-      }
-
-    @feed: (url) ->
-      if not url
-        url = '/api-cache/message/feed'
-      messageList = new App.Models.MessageList()
-      dialog = new Views.Dialog collection: messageList
-      $.get url, (messages) ->
-        messageList.add messages
-      return dialog
-
-  class Views.Video extends Marionette.ItemView
-    template: '#'
 
   class Views.Editor extends Marionette.ItemView
     template: '#view-message-editor'

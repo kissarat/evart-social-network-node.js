@@ -177,12 +177,7 @@ App.module 'Message', (Message, App) ->
       loading = null
       @collection.pageableCollection.on 'start', () =>
         if not loading
-          loading = $('
-      <div class="sk-three-bounce">
-        <div class="sk-child sk-bounce1"></div>
-        <div class="sk-child sk-bounce2"></div>
-        <div class="sk-child sk-bounce3"></div>
-      </div>').appendTo(@$el)
+          loading = $($('#view-bounce').html()).appendTo(@$el)
       @collection.pageableCollection.on 'finish', () ->
         if loading
           loading.remove()
