@@ -1,8 +1,7 @@
 @App.module 'Views', (Views) ->
   class App.Behaviors.Bindings extends Marionette.Behavior
     onRender: ->
-#      document.title = _.result(@view, 'title') || @view.constructor.name
-      @view.$('a').click (e) ->
+     @view.$('a').click (e) ->
         e.preventDefault()
         App.navigate this.getAttribute 'href'
         return
@@ -56,25 +55,6 @@
     bindings:
       'h1': 'status'
       '.text': 'text'
-
-  class Views.Message extends Marionette.ItemView
-    template: '#view-message'
-
-    behaviors:
-      Bindings: {}
-
-    ui:
-      info: '.info'
-      avatar: '.avatar'
-      time: '.time'
-      ip: '.ip'
-      top: '.top'
-      middle: '.middle'
-      photos: '.photos'
-
-    bindings:
-      '.text': 'text'
-      '.ip': 'ip'
 
   class Views.Editor extends Marionette.ItemView
     template: '#view-message-editor'
@@ -135,8 +115,8 @@
 
   class Views.PhotoThumbnail extends Marionette.ItemView
     template: '#view-photo-thumbnail'
-#    ui:
-#      image: '.photo-thumbnail'
+
+    ui: {}
 
     attributes:
       class: 'photo-thumbnail thumbnail'
@@ -159,108 +139,11 @@
     onRender: () ->
       @ui.image.attr 'src', "/photo/#{@model.get '_id'}.jpg"
 
-  class Views.LoadVideo extends Marionette.ItemView
-    template: '#view-load-video'
-
-    ui:
-      url: 'input'
-      preview: '.video-preview'
-
-    events:
-      'change input': 'paste'
-      'click button': 'add'
-
-    paste: () ->
-      $.getJSON '/api/video?url=' + @ui.url.val(), (video) =>
-        @model = new App.Models.Video video
-        @model.set 'url', @ui.url.val()
-        @ui.preview.html video.html
-
-    add: () ->
-      $.post '/api/video?url=' + @model.get('url'), @model.toJSON(), () =>
-        @ui.url.html ''
-        @ui.preview.html ''
-        @trigger 'add', @model
-
   class Views.PhotoList extends Marionette.CollectionView
     childView: Views.PhotoThumbnail
 
     @create: (ids) ->
       new Views.PhotoList collection: new App.Models.PhotoList _.map ids, (id) -> _id: id
-
-  class Views.LastMessage extends Marionette.ItemView
-    template: '#view-last-message'
-
-    behaviors:
-      Bindings: {}
-
-    bindings:
-      '.text': 'text'
-
-    ui:
-      domain: '.domain'
-      avatar: '.avatar'
-      time: '.time'
-      text: '.text'
-      unread: '.unread-count'
-      info: '.info'
-
-    events:
-      'click': 'open'
-
-    open: () ->
-      App.navigate 'dialog/' + @model.get('dialog_id')
-
-    onRender: () ->
-#      @ui.frame.html @model.get 'html'
-      source = @model.get('source')
-      @$el.attr('data-id', @model.get '_id')
-      @ui.info.attr('data-id', source._id)
-      @ui.avatar.attr 'src', '/api/user/avatar?id=' + source._id
-      unread = @model.get 'unread'
-      if unread > 0
-        @ui.unread.html unread
-        @$el.addClass 'unread'
-      if @model.get('dialog_id') == source._id
-        @ui.domain.html source.domain
-      else
-        @ui.domain.html @model.get('target').domain
-
-  class Views.DialogList extends Marionette.CollectionView
-    childView: Views.LastMessage
-
-  #    onRender: () ->
-  #      $('<div class="loading"></div>')
-  #      .appendTo(@$el);
-
-  class Views.UserItem extends Marionette.ItemView
-    template: '#view-user-item'
-    ui:
-      avatar: 'img'
-      name: '.name'
-      country: '.country'
-      city: '.city'
-
-    events:
-      'click': 'open'
-
-    behaviors:
-      Bindings: {}
-
-    message: () ->
-      App.navigate 'dialog/' + @model.get('_id')
-
-    onRender: () ->
-      @ui.name.text App.Models.User.getName @model
-      @ui.avatar.attr 'src', '/api/user/avatar?id=' + @model.get('_id')
-      @ui.country.text @model.get('country')
-      @ui.city.text @model.get('city')
-
-    open: () ->
-      App.navigate '/view/' + @model.get('domain')
-
-  class Views.UserList extends Marionette.CollectionView
-    childView: Views.UserItem
 
   class Views.VerticalMenu extends Marionette.ItemView
     template: '#view-vertical-menu'
@@ -269,9 +152,6 @@
     ui:
       messages: '[data-name=messages]'
       video: '[data-name=video]'
-
-  #    onRender: () ->
-  #      console.log @ui.video
 
   class Views.Alert extends Marionette.ItemView
     template: '#view-alert'

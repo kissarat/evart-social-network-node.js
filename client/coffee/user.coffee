@@ -109,6 +109,11 @@
       else
         @get('domain')
 
+  class User.List extends App.PageableCollection
+
+    model: (attributes, options) ->
+      new User.Model(attributes, options)
+
   # Forms
 
   class User.LoginForm extends Marionette.LayoutView
@@ -270,7 +275,7 @@
         @ui.origin.html(location.origin)
 
   class User.View extends Marionette.LayoutView
-    template: '#layout-profile'
+    template: '#layout-user'
 
     regions:
       messagesRegion: '.messages'
@@ -341,6 +346,35 @@
         App.navigate 'login'
       else
         @report 'code', 'Invalid code'
+
+  class User.Thumbnail extends Marionette.ItemView
+    template: '#thumbnail-user'
+    ui:
+      avatar: '.avatar'
+      name: '.name'
+      country: '.country'
+      city: '.city'
+
+    events:
+      'click': 'open'
+
+    behaviors:
+      Bindings: {}
+
+    message: () ->
+      App.navigate 'dialog/' + @model.get('_id')
+
+    onRender: () ->
+      @ui.name.text @model.getName()
+      @ui.avatar[0].setBackground('/api/user/avatar?id=' + @model.get('_id'))
+      @ui.country.text @model.get('country')
+      @ui.city.text @model.get('city')
+
+    open: () ->
+      App.navigate '/view/' + @model.get('domain')
+
+  class User.ListView extends Marionette.CollectionView
+    childView: User.Thumbnail
 
     new User.Router
       controller: new User.Controller
