@@ -9,7 +9,7 @@
       'edit/:id': 'edit'
       'group/create': 'create'
 
-    login: ->
+    login: () ->
       App.mainRegion.show new User.LoginForm model: new User.Login()
       $(document.body).addClass('login')
 

@@ -103,6 +103,12 @@ function _get(name) {
     return null
 }
 
+function properties(target, source) {
+    for(var key in source) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+    }
+}
+
 function preventDefault(e) {
     e.preventDefault();
 }
@@ -135,12 +141,12 @@ function logPromise(p) {
 var RootLayout = Marionette.View.extend({
     template: '#view-region',
     regions: {
-        leftRegion: '#left',
-        addLeftRegion: '#root > .add.left > .region',
-        mainRegion: '#main',
-        addRightRegion: '#root > .add.right > .region',
-        rightRegion: '#right',
-        alertRegion: '#alert'
+        left: '#left',
+        addLeft: '#root > .add.left > .region',
+        main: '#main',
+        addRight: '#root > .add.right > .region',
+        right: '#right',
+        alert: '#alert'
         // modalRegion: App.ModalRegion
     }
 });
@@ -196,40 +202,6 @@ var Application = Marionette.Application.extend({
         this.channels = {};
         this.showView(new RootLayout());
     },
-
-    get route() {
-        return location.pathname.split('/').slice(1);
-    },
-
-    get config() {
-        if (!this._config && this.agent && this.agent.config) {
-            var config = this.agent.config;
-            config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
-            var stun = config.peer.iceServers[0].urls.split(' ').map(function (address) {
-                return 'stun:' + address;
-            });
-            config.peer.iceServers[0].urls = stun.concat(this.defaultConfig.peer.iceServers[0].urls);
-            this._config = config;
-        }
-        return this._config ? this._config : this.defaultConfig;
-    },
-
-    get stunServers() {
-        return [] || this.config.peer.iceServers[0].urls;
-    },
-
-    get language() {
-        return $.cookie('lang') || document.documentElement.getAttribute('lang');
-    },
-
-    set language(value) {
-        $.cookie('lang', value);
-    },
-
-    get user() {
-        return this.agent && this.agent.user ? this.agent.user : null;
-    },
-
 
     debug: {
         trace: function () {
@@ -306,38 +278,22 @@ var Application = Marionette.Application.extend({
     },
 
     boot: function (xhr) {
-        var Controller, controller, error1, ex, name, ref, route;
-        App.controllers = {};
-        if (config.trace.history) {
-            statistics.history = {};
-        }
-        for (name in App.Controllers) {
-            Controller = App.Controllers[name];
-            if (_is(Controller, Marionette.Controller)) {
-                controller = new Controller();
-                new App.Router({
-                    controller: controller,
-                    appRoutes: controller.routes
-                });
-                App.controllers[name] = controller;
-            }
-        }
         if (code.UNAUTHORIZED !== xhr.status) {
             try {
                 App.agent = JSON.parse(xhr.responseText);
                 App.trigger('login');
-            } catch (error1) {
-                ex = error1;
+            } catch (ex) {
                 console.warn('User is not authorized');
             }
         }
-        route = location.pathname.split('/');
+
         Backbone.history.start({
             pushState: true,
             root: '/'
         });
         if (!App.user) {
-            if ((ref = !route[1]) === 'login' || ref === 'signup') {
+            var first = App.route[0];
+            if ('login' == first || 'signup' == first) {
                 return App.login();
             }
         } else {
@@ -349,6 +305,74 @@ var Application = Marionette.Application.extend({
         var module = {};
         this[name] = module;
         define(module, this);
+    },
+
+    onStart: function() {
+        var self = this;
+        $.sendJSON('POST', '/api/agent', statistics, function(xhr) {
+            var language;
+            $('#boot-loading').hide();
+            $('#root').show();
+            if (xhr.status <= code.UNAUTHORIZED) {
+                language = App.language;
+                if (language && 'en' !== language) {
+                    document.documentElement.setAttribute('lang', language);
+                    $.getJSON("/languages/" + language + ".json", function(_dict) {
+                        window.dictionary = _dict;
+                        window.T = function(name) {
+                            return this.dictionary[name] || name;
+                        };
+                        self.boot(xhr);
+                    });
+                } else {
+                    self.boot(xhr);
+                }
+            } else {
+                self.Views.show('Error', {
+                    status: 'Server Error',
+                    text: 'Service Temporarily Unavailable'
+                });
+            }
+        });
+    }
+});
+
+properties(Application.prototype, {
+    get route() {
+        return location.pathname.split('/').slice(1);
+    },
+
+    get config() {
+        if (!this._config && this.agent && this.agent.config) {
+            var config = this.agent.config;
+            config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
+            var stun = config.peer.iceServers[0].urls.split(' ').map(function (address) {
+                return 'stun:' + address;
+            });
+            config.peer.iceServers[0].urls = stun.concat(this.defaultConfig.peer.iceServers[0].urls);
+            this._config = config;
+        }
+        return this._config ? this._config : this.defaultConfig;
+    },
+
+    get stunServers() {
+        return [] || this.config.peer.iceServers[0].urls;
+    },
+
+    get language() {
+        return $.cookie('lang') || document.documentElement.getAttribute('lang');
+    },
+
+    set language(value) {
+        $.cookie('lang', value);
+    },
+
+    get user() {
+        return this.agent && this.agent.user ? this.agent.user : null;
+    },
+
+    get mainRegion() {
+        return this.getView().getRegion('mainRegion');
     }
 });
 
