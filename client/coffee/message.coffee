@@ -1,15 +1,15 @@
 App.module 'Message', (Message, App) ->
-  class Message.Controller extends Marionette.Controller
+  class Message.Controller
     wall: (id) ->
       wall = Message.ListView.wall(id)
       wall.$el.addClass('scroll')
       App.mainRegion.show wall
 
-  class Message.Router extends App.Router
+  class Message.Router extends Marionette.AppRouter
     appRoutes:
       'wall/:id': 'wall'
 
-  class Message.Model extends App.Model
+  class Message.Model extends Backbone.Model
     nested:
       source: App.User.Model
       target: App.User.Model

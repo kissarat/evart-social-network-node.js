@@ -18,7 +18,7 @@
     "bootstrap": "*",
     "underscore": "*",
     "backbone": "*",
-    "marionette": "*",
+    "marionette": "^3",
     "jquery-cookie": "*",
     "backbone.stickit": "^0.9.2",
     "moment": "^2.12.0",

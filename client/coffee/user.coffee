@@ -1,5 +1,14 @@
 @App.module 'User', (User, App) ->
-  class User.Controller extends Marionette.Controller
+  class User.Router extends Marionette.AppRouter
+    routes:
+      'login': 'login'
+      'logout': 'logout'
+      'signup/:step': 'signup'
+      'profile': 'view'
+      'view/:id': 'view'
+      'edit/:id': 'edit'
+      'group/create': 'create'
+
     login: ->
       App.mainRegion.show new User.LoginForm model: new User.Login()
       $(document.body).addClass('login')
@@ -33,16 +42,6 @@
       model = new User.Model type: App.route[0]
       form = new User.EditForm model: model
       App.mainRegion.show form
-
-  class User.Router extends Marionette.AppRouter
-    appRoutes:
-      'login': 'login'
-      'logout': 'logout'
-      'signup/:step': 'signup'
-      'profile': 'view'
-      'view/:id': 'view'
-      'edit/:id': 'edit'
-      'group/create': 'create'
 
   # Models
 
@@ -82,7 +81,7 @@
       surname:
         required: true
 
-  class User.Model extends App.Model
+  class User.Model extends Backbone.Model
     urlRoot: '/api/user'
 
     validation:
@@ -217,7 +216,7 @@
       step = _.last(step)
       @$el.attr('data-step', step)
 
-  class App.User.EditForm extends Marionette.ItemView
+  class User.EditForm extends Marionette.ItemView
     template: '#form-edit'
     tagName: 'form'
 
@@ -377,4 +376,4 @@
     childView: User.Thumbnail
 
     new User.Router
-      controller: new User.Controller
+      controller: {}

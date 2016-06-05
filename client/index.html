@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <title>Evart Social Network</title>
     <meta charset="UTF-8">
@@ -57,53 +57,49 @@
     })()
 </script>
 
-<div id="corner-panel">
-    <div class="domain"></div>
-    <select id="select-language" title="Language">
-        <option value="en">English</option>
-        <option value="ru">Русский</option>
-    </select>
-</div>
+<div id="root-region"></div>
 
-<div id="root" style="display: none">
-    <div id="left">
-        <div class="panel">
-            <div class="controls">
-                <div class="menu fa fa-caret-left">
-                    <div class="menu region"></div>
+<script id="view-region" type="text/template">
+    <div id="root" style="display: none">
+        <div id="left">
+            <div class="panel">
+                <div class="controls">
+                    <div class="menu fa fa-caret-left">
+                        <div class="menu region"></div>
+                    </div>
+                    <div class="close fa fa-times"></div>
                 </div>
-                <div class="close fa fa-times"></div>
-            </div>
-            <div class="content">
+                <div class="content">
+                </div>
             </div>
         </div>
+        <div class="add left">
+            <div class="region"></div>
+            <div class="plus">+</div>
+        </div>
+        <div id="main"></div>
+        <div class="add right">
+            <div class="region"></div>
+            <div class="plus">+</div>
+        </div>
+        <div id="right"></div>
     </div>
-    <div class="add left">
-        <div class="region"></div>
-        <div class="plus">+</div>
-    </div>
-    <div id="main"></div>
-    <div class="add right">
-        <div class="region"></div>
-        <div class="plus">+</div>
-    </div>
-    <div id="right"></div>
-</div>
 
-<footer class="front-footer">
-    <div class="images">
-        <div class="left">
-            <div class="copyright">
-                <div>&copy; 2015-<span class="year">2016</span> Evart Systems incorporated</div>
-                <div>All rights reserved</div>
-                <div>Part of <span class="company">Evart</span> corporation</div>
+    <footer class="front-footer">
+        <div class="images">
+            <div class="left">
+                <div class="copyright">
+                    <div>&copy; 2015-<span class="year">2016</span> Evart Systems incorporated</div>
+                    <div>All rights reserved</div>
+                    <div>Part of <span class="company">Evart</span> corporation</div>
+                </div>
+            </div>
+            <div class="right">
+                <img src="/images/front-bg-footer-right.png">
             </div>
         </div>
-        <div class="right">
-            <img src="/images/front-bg-footer-right.png">
-        </div>
-    </div>
-</footer>
+    </footer>
+</script>
 
 <script type="text/template" id="view-vertical-menu">
     <li data-name="messages">Messages</li>
@@ -111,27 +107,27 @@
     <li data-name="audio">Audio</li>
     <li data-name="friends">Friends</li>
     <li data-name="groups">Groups</li>
-</script>
 
-<div id="dock-container" style="display: none">
-    <div id="dock">
-        <ul>
-            <li><a href="/feed" title="News"></a></li>
-            <li><a href="/profile" title="Profile"></a></li>
-            <li><a href="/feedback" title="Feedback" class="disabled"></a></li>
-            <li><a href="/dialogs" title="Messages"></a></li>
-            <li><a href="/phone" title="Call" class="disabled"></a></li>
-            <li><a href="/friends" title="Friends" class="disabled"></a></li>
-            <li><a href="/groups" title="Groups" class="disabled"></a></li>
-            <li><a href="/photos" title="Photos"></a></li>
-            <li><a href="/videos" title="Movies" data-open="left"></a></li>
-            <li><a href="/conference" title="Video" class="disabled"></a></li>
-            <li><a href="/audio" title="Music" data-open="right"></a></li>
-            <li><a href="/settings" title="Settings"></a></li>
-        </ul>
-        <div class="base"></div>
+    <div id="dock-container" style="display: none">
+        <div id="dock">
+            <ul>
+                <li><a href="/feed" title="News"></a></li>
+                <li><a href="/profile" title="Profile"></a></li>
+                <li><a href="/feedback" title="Feedback" class="disabled"></a></li>
+                <li><a href="/dialogs" title="Messages"></a></li>
+                <li><a href="/phone" title="Call" class="disabled"></a></li>
+                <li><a href="/friends" title="Friends" class="disabled"></a></li>
+                <li><a href="/groups" title="Groups" class="disabled"></a></li>
+                <li><a href="/photos" title="Photos"></a></li>
+                <li><a href="/videos" title="Movies" data-open="left"></a></li>
+                <li><a href="/conference" title="Video" class="disabled"></a></li>
+                <li><a href="/audio" title="Music" data-open="right"></a></li>
+                <li><a href="/settings" title="Settings"></a></li>
+            </ul>
+            <div class="base"></div>
+        </div>
     </div>
-</div>
+</script>
 
 <div class="include" data-src="/templates/user.html"></div>
 <div class="include" data-src="/templates/other.html"></div>
@@ -158,15 +154,14 @@
     <script src="/lib/marionette/lib/backbone.marionette.js"></script>
     <script src="/lib/moment/moment.js"></script>
     <script src="/js/polyfills.js"></script>
-    <script src="/coffee/app.js"></script>
-    <script src="/js/build-ui.js"></script>
+    <script src="/js/main.js"></script>
     <script src="/coffee/models.js"></script>
     <script src="/coffee/views.js"></script>
     <script src="/coffee/layouts.js"></script>
     <script src="/coffee/controllers.js"></script>
     <script src="/coffee/user.js"></script>
     <script src="/coffee/video.js"></script>
-    <script src="/coffee/file.js"></script>
+    <!--<script src="/coffee/file.js"></script>-->
     <script src="/coffee/message.js"></script>
     <script src="/coffee/socket.js"></script>
     <script src="/js/peer.js"></script>

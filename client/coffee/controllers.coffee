@@ -1,4 +1,4 @@
-@App.module "Controllers", (Controllers, App) ->
+App.module "Controllers", (Controllers, App) ->
   class Controllers.User extends Marionette.Controller
     users: () ->
       App.selectUser null, App.mainRegion

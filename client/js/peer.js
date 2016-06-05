@@ -1,6 +1,6 @@
 "use strict";
 App.module('Peer', function (Peer, App) {
-    Peer.Controller = Marionette.Controller.extend({
+    Peer.Controller = {
         phone: function (id) {
             var peer;
             peer = App.Peer.find(id);
@@ -16,47 +16,12 @@ App.module('Peer', function (Peer, App) {
             } else {
                 App.navigate('/unsupported/peer');
             }
-        },
-
-        presentation: function () {
-            // PDFJS.getDocument('/images/ipad_user_guide.pdf').then(function (pdf) {
-            //     pdf.getPage(1).then(function (page) {
-            //         var pdfView = new PDFJS.PDFPageView({
-            //             container: document.querySelector('#main'),
-            //             id: 1,
-            //             scale: 1,
-            //             defaultViewport: page.getViewport(1),
-            //             textLayerFactory: new PDFJS.DefaultTextLayerFactory(),
-            //             annotationLayerFactory: new PDFJS.DefaultAnnotationLayerFactory()
-            //         });
-            //         pdfView.setPdfPage(page);
-            //         return pdfView.draw();
-            //     var presentationView = new Peer.Presentation({
-            //         model: new Backbone.Model()
-            //     });
-            //     App.mainRegion.show(presentationView);
-            //     var viewport = page.getViewport(2);
-            //     console.log(viewport);
-            //     var canvas = presentationView.ui.canvas[0];
-            //     var context = canvas.getContext('2d');
-            //     page.render({
-            //         canvasContext: context,
-            //         viewport: viewport
-            //     });
-            // });
-            // });
-
-            var presentationView = new Peer.Presentation({
-                model: new Backbone.Model()
-            });
-            App.mainRegion.show(presentationView);
         }
-    });
+    };
 
     Peer.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'phone/:id': 'phone',
-            'presentation': 'presentation'
+            'phone/:id': 'phone'
         }
     });
 
@@ -459,6 +424,6 @@ App.module('Peer', function (Peer, App) {
     });
 
     new Peer.Router({
-        controller: new Peer.Controller()
+        controller: Peer.Controller
     });
 });

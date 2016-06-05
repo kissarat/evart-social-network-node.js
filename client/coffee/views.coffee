@@ -1,4 +1,4 @@
-@App.module 'Views', (Views) ->
+App.module 'Views', (Views) ->
   class App.Behaviors.Bindings extends Marionette.Behavior
     onRender: ->
      @view.$('a').click (e) ->
