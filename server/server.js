@@ -582,26 +582,44 @@ Context.prototype = {
     },
 
     get skip() {
-        var skip = null;
+        var value = 0;
         if (this.has('skip')) {
-            skip = this.get('skip');
+            value = this.get('skip');
+            if (value < 0) {
+                value = 0;
+            }
         }
-        // else if (this.has('page')) {
-        //     skip = (this.get('page') - 1) * this.limit;
-        // }
-        else {
-            skip = 0;
-        }
-        return skip;
+        return value;
     },
 
     get limit() {
-        return this.has('limit') ? this.get('limit') : 10;
+        var value = 96;
+        if (this.has('limit')) {
+            value = this.get('limit');
+            if (value > 100 || value <= 0) {
+                value = 96;
+            }
+        }
+        return value;
     },
 
     get order() {
-        if (this.has('sort') && this.has('order')) {
-            return [this.get('sort'), 'asc' == this.get('order') ? 'ascedenting' : 'descdenting'];
+        if (this.has('sort')) {
+            var sort = this.get('sort');
+            if (this.has('order')) {
+                return [sort, 'a' == this.get('order')[0] ? 'ascedenting' : 'descdenting'];
+            }
+            else {
+                var order;
+                if ('-' == sort[0]) {
+                    sort = sort.slice(1);
+                    order = 'descdenting'
+                }
+                else {
+                    order = 'ascedenting';
+                }
+                return [sort, order];
+            }
         }
         return false;
     },
@@ -785,7 +803,7 @@ function exec($, action) {
                         data = data.toString('utf8');
                         $.body = JSON.parse(data);
                         $.params = $.merge($.params, $.body);
-                        for(var key in $.params) {
+                        for (var key in $.params) {
                             var value = $.params[key];
                             if (value.replace) {
                                 $.params[key] = value

@@ -188,8 +188,10 @@ module.exports =
       return User.findOne($.paramsObject params)
       .select(fields)
     else if $.has 'ids'
-      return User.find(_id:
-        $in: $.ids('ids'))
+      return User.find(
+        _id:
+          $in: $.ids('ids')
+      )
       .select(fields)
     else
       if $.has('domain') and $.has('list')
@@ -233,7 +235,8 @@ module.exports =
         charset: 'numeric'
     User.findOne {phone: $.agent.phone}, $.wrap (user) ->
       if user
-        $.send error: message: 'The phone number already registered'
+        $.send error:
+          message: 'The phone number already registered'
       else
         save = () ->
           $.agent.save($.success)
@@ -352,6 +355,8 @@ search = ($, ids) ->
   if ids
     ands._id =
       $in: ids.map (id) -> ObjectID(id)
+  if $.has('type')
+    ands.type = $.get('type')
   r = User.find ands
   r.select fields
 #  r.exec $.wrap (users) ->

@@ -518,7 +518,7 @@ App.PageableCollection = Backbone.PageableCollection.extend({
         sortKey: '_id',
         totalRecords: 2000,
         currentPage: 1,
-        limit: 28
+        limit: 48
     },
 
     queryParams: {
@@ -547,19 +547,16 @@ App.PageableCollection = Backbone.PageableCollection.extend({
     },
 
     delaySearch: function (cb) {
-        this.start = Date.now();
         var self = this;
 
         function search() {
-            if (Date.now() - self.start >= App.config.search.delay) {
-                self.fullCollection.reset();
-                self.getFirstPage({
-                    success: cb
-                });
-            }
+            self.fullCollection.reset();
+            self.getFirstPage({
+                success: cb
+            });
         }
 
-        setTimeout(search, App.config.search.delay);
+        _.debounce(search, App.config.search.delay);
     },
 
     getPage: function (number) {
