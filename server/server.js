@@ -609,7 +609,7 @@ Context.prototype = {
     get search() {
         if (this.has('q')) {
             var q = this.get('q');
-            q = q.trim().replace(/[\+\s]+/g, '.*').toLowerCase();
+            q = q ? q.toString().trim().replace(/[\+\s]+/g, '.*').toLowerCase() : '';
             return q ? new RegExp(`.*${q}.*`, 'i') : false;
         }
         return false;

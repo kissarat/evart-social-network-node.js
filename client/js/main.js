@@ -499,15 +499,15 @@ App.PageableCollection = Backbone.PageableCollection.extend({
 
     initialize: function () {
         this.queryModel = new Backbone.Model(this.queryModelInitial);
-        var _this = this;
+        var self = this;
         return Object.keys(this.queryModelInitial).forEach(function (k) {
-            return _this.queryParams[k] = function () {
-                var value;
-                value = _this.queryModel.get(k);
-                if (value) {
-                    return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-                } else {
-                    return console.error(k + ' is undefied');
+            return self.queryParams[k] = function () {
+                var value = self.queryModel.get(k);
+                if ('string' == typeof value) {
+                    return value ? value.trim().replace(/\s+/g, ' ').toLocaleLowerCase() : '';
+                }
+                else {
+                    console.error(k + ' is undefined');
                 }
             };
         });
@@ -516,7 +516,9 @@ App.PageableCollection = Backbone.PageableCollection.extend({
     state: {
         order: -1,
         sortKey: '_id',
-        totalRecords: 2000
+        totalRecords: 2000,
+        currentPage: 1,
+        limit: 28
     },
 
     queryParams: {
@@ -546,12 +548,12 @@ App.PageableCollection = Backbone.PageableCollection.extend({
 
     delaySearch: function (cb) {
         this.start = Date.now();
-        var _this = this;
+        var self = this;
 
         function search() {
-            if (Date.now() - _this.start >= App.config.search.delay) {
-                _this.fullCollection.reset();
-                _this.getFirstPage({
+            if (Date.now() - self.start >= App.config.search.delay) {
+                self.fullCollection.reset();
+                self.getFirstPage({
                     success: cb
                 });
             }

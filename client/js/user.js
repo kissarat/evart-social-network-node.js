@@ -1,3 +1,5 @@
+"use strict";
+
 App.module('User', function (User, App) {
     User.Router = Marionette.AppRouter.extend({
         appRoutes: {
@@ -7,7 +9,8 @@ App.module('User', function (User, App) {
             'profile': 'view',
             'view/:id': 'view',
             'edit/:id': 'edit',
-            'group/create': 'create'
+            'group/create': 'create',
+            'users': 'index'
         }
     });
 
@@ -57,8 +60,6 @@ App.module('User', function (User, App) {
     });
 
     User.Model = Backbone.Model.extend({
-        urlRoot: '/api/user',
-
         validation: {
             domain: {
                 pattern: /^[\w\._\-]{4,23}$/,
@@ -94,7 +95,14 @@ App.module('User', function (User, App) {
         }
     });
 
-    User.List = Backbone.Collection.extend({
+    User.List = App.PageableCollection.extend({
+        url: '/api-cache/user',
+
+        queryModelInitial: {
+            type: 'user',
+            q: ''
+        },
+
         model: function (attributes, options) {
             return new User.Model(attributes, options);
         }
@@ -309,9 +317,9 @@ App.module('User', function (User, App) {
                         if (data.success) {
                             self.ui.domain.val(data.value);
                             if (data.exists) {
-                                return self.$el.report('domain', T('Address already in use'), 'error');
+                                self.$el.report('domain', T('Address already in use'), 'error');
                             } else {
-                                return self.$el.report('domain', '', false);
+                                self.$el.report('domain', '', false);
                             }
                         }
                     });
@@ -423,6 +431,7 @@ App.module('User', function (User, App) {
 
     User.Thumbnail = Marionette.View.extend({
         template: '#thumbnail-user',
+        tagName: 'a',
 
         ui: {
             avatar: '.avatar',
@@ -439,24 +448,76 @@ App.module('User', function (User, App) {
             Bindings: {}
         },
 
+        open: function (e) {
+            e.preventDefault();
+            App.navigate('/view/' + this.model.get('domain'));
+        },
+
         message: function () {
             App.navigate('dialog/' + this.model.get('_id'));
         },
 
         onRender: function () {
+            this.el.href = '/view/' + this.model.get('domain');
             this.ui.name.text(this.model.getName());
             this.ui.avatar[0].setBackground('/api/user/avatar?id=' + this.model.get('_id'));
             this.ui.country.text(this.model.get('country'));
             this.ui.city.text(this.model.get('city'));
-        },
-
-        open: function () {
-            App.navigate('/view/' + this.model.get('domain'));
         }
     });
 
-    User.ListView = Marionette.View.extend({
-        childView: User.Thumbnail
+    User.ListView = Marionette.CollectionView.extend({
+        childView: User.Thumbnail,
+
+        behaviors: {
+            Pageable: {}
+        }
+    });
+
+    User.SearchView = Marionette.View.extend({
+        template: '#layout-user-search',
+
+        behaviors: {
+            Bindings: {}
+        },
+
+        bindings: {
+            '[type=search]': 'q'
+        },
+
+        attributes: {
+            'class': 'scroll'
+        },
+
+        ui: {
+            search: '[type=search]',
+            list: '.list'
+        },
+
+        regions: {
+            list: '.list'
+        },
+
+        modelEvents: {
+            'change q': 'search'
+        },
+
+        onRender: function () {
+
+        },
+
+        getCollection: function () {
+            return this.getRegion('list').currentView.collection.pageableCollection;
+        },
+
+        search: function () {
+            this.getCollection().delaySearch();
+            // var self = this;
+            // this.ui.list.busy(true);
+            // this.getCollection().delaySearch(function () {
+            //     self.ui.list.busy(false);
+            // })
+        }
     });
 
     return new User.Router({
@@ -517,6 +578,16 @@ App.module('User', function (User, App) {
                     model: model
                 });
                 return App.mainRegion.show(form);
+            },
+
+            index: function () {
+                var pageable = new User.List();
+                pageable.queryModel.set('type', 'user');
+                var listView = new User.ListView({collection: pageable.fullCollection});
+                var layout = new User.SearchView({model: pageable.queryModel});
+                App.getView().getRegion('main').show(layout);
+                layout.getRegion('list').show(listView);
+                pageable.getFirstPage();
             }
         }
     });

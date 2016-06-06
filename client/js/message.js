@@ -267,8 +267,7 @@ App.module('Message', function (Message, App) {
     return new Message.Router({
         controller: {
             wall: function (id) {
-                var wall;
-                wall = Message.ListView.wall(id);
+                var wall = Message.ListView.wall(id);
                 wall.$el.addClass('scroll');
                 return App.mainRegion.show(wall);
             }

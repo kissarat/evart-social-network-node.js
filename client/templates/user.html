@@ -156,7 +156,10 @@
 </script>
 
 <script type="text/template" id="form-edit">
-    <h1><span class="fa fa-users"></span><span class="title"></span></h1>
+    <h1>
+        <span class="fa fa-users"></span>
+        <span class="title"></span>
+    </h1>
     <div class="form-group admin admin-field">
         <select class="form-control" name="type">
             <option value="user">User</option>
@@ -211,13 +214,20 @@
 
 <script type="text/template" id="thumbnail-user">
     <div>
-        <div class="avatar"></div>
-    </div>
-    <div>
-        <div class="name"></div>
         <div>
-            <span class="country"></span>
-            <span class="city"></span>
+            <div class="avatar"></div>
+        </div>
+        <div>
+            <div class="name"></div>
+            <div>
+                <span class="country"></span>
+                <span class="city"></span>
+            </div>
         </div>
     </div>
+</script>
+
+<script type="text/template" id="layout-user-search">
+    <input type="search"/>
+    <div class="list"></div>
 </script>

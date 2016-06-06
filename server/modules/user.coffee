@@ -335,13 +335,12 @@ admin_fields = ['domain', 'type'];
 
 search = ($, ids) ->
   ORs = []
-  if $.has 'search'
-    search = $.param 'search'
-    search = search.replace /\s+/g, '.*'
+  if $.has 'q'
+    q = $.search;
     for name in ['domain', 'surname']
       d = {}
       d[name] =
-        $regex: search
+        $regex: q
       ORs.push d
   ands = {}
   if ORs.length > 0
@@ -355,5 +354,5 @@ search = ($, ids) ->
       $in: ids.map (id) -> ObjectID(id)
   r = User.find ands
   r.select fields
-  r.exec $.wrap (users) ->
-    $.send users
+#  r.exec $.wrap (users) ->
+#    $.send users
