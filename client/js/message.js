@@ -6,6 +6,17 @@ App.module('Message', function (Message, App) {
     });
 
     Message.Model = Backbone.Model.extend({
+        initialize: function () {
+            var value = this.get('source');
+            if ('object' == typeof value) {
+                this.set('source', new App.User.Model(value));
+            }
+            value = this.get('target');
+            if ('object' == typeof value) {
+                this.set('target', new App.User.Model(value));
+            }
+        },
+
         isPost: function () {
             return !!this.get('owner');
         }
@@ -18,7 +29,7 @@ App.module('Message', function (Message, App) {
             owner_id: null
         },
 
-        model: function (models, options) {
+        model: function (attrs, options) {
             return new Message.Model(attrs, options);
         }
     });
@@ -207,7 +218,6 @@ App.module('Message', function (Message, App) {
 
         onRender: function () {
             var loading;
-            loading = null;
             this.collection.pageableCollection.on('start', (function (_this) {
                 return function () {
                     if (!loading) {
@@ -218,14 +228,13 @@ App.module('Message', function (Message, App) {
             return this.collection.pageableCollection.on('finish', function () {
                 if (loading) {
                     loading.remove();
-                    return loading = null;
+                    loading = null;
                 }
             });
         }
     }, {
         wall: function (id) {
-            var pageable;
-            pageable = new Message.List();
+            var pageable = new Message.List();
             pageable.queryModel.set('type', 'wall');
             pageable.queryModel.set('owner_id', id);
             pageable.getFirstPage();

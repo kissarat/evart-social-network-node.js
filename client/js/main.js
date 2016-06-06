@@ -104,7 +104,7 @@ function _get(name) {
 }
 
 function properties(target, source) {
-    for(var key in source) {
+    for (var key in source) {
         Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
     }
 }
@@ -151,10 +151,23 @@ var RootLayout = Marionette.View.extend({
     }
 });
 
+var morozovProxyHandler = {
+    get: function (target, name) {
+        return target[name];
+    },
+
+    set: function (target, name, value) {
+        console.log(name);
+        target[name] = value;
+    }
+};
+
 var Application = Marionette.Application.extend({
     region: '#root-region',
 
     initialize: function () {
+        this.DEV_MODE = true;
+
         this.defaultConfig = {
             search: {
                 delay: 250
@@ -200,7 +213,6 @@ var Application = Marionette.Application.extend({
         };
 
         this.channels = {};
-        this.showView(new RootLayout());
     },
 
     debug: {
@@ -304,12 +316,14 @@ var Application = Marionette.Application.extend({
     module: function (name, define) {
         var module = {};
         this[name] = module;
+        // console.log('MODULE: ' + name);
+        // define(new Proxy(module, morozovProxyHandler), this);
         define(module, this);
     },
 
-    onStart: function() {
+    onStart: function () {
         var self = this;
-        $.sendJSON('POST', '/api/agent', statistics, function(xhr) {
+        $.sendJSON('POST', '/api/agent', statistics, function (xhr) {
             var language;
             $('#boot-loading').hide();
             $('#root').show();
@@ -317,9 +331,9 @@ var Application = Marionette.Application.extend({
                 language = App.language;
                 if (language && 'en' !== language) {
                     document.documentElement.setAttribute('lang', language);
-                    $.getJSON("/languages/" + language + ".json", function(_dict) {
+                    $.getJSON("/languages/" + language + ".json", function (_dict) {
                         window.dictionary = _dict;
-                        window.T = function(name) {
+                        window.T = function (name) {
                             return this.dictionary[name] || name;
                         };
                         self.boot(xhr);
@@ -372,7 +386,7 @@ properties(Application.prototype, {
     },
 
     get mainRegion() {
-        return this.getView().getRegion('mainRegion');
+        return this.getView().getRegion('main');
     }
 });
 
@@ -472,16 +486,7 @@ _.extend(Backbone.Validation.callbacks, {
 var App = new Application();
 window.App = App;
 window.Application = Application;
-Marionette.ItemView = Marionette.View;
-Marionette.LayoutView = Marionette.View;
-Marionette.Controller = Function();
-Marionette.Renderer._render = Marionette.Renderer.render;
-Marionette.Renderer.render = function (template, data, self) {
-    if (!template) {
-        console.error(self, data);
-    }
-    this._render(template, data, self);
-};
+App.showView(new RootLayout());
 
 App.Behaviors = {};
 
@@ -556,16 +561,15 @@ App.PageableCollection = Backbone.PageableCollection.extend({
     },
 
     getPage: function (number) {
+        var self = this;
         if (!this.loading) {
             this.trigger('start');
             this.loading = true;
-            return PageableCollection.__super__.getPage.call(this, number, {
-                complete: (function (_this) {
-                    return function () {
-                        _this.trigger('finish');
-                        return _this.loading = false;
-                    };
-                })(this)
+            Backbone.PageableCollection.prototype.getPage.call(this, number, {
+                complete: (function () {
+                    self.trigger('finish');
+                    self.loading = false;
+                })
             });
         }
     }

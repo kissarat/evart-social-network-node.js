@@ -1,5 +1,5 @@
 App.module('User', function (User, App) {
-    User.Router = ({
+    User.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'login': 'login',
             'logout': 'logout',
@@ -10,7 +10,8 @@ App.module('User', function (User, App) {
             'group/create': 'create'
         }
     });
-    User.Login = Martonette.View.extend({
+
+    User.Login = Backbone.Model.extend({
         url: '/api/user/login',
 
         validation: {
@@ -320,11 +321,11 @@ App.module('User', function (User, App) {
         }
     });
 
-    User.View = Marionette.View({
+    User.View = Marionette.View.extend({
         template: '#layout-user',
 
         regions: {
-            messagesRegion: '.messages'
+            'message-list': '.message-list'
         },
 
         behaviors: {
@@ -340,9 +341,9 @@ App.module('User', function (User, App) {
         },
 
         events: {
-            'dragenter .big-avatar': preventDefault,
-            'dragover .big-avatar': preventDefault,
-            'drop .big-avatar': 'dropAvatar',
+            // 'dragenter .big-avatar': preventDefault,
+            // 'dragover .big-avatar': preventDefault,
+            // 'drop .big-avatar': 'dropAvatar',
             'click .edit': function () {
                 return App.navigate('/edit/' + this.model.get('_id'));
             },
@@ -389,39 +390,36 @@ App.module('User', function (User, App) {
         },
 
         onRender: function () {
-            var back;
             document.title = this.model.getName();
-            back = this.ui.background[0];
+            var back = this.ui.background[0];
             back.setBackground(this.model.get('background'));
-            this.ui.header.find('.photo').each(function (i, p) {
-                var r;
-                r = Math.round(Math.random() * 35);
-                r = ('000000000000000000000000' + r).slice(-24);
-                p.setAttribute('draggable', 'true');
-                p.style.backgroundImage = 'url("/photo/' + r + '.jpg")';
-                App.draggable(p);
-                return p.addEventListener('dragleave', function (e) {
-                    return $.sendJSON('POST', '/api/user/change?field=background&value=' + r, {}, function () {
-                        return back.setBackground(r);
-                    });
-                });
-            });
+            // this.ui.header.find('.photo').each(function (i, p) {
+            //     var r = Math.round(Math.random() * 35);
+            //     r = ('000000000000000000000000' + r).slice(-24);
+            //     p.setAttribute('draggable', 'true');
+            //     p.style.backgroundImage = 'url("/photo/' + r + '.jpg")';
+            //     App.draggable(p);
+            //     return p.addEventListener('dragleave', function (e) {
+            //         return $.sendJSON('POST', '/api/user/change?field=background&value=' + r, {}, function () {
+            //             return back.setBackground(r);
+            //         });
+            //     });
+            // });
             return this.setAvatar();
         },
 
         setAvatar: function () {
-            return this.ui.avatar.css('background-image', 'url("' + (App.avatarUrl(this.model.id)) + '")');
+            this.ui.avatar.css('background-image', 'url("' + (App.avatarUrl(this.model.id)) + '")');
         },
 
         success: function (data) {
             if (data.verified) {
-                return App.navigate('login');
+                App.navigate('login');
             } else {
-                return this.report('code', 'Invalid code');
+                this.report('code', 'Invalid code');
             }
         }
     });
-
 
     User.Thumbnail = Marionette.View.extend({
         template: '#thumbnail-user',
@@ -442,18 +440,18 @@ App.module('User', function (User, App) {
         },
 
         message: function () {
-            return App.navigate('dialog/' + this.model.get('_id'));
+            App.navigate('dialog/' + this.model.get('_id'));
         },
 
         onRender: function () {
             this.ui.name.text(this.model.getName());
             this.ui.avatar[0].setBackground('/api/user/avatar?id=' + this.model.get('_id'));
             this.ui.country.text(this.model.get('country'));
-            return this.ui.city.text(this.model.get('city'));
+            this.ui.city.text(this.model.get('city'));
         },
 
         open: function () {
-            return App.navigate('/view/' + this.model.get('domain'));
+            App.navigate('/view/' + this.model.get('domain'));
         }
     });
 
@@ -490,15 +488,12 @@ App.module('User', function (User, App) {
                     domain = App.user.domain;
                 }
                 $.get('/api/user?domain=' + domain, function (user) {
-                    var profile;
-                    user = new App.User.Model(user);
-                    profile = new App.User.View({
-                        model: user
-                    });
-                    profile.$el.addClass('scroll');
-                    profile.$el.addClass(user.get('type'));
+                    user = new User.Model(user);
+                    var profile = new User.View({model: user});
+                    profile.el.classList.add('scroll');
+                    profile.el.classList.add(user.get('type'));
                     App.mainRegion.show(profile);
-                    return profile.messagesRegion.show(App.Message.ListView.wall(user.get('_id')));
+                    profile.showChildView('message-list', App.Message.ListView.wall(user.get('_id')));
                 });
             },
 

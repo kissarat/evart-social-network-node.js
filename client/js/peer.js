@@ -1,24 +1,5 @@
 "use strict";
 App.module('Peer', function (Peer, App) {
-    Peer.Controller = {
-        phone: function (id) {
-            var peer;
-            peer = App.Peer.find(id);
-            if (peer) {
-                App.modalRegion.show(new Peer.Conference({
-                    model: peer
-                }));
-                if (peer.get('offer')) {
-                    peer.answerCall(id);
-                } else {
-                    peer.offerCall(id);
-                }
-            } else {
-                App.navigate('/unsupported/peer');
-            }
-        }
-    };
-
     Peer.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'phone/:id': 'phone'
@@ -291,7 +272,7 @@ App.module('Peer', function (Peer, App) {
         });
     });
 
-    Peer.Conference = Marionette.ItemView.extend({
+    Peer.Conference = Marionette.View.extend({
         template: '#view-conference',
 
         attributes: {
@@ -356,7 +337,7 @@ App.module('Peer', function (Peer, App) {
         }
     });
 
-    Peer.IncomingCall = Marionette.ItemView.extend({
+    Peer.IncomingCall = Marionette.View.extend({
         template: '#view-incoming-call',
 
         behaviors: {
@@ -393,7 +374,7 @@ App.module('Peer', function (Peer, App) {
         }
     });
 
-    Peer.Presentation = Marionette.ItemView.extend({
+    Peer.Presentation = Marionette.View.extend({
         template: '#view-presentation',
         tagName: 'iframe',
 
@@ -424,6 +405,22 @@ App.module('Peer', function (Peer, App) {
     });
 
     new Peer.Router({
-        controller: Peer.Controller
+        controller: {
+            phone: function (id) {
+                var peer = App.Peer.find(id);
+                if (peer) {
+                    App.modalRegion.show(new Peer.Conference({
+                        model: peer
+                    }));
+                    if (peer.get('offer')) {
+                        peer.answerCall(id);
+                    } else {
+                        peer.offerCall(id);
+                    }
+                } else {
+                    App.navigate('/unsupported/peer');
+                }
+            }
+        }
     });
 });
