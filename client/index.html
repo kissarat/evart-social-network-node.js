@@ -17,10 +17,6 @@
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
     <script>
         var statistics = {start: Date.now()};
-
-        addEventListener('load', function () {
-            statistics.load = Date.now() - statistics.start;
-        });
     </script>
     <link rel="stylesheet" type="text/css" href="/lib/components-font-awesome/css/font-awesome.css">
     <link rel="stylesheet" type="text/css" href="/fonts.css"/>
@@ -47,7 +43,7 @@
                 })
                 && window.localStorage && style.removeProperty && 'dataset' in HTMLElement.prototype
                 && p.querySelector && p.getBoundingClientRect && Function.prototype.bind
-                && Object.create && Object.defineProperty && Object.keys;
+                && Object.create && Object.defineProperty && Object.keys && window.addEventListener;
         if (supported) {
             document.body.removeAttribute('style');
             document.body.setAttribute('class', 'front');
@@ -155,6 +151,7 @@
     <script src="/lib/moment/moment.js"></script>
     <script src="/js/polyfills.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/load.js"></script>
     <script src="/js/views.js"></script>
     <script src="/js/user.js"></script>
     <script src="/js/message.js"></script>

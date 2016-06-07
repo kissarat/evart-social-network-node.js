@@ -297,8 +297,9 @@ module.exports =
         $.invalid 'name'
       fields = {domain: 1}
       fields[name] = 1
-      User.findOne($.id, fields)
-      .populate(name, '_id domain')
+      id = if $.has('id') then $.id else $.user._id
+      User.findOne(id, fields)
+      .populate(name, $.select(['_id', 'domain'], user_fields))
 
     POST: ($) ->
       name = $.param 'name'
@@ -331,7 +332,7 @@ list_fields =
   follow: 'deny'
   deny: 'follow'
 
-user_fields = ["city", "country", "address", "phone",
+user_fields = ["name", "surname", "forename", "city", "country", "address", "phone",
   "password", "avatar", "name", "birthday", "languages", "relationship"];
 group_fields = ["domain", "name", "about", "avatar"];
 admin_fields = ['domain', 'type'];

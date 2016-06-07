@@ -448,6 +448,10 @@ App.module('User', function (User, App) {
             Bindings: {}
         },
 
+        regions: {
+            control: '.control-region'
+        },
+
         open: function (e) {
             e.preventDefault();
             App.navigate('/view/' + this.model.get('domain'));
@@ -463,6 +467,24 @@ App.module('User', function (User, App) {
             this.ui.avatar[0].setBackground('/api/user/avatar?id=' + this.model.get('_id'));
             this.ui.country.text(this.model.get('country'));
             this.ui.city.text(this.model.get('city'));
+            if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
+                var button = new App.Views.Button();
+                button.setText('Follow');
+                this.getControls().children.push(button);
+            }
+        },
+        
+        getControls: function () {
+            var region = this.getRegion('control');
+            if (!region.currentView) {
+                var collectionView = new App.Views.Collection();
+                region.show(collectionView);
+            }
+            return region.currentView;
+        },
+        
+        follow: function () {
+            console.log(arguments);
         }
     });
 

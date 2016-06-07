@@ -633,6 +633,22 @@ Context.prototype = {
         return false;
     },
 
+    select: function (array = [], allow) {
+        if (this.has('select')) {
+            var param = this.get('select').split('.').sort();
+            var allowed_fields = [];
+            if (allow) {
+                allow.forEach(function (field) {
+                    if (param.indexOf(field) >= 0) {
+                        allowed_fields.push(field);
+                    }
+                });
+            }
+            array = array.concat(allowed_fields);
+        }
+        return _.uniq(array).join(' ');
+    },
+
     model: function () {
         this.o.apply(this.o, arguments);
     }

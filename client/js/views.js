@@ -1,3 +1,5 @@
+"use strict";
+
 App.module('Views', function (Views, App) {
     App.Behaviors.Bindings = Marionette.Behavior.extend({
         onRender: function () {
@@ -173,4 +175,32 @@ App.module('Views', function (Views, App) {
     Views.AlertList = Marionette.View.extend({
         childView: Views.Alert
     });
+
+    Views.Button = Backbone.View.extend({
+        setText: function (value) {
+            this.el.innerHTML = T(value);
+        }
+    });
+
+    Views.Collection = Backbone.View.extend({
+        constructor: function (options) {
+            if (!options) {
+                options = {};
+            }
+            Backbone.View.call(this, options);
+            this.children = options.children || [];
+        },
+
+        render: function () {
+            this.el.innerHTML = '';
+            this.children.forEach(function (child) {
+                child.render();
+                this.appendChild(child.el);
+                console.log(child.el);
+            });
+            return this;
+        }
+    });
+    
+    Views.ControlList = Marionette.CollectionView.extend({});
 });
