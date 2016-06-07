@@ -110,8 +110,8 @@ function load2_registerAgent() {
                 load3_languageLoaded.call(self, xhr);
             }
         } else {
-            self.Views.show('Error', {
-                status: 'Server Error',
+            self.show(App.Views.Error, {
+                title: 'Server Error',
                 text: 'Service Temporarily Unavailable'
             });
         }

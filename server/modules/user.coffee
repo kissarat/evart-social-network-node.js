@@ -335,6 +335,8 @@ list_fields =
 
 user_fields = ["name", "surname", "forename", "city", "country", "address", "phone",
   "password", "avatar", "name", "birthday", "languages", "relationship"];
+schema.User.user_public_fields = ["name", "surname", "forename", "city", "country",
+  "address", "phone", "avatar", "name", "birthday", "languages", "relationship"];
 group_fields = ["domain", "name", "about", "avatar"];
 admin_fields = ['domain', 'type'];
 

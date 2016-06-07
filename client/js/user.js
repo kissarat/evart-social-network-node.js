@@ -10,7 +10,8 @@ App.module('User', function (User, App) {
             'view/:id': 'view',
             'edit/:id': 'edit',
             'group/create': 'create',
-            'users': 'index'
+            'users': 'index',
+            'request': 'request'
         }
     });
 
@@ -105,6 +106,21 @@ App.module('User', function (User, App) {
 
         model: function (attributes, options) {
             return new User.Model(attributes, options);
+        }
+    });
+
+    User.RequestList = User.List.extend({
+        url: '/api/record',
+
+        queryModelInitial: {
+            type: 'follow',
+            q: ''
+        },
+
+        parseRecords: function (records) {
+            return records.map(function (user) {
+                return user.source;
+            });
         }
     });
 
@@ -605,6 +621,15 @@ App.module('User', function (User, App) {
             index: function () {
                 var pageable = new User.List();
                 pageable.queryModel.set('type', 'user');
+                var listView = new User.ListView({collection: pageable.fullCollection});
+                var layout = new User.SearchView({model: pageable.queryModel});
+                App.getView().getRegion('main').show(layout);
+                layout.getRegion('list').show(listView);
+                pageable.getFirstPage();
+            },
+
+            request: function () {
+                var pageable = new User.RequestList();
                 var listView = new User.ListView({collection: pageable.fullCollection});
                 var layout = new User.SearchView({model: pageable.queryModel});
                 App.getView().getRegion('main').show(layout);

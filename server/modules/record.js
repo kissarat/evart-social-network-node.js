@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
 
-global.schema.Record = {
+global.schema.Record = new mongoose.Schema({
     _id: utils.idType('User'),
     
     type: {
@@ -17,19 +17,21 @@ global.schema.Record = {
     },
     
     source: {
-        type: ObjectID,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
     
     target: {
-        type: ObjectID,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     }
-};
+});
 
 module.exports = {
     GET: function ($) {
-        var cnd = {target_id: App.user._id};
+        var cnd = {target: $.user._id};
         if ($.has('type')) {
             var type = $.param('type').split('.');
             if (1 == type.length) {
@@ -39,12 +41,13 @@ module.exports = {
                 cnd.type = {$in: type};
             }
         }
-        return Record.find(cnd);
+        return Record.find(cnd, {type: 1, source: 1})
+            .populate('source', $.select(['domain'], schema.User.user_public_fields));
     },
 
     POST: function ($) {
         var record = new Record({
-            source: App.user._id,
+            source: $.user._id,
             target: $.param('target_id'),
             type: $.param('type')
         });
@@ -54,7 +57,7 @@ module.exports = {
     DELETE: function ($) {
         return Record.remove({
             id: $.id,
-            target_id: App.user._id,
+            target_id: $.user._id
         })
     }
 };

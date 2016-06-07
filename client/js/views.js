@@ -201,6 +201,63 @@ App.module('Views', function (Views, App) {
             return this;
         }
     });
+
+    Views.Alert = Marionette.View.extend({
+        template: '#view-alert',
+
+        ui: {
+            message: '.message'
+        },
+
+        events: {
+            'click .close': 'close'
+        },
+
+        close: function () {
+            this.model.collection.remove(this.model);
+        },
+
+        onRender: function () {
+            this.el.classList.add('alert');
+            this.el.classList.add('alert-' + this.model.get('type'));
+            if (App.config.alert.duration > 0) {
+                setTimeout(_.bind(this.close, this), App.config.alert.duration);
+            }
+        }
+    });
+
+    Views.AlertList = Marionette.CollectionView.extend({
+        childView: Views.Alert
+    });
+
+    App.alert = function (type, message) {
+        var region = App.getRegion('alert');
+        if (!region.currentView || !region.currentView.collection) {
+            var collection = new Backbone.Collection();
+            region.show(new Views.AlertList({collection: collection}));
+        }
+        region.currentView.collection.add(new Backbone.Model({
+            type: type,
+            message: message
+        }));
+    };
     
-    Views.ControlList = Marionette.CollectionView.extend({});
+    Views.Error = Marionette.View.extend({
+        template: '#view-error',
+
+        behaviors: {
+            Bindings: {}
+        },
+        
+        bindings: {
+            'h1': 'title',
+            '.text': 'text'
+        }
+    });
+
+    App.show = function (View, data) {
+        var region = App.getRegion('main');
+        var view = new View({model: new Backbone.Model(data)});
+        region.show(view);
+    };
 });

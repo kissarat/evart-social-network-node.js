@@ -606,20 +606,21 @@ Context.prototype = {
     get order() {
         if (this.has('sort')) {
             var sort = this.get('sort');
+            var _order = {};
             if (this.has('order')) {
-                return [sort, 'a' == this.get('order')[0] ? 'ascedenting' : 'descdenting'];
+                _order[sort] = 'a' == this.get('order')[0] ? 1 : -1;
             }
             else {
-                var order;
-                if ('-' == sort[0]) {
-                    sort = sort.slice(1);
-                    order = 'descdenting'
-                }
-                else {
-                    order = 'ascedenting';
-                }
-                return [sort, order];
+                sort.forEach(function (field) {
+                    var direction = 1;
+                    if ('-' == field[0]) {
+                        field = field.slice(1);
+                        direction = -1;
+                    }
+                    _order[field] = direction;
+                })
             }
+            return _order;
         }
         return false;
     },
@@ -708,9 +709,9 @@ function serve($) {
         case 'object':
             if (result instanceof god.Query || result instanceof god.Aggregate) {
                 if ('find' == result.op) {
-                    var sort = $.order;
-                    if (sort) {
-                        result.sort(sort);
+                    var order = $.order;
+                    if (order) {
+                        result.sort(order);
                     }
                     result.skip($.skip);
                     result.limit($.limit);
