@@ -1,4 +1,12 @@
 node_modules/
 nginx/logs/
-modules/*.js*
-vkontakte.js*
+modules/*.map
+modules/admin.js
+modules/like.js
+modules/video.js
+modules/test.js
+modules/photo.js
+modules/agent.js
+modules/file.js
+modules/message.js
+modules/user.js

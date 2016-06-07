@@ -1,7 +1,6 @@
 rs = require 'randomstring'
 god = require 'mongoose'
 ObjectID = require('mongodb').ObjectID
-crypto = require 'crypto'
 utils = require '../utils'
 
 
@@ -86,6 +85,11 @@ global.schema.User = new god.Schema
       !@code
 
   follow: [
+    type: god.Schema.Types.ObjectId
+    ref: 'User'
+  ]
+
+  request: [
     type: god.Schema.Types.ObjectId
     ref: 'User'
   ]
@@ -293,31 +297,26 @@ module.exports =
   list:
     GET: ($) ->
       name = $.param 'name'
-      if not list_fields[name]
+      if not list_fields.hasOwnProperty name
         $.invalid 'name'
-      fields = {domain: 1}
-      fields[name] = 1
+      fields = {}
+      fields[if 'friend' == name then 'follow' else name] = 1
       id = if $.has('id') then $.id else $.user._id
-      User.findOne(id, fields)
-      .populate(name, $.select(['_id', 'domain'], user_fields))
+#      select = $.select(['_id', 'domain'], user_fields)
+      User.findOne id, fields, $.wrap (user) ->
+        if 'friend' == name
+          search $, _id: $in: user.follow
+        else
+          search $, user[name]
 
     POST: ($) ->
       name = $.param 'name'
-      target_id = $.param 'target_id'
-      opposite = list_fields[name]
-      if not opposite
+      if not list_fields.hasOwnProperty name
         $.invalid 'name'
-      User.find(target_id).then (target) ->
-        if target
-          User.findOne($.id).then (user) ->
-            result = {}
-            result[name] = toggle user[name], target_id
-            if not result[name]
-              result[opposite] = toggle user[opposite], target_id
-            user.save().then () ->
-              $.send result
-        else
-          $.invalid 'target_id'
+      target_id = $.param 'target_id'
+      id = if $.has('id') then $.id else $.user._id
+      opposite = list_fields[name]
+
 
 toggle = (array, element) ->
   i = array.indexOf(element)
@@ -331,13 +330,15 @@ toggle = (array, element) ->
 list_fields =
   follow: 'deny'
   deny: 'follow'
+  friend: null
+  request: null
 
 user_fields = ["name", "surname", "forename", "city", "country", "address", "phone",
   "password", "avatar", "name", "birthday", "languages", "relationship"];
 group_fields = ["domain", "name", "about", "avatar"];
 admin_fields = ['domain', 'type'];
 
-search = ($, ids) ->
+search = ($, cnd, send = false) ->
   ORs = []
   if $.has 'q'
     q = $.search;
@@ -346,19 +347,20 @@ search = ($, ids) ->
       d[name] =
         $regex: q
       ORs.push d
-  ands = {}
+  ands = if cnd and cnd.constructor == Array then cnd else {}
   if ORs.length > 0
     ands.$or = ORs
   for param in ['country', 'city', 'sex', 'forename', 'relationship', 'type']
     if $.has param
       ands[param] = $.param param
   fields = '_id type forename surname domain name type city address avatar sex'
-  if ids
+  if cnd and cnd.constructor == Array
     ands._id =
-      $in: ids.map (id) -> ObjectID(id)
+      $in: cnd.map (id) -> ObjectID(id)
   if $.has('type')
     ands.type = $.get('type')
   r = User.find ands
   r.select fields
-#  r.exec $.wrap (users) ->
-#    $.send users
+  if send
+    r.exec $.wrap (users) ->
+      $.send users

@@ -352,7 +352,7 @@ Context.prototype = {
         if (name in object) {
             var value = object[name];
             if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
-                if (!/[0-9a-z]{24}/.test(value)) {
+                if (!/[\da-f]{24}/i.test(value)) {
                     this.invalid(name, 'ObjectID');
                 }
                 value = ObjectID(value);
@@ -708,12 +708,12 @@ function serve($) {
         case 'object':
             if (result instanceof god.Query || result instanceof god.Aggregate) {
                 if ('find' == result.op) {
-                    if (false !== sort) {
+                    var sort = $.order;
+                    if (sort) {
                         result.sort(sort);
                     }
                     result.skip($.skip);
                     result.limit($.limit);
-                    var sort = $.order;
                 }
                 result = result.exec();
             }
@@ -821,11 +821,13 @@ function exec($, action) {
                         $.params = $.merge($.params, $.body);
                         for (var key in $.params) {
                             var value = $.params[key];
-                            if (value.replace) {
+                            if (value.replace && /[<>"']/.test(value)) {
                                 $.params[key] = value
                                     .replace(/</g, '&lt;')
+                                    .replace(/>/g, '&gt;')
                                     .replace(/"([^"]+)"/g, '«$1»')
-                                    .replace(/"/g, '&quot;');
+                                    .replace(/"/g, '&quot;')
+                                    .replace(/'/g, '’');
                             }
                         }
                     }
