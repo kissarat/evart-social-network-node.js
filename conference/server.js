@@ -7,6 +7,7 @@ var staticServer = new nodeStatic.Server('./static');
 var stream = null;
 var buffer = [];
 var k = 0;
+var stream_regex = /^\/stream\/([\da-f]{24})/;
 
 require('http').createServer(function (req, res) {
     var filename = `video/${k}.webm`;
@@ -32,7 +33,7 @@ require('http').createServer(function (req, res) {
             }
         })
     }
-    else if ('/stream' == req.url) {
+    else if (stream_regex.test(req.url)) {
         clients[++i] = res;
         res.writeHead(200, {
             'Content-Type': 'video/webm'

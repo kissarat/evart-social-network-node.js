@@ -366,3 +366,5 @@ search = ($, cnd, send = false) ->
   if send
     r.exec $.wrap (users) ->
       $.send users
+  else
+    r

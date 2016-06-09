@@ -237,30 +237,32 @@ var Application = Marionette.Application.extend({
     },
 
     login: function () {
-        if (App.user) {
-            return App.trigger('login');
+        var self = this;
+        if (this.user) {
+            return this.trigger('login');
         } else {
             return $.getJSON('/api/agent', function (agent) {
-                App.agent = agent;
-                if (App.user) {
-                    App.navigate('profile');
+                self.agent = agent;
+                if (self.user) {
+                    self.navigate('profile');
                     $('#dock-container').show();
-                    return App.trigger('login');
+                    return self.trigger('login');
                 }
             });
         }
     },
 
     logout: function () {
-        if (App.user) {
+        var self = this;
+        if (this.user) {
             return $.getJSON('/api/user/logout', function (response) {
                 $('#dock-container').hide();
-                App.trigger('logout');
-                return App.navigate('login');
+                self.trigger('logout');
+                return self.navigate('login');
             });
         } else {
-            App.trigger('logout');
-            return App.navigate('login');
+            this.trigger('logout');
+            return this.navigate('login');
         }
     },
 
@@ -290,12 +292,12 @@ var Application = Marionette.Application.extend({
     },
 
     onStart: function (xhr) {
-        if (App.user) {
+        if (this.user) {
             return $('body').removeAttr('class');
         } else {
-            var first = App.route[0];
-            if ('login' == first || 'signup' == first) {
-                return App.login();
+            var first = this.route[0];
+            if (['login', 'signup', 'users'].indexOf(first) == 0) {
+                return this.login();
             }
         }
     },
@@ -303,8 +305,6 @@ var Application = Marionette.Application.extend({
     module: function (name, define) {
         var module = {};
         this[name] = module;
-        // console.log('MODULE: ' + name);
-        // define(new Proxy(module, morozovProxyHandler), this);
         define(module, this);
     }
 });
@@ -387,17 +387,25 @@ App.PageableCollection = Backbone.PageableCollection.extend({
         });
     },
 
+    // state: function () {
+    //     return {
+    //         totalRecords: 2000,
+    //         currentPage: 1,
+    //         limit: 48
+    //     }
+    // },
+
     state: {
         order: -1,
-        sortKey: '_id',
-        totalRecords: 2000,
+        sort: '_id',
+        limit: 48,
         currentPage: 1,
-        limit: 48
+        totalRecords: 2000
     },
 
     queryParams: {
         pageSize: 'limit',
-        sortKey: 'sort',
+        sortKey: '_id',
         currentPage: null,
         totalPages: null,
         totalRecords: null,
@@ -407,14 +415,15 @@ App.PageableCollection = Backbone.PageableCollection.extend({
     },
 
     parseRecords: function (records) {
+        var state = this.state;
         if (0 === records.length) {
-            this.state.totalRecords = this.fullCollection.length;
-            if (this.state.totalRecords > 0) {
-                this.state.totalPages = Math.floor(this.state.totalRecords / this.state.limit);
-                this.state.currentPage = this.state.totalPages;
+            state.totalRecords = this.fullCollection.length;
+            if (state.totalRecords > 0) {
+                state.totalPages = Math.floor(state.totalRecords / state.limit);
+                state.currentPage = state.totalPages;
             } else {
-                this.state.totalPages = 0;
-                this.state.currentPage = 1;
+                state.totalPages = 0;
+                state.currentPage = 1;
             }
         }
         return records;

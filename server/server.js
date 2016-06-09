@@ -148,6 +148,7 @@ function call_modules_method(name, $) {
 function Context(req) {
     this.config = config;
     this.o = o;
+    this.isCache = req.url.indexOf('/api-cache') == 0;
     var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
     // console.log('URL', raw_url);
     req.url = parse(raw_url);
@@ -455,6 +456,7 @@ Context.prototype = {
         else {
             this.res.setHeader('set-cookie', cookie);
         }
+        console.log(cookie);
     },
 
     allowFields: function (user_fields, admin_fields) {
@@ -797,10 +799,10 @@ function exec($, action) {
         }
     }
 
-    var is_unauthoried_route = /^.(agent|user.(login|phone|code|personal|exists))/.test($.req.url.original);
+    var is_unauthoried_route = /^.(agent|user.(login|phone|code|personal|exists|avatar))/.test($.req.url.original);
     var must_upload_route = /^.(photo|file)/.test($.req.url.original);
 
-    if ($.user || is_unauthoried_route) {
+    if ($.user || is_unauthoried_route || ('GET' == $.req.method && $.isCache)) {
         var size = $.req.headers['content-length'];
         if (size && size > 0 && !must_upload_route) {
             return receive($.req, function (data) {

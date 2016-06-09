@@ -417,18 +417,6 @@ App.module('User', function (User, App) {
             document.title = this.model.getName();
             var back = this.ui.background[0];
             back.setBackground(this.model.get('background'));
-            // this.ui.header.find('.photo').each(function (i, p) {
-            //     var r = Math.round(Math.random() * 35);
-            //     r = ('000000000000000000000000' + r).slice(-24);
-            //     p.setAttribute('draggable', 'true');
-            //     p.style.backgroundImage = 'url("/photo/' + r + '.jpg")';
-            //     App.draggable(p);
-            //     return p.addEventListener('dragleave', function (e) {
-            //         return $.sendJSON('POST', '/api/user/change?field=background&value=' + r, {}, function () {
-            //             return back.setBackground(r);
-            //         });
-            //     });
-            // });
             return this.setAvatar();
         },
 
@@ -483,7 +471,8 @@ App.module('User', function (User, App) {
             this.ui.avatar[0].setBackground('/api/user/avatar?id=' + this.model.get('_id'));
             this.ui.country.text(this.model.get('country'));
             this.ui.city.text(this.model.get('city'));
-            if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
+            var me = App.user;
+            if (me && me.follow && me.follow.indexOf && me.follow.indexOf(this.model.get('_id')) < 0) {
                 var button = new App.Views.Button();
                 button.setText('Follow');
                 this.getControls().children.push(button);
