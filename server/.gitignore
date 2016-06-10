@@ -3,7 +3,6 @@ node_modules/
 mongodb/data/
 modules/*.map
 modules/admin.js
-modules/like.js
 modules/video.js
 modules/test.js
 modules/photo.js

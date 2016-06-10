@@ -22,6 +22,23 @@ fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n
     }
 });
 
+var handlers = [
+    {mime: ['audio/mpeg', 'audio/ogg', 'audio/ogg'], type: 'audio'},
+    {mime: ['video/mp4', 'video/webm'], type: 'video'},
+    {mime: ['text/html', 'text/plain'], type: 'text'},
+    {mime: ['application/pdf'], type: 'pdf'},
+];
+
+function find_handler_type(mime) {
+    for(var i = 0; i < handlers.length; i++) {
+        var handler = handlers[i];
+        if (handler.mime.indexOf(mime) >= 0) {
+            return handler.type;
+        }
+    }
+    return false;
+}
+
 module.exports = {
     POST: function ($) {
         var owner_id = $.param('owner_id');
@@ -58,6 +75,7 @@ module.exports = {
                     if (mime_type.ext.indexOf(ext) < 0) {
                         ext = mime_type.ext[0];
                     }
+
                     data = {
                         name: filename,
                         owner: owner_id,
@@ -130,10 +148,6 @@ global.schema.File = new mongoose.Schema({
     },
 
     md5: {
-        type: String
-    },
-
-    mime: {
         type: String
     },
 
