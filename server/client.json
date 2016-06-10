@@ -1,6 +1,6 @@
 {
   "file": {
-
+    "max": 32768
   },
   "search": {
     "delay": 250
