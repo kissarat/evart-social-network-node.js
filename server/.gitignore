@@ -1,5 +1,6 @@
-node_modules/
 nginx/logs/
+node_modules/
+mongodb/data/
 modules/*.map
 modules/admin.js
 modules/like.js

@@ -1,16 +1,26 @@
+"use strict";
+
 var fs = require('fs');
 var path = require('path');
 var mmm = require('mmmagic');
 var hash_md5 = require('md5-file');
 var ffprobe = require('node-ffprobe');
 var meta = require('musicmetadata');
-var code = require(__dirname + '../../client/code.json');
+var code = require('../../client/code.json');
 var magic = new mmm.Magic(mmm.MAGIC_MIME);
 var mongoose = require('mongoose');
 var static_dir = path.normalize(__dirname + '/../../static');
 var utils = require('../utils.js');
-mimes = fs.readFileSync('../../client/mime.csv');
-mimes = mimes.split();
+var mimes = {};
+fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n').map(function (mime) {
+    mime = mime.split(',');
+    if (mime.length == 3) {
+        mimes[mime[0]] = {
+            ext: mime[2].split(' '),
+            size: parseInt(mime[1])
+        };
+    }
+});
 
 module.exports = {
     POST: function ($) {
@@ -44,16 +54,14 @@ module.exports = {
                 hash_md5(temp, $.wrap(function (md5) {
                     var mime = mime.replace('; charset=binary', '');
                     var type = 'file';
-                    if ('audio/mpeg' == mime) {
-                        type = 'audio';
-                        ext: 
-                    }
-                    if (['video/webm', 'video/mp4'].indexOf(mime)) {
-                        type = 'video';
+                    var mime_type = mimes[mime];
+                    if (mime_type.ext.indexOf(ext) < 0) {
+                        ext = mime_type.ext[0];
                     }
                     data = {
                         name: filename,
                         owner: owner_id,
+                        ext: ext,
                         mime: mime,
                         stat: stat,
                         time: Date.now(),
