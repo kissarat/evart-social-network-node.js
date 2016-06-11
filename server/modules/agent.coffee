@@ -49,7 +49,7 @@ global.schema.Agent = new god.Schema
     ref: 'User'
 
 extract = (agent) ->
-  if agent.toObject
+  if 'function' == typeof agent.toObject
     agent = agent.toObject()
   result =
     _id: agent._id
@@ -72,8 +72,8 @@ module.exports =
       agent.time = Date.now()
       agent.save $.wrap () ->
         if (Math.random() > (1 - config.auth_generation)) and not $.req.auth
-          $.setCookie 'auth', agent.auth, config.FOREVER
-        agent = extract agent
+          $.setCookie 'auth', agent.auth, config.forever
+        agent = extract(agent)
         agent.config = client
         $.send agent
 
@@ -84,4 +84,4 @@ module.exports =
     return
 
   GET: ($) ->
-    $.send extract $.agent
+    $.send extract($.agent)

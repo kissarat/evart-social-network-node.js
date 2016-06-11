@@ -7,7 +7,10 @@ var config = require('./config.json');
 var code = require('../client/code.json');
 
 class Iterator {
-    constructor(array = []) {
+    constructor(array) {
+        if (!array) {
+            array = [];
+        }
         this.i = -1;
         this.array = array;
     }

@@ -1,4 +1,5 @@
 {
+  "dev": false,
   "file": "/tmp/socex-api.sock",
   "socket": {
     "port": 8080
@@ -15,7 +16,7 @@
     "length": 40
   },
   "salt": "P<Ch-ish0lier",
-  "auth_generation": 0.8,
+  "auth_generation": 0,
   "machine": {
     "id": 1
   },

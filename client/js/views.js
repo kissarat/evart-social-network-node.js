@@ -20,7 +20,11 @@ App.module('Views', function (Views, App) {
             var cssClass = template.attr('data-class');
             document.body.removeAttribute('class');
             if (cssClass) {
-                document.body.classList.add(cssClass);
+                cssClass.split(/\s+/).forEach(function (className) {
+                    if (className) {
+                        document.body.classList.add(cssClass);
+                    }
+                });
             }
             var el = this.view.el;
             if (App.dictionary) {

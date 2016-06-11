@@ -4,7 +4,9 @@ var style = document.createElement('style');
 style.innerHTML = 'ul {padding-left: 16px; font: 10pt courier;} li {list-style: none} strong:after {content: ": "}'
     + ' .object {display: inline-block; margin-left: -12px; margin-top: 2px}'
     + ' ul ul:hover {background-color: rgba(0, 191, 255, 0.25)}'
-    + ' h1, h2 {display: inline-block; margin: 4px 6px; font-size: 24px}';
+    + ' h1, h2 {display: inline-block; margin: 16px 10px 0 10px; font-size: 24px; font-family: Roboto, "Droid Sans", sans-serif}'
+    + ' html {background-color: #ECEFF4}'
+    + ' body {background: url("/images/polyhedron-bg.png") left no-repeat; background-size: cover; margin: 0}';
 document.head.appendChild(style);
 var title = document.querySelector('title');
 var h1 = document.querySelector('h1');

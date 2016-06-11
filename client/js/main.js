@@ -43,12 +43,31 @@ _.mixin({
             }
             return result;
         }
+    },
+
+    hex_time: function () {
+        return (Date.now().toString(16) + '000').slice(0, -3);
     }
 });
 
 if (!Array.from) {
     Array.from = _.toArray;
 }
+
+addEventListener('keyup', function (e) {
+   if ('F7' == e.key) {
+       var error_id = localStorage.getItem('errors_last');
+       if (error_id) {
+           App.local.getById('errors', error_id).then(function (error) {
+               var text = JSON.stringify(error, null, '\t');
+               text = text.replace(/([\/\w\-_]+\.js):(\d+)/g, function (match, path, line) {
+                   return '<span class="green">' + path + '</span>:<span class="red">' + line + '</span>';
+               });
+               document.body.innerHTML = '<pre>' + text + '</pre>';
+           })
+       }
+   }
+});
 
 function reverse(array) {
     if (!(array instanceof Array)) {
@@ -179,6 +198,19 @@ var RootLayout = Marionette.View.extend({
         right: '#right',
         alert: '#alert'
         // modalRegion: App.ModalRegion
+    }
+});
+
+$(document).ajaxError(function (e, xhr) {
+    var data;
+    try {
+        data = JSON.parse(xhr.responseText);
+    }
+    catch (ex) {}
+    if (data && data.error && data.error.stack) {
+        var error = data.error;
+        error.type = 'server';
+        App.local.add('errors', error);
     }
 });
 
@@ -389,6 +421,8 @@ _.extend(Backbone.Validation.callbacks, {
 });
 
 var App = new Application();
+App.name = 'socex';
+App.version = 1;
 window.App = App;
 window.Application = Application;
 App.showView(new RootLayout());

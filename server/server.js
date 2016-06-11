@@ -1,7 +1,7 @@
 'use strict';
 
 require('colors');
-var god = require('mongoose');
+var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var http = require('http');
 var ws = require('ws');
@@ -50,10 +50,10 @@ modules_dir.forEach(function (file) {
 Object.keys(schema).forEach(function (name) {
     var current = schema[name];
     current.plugin(require('mongoose-unique-validator'));
-    global[name] = god.model(name, current);
+    global[name] = mongoose.model(name, current);
 });
 
-var o = god.connect(config.mongo.uri, config.mongo.options);
+var o = mongoose.connect(config.mongo.uri, config.mongo.options);
 var subscribers = {};
 var server;
 var start;
@@ -247,7 +247,7 @@ Context.prototype = {
         var self = this;
         return function (err, result) {
             if (err) {
-                if (err instanceof god.Error.ValidationError) {
+                if (err instanceof mongoose.Error.ValidationError) {
                     self.send(code.BAD_REQUEST, {
                         invalid: err.errors
                     });
@@ -277,7 +277,7 @@ Context.prototype = {
 
     success: function (err, result) {
         if (err) {
-            if (err instanceof god.Error.ValidationError) {
+            if (err instanceof mongoose.Error.ValidationError) {
                 this.send(code.BAD_REQUEST, {
                     invalid: err.errors
                 });
@@ -645,7 +645,10 @@ Context.prototype = {
         return false;
     },
 
-    select: function (array = [], allow) {
+    select: function (array, allow) {
+        if (!array) {
+            array  = [];
+        }
         if (this.has('select')) {
             var param = this.get('select').split('.').sort();
             var allowed_fields = [];
@@ -718,7 +721,7 @@ function serve($) {
 
     switch (typeof result) {
         case 'object':
-            if (result instanceof god.Query || result instanceof god.Aggregate) {
+            if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
                 if ('find' == result.op) {
                     var order = $.order;
                     if (order) {
@@ -784,26 +787,42 @@ function exec($, action) {
                 console.log($.body);
             }
         }
-        try {
-            // var result = $.validate($.params);
-            // if ('valid' in result ? result.valid : result) {
+        if (config.dev) {
             return action($);
-            // }
-            // else {
-            //     $.send(code.BAD_REQUEST, {
-            //         invalid: result.errors
-            //     });
-            // }
         }
-        catch (ex) {
-            if (ex.invalid) {
-                $.send(code.BAD_REQUEST, ex);
+        else {
+            try {
+                // var result = $.validate($.params);
+                // if ('valid' in result ? result.valid : result) {
+                    return action($);
+                // }
+                // else {
+                //     $.send(code.BAD_REQUEST, {
+                //         invalid: result.errors
+                //     });
+                // }
             }
-            else if (ex instanceof errors.Response) {
-                $.send(ex.code, ex.data);
-            }
-            else {
-                throw ex;
+            catch (ex) {
+                if (ex.invalid) {
+                    $.send(code.BAD_REQUEST, ex);
+                }
+                else if (ex instanceof errors.Response) {
+                    $.send(ex.code, ex.data);
+                }
+                else {
+                    var error = {
+                        message: ex.message
+                    };
+                    if (ex.code) {
+                        error.code = ex.code;
+                    }
+                    if (ex.stack) {
+                        error.stack = ex.stack.split(/\s*\n\s*at\s*/).map(function (trace) {
+                            return trace.replace(/[\/\w]+socex\/server\//, '/');
+                        });
+                    }
+                    $.send(code.INTERNAL_SERVER_ERROR, {error: error});
+                }
             }
         }
     }
