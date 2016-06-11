@@ -2,7 +2,8 @@
 App.module('Peer', function (Peer, App) {
     Peer.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'phone/:id': 'phone'
+            'phone/:id': 'phone',
+            'stream/:id': 'stream'
         }
     });
 
@@ -334,6 +335,7 @@ App.module('Peer', function (Peer, App) {
             if (this.model.get('stream')) {
                 this.ui.video[0].srcObject = this.model.get('stream');
             }
+            var source = this.model.get('url');
         }
     });
 
@@ -420,6 +422,12 @@ App.module('Peer', function (Peer, App) {
                 } else {
                     App.navigate('/unsupported/peer');
                 }
+            },
+
+            stream: function (id) {
+                App.modalRegion.show(new Peer.Conference({
+                    url: id
+                }));
             }
         }
     });

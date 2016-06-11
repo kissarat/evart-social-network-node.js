@@ -11,12 +11,10 @@
   "private": true,
   "dependencies": {
     "faker": "*",
-    "webrtc-adapter": "^0",
     "components-font-awesome": "*",
     "jquery": "^2",
     "jquery-ui": "*",
     "bootstrap": "*",
-    "underscore": "*",
     "backbone": "*",
     "marionette": "^3",
     "jquery-cookie": "*",
@@ -25,6 +23,7 @@
     "backbone.paginator": "^2.0.5",
     "backbone.validation": "backbone-validation#^0.11.5",
     "backbone.radio": "^1.0.5",
-    "pdfjs-dist": "^1.5.285"
+    "pdfjs-dist": "^1.5.285",
+    "lodash": "*"
   }
 }

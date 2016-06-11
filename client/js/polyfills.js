@@ -28,7 +28,6 @@ if (!('requestFullscreen' in Element.prototype)) {
         Element.prototype.webkitRequestFullScreen || Element.prototype.mozRequestFullScreen;
 }
 
-
 if (!navigator.mediaDevices.getUserMedia && navigator.webkitGetUserMedia) {
     navigator.mediaDevices.getUserMedia = function (options) {
         return new Promise(function (resolve, reject) {
@@ -58,3 +57,22 @@ if (!window.RTCPeerConnection && window.webkitRTCPeerConnection) {
     }).call(RTCPeerConnection.prototype);
 }
 
+if (window._ && 'lodash' == _.name) {
+    _.each = _.forEach = function (list, iteratee, context) {
+        if (list) {
+            if (context) {
+                iteratee = _.bind(iteratee, context);
+            }
+            if ('length' in list) {
+                [].forEach.call(list, iteratee);
+            }
+            else {
+                for (var key in list) {
+                    iteratee(list[key], key);
+                }
+            }
+        }
+    };
+
+    _.any = _.some;
+}

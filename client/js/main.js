@@ -46,6 +46,17 @@ _.mixin({
     }
 });
 
+if (!Array.from) {
+    Array.from = _.toArray;
+}
+
+function reverse(array) {
+    if (!(array instanceof Array)) {
+        array = Array.from(array);
+    }
+    return array.reverse();
+}
+
 HTMLFormElement.prototype.serialize = function () {
     var result;
     result = {};
@@ -491,7 +502,7 @@ App.Upload = Marionette.Object.extend({
         }
 
         function upload(files) {
-            self.files = (files instanceof Array ? files : _.toArray(files)).reverse();
+            self.files = reverse(files);
             self.uploadFile();
             self.on('response', self.uploadFile);
         }
