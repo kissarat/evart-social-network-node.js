@@ -53,7 +53,7 @@ Object.keys(schema).forEach(function (name) {
     global[name] = god.model(name, current);
 });
 
-var o = god.connect(config.mongo);
+var o = god.connect(config.mongo.uri, config.mongo.options);
 var subscribers = {};
 var server;
 var start;
@@ -70,7 +70,16 @@ o.connection.on('open', function () {
             $.subscribers = subscribers;
             $.COOKIE_AGE_FOREVER = config.forever;
 
-            $.authorize(() => serve($));
+            if (0 === req.url.original.indexOf('/headers')) {
+                $.send({
+                    url: req.url,
+                    method: req.method,
+                    headers: req.headers
+                });
+            }
+            else {
+                $.authorize(() => serve($));
+            }
         }
         catch (ex) {
             if (ex.invalid) {

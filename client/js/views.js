@@ -113,6 +113,7 @@ App.module('Views', function (Views, App) {
                     return _upload();
                 }
             }
+
             _upload();
         }
     });
@@ -241,14 +242,14 @@ App.module('Views', function (Views, App) {
             message: message
         }));
     };
-    
+
     Views.Error = Marionette.View.extend({
         template: '#view-error',
 
         behaviors: {
             Bindings: {}
         },
-        
+
         bindings: {
             'h1': 'title',
             '.text': 'text'
@@ -260,4 +261,54 @@ App.module('Views', function (Views, App) {
         var view = new View({model: new Backbone.Model(data)});
         region.show(view);
     };
+
+    Views.fileDialog = function (options = {}) {
+        if (!options.id) {
+            options.id = 'file-dialog';
+        }
+        var fileInput = document.getElementById(options.id);
+        if (!fileInput) {
+            fileInput = document.createElement('input');
+            fileInput.setAttribute('id', options.id);
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('style', 'display: none');
+            document.body.appendChild(fileInput);
+        }
+        if (options.accept) {
+            fileInput.setAttribute('accept', options.accept);
+        }
+        fileInput.multiple = !!options.multiple;
+        return new Promise(function (resolve, reject) {
+            fileInput.addEventListener('change', function (e) {
+                var files = e.target.files;
+                if (files.length > 0) {
+                    resolve(files);
+                }
+                else {
+                    reject(e);
+                }
+            });
+            $(fileInput).click();
+        });
+    };
+
+    Views.uploadDialog = function (options) {
+        if (!options) {
+            options = '/api/file';
+        }
+        if ('string' == typeof options) {
+            options = {
+                url: options,
+                multiple: true
+            }
+        }
+        var dialogOptions = {};
+        ['multiple', 'accept'].forEach(function (name) {
+            if (name in options) {
+                dialogOptions[name] = options[name];
+            }
+        });
+        options.promise = Views.fileDialog(dialogOptions);
+        return new App.Upload(options);
+    }
 });

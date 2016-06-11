@@ -4,13 +4,21 @@
     "port": 8080
   },
   "forever": 100000000000,
-  "mongo": "mongodb://socex:eequ2eizain8Etohxei0yoGaixeeviey3rei@localhost:27017/socex",
+  "mongo": {
+    "uri": "mongodb://localhost:27017/socex",
+    "options": {
+      "user": "socex",
+      "pass": "eequ2eizain8Etohxei0yoGaixeeviey3rei"
+    }
+  },
   "auth": {
     "length": 40
   },
   "salt": "P<Ch-ish0lier",
   "auth_generation": 0.8,
-  "machine_id": 1,
+  "machine": {
+    "id": 1
+  },
   "photo": {
     "width": 1536,
     "quality": 74,

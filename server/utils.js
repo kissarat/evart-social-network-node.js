@@ -4,6 +4,7 @@ var ObjectIdSchema = require('mongoose').Schema.Types.ObjectId;
 var crc = require('crc');
 var crypto = require('crypto');
 var config = require('./config.json');
+var code = require('../client/code.json');
 
 class Iterator {
     constructor(array = []) {
@@ -57,7 +58,7 @@ function nano100time() {
     return (start + (now[0] * 1000000000 + now[1])) / 100;
 }
 
-var entities = ['User', 'Agent', 'Record', 'Message', 'File'];
+var entities = ['User', 'Agent', 'Record', 'Message', 'File', 'Stream'];
 
 function id12(name) {
     var now = process.hrtime();
@@ -101,7 +102,9 @@ var exports = {
             exports[clazz.name] = clazz
         }
         return exports;
-    }
+    },
+
+    code: code
 };
 
 module.exports = merge(exports, exports.export(

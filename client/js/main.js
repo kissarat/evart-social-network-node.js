@@ -26,6 +26,26 @@ _.extend(Element.prototype, {
     }
 });
 
+_.mixin({
+    merge: function () {
+        if (arguments.length <= 1) {
+            return arguments[0] || {};
+        }
+        else {
+            var result = {};
+            for (var i = 0; i < arguments.length; i++) {
+                var arg = arguments[i];
+                if (arg) {
+                    for (var j in arg) {
+                        result[j] = arg[j];
+                    }
+                }
+            }
+            return result;
+        }
+    }
+});
+
 HTMLFormElement.prototype.serialize = function () {
     var result;
     result = {};
@@ -454,5 +474,109 @@ App.PageableCollection = Backbone.PageableCollection.extend({
                 })
             });
         }
+    }
+});
+
+App.Upload = Marionette.Object.extend({
+    initialize: function (options) {
+        var self = this;
+        this.url = options.url || '/api/file';
+        this.method = options.method || 'POST';
+        this.channel = options.channel || Backbone.Radio.channel('upload');
+        this.channel.reply('upload', _.bind(this.reply, this));
+        this.headers = options.headers || {};
+        this.params = options.params;
+        if (options.contentType) {
+            this.headers['content-type'] = options.contentType;
+        }
+
+        function upload(files) {
+            self.files = (files instanceof Array ? files : _.toArray(files)).reverse();
+            self.uploadFile();
+            self.on('response', self.uploadFile);
+        }
+
+        if (options.promise) {
+            options.promise.then(upload);
+        }
+        else {
+            if (options.file) {
+                options.files = [file];
+            }
+            if (options.files) {
+                upload(options.files);
+            }
+        }
+    },
+
+    uploadFile: function () {
+        var file = this.files.pop();
+        if (file) {
+            this.channel.request('upload', file);
+        }
+    },
+
+    reply: function (options) {
+        var self = this;
+        var headers = {};
+        if (options instanceof Blob) {
+            options.data = options;
+        }
+        else if (options.json) {
+            options.data = JSON.stringify(options.json);
+            headers['content-type'] = 'application/json';
+        }
+        if (options.data.name) {
+            headers['name'] = options.data.name;
+        }
+        if (options.data.type) {
+            headers['content-type'] = options.data.type;
+        }
+        if (options.data.mozFullPath) {
+            headers['path'] = options.data.mozFullPath;
+        }
+        if (options.data.lastModifiedDate) {
+            headers['last-modified'] = options.data.lastModifiedDate;
+        }
+        if (options.data.lastModified) {
+            headers['modified'] = options.data.lastModified;
+        }
+        options.headers = _.merge(this.headers, options.headers, headers);
+        if (!options.headers['accept']) {
+            options.headers['accept'] = 'application/json';
+        }
+        var xhr = new XMLHttpRequest();
+        options.method = options.method || this.method;
+        options.url = options.url || this.url;
+        options.params = options.params || this.params;
+        var url = options.url;
+        if (options.params) {
+            url += '?' + $.param(options.params);
+        }
+        xhr.open(options.method || this.method, url);
+        var isText = false;
+        for (var name in options.headers) {
+            var value = options.headers[name];
+            if ('content-type' == name.toLocaleLowerCase() && (value.indexOf('json') > 0 || value.indexOf('text') === 0)) {
+                value += '; charset=utf8';
+                isText = true;
+            }
+            xhr.setRequestHeader(name, value);
+        }
+        if (!isText) {
+            xhr.responseType = 'arraybuffer';
+        }
+        xhr.addEventListener('load', function () {
+            var data = null;
+            try {
+                data = JSON.parse(this.responseText);
+            }
+            catch (ex) {
+            }
+            self.trigger('response', data, xhr, options);
+        });
+        this.trigger('upload', xhr, options);
+        xhr.send(options.data);
+        return xhr;
     }
 });

@@ -10,6 +10,7 @@ var code = require('../../client/code.json');
 var magic = new mmm.Magic(mmm.MAGIC_MIME);
 var mongoose = require('mongoose');
 var static_dir = path.normalize(__dirname + '/../../static');
+var md5_dir = static_dir + '/md5';
 var utils = require('../utils.js');
 var mimes = {};
 fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n').map(function (mime) {
@@ -22,6 +23,8 @@ fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n
     }
 });
 
+var ext_regex = /\.(\w+)$/;
+
 var handlers = [
     {mime: ['audio/mpeg', 'audio/ogg', 'audio/ogg'], type: 'audio'},
     {mime: ['video/mp4', 'video/webm'], type: 'video'},
@@ -30,7 +33,7 @@ var handlers = [
 ];
 
 function find_handler_type(mime) {
-    for(var i = 0; i < handlers.length; i++) {
+    for (var i = 0; i < handlers.length; i++) {
         var handler = handlers[i];
         if (handler.mime.indexOf(mime) >= 0) {
             return handler.type;
@@ -45,65 +48,71 @@ module.exports = {
         var name = $.req.headers.name;
         var ext;
         if (name) {
-            ext = /\.(\w+)$/.exec(ext);
+            ext = ext_regex.exec(name);
             if (ext) {
                 ext = ext[1];
-                name = name.replace(ext, '');
+                name = name.replace(ext_regex, '');
             }
             else {
                 $.invalid('ext');
             }
         }
-        if (!name || !/.+\..+/.test(name)) {
+        else {
             $.invalid('name');
         }
         name = name.replace(/[\\:;\/]/g, '.').replace(/\s+/g, ' ');
-        var id = id12('File');
+        var id = utils.id12('File');
         var id_filename = static_dir + '/id/' + id + '.' + ext;
-        stream = fs.createWriteStream(id_filename, {
+        var stream = fs.createWriteStream(id_filename, {
             flags: 'w',
-            mode: parseInt('400', 8),
-            autoClose: true
+            mode: parseInt('600', 8)
         });
         $.req.pipe(stream);
-        fs.stat(temp, $.wrap(function (stat) {
-            magic.detectFile(temp, $.wrap(function (mime) {
-                hash_md5(temp, $.wrap(function (md5) {
-                    var mime = mime.replace('; charset=binary', '');
-                    var type = 'file';
-                    var mime_type = mimes[mime];
-                    if (mime_type.ext.indexOf(ext) < 0) {
-                        ext = mime_type.ext[0];
-                    }
+        return new Promise(function (resolve, reject) {
+            stream.on('end', function () {
+                fs.stat(id_filename, $.wrap(function (stat) {
+                    magic.detectFile(id_filename, $.wrap(function (mime) {
+                        hash_md5(id_filename, $.wrap(function (md5) {
+                            mime = mime.replace('; charset=binary', '');
+                            var type = find_handler_type(mime);
+                            var mime_type = mimes[mime];
+                            if (mime_type && mime_type.ext && mime_type.ext.indexOf(ext) < 0) {
+                                ext = mime_type.ext[0];
+                            }
 
-                    data = {
-                        name: filename,
-                        owner: owner_id,
-                        ext: ext,
-                        mime: mime,
-                        stat: stat,
-                        time: Date.now(),
-                        md5: md5,
-                        type: mime.indexOf('audio') === 0 ? 'audio' : 'file'
-                    };
-                    var md5_filename = path.join(md5_dir, md5);
-                    fs.stat(md5_filename, function (err, stat) {
-                        data.path = md5_filename;
-                        if (stat) {
-                            return fs.unlink(temp, function () {
-                                data.created = false;
-                                return _process_file($, data);
-                            });
-                        } else {
-                            return fs.rename(temp, md5_filename, $.wrap(function () {
-                                data.created = true;
-                                return _process_file($, data);
+                            var data = {
+                                name: name,
+                                owner: owner_id,
+                                ext: ext,
+                                mime: mime,
+                                stat: stat,
+                                time: Date.now(),
+                                md5: md5,
+                                type: mime ? mime : 'file'
+                            };
+                            var md5_filename = path.join(md5_dir, md5 + '.' + ext);
+                            fs.stat(md5_filename, $.wrap(function (stat) {
+                                data.path = md5_filename;
+                                data.success = true;
+                                function save(created) {
+                                    return function (err) {
+                                        data.created = created;
+                                        var file = new File(data);
+                                        resolve(file.save());
+                                    }
+                                }
+
+                                if (stat) {
+                                    fs.unlink(id_filename, save(false));
+                                } else {
+                                    fs.rename(id_filename, md5_filename, save(true));
+                                }
                             }));
-                        }
-                    });
+                        }));
+                    }));
                 }));
-            }));
-        }));
+            });
+        })
     },
 
     GET: function ($) {
