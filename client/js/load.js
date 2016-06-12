@@ -134,4 +134,15 @@ function load3_languageLoaded(xhr) {
     });
     
     this.start();
+
+    if (navigator.serviceWorker) {
+        navigator.serviceWorker.register('/service.js', {scope: '/'})
+            .then(function (registration) {
+                // console.log('The service worker has been registered');
+            })
+            .catch(function (e) {
+                console.error('The service worker registration error ', e);
+            })
+        ;
+    }
 }

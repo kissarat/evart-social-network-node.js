@@ -75,6 +75,14 @@ if (window._ && 'lodash' == _.name) {
     };
 
     _.any = _.some;
+    _.contains = _.includes;
+    _.pairs = function (object) {
+        var result = [];
+        for(var key in object) {
+            result.push([key, object[key]])
+        }
+        return result;
+    }
 }
 
 /*!

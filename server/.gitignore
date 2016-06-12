@@ -5,7 +5,6 @@ modules/*.map
 modules/admin.js
 modules/video.js
 modules/test.js
-modules/photo.js
 modules/agent.js
 modules/message.js
 modules/user.js

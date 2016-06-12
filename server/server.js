@@ -465,7 +465,7 @@ Context.prototype = {
         else {
             this.res.setHeader('set-cookie', cookie);
         }
-        console.log(cookie);
+        // console.log(cookie);
     },
 
     allowFields: function (user_fields, admin_fields) {
