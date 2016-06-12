@@ -47,6 +47,7 @@ var notification_not_available = function() {
     return console.warn('Notification not available');
 };
 
+/*
 if (App.features.notification.available && App.features.notification.enabled) {
     Notification.requestPermission(function (permission) {
         if ('granted' === permission) {
@@ -60,6 +61,7 @@ if (App.features.notification.available && App.features.notification.enabled) {
 } else {
     notification_not_available();
 }
+*/
 
 App.notify = function (title, options) {
     options.title = title;
@@ -71,10 +73,10 @@ App.notify = function (title, options) {
     };
 };
 
-App.socket = new Socket(App.config.socket);
+App.socket = new Socket((self.App && App.config ? App.config : self.defaultConfig).socket);
 
-// App.pull = App.socket.pull;
-// App.push = App.socket.push;
+App.pull = App.socket.pull;
+App.push = App.socket.push;
 
 
 register(App, {

@@ -1,9 +1,11 @@
 "use strict";
 
 importScripts(
+    '/js/data.js',
     '/js/jquery.core.js',
     '/lib/underscore/underscore.js',
-    '/lib/backbone/backbone.js'
+    '/lib/backbone/backbone.js',
+    '/js/common.js'
 );
 
 // var SOCEX_CACHE_NAME = 'socex';
