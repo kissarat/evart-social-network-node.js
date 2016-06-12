@@ -28,7 +28,7 @@ if (!('requestFullscreen' in Element.prototype)) {
         Element.prototype.webkitRequestFullScreen || Element.prototype.mozRequestFullScreen;
 }
 
-if (!navigator.mediaDevices.getUserMedia && navigator.webkitGetUserMedia) {
+if (navigator.webkitGetUserMedia && !navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices.getUserMedia = function (options) {
         return new Promise(function (resolve, reject) {
             navigator.webkitGetUserMedia(options, resolve, reject);
@@ -61,7 +61,7 @@ if (window._ && 'lodash' == _.name) {
     _.each = _.forEach = function (list, iteratee, context) {
         if (list) {
             if (context) {
-                iteratee = _.bind(iteratee, context);
+                iteratee = iteratee.bind(context);
             }
             if ('length' in list) {
                 [].forEach.call(list, iteratee);
@@ -71,6 +71,7 @@ if (window._ && 'lodash' == _.name) {
                     iteratee(list[key], key);
                 }
             }
+            return list;
         }
     };
 

@@ -266,7 +266,10 @@ App.module('Views', function (Views, App) {
         region.show(view);
     };
 
-    Views.fileDialog = function (options = {}) {
+    Views.fileDialog = function (options) {
+        if (!options) {
+            options = {};
+        }
         if (!options.id) {
             options.id = 'file-dialog';
         }

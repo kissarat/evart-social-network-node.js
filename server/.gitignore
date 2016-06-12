@@ -1,10 +1,9 @@
-nginx/logs/
-node_modules/
-mongodb/data/
 modules/*.map
 modules/admin.js
-modules/video.js
-modules/test.js
-modules/agent.js
 modules/message.js
+modules/test.js
 modules/user.js
+modules/video.js
+mongodb/data/
+nginx/logs/
+node_modules/

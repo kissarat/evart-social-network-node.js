@@ -1,7 +1,7 @@
 .DS_Store
 .idea/
 app/
-static/
-node_modules/
 gulpfile.js*
+node_modules/
 RecordRTC-master
+static/

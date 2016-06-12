@@ -1,7 +1,7 @@
-images/
-fonts/
-lib/
-coffee/*.js*
-sass/*.css
 .sass-cache/
 blacklist.conf
+coffee/*.js*
+fonts/
+images/
+lib/
+sass/*.css
