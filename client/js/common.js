@@ -82,6 +82,17 @@ function react(target, getter, listeners) {
     }
 }
 
+function resolve(path) {
+    if ('string' == typeof path) {
+        path = path.split('.');
+    }
+    var property = this[path[0]];
+    if (!property) {
+        throw new Error('Invalid property', path[0]);
+    }
+    return path.length > 1 ? resolve.call(property, path.slice(1)) : property;
+}
+
 function logPromise(p) {
     return p.then(function (result) {
             console.log('RESOLVE', result);
@@ -197,6 +208,8 @@ CommonApplication.prototype = {
             return this.navigate('login');
         }
     },
+    
+    resolve: resolve,
     
     module: function (name, define) {
         var module = {};

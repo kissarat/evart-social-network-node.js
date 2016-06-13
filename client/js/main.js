@@ -141,17 +141,35 @@ var StackRegion = Marionette.Region.extend({
         }
     },
 
-    addPanel: function (view) {
+    addPanel: function (view, options) {
         var panelList = this.getPanelList();
         if (view instanceof App.Views.Panel) {
             panel = view;
         }
         else {
             var panel = new App.Views.Panel();
-            panel.getRegion('content').show(view);
+            this._resolveView(panel.getRegion('content'), view, options);
         }
         panelList.addChildView(panel);
         return panel;
+    },
+
+    _resolveView: function (region, view, options) {
+        if ('string' == typeof view) {
+            view = App.resolve(view);
+        }
+        if (view instanceof Marionette.View) {
+            region.show(view);
+        }
+        else {
+            if (view.widget) {
+                view = view.widget(region, options);
+            }
+            else {
+                throw new Error('View is not widget');
+            }
+        }
+        return view;
     },
 
     removePanel: function () {}

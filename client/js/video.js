@@ -137,6 +137,20 @@ App.module('Video', function (Video, App) {
                 })(this));
             }
         }
+
+    }, {
+        widget: function (region) {
+            var list = new Video.List();
+            var layout = new Video.Layout();
+            region.show(layout);
+            var listView = new Video.ListView({
+                collection: list.fullCollection
+            });
+            layout.getRegion('current').show(new Video.View());
+            layout.getRegion('list').show(listView);
+            list.getFirstPage();
+            return layout;
+        }
     });
 
     Video.Unsupported = Marionette.View.extend({
@@ -165,16 +179,7 @@ App.module('Video', function (Video, App) {
     return new Video.Router({
         controller: {
             index: function () {
-                var layout, list, listView;
-                list = new Video.List();
-                layout = new Video.Layout();
-                App.mainRegion.show(layout);
-                listView = new Video.ListView({
-                    collection: list.fullCollection
-                });
-                layout.getRegion('current').show(new Video.View());
-                layout.getRegion('list').show(listView);
-                return list.getFirstPage();
+                return Video.Layout.widget(App.getPlace('main'));
             },
 
             unsupported: function () {
