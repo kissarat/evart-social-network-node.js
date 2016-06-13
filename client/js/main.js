@@ -279,6 +279,7 @@ _.extend(Backbone.Validation.callbacks, {
 var App = new Application();
 App.name = 'socex';
 App.version = 1;
+App.channels = {};
 _.extend(App, CommonApplication.prototype);
 window.App = App;
 window.Application = Application;

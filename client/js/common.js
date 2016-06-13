@@ -145,8 +145,6 @@ CommonApplication.prototype = {
                 available: Element.prototype.requestFullscreen
             }
         };
-
-        this.channels = {};
     },
 
     debug: {
