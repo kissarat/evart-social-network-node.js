@@ -1,0 +1,14 @@
+{
+"/feed": "News",
+"/profile": "Profile", 
+"/feedback": "Feedback" class="disabled", 
+"/dialogs": "Messages", 
+"/phone": "Call" class="disabled", 
+"/friends": "Friends" class="disabled", 
+"/groups": "Groups" class="disabled", 
+"/photos": "Photos", 
+"/videos": "Movies" data-open="left", 
+"/conference": "Video" class="disabled", 
+"/audio": "Music" data-open="right", 
+"/settings": "Settings"
+}

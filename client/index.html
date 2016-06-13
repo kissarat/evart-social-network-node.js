@@ -81,6 +81,10 @@
         <div id="right"></div>
     </div>
 
+    <div id="alert"></div>
+    <div id="modal"></div>
+    <div id="dock-container"></div>
+
     <footer class="front-footer">
         <div class="images">
             <div class="left">
@@ -103,26 +107,6 @@
     <li data-name="audio">Audio</li>
     <li data-name="friends">Friends</li>
     <li data-name="groups">Groups</li>
-
-    <div id="dock-container" style="display: none">
-        <div id="dock">
-            <ul>
-                <li><a href="/feed" title="News"></a></li>
-                <li><a href="/profile" title="Profile"></a></li>
-                <li><a href="/feedback" title="Feedback" class="disabled"></a></li>
-                <li><a href="/dialogs" title="Messages"></a></li>
-                <li><a href="/phone" title="Call" class="disabled"></a></li>
-                <li><a href="/friends" title="Friends" class="disabled"></a></li>
-                <li><a href="/groups" title="Groups" class="disabled"></a></li>
-                <li><a href="/photos" title="Photos"></a></li>
-                <li><a href="/videos" title="Movies" data-open="left"></a></li>
-                <li><a href="/conference" title="Video" class="disabled"></a></li>
-                <li><a href="/audio" title="Music" data-open="right"></a></li>
-                <li><a href="/settings" title="Settings"></a></li>
-            </ul>
-            <div class="base"></div>
-        </div>
-    </div>
 </script>
 
 <div class="include" data-src="/templates/user.html"></div>
@@ -130,10 +114,6 @@
 <div class="include" data-src="/templates/message.html"></div>
 <div class="include" data-src="/templates/video.html"></div>
 <div class="include" data-src="/templates/peer.html"></div>
-
-<div id="floating-window-container"></div>
-<div id="alert"></div>
-<div id="modal"></div>
 
 <div id="script">
     <script src="/js/data.js"></script>
@@ -155,6 +135,7 @@
     <script src="/js/database.js"></script>
     <script src="/js/load.js"></script>
     <script src="/js/views.js"></script>
+    <script src="/js/dock.js"></script>
     <script src="/js/user.js"></script>
     <script src="/js/message.js"></script>
     <!--<script src="/coffee/video.js"></script>-->

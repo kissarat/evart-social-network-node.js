@@ -26,7 +26,7 @@ Socket.prototype = {
             },
             close: function () {
                 if (App.user) {
-                    return setTimeout(pull, App.config.socket.wait);
+                    return setTimeout(App.socket.pull.bind(App), App.config.socket.wait);
                 }
             }
         });

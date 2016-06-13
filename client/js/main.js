@@ -39,6 +39,15 @@ addEventListener('keyup', function (e) {
    }
 });
 
+_.extend(Backbone.ChildViewContainer.prototype, {
+    clear: function () {
+        var self = this;
+        this.call(function () {
+            self.remove(this);
+        })
+    }
+});
+
 HTMLFormElement.prototype.serialize = function () {
     var result;
     result = {};
@@ -98,7 +107,8 @@ var RootLayout = Marionette.View.extend({
         main: '#main',
         addRight: '#root > .add.right > .region',
         right: '#right',
-        alert: '#alert'
+        alert: '#alert',
+        dock: '#dock'
         // modalRegion: App.ModalRegion
     }
 });
@@ -153,6 +163,27 @@ var Application = Marionette.Application.extend({
                 return this.login();
             }
         }
+    },
+
+    getPlace: function (name) {
+        var region = this.getRegion().currentView.getRegion(name);
+        if (!region.currentView) {
+            var stack = new App.Views.PanelList();
+            region.show(stack);
+        }
+        return region;
+    },
+    
+    putPanel: function (name, view, clear) {
+        var region = this.getPlace(name);
+        var panelList = region.currentView;
+        if (clear) {
+            panelList.childViewContainer.clear();
+        }
+        else {
+            panelList.push();
+        }
+        panelList.add(view, false);
     }
 });
 
@@ -410,3 +441,10 @@ App.Upload = Marionette.Object.extend({
         return xhr;
     }
 });
+
+function uptime() {
+    var delta = Date.now() - statistics.start;
+    var minutes = Math.floor(delta / 60000);
+    var seconds = Math.floor(delta / 1000 - minutes * 60);
+    return [minutes, seconds];
+}

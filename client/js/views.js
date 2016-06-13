@@ -79,49 +79,6 @@ App.module('Views', function (Views, App) {
         }
     });
 
-    Views.Upload = Marionette.View.extend({
-        template: '#view-upload',
-
-        ui: {
-            file: '[type=file]'
-        },
-
-        events: {
-            'change [type=file]': 'upload'
-        },
-
-        upload: function () {
-            var self = this;
-            var files = _.toArray(this.ui.file[0].files);
-
-            function _upload() {
-                var file;
-                file = files.shift();
-                if (file) {
-                    App.upload('/api/photo', file).then(function (photo, e) {
-                        var message;
-                        if (photo) {
-                            return self.trigger('uploaded', new App.Models.Photo(photo));
-                        } else {
-                            message = (function () {
-                                switch (e.target.status) {
-                                    case code.REQUEST_TOO_LONG:
-                                        return 'is too large';
-                                    default:
-                                        return 'unknown error';
-                                }
-                            })();
-                            return error_message(self.el, file.name + ' ' + T(message));
-                        }
-                    });
-                    return _upload();
-                }
-            }
-
-            _upload();
-        }
-    });
-
     Views.PhotoThumbnail = Marionette.View.extend({
         template: '#view-photo-thumbnail',
 
@@ -317,5 +274,43 @@ App.module('Views', function (Views, App) {
         });
         options.promise = Views.fileDialog(dialogOptions);
         return new App.Upload(options);
-    }
+    };
+
+    Views.Panel = Marionette.View.extend({
+        template: '#view-dock',
+
+        ui: {
+            controls: '.panel-controls'
+        },
+
+        onRender: function () {
+
+        }
+    });
+
+    Views.PanelList = Marionette.CollectionView.extend({
+        childView: Views.Panel,
+
+        initialize: function () {
+            this.stack = [];
+        },
+        
+        push: function () {
+            var children = this.children;
+            this._initChildViewStorage();
+            this.stack.push(children);
+            return children;
+        },
+
+        pop: function () {
+            return this.children = this.stack.pop();
+        },
+
+        add: function (view, enableControls) {
+            this.addChildView(view);
+            if (enableControls) {
+                view.ui.controls[0].style.removeProperty('display');
+            }
+        }
+    });
 });
