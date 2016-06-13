@@ -349,7 +349,8 @@ App.module('User', function (User, App) {
         template: '#layout-user',
 
         regions: {
-            'message-list': '.message-list'
+            'message-list': '.message-list',
+            'photo-list': '.photo-list'
         },
 
         behaviors: {
@@ -361,13 +362,11 @@ App.module('User', function (User, App) {
             header: 'header',
             avatar: '.big-avatar',
             edit: '.edit',
-            status: '.status'
+            status: '.status',
+            photoList: '.photo-list'
         },
 
         events: {
-            // 'dragenter .big-avatar': preventDefault,
-            // 'dragover .big-avatar': preventDefault,
-            // 'drop .big-avatar': 'dropAvatar',
             'click .edit': function () {
                 return App.navigate('/edit/' + this.model.get('_id'));
             },
@@ -550,7 +549,7 @@ App.module('User', function (User, App) {
     return new User.Router({
         controller: {
             login: function () {
-                App.mainRegion.show(new User.LoginForm({
+                App.getPlace('main').show(new User.LoginForm({
                     model: new User.Login()
                 }));
                 return $(document.body).addClass('login');
@@ -565,7 +564,7 @@ App.module('User', function (User, App) {
                 signup = new User.SignupForm({
                     model: new User.Signup()
                 });
-                App.mainRegion.show(signup);
+                App.getPlace('main').show(signup);
                 return signup.loginRegion.show(new User.LoginForm({
                     model: new User.Login()
                 }));
@@ -581,7 +580,12 @@ App.module('User', function (User, App) {
                     profile.el.classList.add('scroll');
                     profile.el.classList.add(user.get('type'));
                     App.getPlace('main').show(profile);
+                    var photoList = new App.Photo.List();
+                    photoList.queryModel.set('owner_id', user._id);
+                    photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 70));
                     profile.getRegion('message-list').show(App.Message.ListView.wall(user.get('_id')));
+                    profile.getRegion('photo-list').show(new App.Photo.ListView({collection: photoList.fullCollection}));
+                    photoList.getFirstPage();
                 });
             },
 
@@ -591,7 +595,7 @@ App.module('User', function (User, App) {
                     _id: id
                 });
                 model.fetch();
-                return App.mainRegion.show(new User.EditForm({
+                return App.getPlace('main').show(new User.EditForm({
                     model: model
                 }));
             },
@@ -604,7 +608,7 @@ App.module('User', function (User, App) {
                 form = new User.EditForm({
                     model: model
                 });
-                return App.mainRegion.show(form);
+                return App.getPlace('main').show(form);
             },
 
             index: function () {

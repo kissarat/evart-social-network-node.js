@@ -26,6 +26,7 @@ fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n
 var ext_regex = /\.(\w+)$/;
 
 var handlers = [
+    {mime: ['image/jpeg'], type: 'photo'},
     {mime: ['audio/mpeg', 'audio/ogg', 'audio/ogg'], type: 'audio'},
     {mime: ['video/mp4', 'video/webm'], type: 'video'},
     {mime: ['text/html', 'text/plain'], type: 'text'},
@@ -65,11 +66,11 @@ module.exports = {
         var id_filename = static_dir + '/id/' + id + '.' + ext;
         var stream = fs.createWriteStream(id_filename, {
             flags: 'w',
-            mode: parseInt('600', 8)
+            mode: parseInt('644', 8),
+            autoClose: true
         });
-        $.req.pipe(stream);
         return new Promise(function (resolve, reject) {
-            stream.on('end', function () {
+            $.req.on('end', function () {
                 fs.stat(id_filename, $.wrap(function (stat) {
                     magic.detectFile(id_filename, $.wrap(function (mime) {
                         hash_md5(id_filename, $.wrap(function (md5) {
@@ -85,33 +86,33 @@ module.exports = {
                                 owner: owner_id,
                                 ext: ext,
                                 mime: mime,
-                                stat: stat,
+                                size: stat.size,
+                                inode: stat.ino,
                                 time: Date.now(),
                                 md5: md5,
-                                type: mime ? mime : 'file'
+                                type: type ? type : 'file'
                             };
                             var md5_filename = path.join(md5_dir, md5 + '.' + ext);
-                            fs.stat(md5_filename, $.wrap(function (stat) {
-                                data.path = md5_filename;
-                                data.success = true;
-                                function save(created) {
-                                    return function (err) {
-                                        data.created = created;
-                                        var file = new File(data);
-                                        resolve(file.save());
-                                    }
+                            data.path = md5_filename;
+                            data.success = true;
+                            function save(created) {
+                                return function (err) {
+                                    data.created = created;
+                                    var file = new File(data);
+                                    resolve(file.save());
                                 }
+                            }
 
-                                if (stat) {
-                                    fs.unlink(id_filename, save(false));
-                                } else {
-                                    fs.rename(id_filename, md5_filename, save(true));
-                                }
-                            }));
+                            // if (stat) {
+                            //     fs.unlink(id_filename, save(false));
+                            // } else {
+                                fs.rename(id_filename, md5_filename, save(true));
+                            // }
                         }));
                     }));
                 }));
             });
+            $.req.pipe(stream, {end: true});
         })
     },
 
@@ -144,6 +145,8 @@ module.exports = {
 };
 
 global.schema.File = new mongoose.Schema({
+    _id: utils.idType('File'),
+
     time: {
         type: Date,
         required: true,
@@ -174,12 +177,14 @@ global.schema.File = new mongoose.Schema({
         required: true
     },
 
-    size: {
-        type: Number,
-        required: true
-    },
-
     name: {
         type: String
-    }
+    },
+
+    ext: {
+        type: String
+    },
+
+    size: Number,
+    inode: Number
 });

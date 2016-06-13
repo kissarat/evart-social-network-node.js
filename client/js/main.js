@@ -25,18 +25,18 @@ _.extend(Element.prototype, {
 });
 
 addEventListener('keyup', function (e) {
-   if ('F7' == e.key) {
-       var error_id = localStorage.getItem('errors_last');
-       if (error_id) {
-           App.local.getById('errors', error_id).then(function (error) {
-               var text = JSON.stringify(error, null, '\t');
-               text = text.replace(/([\/\w\-_]+\.js):(\d+)/g, function (match, path, line) {
-                   return '<span class="green">' + path + '</span>:<span class="red">' + line + '</span>';
-               });
-               document.body.innerHTML = '<pre>' + text + '</pre>';
-           })
-       }
-   }
+    if ('F7' == e.key) {
+        var error_id = localStorage.getItem('errors_last');
+        if (error_id) {
+            App.local.getById('errors', error_id).then(function (error) {
+                var text = JSON.stringify(error, null, '\t');
+                text = text.replace(/([\/\w\-_]+\.js):(\d+)/g, function (match, path, line) {
+                    return '<span class="green">' + path + '</span>:<span class="red">' + line + '</span>';
+                });
+                document.body.innerHTML = '<pre>' + text + '</pre>';
+            })
+        }
+    }
 });
 
 _.extend(Backbone.ChildViewContainer.prototype, {
@@ -143,14 +143,10 @@ var StackRegion = Marionette.Region.extend({
 
     addPanel: function (view, options) {
         var panelList = this.getPanelList();
-        if (view instanceof App.Views.Panel) {
-            panel = view;
-        }
-        else {
-            var panel = new App.Views.Panel();
-            this._resolveView(panel.getRegion('content'), view, options);
-        }
+        var panel = view instanceof App.Views.Panel ? view : new App.Views.Panel();
         panelList.addChildView(panel);
+        panel.ui.controls.show();
+        this._resolveView(panel.getRegion('content'), view, options);
         return panel;
     },
 
@@ -162,7 +158,7 @@ var StackRegion = Marionette.Region.extend({
             region.show(view);
         }
         else {
-            if (view.widget) {
+            if ('function' === typeof view.widget) {
                 view = view.widget(region, options);
             }
             else {
@@ -172,7 +168,8 @@ var StackRegion = Marionette.Region.extend({
         return view;
     },
 
-    removePanel: function () {}
+    removePanel: function () {
+    }
 });
 
 var RootLayout = Marionette.View.extend({
@@ -182,7 +179,7 @@ var RootLayout = Marionette.View.extend({
         addLeft: '#root > .add.left',
         main: '#main',
         addRight: '#root > .add.right',
-        right:  new StackRegion({el: '#right'}),
+        right: new StackRegion({el: '#right'}),
         alert: '#alert',
         dock: '#dock-container'
         // modalRegion: App.ModalRegion
@@ -194,7 +191,8 @@ $(document).ajaxError(function (e, xhr) {
     try {
         data = JSON.parse(xhr.responseText);
     }
-    catch (ex) {}
+    catch (ex) {
+    }
     if (data && data.error && data.error.stack) {
         var error = data.error;
         error.type = 'server';
@@ -318,12 +316,7 @@ App.PageableCollection = Backbone.PageableCollection.extend({
         return Object.keys(this.queryModelInitial).forEach(function (k) {
             return self.queryParams[k] = function () {
                 var value = self.queryModel.get(k);
-                if ('string' == typeof value) {
-                    return value ? value.trim().replace(/\s+/g, ' ').toLocaleLowerCase() : '';
-                }
-                else {
-                    console.error(k + ' is undefined');
-                }
+                return 'string' == typeof value ? value ? value.trim().replace(/\s+/g, ' ').toLocaleLowerCase() : '' : null;
             };
         });
     },

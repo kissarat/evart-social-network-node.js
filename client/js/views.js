@@ -29,7 +29,7 @@ App.module('Views', function (Views, App) {
             if (cssClass) {
                 cssClass.split(/\s+/).forEach(function (className) {
                     if (className) {
-                        document.body.classList.add(cssClass);
+                        document.body.classList.add(className);
                     }
                 });
             }

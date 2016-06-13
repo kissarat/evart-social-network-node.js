@@ -43,23 +43,13 @@ global.schema.Message = god.Schema
     default: null
   ]
 
-  photo:
+  file:
     type: god.Schema.Types.ObjectId
     ref: 'Photo'
 
-  photos: [
+  files: [
     type: god.Schema.Types.ObjectId
     ref: 'Photo'
-    default: null
-  ]
-
-  video:
-    type: god.Schema.Types.ObjectId
-    ref: 'Video'
-
-  videos: [
-    type: god.Schema.Types.ObjectId
-    ref: 'Video'
     default: null
   ]
 
