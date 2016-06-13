@@ -1,6 +1,9 @@
 "use strict";
 
 self.DEV = !self.version;
+self.T = function (text) {
+    return text;
+};
 
 _.mixin({
     merge: function () {

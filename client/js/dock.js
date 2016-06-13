@@ -60,9 +60,13 @@ App.module('Dock', function (Dock, App) {
         }));
     }
 
-    App.on('start', function () {
+    App.on('login', function () {
         var dock = new Dock.Layout();
-        App.getPlace('main').show(dock);
+        App.getPlace('dock').show(dock);
         dock.getRegion('list').show(new Dock.ListView({collection: list}));
+    });
+
+    App.on('logout', function () {
+        App.getPlace('dock').empty();
     });
 });

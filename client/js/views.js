@@ -1,6 +1,13 @@
 "use strict";
 
 App.module('Views', function (Views, App) {
+    Views.Router = Marionette.AppRouter.extend({
+        appRoutes: {
+            'empty': 'empty'
+        }
+    });
+
+
     App.Behaviors.Bindings = Marionette.Behavior.extend({
         onRender: function () {
             this.view.$('a').click(function (e) {
@@ -96,17 +103,6 @@ App.module('Views', function (Views, App) {
 
         onRender: function () {
             return this.$el.css('background-image', "url(/photo/" + (this.model.get('_id')) + ".jpg)");
-        }
-    });
-
-    Views.VerticalMenu = Marionette.View.extend({
-        template: '#view-vertical-menu',
-
-        tagName: 'ul',
-
-        ui: {
-            messages: '[data-name=messages]',
-            video: '[data-name=video]'
         }
     });
 
@@ -277,10 +273,14 @@ App.module('Views', function (Views, App) {
     };
 
     Views.Panel = Marionette.View.extend({
-        template: '#view-dock',
+        template: '#view-panel',
 
         ui: {
             controls: '.panel-controls'
+        },
+
+        regions: {
+            content: '.panel-content'
         },
 
         onRender: function () {
@@ -294,22 +294,31 @@ App.module('Views', function (Views, App) {
         initialize: function () {
             this.stack = [];
         },
-        
-        push: function () {
-            var children = this.children;
-            this._initChildViewStorage();
-            this.stack.push(children);
-            return children;
-        },
-
-        pop: function () {
-            return this.children = this.stack.pop();
-        },
 
         add: function (view, enableControls) {
-            this.addChildView(view);
+            var panel = new Views.Panel();
+            this.addChildView(panel);
+            panel.getRegion('content').show(view);
             if (enableControls) {
-                view.ui.controls[0].style.removeProperty('display');
+                panel.ui.controls[0].style.removeProperty('display');
+            }
+            return panel;
+        }
+    });
+    
+    Views.Placeholder = Marionette.View.extend({
+        template: '#view-empty',
+        
+        attributes: {
+            'class': 'view-placeholder'
+        }
+    });
+
+    new Views.Router({
+        controller: {
+            empty: function () {
+                var placeholder = new Views.Placeholder();
+                App.getPlace('main').add(placeholder, true);
             }
         }
     });

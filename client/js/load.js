@@ -78,7 +78,6 @@ function load1_windowLoad() {
             }));
         });
         return $.when(deferreds).then(function () {
-            console.log('Views loaded');
             load2_registerAgent.call(App);
         });
     } else if (window.addEventListener && navigator.sendBeacon) {
@@ -122,10 +121,10 @@ function load3_languageLoaded(xhr) {
     if (code.UNAUTHORIZED !== xhr.status) {
         try {
             App.agent = JSON.parse(xhr.responseText);
-            App.trigger('login');
         } catch (ex) {
             console.warn('User is not authorized');
         }
+        App.trigger('login');
     }
 
     Backbone.history.start({

@@ -580,8 +580,8 @@ App.module('User', function (User, App) {
                     var profile = new User.View({model: user});
                     profile.el.classList.add('scroll');
                     profile.el.classList.add(user.get('type'));
-                    App.mainRegion.show(profile);
-                    profile.showChildView('message-list', App.Message.ListView.wall(user.get('_id')));
+                    App.getPlace('main').show(profile);
+                    profile.getRegion('message-list').show(App.Message.ListView.wall(user.get('_id')));
                 });
             },
 

@@ -99,16 +99,74 @@ _.extend(Backbone.Model.prototype, {
     }
 });
 
+var StackRegion = Marionette.Region.extend({
+    initialize: function () {
+        this.stack = [];
+    },
+
+    push: function (view) {
+        var old = this.currentView;
+        if (old) {
+            this.stack.push(this.currentView);
+        }
+        this.show(view);
+        return old;
+    },
+
+    pop: function () {
+        var current = this.currentView;
+        var old = this.stack.pop();
+        if (old) {
+            this.show(old);
+        }
+        else {
+            this.empty();
+        }
+        return current;
+    },
+
+    getPanelList: function () {
+        var current = this.currentView;
+        if (current) {
+            if (current instanceof App.Views.PanelList) {
+                return current;
+            }
+            else {
+                throw new Error('currentView is not PanelList');
+            }
+        }
+        else {
+            this.show(new App.Views.PanelList());
+            return this.currentView;
+        }
+    },
+
+    addPanel: function (view) {
+        var panelList = this.getPanelList();
+        if (view instanceof App.Views.Panel) {
+            panel = view;
+        }
+        else {
+            var panel = new App.Views.Panel();
+            panel.getRegion('content').show(view);
+        }
+        panelList.addChildView(panel);
+        return panel;
+    },
+
+    removePanel: function () {}
+});
+
 var RootLayout = Marionette.View.extend({
     template: '#view-region',
     regions: {
-        left: '#left',
-        addLeft: '#root > .add.left > .region',
+        left: new StackRegion({el: '#left'}),
+        addLeft: '#root > .add.left',
         main: '#main',
-        addRight: '#root > .add.right > .region',
-        right: '#right',
+        addRight: '#root > .add.right',
+        right:  new StackRegion({el: '#right'}),
         alert: '#alert',
-        dock: '#dock'
+        dock: '#dock-container'
         // modalRegion: App.ModalRegion
     }
 });
@@ -166,24 +224,7 @@ var Application = Marionette.Application.extend({
     },
 
     getPlace: function (name) {
-        var region = this.getRegion().currentView.getRegion(name);
-        if (!region.currentView) {
-            var stack = new App.Views.PanelList();
-            region.show(stack);
-        }
-        return region;
-    },
-    
-    putPanel: function (name, view, clear) {
-        var region = this.getPlace(name);
-        var panelList = region.currentView;
-        if (clear) {
-            panelList.childViewContainer.clear();
-        }
-        else {
-            panelList.push();
-        }
-        panelList.add(view, false);
+        return this.getRegion().currentView.getRegion(name);
     }
 });
 
@@ -267,14 +308,6 @@ App.PageableCollection = Backbone.PageableCollection.extend({
             };
         });
     },
-
-    // state: function () {
-    //     return {
-    //         totalRecords: 2000,
-    //         currentPage: 1,
-    //         limit: 48
-    //     }
-    // },
 
     state: {
         order: -1,
