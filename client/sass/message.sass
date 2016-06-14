@@ -39,11 +39,6 @@
   display: flex
   flex-direction: column
 
-//.unread
-//  background-color: greenyellow
-//  &:hover
-//    background-color: green
-
 .wall-like
   width: 56px
   height: 22px
@@ -53,7 +48,7 @@
   &.hate
     background-position-y: 44px
   > div:hover
-      background-color: black
+    background-color: black
 
 .message-controls
   color: #BCBCBC
@@ -79,3 +74,42 @@
   border-radius: 50%
   width: 32px
   height: 32px
+
+.layout-dialog
+  .list
+    min-height: calc(100vh - 136px)
+
+.layout-editor
+  border-top: 1px solid black
+  .editor-container
+    display: flex
+    justify-content: space-between
+    > div
+      margin-top: 4px
+      height: 36px
+      width: 36px
+  .button
+    background: no-repeat center
+    cursor: pointer
+  .attach
+    background-image: url("/images/attach.png")
+  .editor
+    flex: 1
+    border: none
+    resize: none
+    height: 40px
+  .smile
+    line-height: 36px
+    font-size: 1.2em
+  .send
+    background-image: url("/images/send.png")
+  .smiles span
+    display: inline-block
+    margin: 0 2px
+    cursor: pointer
+    font-size: 1em
+    transition: font-size 0.2s
+    vertical-align: top
+    &:hover
+      font-size: 1.5em
+      transition: font-size 0.2s

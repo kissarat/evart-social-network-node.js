@@ -616,7 +616,7 @@ App.module('User', function (User, App) {
                 pageable.queryModel.set('type', 'user');
                 var listView = new User.ListView({collection: pageable.fullCollection});
                 var layout = new User.SearchView({model: pageable.queryModel});
-                App.putPanel('main', layout);
+                App.getPlace('main').show(layout);
                 layout.getRegion('list').show(listView);
                 pageable.getFirstPage();
             },

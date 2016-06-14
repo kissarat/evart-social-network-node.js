@@ -1,7 +1,8 @@
 App.module('Message', function (Message, App) {
     Message.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'wall/:id': 'wall'
+            'wall/:id': 'wall',
+            'dialog/:id': 'dialog',
         }
     });
 
@@ -25,9 +26,7 @@ App.module('Message', function (Message, App) {
     Message.List = App.PageableCollection.extend({
         url: '/api/message',
 
-        queryModelInitial: {
-            owner_id: null
-        },
+        queryModelInitial: {},
 
         model: function (attrs, options) {
             return new Message.Model(attrs, options);
@@ -257,23 +256,93 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.Dialog = Marionette.View.extend({
+        template: '#layout-dialog',
+        url: '/api/message',
+
+        attributes: {
+            'class': 'layout-dialog scroll'
+        },
+
+        regions: {
+            'list': '.list',
+            'editor': '.editor'
+        },
+
+        queryModelInitial: {
+            target_id: null
+        },
+
+        onRender: function () {
+
+        }
+    }, {
+        widget: function (region, options) {
+            var list = new Message.List();
+            list.queryModel.set('target_id', options.target_id);
+            var listView = new Message.ListView({collection: list.fullCollection});
+            var editor = new Message.Editor({
+                model: new Message.Model({
+                    target_id: options.target_id
+                })
+            });
+            var dialog = new Message.Dialog();
+            region.show(dialog);
+            dialog.getRegion('list').show(listView);
+            dialog.getRegion('editor').show(editor);
+            list.getFirstPage();
+            return dialog;
+        }
+    });
+
+    Message.Emoji = Marionette.View.extend({
+        template: '#view-empty',
+
+        onRender: function () {
+            var self = this;
+            emoji.slice(0, 36).forEach(function (smile) {
+                $('<span/>')
+                    .html(smile)
+                    .appendTo(self.$el)
+                    .click(function () {
+                        self.trigger('insert', this.innerHTML);
+                    })
+            });
+        }
+    });
+
     Message.Editor = Marionette.View.extend({
         template: '#layout-editor',
+        
+        behaviors: {
+            Bindings: {}
+        },
+        
+        ui: {
+            editor: '.editor'
+        },
 
         regions: {
             editor: '.editor',
-            buttons: '.buttons',
+            smiles: '.smiles',
             attachments: '.attachments',
-            photos: 'div[data-list=photos]',
-            videos: 'div[data-list=videos]',
-            files: 'div[data-list=files]',
             selection: '.selection'
         },
 
         events: {
-            'click [data-type=photo]': 'selectPhoto',
-            'click [data-type=video]': 'selectVideo',
-            'click [type=submit]': 'submit'
+            'click .smile': 'showSmiles'
+        },
+
+        showSmiles: function () {
+            var self = this;
+            var emojiView = new Message.Emoji();
+            emojiView.on('insert', function (smile) {
+                var editor = self.ui.editor[0];
+                editor.value = editor.value.slice(0, editor.selectionStart)
+                    + smile + editor.value.slice(editor.selectionEnd);
+                self.getRegion('smiles').empty();
+            });
+            this.getRegion('smiles').show(emojiView);
         }
     });
 
@@ -283,6 +352,10 @@ App.module('Message', function (Message, App) {
                 var wall = Message.ListView.wall(id);
                 wall.$el.addClass('scroll');
                 return App.mainRegion.show(wall);
+            },
+
+            dialog: function (id) {
+                Message.Dialog.widget(App.getPlace('main'), {target_id: id});
             }
         }
     });

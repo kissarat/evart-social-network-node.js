@@ -140,7 +140,7 @@ App.module('Video', function (Video, App) {
         }
 
     }, {
-        widget: function (region) {
+        widget: function (region, options) {
             var list = new Video.List();
             var layout = new Video.Layout();
             region.show(layout);

@@ -496,3 +496,29 @@ function uptime() {
     var seconds = Math.floor(delta / 1000 - minutes * 60);
     return [minutes, seconds];
 }
+function findStyleRules(selector, match) {
+    if (false !== match) {
+        match = true;
+    }
+    var rules = [];
+    for(var i = 0; i < document.styleSheets.length; i++) {
+        var styleSheet = document.styleSheets[i];
+        for(var j = 0; j < styleSheet.cssRules.length; j++) {
+            var rule = styleSheet.cssRules[j];
+            if (rule.selectorText) {
+                var s = rule.selectorText.trim().replace(/\s+/g, ' ');
+                if (match ? s == selector : s.indexOf(selector)) {
+                    rules.push(rule);
+                }
+            }
+        }
+    }
+    return rules;
+}
+
+App.on('login', function () {
+    if (App.user && 'admin' == App.user.type) {
+        var rule = findStyleRules('.admin')[0];
+        rule.style.removeProperty('display');
+    }
+});

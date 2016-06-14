@@ -7,7 +7,6 @@ App.module('Views', function (Views, App) {
         }
     });
 
-
     App.Behaviors.Bindings = Marionette.Behavior.extend({
         onRender: function () {
             this.view.$('a').click(function (e) {

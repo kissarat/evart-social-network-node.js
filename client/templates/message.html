@@ -2,11 +2,11 @@
     <div class="content">
         <a class="info">
             <div class="container">
-            <div>
-                <div class="avatar"></div>
-                <div class="time"></div>
-                <div class="ip"></div>
-            </div>
+                <div>
+                    <div class="avatar"></div>
+                    <div class="time"></div>
+                    <div class="ip"></div>
+                </div>
             </div>
         </a>
         <div class="message">
@@ -36,22 +36,20 @@
 </script>
 
 <script type="text/template" id="layout-editor">
-    <div class="editor">
-        <textarea name="text" placeholder="Message..."></textarea>
-        <img class="avatar"/>
+    <div class="editor-container">
+        <div class="button attach"></div>
+        <textarea class="editor" placeholder="Message..."></textarea>
+        <div class="button smile">&#x1F600;</div>
+        <div class="button send"></div>
     </div>
-    <div class="buttons">
-        <button type="submit">Send</button>
-        <button type="button" data-type="photo" data-list="photos">Photo</button>
-        <button type="button" data-type="video" data-list="videos">Video</button>
-        <button type="button" data-type="file" data-list="files">File</button>
-    </div>
-    <div class="attachments">
-        <div data-list="photos"></div>
-        <div data-list="videos"></div>
-        <div data-list="files"></div>
-    </div>
-    <div class="selection"></div>
+    <div class="smiles"></div>
+    <div class="select-attachement"></div>
+    <div class="attachments"></div>
+</script>
+
+<script type="text/template" id="layout-dialog">
+    <div class="list"></div>
+    <div class="editor"></div>
 </script>
 
 <script type="text/template" id="view-last-message">
@@ -78,3 +76,4 @@
         <input data-id="volume" type="range" max="10"/>
     </div>
 </script>
+
