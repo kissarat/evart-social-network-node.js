@@ -3,5 +3,6 @@ blacklist.conf
 coffee/*.js*
 fonts/
 images/
+easter-*
 lib/
 sass/*.css

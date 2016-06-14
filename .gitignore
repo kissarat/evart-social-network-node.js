@@ -5,3 +5,4 @@ gulpfile.js*
 node_modules/
 RecordRTC-master
 static/
+taras/

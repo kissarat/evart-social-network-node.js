@@ -35,8 +35,8 @@ App.module('Message', function (Message, App) {
     });
 
 
-    Message.List = App.PageableCollection.extend({
-        url: '/api/message',
+    Message.DialogList = App.PageableCollection.extend({
+        url: '/api/message/dialogs',
 
         queryModelInitial: {
             owner_id: null

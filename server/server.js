@@ -717,6 +717,32 @@ function serve($) {
         $.req.url.query.id = last;
         path.pop();
     }
+    var relative = /^.(dir)([^\?]+)/.exec($.req.url.original);
+    if (relative) {
+        var action = modules[relative[1]];
+        if (action) {
+            action = action[$.req.method];
+            if ('function' == typeof action) {
+                relative = relative[2].replace(/\.{2,}/, '');
+                relative = relative.replace(/[\/\\]+/, '/');
+                try {
+                    action($, relative);
+                }
+                catch (ex) {
+                    var response = {
+                        success: false,
+                        path: relative
+                    };
+                    $.sendStatus(code.INTERNAL_SERVER_ERROR, response);
+                }
+                return;
+            }
+        }
+        if (!action) {
+            $.sendStatus(code.METHOD_NOT_ALLOWED);
+            return;
+        }
+    }
     var result = walk($, modules, path);
 
     switch (typeof result) {

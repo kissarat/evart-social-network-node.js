@@ -306,6 +306,10 @@ App.module('Views', function (Views, App) {
         }
     });
     
+    Views.Empty = Marionette.View.extend({
+        template: '#view-empty'
+    });
+    
     Views.Placeholder = Marionette.View.extend({
         template: '#view-empty',
         

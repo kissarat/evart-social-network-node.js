@@ -8,6 +8,7 @@ var T = mongoose.Schema.Types;
 
 global.schema.Message = mongoose.Schema({
     _id: utils.idType('Message'),
+
     source: {
         type: T.ObjectId,
         ref: 'User',
@@ -16,6 +17,7 @@ global.schema.Message = mongoose.Schema({
             unique: false
         }
     },
+
     target: {
         type: T.ObjectId,
         ref: 'User',
@@ -23,6 +25,7 @@ global.schema.Message = mongoose.Schema({
             unique: false
         }
     },
+
     owner: {
         type: T.ObjectId,
         ref: 'User',
@@ -30,6 +33,7 @@ global.schema.Message = mongoose.Schema({
             unique: false
         }
     },
+
     like: [
         {
             type: T.ObjectId,
@@ -37,6 +41,7 @@ global.schema.Message = mongoose.Schema({
             "default": null
         }
     ],
+
     hate: [
         {
             type: T.ObjectId,
@@ -44,10 +49,12 @@ global.schema.Message = mongoose.Schema({
             "default": null
         }
     ],
+
     file: {
         type: T.ObjectId,
         ref: 'Photo'
     },
+
     files: [
         {
             type: T.ObjectId,
@@ -55,28 +62,35 @@ global.schema.Message = mongoose.Schema({
             "default": null
         }
     ],
+
     time: {
         type: Date,
         required: true,
         "default": Date.now
     },
+
     unread: {
         type: Number,
         "default": 1
     },
+
     text: {
         type: String
     },
+
     ip: {
         type: String
     },
+
     geo: {
         type: Array
     },
+
     repost: {
         type: T.ObjectId,
         ref: 'Message'
     },
+
     children: [
         {
             type: T.ObjectId,
@@ -113,6 +127,7 @@ module.exports = {
             return message.save();
         }
     },
+
     GET: function ($) {
         var me, r, target_id;
         r = null;
@@ -150,11 +165,13 @@ module.exports = {
             $.sendStatus(code.BAD_REQUEST);
         }
     },
+
     DELETE: function ($) {
         return Message.remove({
             _id: $.id
         });
     },
+
     read: function ($) {
         var conditions;
         if ($.has('id')) {
@@ -186,6 +203,7 @@ module.exports = {
             return false;
         }
     },
+
     feed: function ($) {
         var follows;
         follows = $.user.follow.map(function (f) {
@@ -197,6 +215,7 @@ module.exports = {
             }
         });
     },
+
     dialogs: function ($) {
         var me;
         me = $.user._id;
@@ -251,13 +270,13 @@ module.exports = {
     }
 };
 
-user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos', 'video', 'videos', 'text', 'repost'];
+var user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos', 'video', 'videos', 'text', 'repost'];
 
-admin_fields = ['domain', 'type'];
+var admin_fields = ['domain', 'type'];
 
 function populate(r) {
     return r.populate('source', '_id domain avatar').populate('target', '_id domain avatar').populate('videos', '_id thumbnail_url thumbnail_width thumbnail_height').populate('repost', '_id source target photos videos text').populate('children', '_id source target photos videos text time');
-};
+}
 
 function dialogs_condition(me) {
     return [
@@ -267,7 +286,8 @@ function dialogs_condition(me) {
                     $exists: true
                 }
             }
-        }, {
+        },
+        {
             $match: {
                 $or: [
                     {
@@ -277,11 +297,13 @@ function dialogs_condition(me) {
                     }
                 ]
             }
-        }, {
+        },
+        {
             $sort: {
                 time: -1
             }
-        }, {
+        },
+        {
             $group: {
                 _id: {
                     source: '$source',
@@ -305,4 +327,4 @@ function dialogs_condition(me) {
             }
         }
     ];
-};
+}
