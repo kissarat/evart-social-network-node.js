@@ -2,7 +2,7 @@ App.module('Message', function (Message, App) {
     Message.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'wall/:id': 'wall',
-            'dialog/:id': 'dialog',
+            'dialog/:id': 'dialog'
         }
     });
 
@@ -51,7 +51,9 @@ App.module('Message', function (Message, App) {
     Message.List = App.PageableCollection.extend({
         url: '/api/message',
 
-        queryModelInitial: {},
+        queryModelInitial: {
+            target_id: null
+        },
 
         model: function (attrs, options) {
             return new Message.Model(attrs, options);
@@ -331,7 +333,7 @@ App.module('Message', function (Message, App) {
             var listView = new Message.ListView({collection: list.fullCollection});
             var editor = new Message.Editor({
                 model: new Message.Model({
-                    target_id: options.target_id
+                    target: options.target_id
                 })
             });
             var dialog = new Message.Dialog();
@@ -399,7 +401,7 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            if (!App.storage.load(this.model, 'target_id')) {
+            if (!App.storage.load(this.model, 'target')) {
                 this.ui.editor.one('click', function () {
                     this.innerHTML = '';
                 });
@@ -408,7 +410,7 @@ App.module('Message', function (Message, App) {
 
         onDestroy: function () {
             if (this.model.get('text')) {
-                App.storage.save(this.model, 'target_id');
+                App.storage.save(this.model, 'target');
             }
         },
 
@@ -429,7 +431,7 @@ App.module('Message', function (Message, App) {
         send: function () {
             var text = this.model.get('text');
             if (text) {
-                this.model.save('text', text, {
+                this.model.save(null, {
                     success: function (model) {
                         model.loadRelative().then(function () {
                             Message.channel.request('message', model);

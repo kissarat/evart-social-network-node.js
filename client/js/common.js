@@ -223,11 +223,16 @@ CommonApplication.prototype = {
 
     storage: {
         save: function (model, idAttribute) {
-            localStorage.setItem(model.get(idAttribute || '_id'), JSON.stringify(model.attributes));
+            var id = model.get(idAttribute || '_id');
+            if ('object' == typeof id) {
+                id = id.id || id._id || id.get('_id');
+            }
+            localStorage.setItem(id, JSON.stringify(model.attributes));
         },
 
         load: function (model, idAttribute) {
-            var object = localStorage.getItem(idAttribute || '_id');
+            var id = idAttribute || '_id';
+            var object = localStorage.getItem(id);
             if (object) {
                 object = JSON.parse(object);
                 model.set(object);
