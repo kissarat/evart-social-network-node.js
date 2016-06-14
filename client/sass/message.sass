@@ -76,8 +76,14 @@
   height: 32px
 
 .layout-dialog
+  display: flex
+  flex-direction: column
   .list
-    min-height: calc(100vh - 136px)
+    flex: 1
+  .message
+    margin-bottom: 100px
+  .bottom
+    min-height: 76px
 
 .layout-editor
   border-top: 1px solid black
@@ -94,15 +100,20 @@
   .attach
     background-image: url("/images/attach.png")
   .editor
+    display: block
     flex: 1
     border: none
     resize: none
     height: 40px
+    text-align: left
+    .placeholder
+      color: lightgrey
   .smile
     line-height: 36px
     font-size: 1.2em
   .send
     background-image: url("/images/send.png")
+    margin-right: 4px
   .smiles span
     display: inline-block
     margin: 0 2px

@@ -261,7 +261,7 @@ App.module('Message', function (Message, App) {
         url: '/api/message',
 
         attributes: {
-            'class': 'layout-dialog scroll'
+            'class': 'layout-dialog'
         },
 
         regions: {
@@ -271,10 +271,6 @@ App.module('Message', function (Message, App) {
 
         queryModelInitial: {
             target_id: null
-        },
-
-        onRender: function () {
-
         }
     }, {
         widget: function (region, options) {
@@ -313,11 +309,11 @@ App.module('Message', function (Message, App) {
 
     Message.Editor = Marionette.View.extend({
         template: '#layout-editor',
-        
+
         behaviors: {
             Bindings: {}
         },
-        
+
         ui: {
             editor: '.editor'
         },
@@ -330,7 +326,8 @@ App.module('Message', function (Message, App) {
         },
 
         events: {
-            'click .smile': 'showSmiles'
+            'click .smile': 'showSmiles',
+            'keyup .editor': 'strip'
         },
 
         showSmiles: function () {
@@ -343,6 +340,28 @@ App.module('Message', function (Message, App) {
                 self.getRegion('smiles').empty();
             });
             this.getRegion('smiles').show(emojiView);
+        },
+
+        strip: function () {
+            var html = this.ui.editor.html();
+            var tagRegex = /<\/?\w+[^>]+\/?>/g;
+            var allowTagRegex = /^<\/?(br|div|p)\/?>$/;
+            do {
+                var m = tagRegex.exec(html);
+                if (m && !allowTagRegex.test(m)) {
+                    this.ui.editor.html(html.replace(tagRegex, function (match) {
+                        return allowTagRegex.test(match) ? match : '';
+                    }));
+                    break;
+                }
+            }
+            while (m);
+        },
+
+        onRender: function () {
+            this.ui.editor.one('click', function () {
+                this.innerHTML = '';
+            })
         }
     });
 
