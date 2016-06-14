@@ -607,7 +607,7 @@ App.module('User', function (User, App) {
                     photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
                     profile.getRegion('message-list').show(App.Message.ListView.wall(user.get('_id')));
                     profile.getRegion('photo-list').show(new App.Photo.ListView({collection: photoList.fullCollection}));
-                    profile.getRegion('buttons').show(new User.OtherProfileButtons());
+                    profile.getRegion('buttons').show(new User.OtherProfileButtons({model: user}));
                     photoList.getFirstPage();
                 });
             },

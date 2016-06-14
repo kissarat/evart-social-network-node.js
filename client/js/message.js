@@ -221,6 +221,12 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.EmptyView = Backbone.View.extend({
+        render: function () {
+            this.el.innerHTML = T('No message');
+        }
+    });
+
     Message.ListView = Marionette.CollectionView.extend({
         childView: Message.View,
 
@@ -243,6 +249,10 @@ App.module('Message', function (Message, App) {
                     loading = null;
                 }
             });
+        },
+
+        getEmptyView: function() {
+            return Message.EmptyView;
         }
     }, {
         wall: function (id) {
