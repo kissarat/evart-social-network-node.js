@@ -347,6 +347,10 @@ App.module('User', function (User, App) {
 
     User.OtherProfileButtons = Marionette.View.extend({
         template: '#view-other-profile-buttons',
+
+        attributes: {
+            'class': 'other-profile-buttons'
+        },
         
         events: {
             'click .message': function () {
@@ -354,8 +358,10 @@ App.module('User', function (User, App) {
                 App.navigate('/dialog/' + id);
             },
             'click .phone': function () {
-                var id = this.model.get('_id');
-                App.navigate('/dialog/' + id);
+                App.navigate('/unavailable');
+            },
+            'click .camera': function () {
+                App.navigate('/unavailable');
             }
         }
     });
@@ -364,7 +370,7 @@ App.module('User', function (User, App) {
         template: '#layout-user',
 
         regions: {
-            'buttons': 'buttons',
+            'buttons': '.buttons',
             'message-list': '.message-list',
             'photo-list': '.photo-list'
         },
@@ -601,6 +607,7 @@ App.module('User', function (User, App) {
                     photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
                     profile.getRegion('message-list').show(App.Message.ListView.wall(user.get('_id')));
                     profile.getRegion('photo-list').show(new App.Photo.ListView({collection: photoList.fullCollection}));
+                    profile.getRegion('buttons').show(new User.OtherProfileButtons());
                     photoList.getFirstPage();
                 });
             },

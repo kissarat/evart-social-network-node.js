@@ -522,3 +522,7 @@ App.on('login', function () {
         rule.style.removeProperty('display');
     }
 });
+
+function backHistory() {
+    history.back();
+}

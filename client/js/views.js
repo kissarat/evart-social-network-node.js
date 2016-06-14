@@ -326,10 +326,16 @@ App.module('Views', function (Views, App) {
         },
 
         ui: {
+            back: '.back',
             message: '.message'
         },
 
+        events: {
+            '.back': backHistory
+        },
+
         onRender: function () {
+            this.ui.back.html(T('Back'));
             this.ui.message.html(T('Function unavailable'))
         }
     });
