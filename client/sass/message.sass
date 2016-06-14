@@ -44,33 +44,16 @@
 //  &:hover
 //    background-color: green
 
-.like-slider-container
-  background-color: #BCBCBC
-  border: none
-  border-radius: 7px
-  line-height: 12px
-  text-align: center
-  width: 36px
-  //border: 1px solid black
-
-  .like-slider
-    background-color: white
-    margin: auto
-    border: 1px solid transparent
-    border-radius: 50%
-    line-height: 12px
-    width: 10px
-    height: 10px
-
-  &.like > .like-slider
-    float: right
-    &:before
-      content: '+'
-
-  &.hate > .like-slider
-    float: left
-    &:before
-      content: '-'
+.wall-like
+  width: 56px
+  height: 22px
+  background: url("/images/wall-like.png") top no-repeat
+  &.like
+    background-position-y: 22px
+  &.hate
+    background-position-y: 44px
+  > div:hover
+      background-color: black
 
 .message-controls
   color: #BCBCBC

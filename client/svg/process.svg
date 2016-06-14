@@ -1,0 +1,55 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="100px" height="20px">
+    <style type="text/css">
+        circle {
+            cy: 10px;
+            r: 8px;
+            fill: black;
+            animation-name: animation;
+            animation-duration: 1600ms;
+            animation-timing-function: ease;
+            animation-iteration-count: infinite;
+        }
+        
+        @keyframes animation {
+            from {
+                fill: black;
+            }
+        
+            50% {
+                fill: rgb(192, 192, 192);
+                r: 7px;
+            }
+        
+            to {
+                fill: black;
+            }
+        }
+        
+        #c1 {
+            animation-delay: 100ms;
+        }
+        
+        #c2 {
+            animation-delay: 300ms;
+        }
+        
+        #c3 {
+            animation-delay: 500ms;
+        }
+        
+        #c4 {
+            animation-delay: 700ms;
+        }
+        
+        #c5 {
+            animation-delay: 900ms;
+        }
+    </style>
+    <circle id="c1" cx="10" />
+    <circle id="c2" cx="30" />
+    <circle id="c3" cx="50" />
+    <circle id="c4" cx="70" />
+    <circle id="c5" cx="90" />
+</svg>

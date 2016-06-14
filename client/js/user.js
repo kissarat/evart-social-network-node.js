@@ -582,7 +582,7 @@ App.module('User', function (User, App) {
                     App.getPlace('main').show(profile);
                     var photoList = new App.Photo.List();
                     photoList.queryModel.set('owner_id', user._id);
-                    photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 70));
+                    photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
                     profile.getRegion('message-list').show(App.Message.ListView.wall(user.get('_id')));
                     profile.getRegion('photo-list').show(new App.Photo.ListView({collection: photoList.fullCollection}));
                     photoList.getFirstPage();

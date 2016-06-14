@@ -13,6 +13,8 @@ App.module('Video', function (Video, App) {
         url: '/api/video',
 
         queryModelInitial: {
+            type: 'video',
+            owner_id: null,
             q: ''
         }
     });
@@ -62,13 +64,12 @@ App.module('Video', function (Video, App) {
         template: '#view-video',
 
         initialize: function () {
+            var self = this;
             this.model = new Backbone.Model();
-            return App.channels.video.reply('open', (function (_this) {
-                return function (model) {
-                    _this.model = model;
-                    return _this.ui.frame.html(model.get('html'));
-                };
-            })(this));
+            return App.channels.video.reply('open', function (model) {
+                self.model = model;
+                self.ui.frame.html(model.get('html'));
+            });
         },
 
         ui: {

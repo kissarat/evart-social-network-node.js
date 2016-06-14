@@ -33,6 +33,14 @@ App.module('Menu', function (Menu, App) {
         ui: {
             messages: '[data-name=messages]',
             video: '[data-name=video]'
+        },
+
+        events: {
+            'click lia': 'open'
+        },
+
+        open: function (e) {
+            // var
         }
     });
 
