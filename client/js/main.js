@@ -316,6 +316,9 @@ App.PageableCollection = Backbone.PageableCollection.extend({
         return Object.keys(this.queryModelInitial).forEach(function (k) {
             return self.queryParams[k] = function () {
                 var value = self.queryModel.get(k);
+                // if ('function' == typeof value) {
+                //     value = value();
+                // }
                 return 'string' == typeof value ? value ? value.trim().replace(/\s+/g, ' ').toLocaleLowerCase() : '' : null;
             };
         });

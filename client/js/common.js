@@ -93,6 +93,10 @@ function resolve(path) {
     return path.length > 1 ? resolve.call(property, path.slice(1)) : property;
 }
 
+function getMyId() {
+    return App.user._id;
+}
+
 function logPromise(p) {
     return p.then(function (result) {
             console.log('RESOLVE', result);

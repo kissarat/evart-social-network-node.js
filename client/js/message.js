@@ -23,7 +23,20 @@ App.module('Message', function (Message, App) {
     });
 
     Message.List = App.PageableCollection.extend({
-        url: '/api-cache/message',
+        url: '/api/message',
+
+        queryModelInitial: {
+            owner_id: null
+        },
+
+        model: function (attrs, options) {
+            return new Message.Model(attrs, options);
+        }
+    });
+
+
+    Message.List = App.PageableCollection.extend({
+        url: '/api/message',
 
         queryModelInitial: {
             owner_id: null
