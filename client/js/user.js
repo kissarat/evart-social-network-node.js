@@ -345,10 +345,26 @@ App.module('User', function (User, App) {
         }
     });
 
+    User.OtherProfileButtons = Marionette.View.extend({
+        template: '#view-other-profile-buttons',
+        
+        events: {
+            'click .message': function () {
+                var id = this.model.get('_id');
+                App.navigate('/dialog/' + id);
+            },
+            'click .phone': function () {
+                var id = this.model.get('_id');
+                App.navigate('/dialog/' + id);
+            }
+        }
+    });
+
     User.View = Marionette.View.extend({
         template: '#layout-user',
 
         regions: {
+            'buttons': 'buttons',
             'message-list': '.message-list',
             'photo-list': '.photo-list'
         },
@@ -477,7 +493,7 @@ App.module('User', function (User, App) {
                 this.getControls().children.push(button);
             }
         },
-        
+
         getControls: function () {
             var region = this.getRegion('control');
             if (!region.currentView) {
@@ -486,7 +502,7 @@ App.module('User', function (User, App) {
             }
             return region.currentView;
         },
-        
+
         follow: function () {
             console.log(arguments);
         }

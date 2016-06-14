@@ -50,12 +50,12 @@
                 <fieldset class="phone">
                     <span>+</span>
                     <input name="phone" class="form-control" placeholder="Phone"/>
-                    <button type="button">Signup</button>
+                    <button>Signup</button>
                     <div class="help-block"></div>
                 </fieldset>
                 <fieldset class="code">
                     <input name="code" class="form-control" placeholder="Code"/>
-                    <button type="button">Verify</button>
+                    <button>Verify</button>
                     <div class="help-block"></div>
                 </fieldset>
                 <fieldset class="personal">
@@ -83,7 +83,7 @@
                         <input class="form-control" name="surname" placeholder="Last Name"/>
                         <div class="help-block"></div>
                     </div>
-                    <button type="button">Signup</button>
+                    <button>Signup</button>
                 </fieldset>
             </div>
         </form>
@@ -140,11 +140,7 @@
             <div class="left">
                 <div class="avatar-block">
                     <div class="big-avatar"></div>
-                    <div class="buttons">
-                        <button type="button" class="fa fa-pencil-square-o edit" title="Settings"></button>
-                        <button type="button" class="fa fa-bar-chart unavailable"></button>
-                        <button type="button" class="fa fa-power-off logout" title="Logout"></button>
-                    </div>
+                    <div class="buttons"></div>
                 </div>
             </div>
             <div class="right">
@@ -153,6 +149,18 @@
             </div>
         </article>
     </div>
+</script>
+
+<script type="text/template" id="view-my-profile-buttons">
+    <div class="fa fa-pencil-square-o edit" title="Settings"></div>
+    <div class="fa fa-bar-chart unavailable"></div>
+    <div class="fa fa-power-off logout" title="Logout"></div>
+</script>
+
+<script type="text/template" id="view-other-profile-buttons">
+    <div class="message" title="Message"></div>
+    <div class="phone" title="Call"></div>
+    <div class="camera" title="Video call"></div>
 </script>
 
 <script type="text/template" id="form-edit">

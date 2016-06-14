@@ -3,7 +3,8 @@
 App.module('Views', function (Views, App) {
     Views.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'empty': 'empty'
+            'empty': 'empty',
+            'unavailable': 'unavailable'
         }
     });
 
@@ -317,11 +318,32 @@ App.module('Views', function (Views, App) {
         }
     });
 
+    Views.Unavailable = Marionette.View.extend({
+        template: '#view-unavailable',
+
+        attributes: {
+            'class': 'unavailable'
+        },
+
+        ui: {
+            message: '.message'
+        },
+
+        onRender: function () {
+            this.ui.message.html(T('Function unavailable'))
+        }
+    });
+
     new Views.Router({
         controller: {
             empty: function () {
                 var placeholder = new Views.Placeholder();
                 App.getPlace('main').add(placeholder, true);
+            },
+
+            unavailable: function () {
+                var view = new Views.Unavailable();
+                App.getPlace('main').show(view);
             }
         }
     });
