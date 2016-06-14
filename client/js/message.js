@@ -6,19 +6,40 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.channel = Backbone.Radio.channel('message');
+
     Message.Model = Backbone.Model.extend({
+        url: '/api/message',
+
         initialize: function () {
-            var value = this.get('source');
-            if ('object' == typeof value) {
-                this.set('source', new App.User.Model(value));
-            }
-            value = this.get('target');
-            if ('object' == typeof value) {
-                this.set('target', new App.User.Model(value));
-            }
+            this.resolveRelative('source');
+            this.resolveRelative('target');
 
             if (!this.has('time')) {
                 this.set('time', new Date().toISOString())
+            }
+        },
+
+        loadRelative: function () {
+            var self = this;
+            return Promise.all(['source', 'target', 'owner']
+                .filter(function (relation) {
+                    return 'string' == typeof self.get(relation)
+                })
+                .map(function (relation) {
+                    return App.local.getById('user', self.get(relation)).then(function (relative) {
+                        self.set(relation, new App.User.Model(relative));
+                    })
+                }));
+        },
+
+        resolveRelative: function (name, modelClass) {
+            if (!modelClass) {
+                modelClass = App.User.Model;
+            }
+            var relative = this.get(name);
+            if ('object' == typeof relative && !(relative instanceof modelClass)) {
+                this.set(name, new modelClass(relative));
             }
         },
 
@@ -285,6 +306,23 @@ App.module('Message', function (Message, App) {
 
         queryModelInitial: {
             target_id: null
+        },
+
+        getCollection: function () {
+            return this.getRegion('list').currentView.collection;
+        },
+
+        initialize: function () {
+            this.reply = _.bind(this.reply, this);
+            Message.channel.reply('message', this.reply);
+        },
+
+        destroy: function () {
+            Message.channel.stopReplying('message', this.reply);
+        },
+
+        reply: function (model) {
+            this.getCollection().add(model);
         }
     }, {
         widget: function (region, options) {
@@ -328,12 +366,16 @@ App.module('Message', function (Message, App) {
             Bindings: {}
         },
 
+        bindings: {
+            '.text': 'text'
+        },
+
         ui: {
-            editor: '.editor'
+            editor: '.text'
         },
 
         regions: {
-            editor: '.editor',
+            editor: '.text',
             smiles: '.smiles',
             attachments: '.attachments',
             selection: '.selection'
@@ -341,7 +383,7 @@ App.module('Message', function (Message, App) {
 
         events: {
             'click .smile': 'showSmiles',
-            'keyup .editor': 'strip'
+            'click .send': 'send'
         },
 
         showSmiles: function () {
@@ -356,22 +398,6 @@ App.module('Message', function (Message, App) {
             this.getRegion('smiles').show(emojiView);
         },
 
-        strip: function () {
-            var html = this.ui.editor.html();
-            var tagRegex = /<\/?\w+[^>]+\/?>/g;
-            var allowTagRegex = /^<\/?(br|div|p)\/?>$/;
-            do {
-                var m = tagRegex.exec(html);
-                if (m && !allowTagRegex.test(m)) {
-                    this.ui.editor.html(html.replace(tagRegex, function (match) {
-                        return allowTagRegex.test(match) ? match : '';
-                    }));
-                    break;
-                }
-            }
-            while (m);
-        },
-
         onRender: function () {
             if (!App.storage.load(this.model, 'target_id')) {
                 this.ui.editor.one('click', function () {
@@ -383,6 +409,33 @@ App.module('Message', function (Message, App) {
         onDestroy: function () {
             if (this.model.get('text')) {
                 App.storage.save(this.model, 'target_id');
+            }
+        },
+
+        escape: function (value, options) {
+            if (value) {
+                value = value
+                    .replace(/(&tab;|&nbsp;)+/ig, ' ')
+                    .replace(/\s+/ig, ' ')
+                    .replace(/<\w+\s*>([^<])<\/\w+>/ig, '')
+                    .replace(/<br\s*\/>/ig, '\n')
+                    .replace(/\s*\n+\s*/ig, '\n')
+                    .trim();
+
+            }
+            return value;
+        },
+
+        send: function () {
+            var text = this.model.get('text');
+            if (text) {
+                this.model.save('text', text, {
+                    success: function (model) {
+                        model.loadRelative().then(function () {
+                            Message.channel.request('message', model);
+                        });
+                    }
+                });
             }
         }
     });

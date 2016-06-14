@@ -95,6 +95,10 @@ if (window._ && 'lodash' == _.name) {
  */
 
 (function () {
+    if (window.Promise) {
+        return;
+    }
+    
     function lib$es6$promise$utils$$objectOrFunction(x) {
         return typeof x === 'function' || (typeof x === 'object' && x !== null);
     }
