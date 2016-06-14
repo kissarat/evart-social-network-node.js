@@ -16,6 +16,10 @@ App.module('Message', function (Message, App) {
             if ('object' == typeof value) {
                 this.set('target', new App.User.Model(value));
             }
+
+            if (!this.has('time')) {
+                this.set('time', new Date().toISOString())
+            }
         },
 
         isPost: function () {
@@ -223,7 +227,7 @@ App.module('Message', function (Message, App) {
 
     Message.EmptyView = Backbone.View.extend({
         render: function () {
-            this.el.innerHTML = T('No message');
+            this.el.innerHTML = T('No messages');
         }
     });
 
@@ -251,7 +255,7 @@ App.module('Message', function (Message, App) {
             });
         },
 
-        getEmptyView: function() {
+        getEmptyView: function () {
             return Message.EmptyView;
         }
     }, {
@@ -369,9 +373,17 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            this.ui.editor.one('click', function () {
-                this.innerHTML = '';
-            })
+            if (!App.storage.load(this.model, 'target_id')) {
+                this.ui.editor.one('click', function () {
+                    this.innerHTML = '';
+                });
+            }
+        },
+
+        onDestroy: function () {
+            if (this.model.get('text')) {
+                App.storage.save(this.model, 'target_id');
+            }
         }
     });
 

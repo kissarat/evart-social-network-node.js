@@ -219,5 +219,20 @@ CommonApplication.prototype = {
         var module = {};
         this[name] = module;
         define(module, this);
+    },
+
+    storage: {
+        save: function (model, idAttribute) {
+            localStorage.setItem(model.get(idAttribute || '_id'), JSON.stringify(model.attributes));
+        },
+
+        load: function (model, idAttribute) {
+            var object = localStorage.getItem(idAttribute || '_id');
+            if (object) {
+                object = JSON.parse(object);
+                model.set(object);
+            }
+            return !!object;
+        }
     }
 };

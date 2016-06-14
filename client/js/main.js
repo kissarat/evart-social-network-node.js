@@ -526,3 +526,9 @@ App.on('login', function () {
 function backHistory() {
     history.back();
 }
+
+addEventListener('unload', function () {
+    _.each(App.getView().getRegions(), function (region) {
+        region.empty();
+    })
+});
