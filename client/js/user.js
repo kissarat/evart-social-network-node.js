@@ -570,6 +570,9 @@ App.module('User', function (User, App) {
     return new User.Router({
         controller: {
             login: function () {
+                if (App.user) {
+                    App.logout();
+                }
                 App.getPlace('main').show(new User.LoginForm({
                     model: new User.Login()
                 }));

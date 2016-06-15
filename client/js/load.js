@@ -9,7 +9,7 @@ else {
 
 function load1_windowLoad() {
     statistics.load = Date.now() - statistics.start;
-    
+
     if (false && matchMedia('min-width(769px)')) {
         var leftMenu = new App.Views.VerticalMenu();
         leftMenu.$el.hide();
@@ -47,19 +47,6 @@ function load1_windowLoad() {
                 return this.classList.add('prev');
             }
         });
-
-    $(document).ajaxError(function (_1, ajax) {
-        switch (ajax.status) {
-            case code.UNAUTHORIZED:
-                App.navigate('/login');
-                break;
-            default:
-                if (ajax.responseJSON && ajax.responseJSON.error) {
-                    var error = ajax.responseJSON.error;
-                    App.alert('danger', error.message ? error.message : error);
-                }
-        }
-    });
 
     // var deferreds;
     // $('#select-language').val(App.language).change(function (e) {
@@ -118,21 +105,28 @@ function load2_registerAgent() {
 }
 
 function load3_languageLoaded(xhr) {
-    if (code.UNAUTHORIZED !== xhr.status) {
-        try {
-            App.agent = JSON.parse(xhr.responseText);
-        } catch (ex) {
+    App.agent = xhr.responseJSON;
+    var isAuthorized = !!(code.UNAUTHORIZED !== xhr.status && App.agent.user);
+
+    if (isAuthorized) {
+        $('body').removeAttr('class');
+    }
+    else {
+        setTimeout(function () {
             console.warn('User is not authorized');
-        }
-        App.trigger('login');
+            var first = App.route[0];
+            if (['login', 'signup', 'users'].indexOf(first) != 0) {
+                App.navigate('/login');
+            }
+        }, 0);
     }
 
     Backbone.history.start({
         pushState: true,
         root: '/'
     });
-    
-    this.start();
+
+    App.start();
 
     if (navigator.serviceWorker) {
         navigator.serviceWorker.register('/service.js', {scope: '/'})

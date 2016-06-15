@@ -174,16 +174,20 @@ var StackRegion = Marionette.Region.extend({
 });
 
 $(document).ajaxError(function (e, xhr) {
-    var data;
-    try {
-        data = JSON.parse(xhr.responseText);
-    }
-    catch (ex) {
-    }
-    if (data && data.error && data.error.stack) {
-        var error = data.error;
-        error.type = 'server';
-        App.local.add('errors', error);
+    switch (xhr.status) {
+        case code.UNAUTHORIZED:
+            App.navigate('/login');
+            break;
+        default:
+            var data = xhr.responseJSON;
+            if (data && data.error) {
+                var error = data.error;
+                App.alert('danger', error.message ? error.message : error);
+                if (error.stack) {
+                    error.type = 'server';
+                    App.local.add('errors', error);
+                }
+            }
     }
 });
 
@@ -260,17 +264,6 @@ _.extend(Application.prototype, {
             return object.get('_id');
         } else {
             return object;
-        }
-    },
-
-    onStart: function (xhr) {
-        if (this.user) {
-            return $('body').removeAttr('class');
-        } else {
-            var first = this.route[0];
-            if (['login', 'signup', 'users'].indexOf(first) == 0) {
-                return this.login();
-            }
         }
     },
 
@@ -382,6 +375,10 @@ _.extend(Backbone.Validation.callbacks, {
 });
 
 window.App = new Application();
+
+// App.alert = function (type, message) {
+//     document.write(message);
+// };
 
 App.Behaviors = {};
 

@@ -504,13 +504,13 @@ App.module('Message', function (Message, App) {
     });
 
     App.on('message', function (model) {
-        
+        throw new Error('Not impletemted');
     });
 
     return new Message.Router({
         controller: {
             wall: function (id) {
-                var wall = Message.ListView.wall(id);
+                var wall = Message.WallView.widget(id);
                 wall.$el.addClass('scroll');
                 return App.mainRegion.show(wall);
             },
