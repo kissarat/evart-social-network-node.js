@@ -354,8 +354,7 @@ App.module('User', function (User, App) {
         
         events: {
             'click .message': function () {
-                var id = this.model.get('_id');
-                App.navigate('/dialog/' + id);
+                App.navigate('/dialog/' + this.model.get('domain'));
             },
             'click .phone': function () {
                 App.navigate('/unavailable');
@@ -605,7 +604,7 @@ App.module('User', function (User, App) {
                     var photoList = new App.Photo.List();
                     photoList.queryModel.set('owner_id', user._id);
                     photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
-                    profile.getRegion('message-list').show(App.Message.ListView.wall(user.get('_id')));
+                    profile.getRegion('message-list').show(App.Message.WallView.widget(user.get('_id')));
                     profile.getRegion('photo-list').show(new App.Photo.ListView({collection: photoList.fullCollection}));
                     profile.getRegion('buttons').show(new User.OtherProfileButtons({model: user}));
                     photoList.getFirstPage();

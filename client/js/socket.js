@@ -85,13 +85,6 @@ register(App, {
         return App.socket.close();
     },
     message: function (message) {
-        var add, dialog;
-        dialog = App.getDialogs().findWhere({
-            dialog_id: message.source
-        });
-        add = function () {
-            return dialog.get('messages').add(message);
-        };
-        return App.dock.set('dialogs');
+        App.Message.channel.request('message', message);
     }
 });

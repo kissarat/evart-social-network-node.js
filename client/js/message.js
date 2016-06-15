@@ -73,8 +73,8 @@ App.module('Message', function (Message, App) {
         }
     });
 
-    Message.View = Marionette.View.extend({
-        template: '#layout-message',
+    Message.PostView = Marionette.View.extend({
+        template: '#layout-post',
 
         regions: {
             repost: '> .repost',
@@ -85,6 +85,10 @@ App.module('Message', function (Message, App) {
 
         behaviors: {
             Bindings: {}
+        },
+
+        bindings: {
+            '> .content .text': 'text'
         },
 
         ui: {
@@ -107,10 +111,6 @@ App.module('Message', function (Message, App) {
             'click > .message-controls .fa-share-alt': 'share',
             'click > .message-controls .comment': 'renderComments',
             'click > .message-controls .like-slider-container': 'sliderClick'
-        },
-
-        bindings: {
-            '> .content .text': 'text'
         },
 
         setAvatar: function (id) {
@@ -253,15 +253,13 @@ App.module('Message', function (Message, App) {
             this.el.innerHTML = T('No messages');
         }
     });
-
-    Message.ListView = Marionette.CollectionView.extend({
-        childView: Message.View,
-
+    
+    var listViewMixin = {
         behaviors: {
             Pageable: {}
         },
 
-        onRender: function () {
+        animateLoading: function () {
             var loading;
             this.collection.pageableCollection.on('start', (function (_this) {
                 return function () {
@@ -281,17 +279,79 @@ App.module('Message', function (Message, App) {
         getEmptyView: function () {
             return Message.EmptyView;
         }
+    };
+
+    Message.WallView = Marionette.CollectionView.extend({
+        childView: Message.PostView,
+
+        onRender: function () {
+            this.animateLoading();
+        }
     }, {
-        wall: function (id) {
+        widget: function (id) {
             var pageable = new Message.List();
             pageable.queryModel.set('type', 'wall');
             pageable.queryModel.set('owner_id', id);
             pageable.getFirstPage();
-            return new Message.ListView({
+            return new Message.WallView({
                 collection: pageable.fullCollection
             });
         }
     });
+    
+    _.extend(Message.WallView.prototype, listViewMixin);
+    
+    Message.View = Marionette.View.extend({
+        template: '#view-message',
+
+        behaviors: {
+            Bindings: {}
+        },
+
+        bindings: {
+            '.text': 'text',
+            '.time': {
+                observe: 'time',
+                onGet: function (value) {
+                    return new Date(value).toLocaleTimeString();
+                }
+            }
+        },
+
+        onRender: function () {
+            var self = this;
+            this.$el.addClass(this.model.get('source').get('_id') == App.user._id ? 'me' : 'other');
+            if (!Message.View.lastAnimationStart) {
+                Message.View.lastAnimationStart = Date.now();
+            }
+            Message.View.appearance.push(this);
+            function appear() {
+                setTimeout(function () {
+                    var current = Message.View.appearance.pop();
+                    if (current) {
+                        current.$el.addClass('visible');
+                        appear();
+                    }
+                }, 120)
+            }
+            if (Message.View.appearance.length <= 1) {
+                appear();
+            }
+        }
+    });
+
+    Message.View.appearance = [];
+
+    Message.ListView = Marionette.CollectionView.extend({
+        childView: Message.View,
+
+        onRender: function () {
+            this.animateLoading();
+        }
+    });
+
+    _.extend(Message.ListView.prototype, listViewMixin);
+
 
     Message.Dialog = Marionette.View.extend({
         template: '#layout-dialog',
@@ -330,6 +390,7 @@ App.module('Message', function (Message, App) {
         widget: function (region, options) {
             var list = new Message.List();
             list.queryModel.set('target_id', options.target_id);
+            list.comparator = '_id';
             var listView = new Message.ListView({collection: list.fullCollection});
             var editor = new Message.Editor({
                 model: new Message.Model({
@@ -442,6 +503,10 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    App.on('message', function (model) {
+        
+    });
+
     return new Message.Router({
         controller: {
             wall: function (id) {
@@ -451,7 +516,14 @@ App.module('Message', function (Message, App) {
             },
 
             dialog: function (id) {
-                Message.Dialog.widget(App.getPlace('main'), {target_id: id});
+                if (_.isObjectID(id)) {
+                    Message.Dialog.widget(App.getPlace('main'), {target_id: id});
+                }
+                else {
+                    $.getJSON('/api/user?domain=' + id, function (user) {
+                        Message.Dialog.widget(App.getPlace('main'), {target_id: user._id});
+                    })
+                }
             }
         }
     });

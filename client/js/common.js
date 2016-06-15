@@ -5,6 +5,15 @@ self.T = function (text) {
     return text;
 };
 
+self.Labiak = function Labiak() {
+    if (this.construct) {
+        this.construct.apply(constructor);
+    }
+};
+self.LabiakFunction = function LabiakFunction() {
+};
+self.isService = !(self.window && window.document);
+
 _.mixin({
     merge: function () {
         if (arguments.length <= 1) {
@@ -26,6 +35,68 @@ _.mixin({
 
     hex_time: function () {
         return (Date.now().toString(16) + '000').slice(0, -3);
+    },
+
+    isObjectID: function (string) {
+        return /^[0-9a-f]{24}$/.exec(string);
+    },
+
+    defineProperties: function (target, source) {
+        for (var key in source) {
+            Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        }
+    },
+
+    defineClass: function (parent, mixins, prototype, statics) {
+        var hasParent = 'function' == typeof parent;
+        if (parent && 'object' == typeof parent) {
+            statics = prototype;
+            prototype = mixins;
+            mixins = parent;
+            parent = Labiak;
+        }
+        else if (!hasParent) {
+            throw new Error('Parent is not a function');
+        }
+        if (!(mixins instanceof Array)) {
+            statics = prototype;
+            prototype = mixins;
+            mixins = [];
+        }
+        if (!prototype || 'object' != typeof prototype) {
+            throw new Error('Prototype is not an object');
+        }
+        if (!(mixins instanceof Array)) {
+            throw new Error('Mixins is an instance of array');
+        }
+        var hasConstructor = Object != prototype.constructor;
+        var child = hasConstructor ? prototype.constructor : Function();
+
+        if (parent.prototype && 'object' == typeof parent.prototype) {
+            child.prototype = Object.create(parent.prototype);
+            _.defineProperties(child.prototype);
+        }
+        else {
+            child.prototype = prototype;
+        }
+
+        child.prototype.construct = hasParent
+            ? function () {
+            _.each(mixins, _.extend, this)
+        }
+            : function () {
+            parent.apply(this, arguments);
+            _.each(mixins, _.extend, this);
+        };
+
+        if (statics) {
+            if ('object' != typeof statics) {
+                throw new Error('Statics is not an object');
+            }
+            _.extend(child, statics);
+        }
+
+        return child;
     }
 });
 
@@ -54,12 +125,6 @@ function _get(name) {
         return regex.exec(location.search)[1];
     }
     return null
-}
-
-function properties(target, source) {
-    for (var key in source) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-    }
 }
 
 function preventDefault(e) {
@@ -106,61 +171,70 @@ function logPromise(p) {
         });
 }
 
-function CommonApplication() {
-    if ('function' == typeof this.initialize) {
-        this.initialize();
+function Service() {
+    if (self.Marionette) {
+        Marionette.Application.apply(this, arguments);
     }
+    else {
+        _.extend(this, Backbone.Events);
+        this.initialize.apply(this, arguments);
+    }
+
+    this.DEV_MODE = true;
+
+    this.defaultConfig = {
+        search: {
+            delay: 250
+        },
+        trace: {
+            history: true
+        },
+        socket: {
+            address: 'ws://' + location.hostname + '/socket',
+            wait: 800
+        },
+        alert: {
+            duration: 12000
+        },
+        peer: {
+            iceServers: [
+                {
+                    urls: "stun:stun.services.mozilla.com",
+                    username: "louis@mozilla.com",
+                    credential: "webrtcdemo"
+                }, {
+                    urls: ['stun:stun.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302', 'stun:stun.services.mozilla.com', "stun:23.21.150.121"]
+                }
+            ]
+        }
+    };
+
+    var _this = this;
+    this.features = {
+        peer: {
+            available: !!window.RTCPeerConnection,
+            get enabled() {
+                return this.available && _this.config.peer.enabled
+            }
+        },
+        notification: {
+            available: !!window.Notification,
+            enabled: false
+        },
+        fullscreen: {
+            available: Element.prototype.requestFullscreen
+        }
+    };
 }
 
-CommonApplication.prototype = {
-    
-    initialize: function () {
-        this.DEV_MODE = true;
+if (self.Marionette) {
+    Service.prototype = Object.create(Marionette.Application.prototype);
+}
 
-        this.defaultConfig = {
-            search: {
-                delay: 250
-            },
-            trace: {
-                history: true
-            },
-            socket: {
-                address: 'ws://' + location.hostname + '/socket',
-                wait: 800
-            },
-            alert: {
-                duration: 12000
-            },
-            peer: {
-                iceServers: [
-                    {
-                        urls: "stun:stun.services.mozilla.com",
-                        username: "louis@mozilla.com",
-                        credential: "webrtcdemo"
-                    }, {
-                        urls: ['stun:stun.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302', 'stun:stun.services.mozilla.com', "stun:23.21.150.121"]
-                    }
-                ]
-            }
-        };
+_.extend(Service.prototype, {
+    cidPrefix: 'app',
 
-        var self = this;
-        this.features = {
-            peer: {
-                available: !!window.RTCPeerConnection,
-                get enabled() {
-                    return this.available && self.config.peer.enabled
-                }
-            },
-            notification: {
-                available: !!window.Notification,
-                enabled: false
-            },
-            fullscreen: {
-                available: Element.prototype.requestFullscreen
-            }
-        };
-    },
+    constructor: Service,
 
     debug: {
         trace: function () {
@@ -212,9 +286,9 @@ CommonApplication.prototype = {
             return this.navigate('login');
         }
     },
-    
+
     resolve: resolve,
-    
+
     module: function (name, define) {
         var module = {};
         this[name] = module;
@@ -239,5 +313,120 @@ CommonApplication.prototype = {
             }
             return !!object;
         }
-    }
-};
+    },
+
+    Upload: _.defineClass({
+        initialize: function (options) {
+            var self = this;
+            this.url = options.url || '/api/file';
+            this.method = options.method || 'POST';
+            this.channel = options.channel || Backbone.Radio.channel('upload');
+            this.channel.reply('upload', _.bind(this.reply, this));
+            this.headers = options.headers || {};
+            this.params = options.params;
+            if (options.contentType) {
+                this.headers['content-type'] = options.contentType;
+            }
+
+            function upload(files) {
+                self.files = reverse(files);
+                self.uploadFile();
+                self.on('response', self.uploadFile);
+            }
+
+            if (options.promise) {
+                options.promise.then(upload);
+            }
+            else {
+                if (options.file) {
+                    options.files = [file];
+                }
+                if (options.files) {
+                    upload(options.files);
+                }
+            }
+        },
+
+        uploadFile: function () {
+            var file = this.files.pop();
+            if (file) {
+                this.channel.request('upload', file);
+            }
+        },
+
+        reply: function (options) {
+            var self = this;
+            var headers = {};
+            if (options instanceof Blob) {
+                options.data = options;
+            }
+            else if (options.json) {
+                options.data = JSON.stringify(options.json);
+                headers['content-type'] = 'application/json';
+            }
+            if (options.data.name) {
+                headers['name'] = options.data.name;
+            }
+            if (options.data.type) {
+                headers['content-type'] = options.data.type;
+            }
+            if (options.data.mozFullPath) {
+                headers['path'] = options.data.mozFullPath;
+            }
+            if (options.data.lastModifiedDate) {
+                headers['last-modified'] = options.data.lastModifiedDate;
+            }
+            if (options.data.lastModified) {
+                headers['modified'] = options.data.lastModified;
+            }
+            options.headers = _.merge(this.headers, options.headers, headers);
+            if (!options.headers['accept']) {
+                options.headers['accept'] = 'application/json';
+            }
+            var xhr = new XMLHttpRequest();
+            options.method = options.method || this.method;
+            options.url = options.url || this.url;
+            options.params = options.params || this.params;
+            var url = options.url;
+            if (options.params) {
+                url += '?' + $.param(options.params);
+            }
+            xhr.open(options.method || this.method, url);
+            var isText = false;
+            for (var name in options.headers) {
+                var value = options.headers[name];
+                if ('content-type' == name.toLocaleLowerCase() && (value.indexOf('json') > 0 || value.indexOf('text') === 0)) {
+                    value += '; charset=utf8';
+                    isText = true;
+                }
+                xhr.setRequestHeader(name, value);
+            }
+            if (!isText) {
+                xhr.responseType = 'arraybuffer';
+            }
+            xhr.addEventListener('load', function () {
+                var data = null;
+                try {
+                    data = JSON.parse(this.responseText);
+                }
+                catch (ex) {
+                }
+                self.trigger('response', data, xhr, options);
+            });
+            this.trigger('upload', xhr, options);
+            xhr.send(options.data);
+            return xhr;
+        }
+    })
+});
+
+function uptime() {
+    var delta = Date.now() - statistics.start;
+    var minutes = Math.floor(delta / 60000);
+    var seconds = Math.floor(delta / 1000 - minutes * 60);
+    return [minutes, seconds];
+}
+
+if (isService) {
+    self.App = new Service();
+}

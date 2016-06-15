@@ -7,7 +7,7 @@ App.module('Video', function (Video, App) {
         }
     });
 
-    App.channels.video = Backbone.Radio.channel('video');
+    Video.channel = Backbone.Radio.channel('video');
 
     Video.List = App.PageableCollection.extend({
         url: '/api/video',
@@ -42,7 +42,7 @@ App.module('Video', function (Video, App) {
 
         open: function (e) {
             e.preventDefault();
-            return App.channels.video.request('open', this.model);
+            return Video.channel.request('open', this.model);
         },
 
         onRender: function () {
@@ -66,7 +66,7 @@ App.module('Video', function (Video, App) {
         initialize: function () {
             var self = this;
             this.model = new Backbone.Model();
-            return App.channels.video.reply('open', function (model) {
+            return Video.channel.reply('open', function (model) {
                 self.model = model;
                 self.ui.frame.html(model.get('html'));
             });

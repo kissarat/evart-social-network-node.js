@@ -1,3 +1,5 @@
+$blue: #3892CD
+
 .layout-message, .last-message
   .name
     font-size: 11pt
@@ -80,8 +82,56 @@
     flex: 1
     justify-content: flex-end
     padding-bottom: 8px
-  .message
-    margin-bottom: 100px
+    .message
+      display: flex
+      justify-content: flex-end
+      opacity: 0
+      .text
+        position: relative
+        margin: 4px
+        padding: 8px
+        border-radius: 4px
+        text-align: justify
+        min-width: 5em
+        &:after
+          position: absolute
+          display: inline-block
+          content: ''
+          top: 8px
+          width: 0
+          height: 0
+          border-top: 8px solid transparent
+          border-bottom: 8px solid transparent
+      .time
+        margin-top: 12px
+        min-width: 20%
+      &.me
+        flex-direction: row
+        .text
+          background-color: $blue
+          color: white
+          &:after
+            border-left: 8px solid $blue
+            right: -8px
+        .time
+          text-align: right
+          margin-right: 4px
+      &.other
+        flex-direction: row-reverse
+        .text
+          background-color: #ECEFF4
+          color: black
+          &:after
+            border-right: 8px solid #ECEFF4
+            left: -8px
+        .time
+          text-align: left
+          margin-right: 4px
+
+      &.visible
+        opacity: 1
+        transition: opacity 600ms
+
   .bottom
     min-height: 76px
 

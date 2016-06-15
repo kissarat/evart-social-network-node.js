@@ -82,7 +82,10 @@ a
   text-align: center
 
 #left, #right
-  flex: 1
+  flex: 0
+  &.visible
+    flex: 1
+    transition: flex 1s linear
 
 #root > :not(.add) > *
   height: 100vh

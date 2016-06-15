@@ -9,7 +9,7 @@ App.module('Photo', function (Photo, App) {
         }
     });
 
-    App.channels.video = Backbone.Radio.channel('photo');
+    Photo.channel = Backbone.Radio.channel('photo');
 
     Photo.List = App.PageableCollection.extend({
         url: '/api/file',
@@ -38,7 +38,7 @@ App.module('Photo', function (Photo, App) {
 
         open: function (e) {
             e.preventDefault();
-            return App.channels.video.request('open', this.model);
+            return Photo.channel.request('open', this.model);
         },
 
         onRender: function () {
@@ -69,7 +69,7 @@ App.module('Photo', function (Photo, App) {
 
         initialize: function () {
             this.model = new Backbone.Model();
-            return App.channels.video.reply('open', (function (_this) {
+            return Photo.channel.reply('open', (function (_this) {
                 return function (model) {
                     _this.model = model;
                     return _this.ui.frame.html(model.get('html'));

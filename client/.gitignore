@@ -1,6 +1,7 @@
 .sass-cache/
 blacklist.conf
 coffee/*.js*
+sound/
 fonts/
 images/
 easter-*

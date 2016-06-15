@@ -20,20 +20,28 @@ $grey: #F6F6F6
   position: fixed
   text-align: center
   width: 100vw
+  &.visible
+    transition: bottom 600ms ease-in
 
 @media (min-width: 1361px)
   #dock-container
-    bottom: 0
+    bottom: -100px
+    &.visible
+      bottom: -8px
 
 @media (min-width: 1025px) and (max-width: 1360px)
   #dock-container
-    bottom: -8px
+    bottom: -100px
     transform: scale(0.75)
+    &.visible
+      bottom: -8px
 
 @media (max-width: 1024px)
   #dock-container
-    bottom: -16px
+    bottom: -100px
     transform: scale(0.5)
+    &.visible
+      bottom: -16px
 
 #dock-container .list > div
   display: block
