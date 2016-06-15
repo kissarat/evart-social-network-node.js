@@ -104,6 +104,14 @@ if (!Array.from) {
     Array.from = _.toArray;
 }
 
+function unimplemented() {
+    throw new Error('Not implemented');
+}
+
+function deprecated() {
+    throw new Error('Deprecated');
+}
+
 function reverse(array) {
     if (!(array instanceof Array)) {
         array = Array.from(array);

@@ -26,7 +26,7 @@ Socket.prototype = {
             },
             close: function () {
                 if (App.user) {
-                    return setTimeout(App.socket.pull.bind(App), App.config.socket.wait);
+                    return setTimeout(self.pull.bind(App), App.config.socket.wait);
                 }
             }
         });
@@ -39,6 +39,16 @@ Socket.prototype = {
         }
         App.debug.push('socket_push', message);
         return this.socket.send(message);
+    },
+
+    close: function () {
+        if (this.socket) {
+            this.socket.close();
+            this.socket = null;
+        }
+        else {
+            console.error('WebSocket does not exists');
+        }
     }
 };
 
@@ -75,14 +85,20 @@ App.notify = function (title, options) {
 
 App.socket = new Socket((self.App && App.config ? App.config : self.defaultConfig).socket);
 
-App.pull = App.socket.pull;
-App.push = App.socket.push;
-
+App.pull = deprecated;
+App.push = deprecated;
 
 register(App, {
-    login: App.socket.pull.bind(App.socket),
+    login: function () {
+        App.socket.pull();
+    },
     logout: function () {
-        return App.socket.close();
+        if (App.socket) {
+            return App.socket.close();
+        }
+        else {
+            console.error('Socket is not exists');
+        }
     },
     message: function (message) {
         App.Message.channel.request('message', message);

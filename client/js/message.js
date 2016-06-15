@@ -52,6 +52,7 @@ App.module('Message', function (Message, App) {
         url: '/api/message',
 
         queryModelInitial: {
+            owner_id: null,
             target_id: null
         },
 
@@ -309,7 +310,13 @@ App.module('Message', function (Message, App) {
         },
 
         bindings: {
-            '.text': 'text',
+            '.text': {
+                observe: 'text',
+                updateMethod: 'html',
+                onGet: function (value) {
+                    return value.replace(/\n/g, '<br/>');
+                }
+            },
             '.time': {
                 observe: 'time',
                 onGet: function (value) {
@@ -319,7 +326,6 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            var self = this;
             this.$el.addClass(this.model.get('source').get('_id') == App.user._id ? 'me' : 'other');
             if (!Message.View.lastAnimationStart) {
                 Message.View.lastAnimationStart = Date.now();
@@ -347,6 +353,21 @@ App.module('Message', function (Message, App) {
 
         onRender: function () {
             this.animateLoading();
+        },
+
+        attachHtml: function (collectionView, itemView, index) {
+            if (this._isAttached) {
+                var now = new Date(itemView.model.get('time'));
+                if (index >= 1) {
+                    var previousHour = new Date(collectionView.children.findByIndex(index - 1).model.get('time')).getHours();
+                }
+                if (index < 1 || now.getHours() < previousHour) {
+                    $('<div></div>')
+                        .html(now.toLocaleDateString())
+                        .appendTo(collectionView.$el);
+                }
+            }
+            Marionette.CollectionView.prototype.attachHtml.apply(this, arguments);
         }
     });
 
@@ -366,8 +387,26 @@ App.module('Message', function (Message, App) {
             'editor': '.editor'
         },
 
+        ui: {
+            'list': '.list',
+            'editor': '.editor'
+        },
+
+        events: {
+            'keyup .editor': 'resize'
+        },
+
         queryModelInitial: {
             target_id: null
+        },
+
+        resize: function () {
+            var text = this.getRegion('editor').currentView.ui.editor;
+            var height = text.height();
+            var scrollHeight = text[0].scrollHeight;
+            if (height * 1.3 < scrollHeight) {
+                text.css('min-height', '40vh');
+            }
         },
 
         getCollection: function () {
@@ -490,12 +529,15 @@ App.module('Message', function (Message, App) {
         },
 
         send: function () {
+            var self = this;
             var text = this.model.get('text');
             if (text) {
                 this.model.save(null, {
                     success: function (model) {
                         model.loadRelative().then(function () {
                             Message.channel.request('message', model);
+                            self.model = new Message.Model();
+                            self.ui.editor[0].style.removeProperty('min-height');
                         });
                     }
                 });

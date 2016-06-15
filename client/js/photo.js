@@ -53,8 +53,11 @@ App.module('Photo', function (Photo, App) {
             Pageable: {}
         }
     }, {
-        widget: function (region) {
+        widget: function (region, options) {
             var list = new Photo.List();
+            _.each(options, function (value, key) {
+                list.queryModel.set(key, value);
+            });
             var listView = new Photo.ListView({
                 collection: list.fullCollection
             });

@@ -110,6 +110,7 @@ function load3_languageLoaded(xhr) {
 
     if (isAuthorized) {
         $('body').removeAttr('class');
+        App.trigger('login');
     }
     else {
         setTimeout(function () {

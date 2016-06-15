@@ -156,7 +156,10 @@ App.module('User', function (User, App) {
             if (this.model.isValid(true)) {
                 return this.model.save(null, {
                     success: function (model, data) {
-                        return App.login();
+                        App.once('login', function () {
+                            App.navigate('/profile');
+                        });
+                        App.login();
                     }
                 });
             }
@@ -573,10 +576,12 @@ App.module('User', function (User, App) {
                 if (App.user) {
                     App.logout();
                 }
-                App.getPlace('main').show(new User.LoginForm({
-                    model: new User.Login()
-                }));
-                return $(document.body).addClass('login');
+                else {
+                    App.getPlace('main').show(new User.LoginForm({
+                        model: new User.Login()
+                    }));
+                    return $(document.body).addClass('login');
+                }
             },
 
             logout: function () {
@@ -604,13 +609,12 @@ App.module('User', function (User, App) {
                     profile.el.classList.add('scroll');
                     profile.el.classList.add(user.get('type'));
                     App.getPlace('main').show(profile);
-                    var photoList = new App.Photo.List();
-                    photoList.queryModel.set('owner_id', user._id);
-                    photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
+                    // photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
                     profile.getRegion('message-list').show(App.Message.WallView.widget(user.get('_id')));
-                    profile.getRegion('photo-list').show(new App.Photo.ListView({collection: photoList.fullCollection}));
                     profile.getRegion('buttons').show(new User.OtherProfileButtons({model: user}));
-                    photoList.getFirstPage();
+                    App.Photo.ListView.widget(profile.getRegion('photo-list'), {
+                        owner_id: user._id
+                    });
                 });
             },
 
