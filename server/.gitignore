@@ -1,7 +1,6 @@
 modules/*.map
 modules/admin.js
 modules/test.js
-modules/user.js
 modules/video.js
 mongodb/data/
 nginx/logs/

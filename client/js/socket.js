@@ -10,6 +10,7 @@ Socket.prototype = {
             return;
         }
         this.socket = new WebSocket(this.address);
+        var self = this;
         register(this.socket, {
             message: function (e) {
                 App.debug.push('socket_pull', e.data);
