@@ -117,14 +117,13 @@ global.schema.User = new mongoose.Schema({
 
 module.exports = {
     login: function ($) {
-        var conditions, login;
         if ($.user) {
             return $.sendStatus(code.FORBIDDEN, 'User is authorized');
         } else {
-            conditions = {
+            var conditions = {
                 hash: utils.hash($.post('password'))
             };
-            login = $.post('login').replace(/[\(\)\s]/, '');
+            var login = $.post('login').replace(/[\(\)\s]/, '');
             if (indexOf.call(login, '@') >= 0) {
                 conditions.email = login;
             } else if (/^[\d\-]+$/.exec(login)) {
@@ -135,12 +134,11 @@ module.exports = {
                 conditions.domain = login;
             }
             User.findOne(conditions, $.wrap(function (user) {
-                var changeset;
                 if (user) {
                     conditions = {
                         auth: $.req.auth
                     };
-                    changeset = {
+                    var changeset = {
                         $set: {
                             user: user._id,
                             time: Date.now()
@@ -165,14 +163,13 @@ module.exports = {
     },
 
     logout: function ($) {
-        var change, conditions;
-        conditions = {
+        var conditions = {
             user: {
                 $exists: true
             },
             auth: $.req.auth
         };
-        change = {
+        var change = {
             $unset: {
                 user: ''
             }
@@ -181,8 +178,7 @@ module.exports = {
     },
 
     info: function ($) {
-        var conditions;
-        conditions = {
+        var conditions = {
             auth: $.req.auth
         };
         Agent.findOne(conditions).populate('user').exec($.wrap(function (agent) {
@@ -204,8 +200,7 @@ module.exports = {
     },
 
     status: function ($) {
-        var status;
-        status = $.param('status');
+        var status = $.param('status');
         status = status.trim().replace(/\s+/g, ' ');
         return User.update({
             _id: $.id
@@ -217,10 +212,9 @@ module.exports = {
     },
 
     POST: function ($) {
-        var data, user;
-        data = $.allowFields(group_fields, admin_fields);
+        var data = $.allowFields(group_fields, admin_fields);
         data.type = 'group';
-        user = new User(data);
+        var user = new User(data);
         user.save($.wrap(function () {
             return $.send(code.CREATED, {
                 success: true,
@@ -232,8 +226,7 @@ module.exports = {
     },
 
     PATCH: function ($) {
-        var data;
-        data = $.allowFields(user_fields, admin_fields);
+        var data = $.allowFields(user_fields, admin_fields);
         return User.findByIdAndUpdate($.id, {
             $set: data
         }, {
@@ -242,9 +235,8 @@ module.exports = {
     },
 
     GET: function ($) {
-        var fields, list_name, params;
-        params = ['id', 'domain'];
-        fields = 'domain status type city country address phone avatar background name birthday languages relationship';
+        var params = ['id', 'domain'];
+        var fields = 'domain status type city country address phone avatar background name birthday languages relationship';
         if ($.hasAny(params) && !$.has('list')) {
             return User.findOne($.paramsObject(params)).select(fields);
         } else if ($.has('ids')) {
@@ -347,12 +339,12 @@ module.exports = {
             };
         }
     },
+
     personal: function ($) {
-        var user;
         if ($.user) {
             return $.sendStatus(code.FORBIDDEN, 'User is authorized');
         }
-        user = new User({
+        var user = new User({
             phone: $.agent.phone,
             domain: $.param('domain'),
             email: $.param('email'),
@@ -362,6 +354,7 @@ module.exports = {
         });
         user.save($.success);
     },
+
     avatar: {
         GET: function ($) {
             User.findOne($.id, $.wrap(function (user) {
@@ -375,12 +368,12 @@ module.exports = {
             }));
         }
     },
+
     change: {
         POST: function ($) {
-            var changes, field, fields;
-            field = $.param('field');
-            changes = {};
-            fields = ['avatar', 'background'];
+            var field = $.param('field');
+            var changes = {};
+            var fields = ['avatar', 'background'];
             if (indexOf.call(fields, field) >= 0) {
                 changes[field] = ObjectID($.param('value'));
             } else {
@@ -391,16 +384,16 @@ module.exports = {
             }, changes).select(fields.join(' '));
         }
     },
+
     list: {
         GET: function ($) {
-            var fields, id, name;
-            name = $.param('name');
+            var name = $.param('name');
             if (!list_fields.hasOwnProperty(name)) {
                 $.invalid('name');
             }
-            fields = {};
+            var fields = {};
             fields['friend' === name ? 'follow' : name] = 1;
-            id = $.has('id') ? $.id : $.user._id;
+            var id = $.has('id') ? $.id : $.user._id;
             return User.findOne(id, fields, $.wrap(function (user) {
                 if ('friend' === name) {
                     return search($, {
@@ -414,14 +407,13 @@ module.exports = {
             }));
         },
         POST: function ($) {
-            var id, name, opposite, target_id;
-            name = $.param('name');
+            var name = $.param('name');
             if (!list_fields.hasOwnProperty(name)) {
                 $.invalid('name');
             }
-            target_id = $.param('target_id');
-            id = $.has('id') ? $.id : $.user._id;
-            return opposite = list_fields[name];
+            var target_id = $.param('target_id');
+            var id = $.has('id') ? $.id : $.user._id;
+            var opposite = list_fields[name];
         }
     }
 };
@@ -498,11 +490,10 @@ function search($, cnd, send) {
     }
 }
 
-
- function extract(user) {
+function extract(user) {
     return {
         success: true,
         _id: user._id,
         domain: user.domain
     };
-};
+}

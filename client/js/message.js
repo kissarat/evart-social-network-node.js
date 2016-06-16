@@ -7,6 +7,12 @@ App.module('Message', function (Message, App) {
     });
 
     Message.channel = Backbone.Radio.channel('message');
+    App.socket.on('message', function (message) {
+        var model = new Message.Model(message);
+        model.loadRelative().then(function () {
+            Message.channel.request('message', model);
+        });
+    });
 
     Message.Model = Backbone.Model.extend({
         url: '/api/message',
@@ -254,7 +260,7 @@ App.module('Message', function (Message, App) {
             this.el.innerHTML = T('No messages');
         }
     });
-    
+
     var listViewMixin = {
         behaviors: {
             Pageable: {}
@@ -299,9 +305,9 @@ App.module('Message', function (Message, App) {
             });
         }
     });
-    
+
     _.extend(Message.WallView.prototype, listViewMixin);
-    
+
     Message.View = Marionette.View.extend({
         template: '#view-message',
 
@@ -314,7 +320,11 @@ App.module('Message', function (Message, App) {
                 observe: 'text',
                 updateMethod: 'html',
                 onGet: function (value) {
-                    return value.replace(/\n/g, '<br/>');
+                    return value
+                        .replace(/((ftp|https?):\/\/[^\s]+)/g, '<a href="$1" class="busy"></a>')
+                        .replace(/\n/g, '<br/>')
+                        .replace(/(п[оі]шел|[ийі]ди)\s+(нахуй)/ig, '$1 <a href="http://natribu.org/">$2</a>')
+                        .replace(/(б[ыи]дл[оa]м?и?)/ig, ' <a href="http://lurkmore.to/%D0%91%D1%8B%D0%B4%D0%BB%D0%BE">$1</a>');
                 }
             },
             '.time': {
@@ -340,6 +350,7 @@ App.module('Message', function (Message, App) {
                     }
                 }, 120)
             }
+
             if (Message.View.appearance.length <= 1) {
                 appear();
             }
@@ -367,6 +378,33 @@ App.module('Message', function (Message, App) {
                         .appendTo(collectionView.$el);
                 }
             }
+            itemView.$('a').each(function (i, anchor) {
+               var image = new Image();
+                anchor.setAttribute('target', '_black');
+                image.addEventListener('load', function () {
+                    anchor.classList.remove('busy');
+                    anchor.classList.add('image');
+                    anchor.appendChild(image);
+                });
+                image.addEventListener('error', function () {
+                    anchor.classList.remove('busy');
+                    var url = decodeURIComponent(anchor.href);
+                    var origin = /\w+:\/\/([^\/]+)\//.exec(url);
+                    if (origin[1].indexOf('wikipedia.org') > 0) {
+                        url = _.last(url.split('/')).replace(/_/g, ' ');
+                    }
+                    else if (url.length > 64) {
+                        var remain = -64 + origin[1].length;
+                        url = origin[1];
+                        if (remain < 0) {
+                            url += '/...' + anchor.href.slice(remain);
+                        }
+                    }
+                    anchor.innerHTML = url;
+                });
+                image.classList.add('busy');
+                image.src = anchor.href;
+            });
             Marionette.CollectionView.prototype.attachHtml.apply(this, arguments);
         }
     });
@@ -413,17 +451,34 @@ App.module('Message', function (Message, App) {
             return this.getRegion('list').currentView.collection;
         },
 
+        getQuery: function () {
+            return this.getCollection().pageableCollection.queryModel;
+        },
+
         initialize: function () {
             this.reply = _.bind(this.reply, this);
+            this.send = _.bind(this.send, this);
             Message.channel.reply('message', this.reply);
+            window.addEventListener('keyup', this.send);
         },
 
         destroy: function () {
+            window.removeEventListener('keydown', this.send);
             Message.channel.stopReplying('message', this.reply);
         },
 
         reply: function (model) {
-            this.getCollection().add(model);
+            var isReceiver = this.getQuery().get('target_id') == model.get('target').get('_id');
+            if (isReceiver) {
+                this.getCollection().add(model);
+            }
+            return isReceiver;
+        },
+
+        send: function (e) {
+            if (e.altKey && 'Enter' == e.key) {
+                this.getRegion('editor').currentView.send();
+            }
         }
     }, {
         widget: function (region, options) {

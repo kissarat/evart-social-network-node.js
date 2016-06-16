@@ -78,6 +78,7 @@ $blue: #3892CD
   flex-direction: column
   .list
     display: flex
+    overflow-x: hidden
     flex-direction: column
     flex: 1
     justify-content: flex-end
@@ -93,6 +94,8 @@ $blue: #3892CD
         border-radius: 4px
         text-align: justify
         min-width: 5em
+        a:hover
+          text-decoration: underline
         &:after
           position: absolute
           display: inline-block
@@ -110,6 +113,15 @@ $blue: #3892CD
         .text
           background-color: $blue
           color: white
+          a
+            color: yellow
+            &.image
+              display: block
+              margin: 6px 0
+              border-radius: 4px
+              img
+                max-width: 384px
+                max-height: 128px
           &:after
             border-left: 8px solid $blue
             right: -8px
@@ -121,6 +133,8 @@ $blue: #3892CD
         .text
           background-color: #ECEFF4
           color: black
+          a
+            color: $blue
           &:after
             border-right: 8px solid #ECEFF4
             left: -8px
