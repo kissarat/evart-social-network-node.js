@@ -145,10 +145,11 @@ else {
 
 App.local = new App.Database({
     name: 'socex',
-    version: 1,
+    version: 2,
     schema: {
         errors: {},
-        user: {}
+        user: {},
+        video: {}
     }
 });
 

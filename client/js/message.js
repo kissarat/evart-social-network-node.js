@@ -390,17 +390,29 @@ App.module('Message', function (Message, App) {
                     anchor.classList.remove('busy');
                     var url = decodeURIComponent(anchor.href);
                     var origin = /\w+:\/\/([^\/]+)\//.exec(url);
-                    if (origin[1].indexOf('wikipedia.org') > 0) {
-                        url = _.last(url.split('/')).replace(/_/g, ' ');
+                    var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
+                    if (youtube) {
+                        App.local.getById('video', youtube[1]).then(function (oembed) {
+                            $(anchor).replaceWith(
+                                $(oembed.html)
+                                    .removeAttr('width')
+                                    .removeAttr('height')
+                            );
+                        });
                     }
-                    else if (url.length > 64) {
-                        var remain = -64 + origin[1].length;
-                        url = origin[1];
-                        if (remain < 0) {
-                            url += '/...' + anchor.href.slice(remain);
+                    else {
+                        if (origin[1].indexOf('wikipedia.org') > 0) {
+                            url = _.last(url.split('/')).replace(/_/g, ' ');
                         }
+                        else if (url.length > 64) {
+                            var remain = -64 + origin[1].length;
+                            url = origin[1];
+                            if (remain < 0) {
+                                url += '/...' + anchor.href.slice(remain);
+                            }
+                        }
+                        anchor.innerHTML = url;
                     }
-                    anchor.innerHTML = url;
                 });
                 image.classList.add('busy');
                 image.src = anchor.href;

@@ -577,7 +577,7 @@ Context.prototype = {
                 this.req.id = ObjectID(this.req.url.query.id);
             }
             catch (ex) {
-                this.req.id = null
+                this.req.id = this.req.url.query.id;
             }
         }
         return this.req.id;
