@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
+var errors = require('../errors');
 var _ = require('underscore');
 
 global.schema.Record = new mongoose.Schema({
@@ -48,7 +49,7 @@ module.exports = {
             where.type = type.indexOf('.') > 0 ? {$in: type.split('.')} : type;
         }
         var populate = $.select(['domain'], schema.User.user_public_fields);
-        return Record.find(where, {type: 1, source: 1, target: 1, status: 1})
+        return Record.find(where, {type: 1, source: 1, target: 1, status: 1, time: 1})
             .populate('source', populate)
             .populate('target', populate);
     },
@@ -108,28 +109,26 @@ module.exports = {
 };
 
 function buildGet($) {
-    var where = $.req.query;
-    var me = $.user._id.toString();
-    if ($.has('source_id') && $.get('source_id').toString() == me) {
-        where.target = me;
+    var where = {};
+    var me = $.user._id;
+    if ($.has('source_id')) {
+        where.source = $.get('source_id');
     }
-    if ($.has('target_id') && $.get('target_id').toString() == me) {
-        where.source = me;
+    if ($.has('target_id')) {
+        where.target = $.get('target_id');
     }
+    if (!where.source && !where.target) {
+        where.$or = [
+            {source: me},
+            {target: me}
+        ];
+    }
+    if (where.source && where.target && !me.equals(where.source) && !me.equals(where.target)) {
+        throw new errors.Forbidden();
+    }
+    console.log(where);
     if ($.has('id')) {
         where._id = $.get('_id');
     }
-    return where;
-}
-
-function buildPost($) {
-    var where = {
-        target_id: $.user._id
-    };
-    ['id', 'source_id', 'type'].forEach(function (name) {
-        if ($.has(name, true)) {
-            where[name.replace('_id', '')] = $.get(name);
-        }
-    });
     return where;
 }

@@ -434,15 +434,16 @@ module.exports = {
             var fields = {};
             fields['friend' === name ? 'follow' : name] = 1;
             var id = $.has('id') ? $.id : $.user._id;
-            return User.findOne(id, fields, $.wrap(function (user) {
+            User.findOne(id, fields, $.wrap(function (user) {
                 if ('friend' === name) {
-                    return search($, {
+                    search($, {
                         _id: {
-                            $in: user.follow
-                        }
-                    });
+                            $in: user.follow.map(ObjectID)
+                        },
+                        follow: user._id
+                    }, true);
                 } else {
-                    return search($, user[name]);
+                    search($, user[name], true);
                 }
             }));
         },
@@ -468,6 +469,7 @@ function modify_list(add) {
                 });
                 result.found = index >= 0;
                 if (result.found == add) {
+                    result.success = result.found && !add;
                     resolve(result);
                 }
                 else {
@@ -508,50 +510,38 @@ var user_fields = ["online", "name", "surname", "forename", "city", "country", "
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];
 
-function search($, cnd, send) {
-    var ORs, ands, d, fields, j, k, len, len1, name, param, q, r, ref, ref1;
-    if (send == null) {
-        send = false;
-    }
-    ORs = [];
+function search($, where, send) {
+    var isArray = where instanceof Array;
+    var ands = isArray ? {} : where;
     if ($.has('q')) {
-        q = $.search;
-        ref = ['domain', 'surname'];
-        for (j = 0, len = ref.length; j < len; j++) {
-            name = ref[j];
-            d = {};
-            d[name] = {
+        var ORs = [];
+        var q = $.search;
+        ['domain', 'surname'].forEach(function (param) {
+            var d = {};
+            d[param] = {
                 $regex: q
             };
             ORs.push(d);
+        });
+        if (ORs.length > 0) {
+            ands.$or = ORs;
         }
     }
-    ands = cnd && cnd.constructor === Array ? cnd : {};
-    if (ORs.length > 0) {
-        ands.$or = ORs;
-    }
-    ref1 = ['country', 'city', 'sex', 'forename', 'relationship', 'type'];
-    for (k = 0, len1 = ref1.length; k < len1; k++) {
-        param = ref1[k];
+    ['country', 'city', 'sex', 'forename', 'relationship', 'type'].forEach(function (param) {
         if ($.has(param)) {
             ands[param] = $.param(param);
         }
-    }
-    fields = '_id type forename surname domain name type city address avatar sex';
-    if (cnd && cnd.constructor === Array) {
+    });
+    if (isArray) {
         ands._id = {
-            $in: cnd.map(function (id) {
+            $in: where.map(function (id) {
                 return ObjectID(id);
             })
         };
     }
-    if ($.has('type')) {
-        ands.type = $.get('type');
-    }
-    r = User.find(ands);
-    r.select(fields);
+    var r = User.find(ands).select($.select(['domain'], user_fields));
     if (send) {
-        return r.exec($.wrap(function (users) {
+        r.exec($.wrap(function (users) {
             return $.send(users);
         }));
     } else {
