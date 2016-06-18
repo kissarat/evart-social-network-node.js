@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
+var _ = require('underscore');
 
 global.schema.Record = new mongoose.Schema({
     _id: utils.idType('User'),
@@ -53,16 +54,14 @@ module.exports = {
     },
 
     PUT: function ($) {
-        var data = {};
-        data.source = $.user._id;
-        data.target = $.param('target_id');
-        data.type = $.param('type');
+        var data = {
+            source: $.user._id,
+            target: $.param('target_id'),
+            type: $.param('type')
+        };
         return new Promise(function (resolve, reject) {
             Record.findOne(data).catch(reject).then(function (record) {
-                var result = {
-                    success: true,
-                    found: !!record
-                };
+                var result = {found: !!record};
                 if (record) {
                     record.time = Date.now();
                 }
@@ -78,12 +77,14 @@ module.exports = {
     },
 
     POST: function ($) {
-        var where = build($);
+        var where = {
+            _id: $.id,
+            target: $.user._id
+        };
         return new Promise(function (resolve, reject) {
             Record.findOne(where).catch(reject).then(function (record) {
                 if (record) {
-                    var changes = $.req.body;
-                    except(changes);
+                    var changes = _.omit($.body, ['_id', 'target', 'source', '__v']);
                     if (_.isEmpty(changes)) {
                         resolve(code.NOT_MODIFIED);
                     }
@@ -121,7 +122,7 @@ function buildGet($) {
     return where;
 }
 
-function build($) {
+function buildPost($) {
     var where = {
         target_id: $.user._id
     };
@@ -131,12 +132,4 @@ function build($) {
         }
     });
     return where;
-}
-
-function except(changes) {
-    for(var name in changes) {
-        if (['_id', 'target', 'source', '__v'].indexOf(name)) {
-            delete changes[name];
-        }
-    }
 }

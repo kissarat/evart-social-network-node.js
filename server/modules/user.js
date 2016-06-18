@@ -4,6 +4,8 @@ var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
 var _ = require('underscore');
 
+var code = utils.code;
+
 var T = mongoose.Schema.Types;
 
 global.schema.User = new mongoose.Schema({
@@ -30,6 +32,7 @@ global.schema.User = new mongoose.Schema({
             unique: true
         }
     },
+
     status: {
         type: String
     },
@@ -47,12 +50,25 @@ global.schema.User = new mongoose.Schema({
         ref: 'Photo'
     },
 
+    online: {
+        type: Date,
+        "default": function () {
+            return Date.now() + 5 * 60000;
+        }
+
+    },
+
     background: {
         type: T.ObjectId,
         ref: 'Photo'
     },
 
     created: {
+        type: Date,
+        "default": Date.now
+    },
+
+    time: {
         type: Date,
         "default": Date.now
     },
@@ -212,7 +228,7 @@ module.exports = {
         });
     },
 
-    POST: function ($) {
+    PUT: function ($) {
         var data = $.allowFields(group_fields, admin_fields);
         data.type = 'group';
         var user = new User(data);
@@ -226,8 +242,9 @@ module.exports = {
         }));
     },
 
-    PATCH: function ($) {
+    POST: function ($) {
         var data = $.allowFields(user_fields, admin_fields);
+        date.time = Date.now();
         return User.findByIdAndUpdate($.id, {
             $set: data
         }, {
@@ -235,11 +252,32 @@ module.exports = {
         });
     },
 
+    PATCH: function ($) {
+        if ($.has('online')) {
+            var online = $.param('online');
+            if (isNaN(online)) {
+                $.invalid('online');
+            }
+            online = +online;
+            var now = Date.now();
+            var delta = 15 * 60000;
+            if (online < 0) {
+                online = now - online;
+            }
+            if (online < now + delta) {
+                return User.update({_id: $.user._id}, {$set: {online: online}});
+            }
+            else {
+                $.invalid('online');
+            }
+        }
+        $.sendStatus(code.BAD_REQUEST);
+    },
+
     GET: function ($) {
         var params = ['id', 'domain'];
-        var fields = 'domain status type city country address phone avatar background name birthday languages relationship';
         if ($.hasAny(params) && !$.has('list')) {
-            return User.findOne($.paramsObject(params)).select(fields);
+            return User.findOne($.paramsObject(params)).select(schema.User.user_public_fields.join(' '));
         } else if ($.has('ids')) {
             return User.find({
                 _id: {
@@ -248,7 +286,7 @@ module.exports = {
             }).select(fields);
         } else {
             if ($.has('domain') && $.has('list')) {
-                list_name = $.param('list');
+                var list_name = $.param('list');
                 if (list_name !== 'follow' && list_name !== 'deny') {
                     $.invalid('list', 'is not follow or deny');
                 }
@@ -464,8 +502,8 @@ var list_fields = {
     request: null
 };
 
-schema.User.user_public_fields = ["name", "surname", "forename", "city", "country", "address", "phone", "avatar", "name", "birthday", "languages", "relationship"];
-var user_fields = ["name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship"];
+schema.User.user_public_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "avatar", "name", "birthday", "languages", "relationship"];
+var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship"];
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];
 
@@ -524,6 +562,7 @@ function extract(user) {
     return {
         success: true,
         _id: user._id,
-        domain: user.domain
+        domain: user.domain,
+        online: user.online
     };
 }

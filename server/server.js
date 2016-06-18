@@ -736,15 +736,26 @@ function serve($) {
             }
             if ('Promise' == result.constructor.name) {
                 result
-                    .then(function (code, r) {
-                        if ('number' != typeof code) {
-                            r = code;
+                    .then(function (c, r) {
+                        if ('number' != typeof c) {
+                            r = c;
+                            c = c.OK;
                         }
                         else if (!r) {
-                            return $.sendStatus(code);
+                            return $.sendStatus(c);
                         }
                         if (r) {
-                            if ($.req.since && r.time && new Date(r.time).getTime() <= $.req.since.getTime()) {
+                            if ('GET' != $.req.method) {
+                                var success = [
+                                    code.OK,
+                                    code.CREATED,
+                                    code.ACCEPTED
+                                ];
+                                if (undefined === r.success && success.indexOf(c) >= 0) {
+                                    r.success = true;
+                                }
+                            }
+                            else if ($.req.since && r.time && new Date(r.time).getTime() <= $.req.since.getTime()) {
                                 return $.sendStatus(code.NOT_MODIFIED);
                             }
                             $.send(r);
@@ -915,7 +926,7 @@ function parse(url) {
             if (!value) {
                 delete a.query[i];
             }
-            else if (24 != value.length && /^\d+$/.test(value)) {
+            else if (24 != value.length && /^\-?\d+$/.test(value)) {
                 a.query[i] = parseFloat(value);
             }
         }
