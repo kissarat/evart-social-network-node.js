@@ -11,7 +11,8 @@ App.module('User', function (User, App) {
             'edit/:id': 'edit',
             'group/create': 'create',
             'users': 'index',
-            'request': 'request'
+            'record/:type': 'record',
+            'list/:name': 'list'
         }
     });
 
@@ -109,11 +110,12 @@ App.module('User', function (User, App) {
         }
     });
 
-    User.RequestList = User.List.extend({
+    User.RecordList = User.List.extend({
         url: '/api/record',
 
         queryModelInitial: {
             type: 'follow',
+            target_id: '',
             q: ''
         },
 
@@ -121,6 +123,15 @@ App.module('User', function (User, App) {
             return records.map(function (user) {
                 return user.source;
             });
+        }
+    });
+
+    User.RelationList = User.List.extend({
+        url: '/api/user/list',
+
+        queryModelInitial: {
+            name: '',
+            q: ''
         }
     });
 
@@ -414,7 +425,7 @@ App.module('User', function (User, App) {
                 if (data.success) {
                     $.sendJSON('PUT', '/api/record?type=follow&target_id=' + self.model.get('_id'), {type: 'follow'}, function (data) {
                         if (data.success) {
-                            App.navigate('/friends');
+                            App.navigate('/list/friend');
                         }
                     });
                 }
@@ -668,8 +679,19 @@ App.module('User', function (User, App) {
                 pageable.getFirstPage();
             },
 
-            request: function () {
-                var pageable = new User.RequestList();
+            list: function (name) {
+                var pageable = new User.RelationList();
+                pageable.queryModel.set('name', name);
+                var listView = new User.ListView({collection: pageable.fullCollection});
+                var layout = new User.SearchView({model: pageable.queryModel});
+                App.getPlace('main').show(layout);
+                layout.getRegion('list').show(listView);
+                pageable.getFirstPage();
+            },
+
+            record: function (type) {
+                var pageable = new User.RecordList();
+                pageable.queryModel.set('target_id', App.user._id);
                 var listView = new User.ListView({collection: pageable.fullCollection});
                 var layout = new User.SearchView({model: pageable.queryModel});
                 App.getView().getRegion('main').show(layout);
