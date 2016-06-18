@@ -2,6 +2,7 @@ var rs = require('randomstring');
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
+var _ = require('underscore');
 
 var T = mongoose.Schema.Types;
 
@@ -124,7 +125,7 @@ module.exports = {
                 hash: utils.hash($.post('password'))
             };
             var login = $.post('login').replace(/[\(\)\s]/, '');
-            if (indexOf.call(login, '@') >= 0) {
+            if (login.indexOf('@') >= 0) {
                 conditions.email = login;
             } else if (/^[\d\-]+$/.exec(login)) {
                 login = login.replace('-', '');
@@ -374,7 +375,7 @@ module.exports = {
             var field = $.param('field');
             var changes = {};
             var fields = ['avatar', 'background'];
-            if (indexOf.call(fields, field) >= 0) {
+            if (fields.indexOf(field) >= 0) {
                 changes[field] = ObjectID($.param('value'));
             } else {
                 $.invalid('field', field);
@@ -406,14 +407,90 @@ module.exports = {
                 }
             }));
         },
+
         POST: function ($) {
             var name = $.param('name');
+            var target_id = $.param('target_id');
             if (!list_fields.hasOwnProperty(name)) {
                 $.invalid('name');
             }
-            var target_id = $.param('target_id');
-            var id = $.has('id') ? $.id : $.user._id;
-            var opposite = list_fields[name];
+            var source_id = $.has('source_id') ? $.get('source_id') : $.user._id;
+            return new Promise(function (resolve, reject) {
+                var where = {
+                    type: 'follow',
+                    source: target_id,
+                    target: source_id
+                };
+                Record.findOne(where).catch(reject).then(function (record) {
+                    if (record) {
+                        var status = $.param('status');
+                        if (['follow', 'friend'].indexOf(status) < 0) {
+                            return reject({invalid: 'status'});
+                        }
+                        var result = {
+                            success: true,
+                            request: record
+                        };
+                        if (record.status == status) {
+                            resolve(result)
+                        }
+                        else {
+                            record.status = status;
+                            record.save().catch(reject).then(function () {
+                                User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
+                                    result.modified = false;
+                                    switch (record.status) {
+                                        case 'friend':
+                                            user.follow.push(target_id);
+                                            result.modified = true;
+                                            break;
+                                        case 'follow':
+                                            var index = _.findIndex(user.follow, function (current_id) {
+                                                return target_id.toString() == current_id.toString();
+                                            });
+                                            if (index >= 0) {
+                                                user.follow.splice(index, 1);
+                                                result.modified = true;
+                                            }
+                                            break;
+                                    }
+                                    if (result.modified) {
+                                        user.follow = _.uniq(user.follow, true, function (a, b) {
+                                            return a.toString() == b.toString();
+                                        });
+                                        user.save().catch(reject).then(function () {
+                                            resolve(result);
+                                        });
+                                    }
+                                    else {
+                                        resolve(result);
+                                    }
+                                });
+                            });
+                        }
+                    }
+                    else {
+                        User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
+                            user.follow.push(target_id);
+                            return user.save();
+                        })
+                            .catch(reject)
+                            .then(function () {
+                                var record = {
+                                    type: 'follow',
+                                    source: source_id,
+                                    target: target_id
+                                };
+                                new Record(record).save().catch(reject).then(function (record) {
+                                    resolve({
+                                        success: true,
+                                        request: record
+                                    });
+                                });
+                            });
+                    }
+                });
+            });
         }
     }
 };

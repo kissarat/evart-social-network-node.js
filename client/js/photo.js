@@ -67,6 +67,18 @@ App.module('Photo', function (Photo, App) {
         }
     });
 
+    Photo.Place = Marionette.View.extend({
+        template: '#view-empty',
+
+        behaviors: {
+            Bindings: {}
+        },
+
+        bindings: {
+            
+        }
+    });
+
     Photo.View = Marionette.View.extend({
         template: '#view-video',
 

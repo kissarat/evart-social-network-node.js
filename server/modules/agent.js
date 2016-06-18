@@ -1,8 +1,10 @@
-var rs = require('randomstring');
-var mongoose = require('mongoose');
-var utils = require('../utils');
-var code = require('../../client/code.json');
+"use strict";
+
 var client = require('../client.json');
+var code = require('../../client/code.json');
+var mongoose = require('mongoose');
+var rs = require('randomstring');
+var utils = require('../utils');
 
 global.schema.Agent = new mongoose.Schema({
     _id: utils.idType('Agent'),

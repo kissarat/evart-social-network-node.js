@@ -1,17 +1,17 @@
 "use strict";
 
-var fs = require('fs');
-var path = require('path');
-var mmm = require('mmmagic');
-var hash_md5 = require('md5-file');
-var ffprobe = require('node-ffprobe');
-var meta = require('musicmetadata');
 var code = require('../../client/code.json');
-var magic = new mmm.Magic(mmm.MAGIC_MIME);
+var ffprobe = require('node-ffprobe');
+var fs = require('fs');
+var hash_md5 = require('md5-file');
+var mmm = require('mmmagic');
 var mongoose = require('mongoose');
+var path = require('path');
 var static_dir = path.normalize(__dirname + '/../../static');
-var md5_dir = static_dir + '/md5';
 var utils = require('../utils.js');
+
+var magic = new mmm.Magic(mmm.MAGIC_MIME);
+var md5_dir = static_dir + '/md5';
 var mimes = {};
 fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n').map(function (mime) {
     mime = mime.split(',');
@@ -119,13 +119,14 @@ module.exports = {
     GET: function ($) {
         var conditions, owner_id;
         if ($.has('id')) {
-            return File.findOne($.param('id')).then(function (file) {
-                $.res.writeHead(code.MOVED_PERMANENTLY, {
-                    'content-type': file.mime,
-                    location: '/md5/' + file.md5 + '/' + file.filename
-                });
-                return $.res.end();
-            });
+            return  File.findOne($.id);
+            // return File.findOne($.param('id')).then(function (file) {
+            //     $.res.writeHead(code.MOVED_PERMANENTLY, {
+            //         'content-type': file.mime,
+            //         location: '/md5/' + file.md5 + '/' + file.filename
+            //     });
+            //     return $.res.end();
+            // });
         } else {
             owner_id = $.has('owner_id') ? $.param('owner_id') : $.user._id;
             conditions = {

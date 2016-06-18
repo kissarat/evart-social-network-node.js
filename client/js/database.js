@@ -145,9 +145,11 @@ else {
 
 App.local = new App.Database({
     name: 'socex',
-    version: 2,
+    version: 1,
     schema: {
         errors: {},
+        file: {},
+        message: {},
         user: {},
         video: {}
     }

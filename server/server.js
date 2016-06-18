@@ -1,15 +1,15 @@
 'use strict';
 
 require('colors');
+var _ = require('underscore');
+var fs = require('fs');
+var http = require('http');
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
-var http = require('http');
-var ws = require('ws');
-var fs = require('fs');
-var url_parse = require('url').parse;
 var qs = require('querystring');
-var _ = require('underscore');
 var twilio = require('twilio');
+var url_parse = require('url').parse;
+var ws = require('ws');
 
 global.config = require('./config.json');
 global.code = require('../client/code.json');
@@ -647,7 +647,7 @@ Context.prototype = {
 
     select: function (array, allow) {
         if (!array) {
-            array  = [];
+            array = [];
         }
         if (this.has('select')) {
             var param = this.get('select').split('.').sort();
@@ -736,7 +736,10 @@ function serve($) {
                 result
                     .then(function (r) {
                         if (r) {
-                            $.send(r.toObject ? r.toObject() : r);
+                            if ($.req.since && r.time && new Date(r.time).getTime() <= $.req.since.getTime()) {
+                                return $.sendStatus(code.NOT_MODIFIED);
+                            }
+                            $.send(r);
                         }
                         else if (arguments.length > 0 && undefined === r) {
                             // console.error('Undefined promise result');
@@ -794,7 +797,7 @@ function exec($, action) {
             try {
                 // var result = $.validate($.params);
                 // if ('valid' in result ? result.valid : result) {
-                    return action($);
+                return action($);
                 // }
                 // else {
                 //     $.send(code.BAD_REQUEST, {

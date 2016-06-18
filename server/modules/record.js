@@ -16,6 +16,10 @@ global.schema.Record = new mongoose.Schema({
         }
     },
     
+    status: {
+        type: String
+    },
+    
     source: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -26,22 +30,28 @@ global.schema.Record = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+
+    time: {
+        type: Date,
+        required: true,
+        "default": Date.now
     }
 });
 
 module.exports = {
     GET: function ($) {
-        var cnd = {target: $.user._id};
+        var where = {target: $.user._id};
         if ($.has('type')) {
             var type = $.param('type').split('.');
             if (1 == type.length) {
-                cnd.type = type[0];
+                where.type = type[0];
             }
             else {
-                cnd.type = {$in: type};
+                where.type = {$in: type};
             }
         }
-        return Record.find(cnd, {type: 1, source: 1})
+        return Record.find(where, {type: 1, source: 1, status: 1})
             .populate('source', $.select(['domain'], schema.User.user_public_fields));
     },
 

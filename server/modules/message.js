@@ -1,8 +1,8 @@
+var _ = require('underscore');
+var code = require(__dirname + '/../../client/code.json');
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
-var code = require(__dirname + '/../../client/code.json');
 var utils = require('../utils');
-var _ = require('underscore');
 
 var T = mongoose.Schema.Types;
 
@@ -134,17 +134,25 @@ module.exports = {
         if ($.has('target_id')) {
             target_id = $.param('target_id');
             me = $.user._id;
-            r = Message.find({
-                $or: [
-                    {
-                        source: me,
-                        target: target_id
-                    }, {
-                        source: target_id,
-                        target: me
-                    }
-                ]
-            });
+            var cnd = {
+                $and: [{
+                    $or: [
+                        {
+                            source: me,
+                            target: target_id
+                        }, {
+                            source: target_id,
+                            target: me
+                        }
+                    ]
+                }]
+            };
+            if ($.has('since')) {
+                cnd.$and.push({
+                    time: {$gte: new Date($.get('since')).toISOString()}
+                });
+            }
+            r = Message.find(cnd);
         } else if ($.has('video_id')) {
             r = Message.find({
                 video: $.param('video_id')
@@ -271,7 +279,6 @@ module.exports = {
 };
 
 var user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos', 'video', 'videos', 'text', 'repost'];
-
 var admin_fields = ['domain', 'type'];
 
 function populate(r) {
