@@ -505,14 +505,16 @@ var list_fields = {
     request: null
 };
 
-schema.User.user_public_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "avatar", "name", "birthday", "languages", "relationship"];
-var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship"];
+schema.User.user_public_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone",
+    "avatar", "name", "birthday", "languages", "relationship"];
+var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar",
+    "name", "birthday", "languages", "relationship"];
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];
 
 function search($, where, send) {
     var isArray = where instanceof Array;
-    var ands = isArray ? {} : where;
+    var ands = !where || isArray ? {} : where;
     if ($.has('q')) {
         var ORs = [];
         var q = $.search;
