@@ -384,9 +384,10 @@ Context.prototype = {
         return this._param(this.body, name);
     },
 
-    has: function (name) {
-        if (name in this.params) {
-            var value = this.params[name];
+    has: function (name, isGet) {
+        var params = isGet ? this.req.url.query : this.params;
+        if (name in params) {
+            var value = params[name];
             if (value instanceof Array) {
                 return value.length > 0;
             }
@@ -661,7 +662,8 @@ Context.prototype = {
             }
             array = array.concat(allowed_fields);
         }
-        return _.uniq(array).join(' ');
+        array = _.uniq(array);
+        return array.join(' ');
     },
 
     model: function () {
@@ -734,7 +736,13 @@ function serve($) {
             }
             if ('Promise' == result.constructor.name) {
                 result
-                    .then(function (r) {
+                    .then(function (code, r) {
+                        if ('number' != typeof code) {
+                            r = code;
+                        }
+                        else if (!r) {
+                            return $.sendStatus(code);
+                        }
                         if (r) {
                             if ($.req.since && r.time && new Date(r.time).getTime() <= $.req.since.getTime()) {
                                 return $.sendStatus(code.NOT_MODIFIED);
@@ -748,7 +756,6 @@ function serve($) {
                             $.sendStatus(code.NOT_FOUND);
                         }
                     })
-
                     .catch(function (r) {
                         $.send(code.INTERNAL_SERVER_ERROR, {
                             error: {

@@ -408,92 +408,45 @@ module.exports = {
             }));
         },
 
-        POST: function ($) {
-            var name = $.param('name');
-            var target_id = $.param('target_id');
-            if (!list_fields.hasOwnProperty(name)) {
-                $.invalid('name');
-            }
-            var source_id = $.has('source_id') ? $.get('source_id') : $.user._id;
-            return new Promise(function (resolve, reject) {
-                var where = {
-                    type: 'follow',
-                    source: target_id,
-                    target: source_id
-                };
-                Record.findOne(where).catch(reject).then(function (record) {
-                    if (record) {
-                        var status = $.param('status');
-                        if (['follow', 'friend'].indexOf(status) < 0) {
-                            return reject({invalid: 'status'});
-                        }
-                        var result = {
-                            success: true,
-                            request: record
-                        };
-                        if (record.status == status) {
-                            resolve(result)
-                        }
-                        else {
-                            record.status = status;
-                            record.save().catch(reject).then(function () {
-                                User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
-                                    result.modified = false;
-                                    switch (record.status) {
-                                        case 'friend':
-                                            user.follow.push(target_id);
-                                            result.modified = true;
-                                            break;
-                                        case 'follow':
-                                            var index = _.findIndex(user.follow, function (current_id) {
-                                                return target_id.toString() == current_id.toString();
-                                            });
-                                            if (index >= 0) {
-                                                user.follow.splice(index, 1);
-                                                result.modified = true;
-                                            }
-                                            break;
-                                    }
-                                    if (result.modified) {
-                                        user.follow = _.uniq(user.follow, true, function (a, b) {
-                                            return a.toString() == b.toString();
-                                        });
-                                        user.save().catch(reject).then(function () {
-                                            resolve(result);
-                                        });
-                                    }
-                                    else {
-                                        resolve(result);
-                                    }
-                                });
-                            });
-                        }
-                    }
-                    else {
-                        User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
-                            user.follow.push(target_id);
-                            return user.save();
-                        })
-                            .catch(reject)
-                            .then(function () {
-                                var record = {
-                                    type: 'follow',
-                                    source: source_id,
-                                    target: target_id
-                                };
-                                new Record(record).save().catch(reject).then(function (record) {
-                                    resolve({
-                                        success: true,
-                                        request: record
-                                    });
-                                });
-                            });
-                    }
-                });
-            });
-        }
+        POST: modify_list(true),
+        DELETE: modify_list(false)
     }
 };
+
+function modify_list(add) {
+    return function ($) {
+        var name = $.param('name');
+        var source_id = $.has('source_id') ? $.get('source_id') : $.user._id;
+        var target_id = $.param('target_id');
+        if (!list_fields.hasOwnProperty(name)) {
+            $.invalid('name');
+        }
+        var result = {success: true};
+        return new Promise(function (resolve, reject) {
+            User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
+                var index = _.findIndex(user.follow, function (current_id) {
+                    return target_id.toString() == current_id.toString();
+                });
+                result.found = index >= 0;
+                if (result.found == add) {
+                    resolve(result);
+                }
+                else {
+                    result.modified = true;
+                    if (add) {
+                        user.follow.push(target_id);
+                    }
+                    else {
+                        user.follow.splice(index, 1);
+                    }
+                    user.save().catch(reject).then(function (user) {
+                        resolve(result);
+                    });
+                }
+            })
+        });
+    }
+}
 
 function toggle(array, element) {
     var i = array.indexOf(element);

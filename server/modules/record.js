@@ -41,33 +41,102 @@ global.schema.Record = new mongoose.Schema({
 
 module.exports = {
     GET: function ($) {
-        var where = {target: $.user._id};
+        var where = buildGet($);
         if ($.has('type')) {
-            var type = $.param('type').split('.');
-            if (1 == type.length) {
-                where.type = type[0];
-            }
-            else {
-                where.type = {$in: type};
-            }
+            var type = $.param('type');
+            where.type = type.indexOf('.') > 0 ? {$in: type.split('.')} : type;
         }
-        return Record.find(where, {type: 1, source: 1, status: 1})
-            .populate('source', $.select(['domain'], schema.User.user_public_fields));
+        var populate = $.select(['domain'], schema.User.user_public_fields);
+        return Record.find(where, {type: 1, source: 1, target: 1, status: 1})
+            .populate('source', populate)
+            .populate('target', populate);
+    },
+
+    PUT: function ($) {
+        var data = {};
+        data.source = $.user._id;
+        data.target = $.param('target_id');
+        data.type = $.param('type');
+        return new Promise(function (resolve, reject) {
+            Record.findOne(data).catch(reject).then(function (record) {
+                var result = {
+                    success: true,
+                    found: !!record
+                };
+                if (record) {
+                    record.time = Date.now();
+                }
+                else {
+                    record = new Record(data);
+                }
+                return record.save().catch(reject).then(function (record) {
+                    result.result = record;
+                    resolve(result);
+                })
+            })
+        })
     },
 
     POST: function ($) {
-        var record = new Record({
-            source: $.user._id,
-            target: $.param('target_id'),
-            type: $.param('type')
+        var where = build($);
+        return new Promise(function (resolve, reject) {
+            Record.findOne(where).catch(reject).then(function (record) {
+                if (record) {
+                    var changes = $.req.body;
+                    except(changes);
+                    if (_.isEmpty(changes)) {
+                        resolve(code.NOT_MODIFIED);
+                    }
+                    else {
+                        for (var name in changes) {
+                            record[name] = changes[name];
+                        }
+                        record.save().then(resolve, reject);
+                    }
+                }
+                else {
+                    resolve(code.NOT_FOUND);
+                }
+            });
         });
-        return record.save();
     },
     
     DELETE: function ($) {
-        return Record.remove({
-            id: $.id,
-            target_id: $.user._id
-        })
+        return Record.remove(buildGet($));
     }
 };
+
+function buildGet($) {
+    var where = $.req.query;
+    var me = $.user._id.toString();
+    if ($.has('source_id') && $.get('source_id').toString() == me) {
+        where.target = me;
+    }
+    if ($.has('target_id') && $.get('target_id').toString() == me) {
+        where.source = me;
+    }
+    if ($.has('id')) {
+        where._id = $.get('_id');
+    }
+    return where;
+}
+
+function build($) {
+    var where = {
+        target_id: $.user._id
+    };
+    ['id', 'source_id', 'type'].forEach(function (name) {
+        if ($.has(name, true)) {
+            where[name.replace('_id', '')] = $.get(name);
+        }
+    });
+    return where;
+}
+
+function except(changes) {
+    for(var name in changes) {
+        if (['_id', 'target', 'source', '__v'].indexOf(name)) {
+            delete changes[name];
+        }
+    }
+}
