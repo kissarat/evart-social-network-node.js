@@ -95,7 +95,7 @@
       border: 1px solid #BCBCBC
       border-radius: 2px
       cursor: pointer
-      
+
   .big-avatar
     background-size: cover
     width: 96px
@@ -117,6 +117,7 @@
       border: none
   .form-control
     width: calc(100% - 26px)
+
 @media (max-width: 1024px)
   article
     flex-flow: column
@@ -193,3 +194,35 @@
     border-right: 1px solid #BCBCBC
   > div:last-child
     border-right: none
+
+.switch
+  background-image: url("/images/switch.png")
+  width: 114px
+  height: 30px
+  &[data-name="follow"]
+    background-position-y: 30px
+  &[data-name="friend"]
+    background-position-y: 60px
+
+.layout-user-search .record
+  display: flex
+  flex-direction: row
+  align-items: center
+  justify-content: space-between
+  .avatar
+    margin: 8px
+    width: 48px
+    height: 48px
+  .whom
+    text-align: left
+  .message
+    flex: 1
+  .switch
+    position: relative
+    > *
+      position: absolute
+      width: 30px
+      height: 30px
+      cursor: pointer
+    .friend
+      right: 0

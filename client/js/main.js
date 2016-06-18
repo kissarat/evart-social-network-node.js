@@ -8,8 +8,8 @@ _.extend(Element.prototype, {
         if (id) {
             this.style.backgroundImage = 'url("' + id + '")';
         }
-        else if (this.style.backgroundImage) {
-            this.style.removeProperty('background-image');
+        else {
+            this.style.backgroundImage = 'url("/images/man.png")';
         }
     },
 
@@ -429,3 +429,24 @@ addEventListener('unload', function () {
         region.empty();
     })
 });
+
+function loadRelative(model, map) {
+    return Promise.all(_.pairs(map)
+        .filter(function (relation) {
+            return 'string' == typeof model.get(relation[0])
+        })
+        .map(function (relation) {
+            return App.local.getById('user', model.get(relation[0])).then(function (relative) {
+                model.set(relation, new relative[1](relative));
+            })
+        }));
+}
+
+function resolveRelative(model, map) {
+    _.each(map, function (modelClass, name) {
+        var relative = model.get(name);
+        if ('object' == typeof relative && !(relative instanceof modelClass)) {
+            model.set(name, new modelClass(relative));
+        }
+    });
+}

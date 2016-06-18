@@ -62,6 +62,13 @@ App.module('User', function (User, App) {
     });
 
     User.Model = Backbone.Model.extend({
+        initialize: function () {
+            resolveRelative(this, {
+                source: App.User.Model,
+                target: App.User.Model
+            })
+        },
+
         validation: {
             domain: {
                 pattern: /^[\w\._\-]{4,23}$/,
@@ -110,6 +117,8 @@ App.module('User', function (User, App) {
         }
     });
 
+    // template: '#view-record',
+
     User.RecordList = User.List.extend({
         url: '/api/record',
 
@@ -117,12 +126,6 @@ App.module('User', function (User, App) {
             type: 'follow',
             target_id: '',
             q: ''
-        },
-
-        parseRecords: function (records) {
-            return records.map(function (user) {
-                return user.source;
-            });
         }
     });
 
@@ -485,6 +488,57 @@ App.module('User', function (User, App) {
         }
     });
 
+    User.RecordView = Marionette.View.extend({
+        template: '#view-record',
+
+        behaviors: {
+            Bindings: {}
+        },
+
+        bindings: {
+            '.time': {
+                observe: 'time',
+                onGet: function (value) {
+                    var time = moment(value);
+                    return moment.duration(time.diff()).asDays() < 2 ? time.fromNow() : new Date(value).toLocaleString();
+                }
+            }
+        },
+
+        ui: {
+            avatar: '.avatar',
+            name: '.name',
+            'switch': '.switch'
+        },
+
+        events: {
+            'click .switch > *': 'follow'
+        },
+
+        follow: function (e) {
+            var action = e.target.getAttribute('class');
+            var id = this.model.get('_id');
+            var source_id = this.model.get('source').get('_id');
+            $.sendJSON('POST', '/api/user/list?name=follow&target_id=' + source_id, {status: action}, function (data) {
+                if (data.success) {
+                    $.sendJSON('POST', '/api/record?type=follow&id=' + id, {status: action}, function (data) {
+                        if (data.success) {
+                            e.target.parentNode.setAttribute('data-name', action);
+                        }
+                    });
+                }
+            });
+        },
+
+        onRender: function () {
+            this.ui.name.html(this.model.get('source').getName());
+            this.ui.avatar[0].setBackground(this.model.get('source').get('avatar'));
+            if (this.model.get('status')) {
+                this.ui.switch.attr('data-name', this.model.get('status'));
+            }
+        }
+    });
+
     User.Thumbnail = Marionette.View.extend({
         template: '#thumbnail-user',
         tagName: 'a',
@@ -591,11 +645,11 @@ App.module('User', function (User, App) {
 
         search: function () {
             this.getCollection().delaySearch();
-            // var self = this;
-            // this.ui.list.busy(true);
-            // this.getCollection().delaySearch(function () {
-            //     self.ui.list.busy(false);
-            // })
+            var self = this;
+            this.ui.list.busy(true);
+            this.getCollection().delaySearch(function () {
+                self.ui.list.busy(false);
+            })
         }
     });
 
@@ -692,7 +746,10 @@ App.module('User', function (User, App) {
             record: function (type) {
                 var pageable = new User.RecordList();
                 pageable.queryModel.set('target_id', App.user._id);
-                var listView = new User.ListView({collection: pageable.fullCollection});
+                var listView = new User.ListView({
+                    childView: User.RecordView,
+                    collection: pageable.fullCollection
+                });
                 var layout = new User.SearchView({model: pageable.queryModel});
                 App.getView().getRegion('main').show(layout);
                 layout.getRegion('list').show(listView);

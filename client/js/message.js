@@ -18,8 +18,11 @@ App.module('Message', function (Message, App) {
         url: '/api/message',
 
         initialize: function () {
-            this.resolveRelative('source');
-            this.resolveRelative('target');
+            resolveRelative(this, {
+                source: App.User.Model,
+                target: App.User.Model,
+                owner: App.User.Model
+            });
 
             if (!this.has('time')) {
                 this.set('time', new Date().toISOString())
@@ -27,26 +30,11 @@ App.module('Message', function (Message, App) {
         },
 
         loadRelative: function () {
-            var self = this;
-            return Promise.all(['source', 'target', 'owner']
-                .filter(function (relation) {
-                    return 'string' == typeof self.get(relation)
-                })
-                .map(function (relation) {
-                    return App.local.getById('user', self.get(relation)).then(function (relative) {
-                        self.set(relation, new App.User.Model(relative));
-                    })
-                }));
-        },
-
-        resolveRelative: function (name, modelClass) {
-            if (!modelClass) {
-                modelClass = App.User.Model;
-            }
-            var relative = this.get(name);
-            if ('object' == typeof relative && !(relative instanceof modelClass)) {
-                this.set(name, new modelClass(relative));
-            }
+            return loadRelative(this, {
+                source: App.User.Model,
+                target: App.User.Model,
+                owner: App.User.Model
+            });
         },
 
         isPost: function () {
@@ -379,7 +367,7 @@ App.module('Message', function (Message, App) {
                 }
             }
             itemView.$('a').each(function (i, anchor) {
-               var image = new Image();
+                var image = new Image();
                 anchor.setAttribute('target', '_black');
                 image.addEventListener('load', function () {
                     anchor.classList.remove('busy');
