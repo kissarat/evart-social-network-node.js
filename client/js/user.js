@@ -354,7 +354,7 @@ App.module('User', function (User, App) {
         attributes: {
             'class': 'other-profile-buttons'
         },
-        
+
         events: {
             'click .message': function () {
                 App.navigate('/dialog/' + this.model.get('domain'));
@@ -387,15 +387,17 @@ App.module('User', function (User, App) {
             avatar: '.big-avatar',
             edit: '.edit',
             status: '.status',
-            photoList: '.photo-list'
+            photoList: '.photo-list',
+            follow: '.follow'
         },
 
         events: {
+            'change .status': 'changeStatus',
+            'keyup .status': 'keyupStatus',
+            'click .follow': 'follow',
             'click .edit': function () {
                 return App.navigate('/edit/' + this.model.get('_id'));
             },
-            'change .status': 'changeStatus',
-            'keyup .status': 'keyupStatus',
             'click .logout': function () {
                 return App.logout();
             }
@@ -404,6 +406,19 @@ App.module('User', function (User, App) {
         bindings: {
             '.name': 'name',
             '.status': 'status'
+        },
+
+        follow: function () {
+            var self = this;
+            $.sendJSON('POST', '/api/user/list?name=follow&target_id=' + this.model.get('_id'), {}, function (data) {
+                if (data.success) {
+                    $.sendJSON('PUT', '/api/record?type=follow&target_id=' + self.model.get('_id'), {type: 'follow'}, function (data) {
+                        if (data.success) {
+                            App.navigate('/friends');
+                        }
+                    });
+                }
+            });
         },
 
         changeStatus: function () {
@@ -440,6 +455,9 @@ App.module('User', function (User, App) {
             document.title = this.model.getName();
             var back = this.ui.background[0];
             back.setBackground(this.model.get('background'));
+            if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
+                this.ui.follow.show();
+            }
             return this.setAvatar();
         },
 

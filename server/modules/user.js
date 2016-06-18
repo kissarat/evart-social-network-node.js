@@ -276,8 +276,9 @@ module.exports = {
 
     GET: function ($) {
         var params = ['id', 'domain'];
+        var fields = schema.User.user_public_fields.join(' ');
         if ($.hasAny(params) && !$.has('list')) {
-            return User.findOne($.paramsObject(params)).select(schema.User.user_public_fields.join(' '));
+            return User.findOne($.paramsObject(params)).select(fields);
         } else if ($.has('ids')) {
             return User.find({
                 _id: {

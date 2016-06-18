@@ -1,7 +1,6 @@
 "use strict";
 
 var client = require('../client.json');
-var code = require('../../client/code.json');
 var mongoose = require('mongoose');
 var rs = require('randomstring');
 var utils = require('../utils');
@@ -78,7 +77,7 @@ module.exports = {
                 agent.config = client;
                 $.send(agent);
             }));
-        };
+        }
         if ($.req.auth) {
             Agent.findOne({
                 auth: $.req.auth

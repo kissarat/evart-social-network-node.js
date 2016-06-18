@@ -739,7 +739,7 @@ function serve($) {
                     .then(function (c, r) {
                         if ('number' != typeof c) {
                             r = c;
-                            c = c.OK;
+                            c = code.OK;
                         }
                         else if (!r) {
                             return $.sendStatus(c);
@@ -813,15 +813,7 @@ function exec($, action) {
         }
         else {
             try {
-                // var result = $.validate($.params);
-                // if ('valid' in result ? result.valid : result) {
                 return action($);
-                // }
-                // else {
-                //     $.send(code.BAD_REQUEST, {
-                //         invalid: result.errors
-                //     });
-                // }
             }
             catch (ex) {
                 if (ex.invalid) {
