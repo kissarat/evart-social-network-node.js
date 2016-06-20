@@ -208,27 +208,35 @@
 .thumbnail-user
   display: inline-block
   width: 30%
-  .info > div > div
-    margin-bottom: 4px
+  .info
+    position: relative
+    margin-top: -1em
+    > div
+      position: absolute
   &:hover
     .info
-      position: relative
-      border: 1px solid $font
+      padding: 6px 0
+      z-index: 1
       > div
-        position: absolute
-        padding: 6px
-        background-color: #F5F5F5
         border: 1px solid $font
+        background-color: #F5F5F5
+        .name
+          text-align: left
+          margin-bottom: 6px
     .hidden
       display: block
   .hidden
     display: none
+  .info > div
+    margin-left: 6px
+    margin-top: -8px
+    padding: 8px
   > div
     display: flex
     flex-direction: row
     align-items: center
     .avatar
-      margin: 8px
+      margin: 8px 0
 
 .layout-user-search .record
   display: flex
