@@ -388,7 +388,13 @@ App.module('User', function (User, App) {
         regions: {
             'buttons': '.buttons',
             'message-list': '.message-list',
-            'photo-list': '.photo-list'
+            'photo-list': '.photo-list',
+            'tile0': '[data-number="0"]',
+            'tile1': '[data-number="1"]',
+            'tile2': '[data-number="2"]',
+            'tile3': '[data-number="3"]',
+            'tile4': '[data-number="4"]',
+            'tile5': '[data-number="5"]'
         },
 
         behaviors: {
@@ -402,13 +408,23 @@ App.module('User', function (User, App) {
             edit: '.edit',
             status: '.status',
             photoList: '.photo-list',
-            follow: '.follow'
+            follow: '.follow',
+            'tile0': '[data-number="0"]',
+            'tile1': '[data-number="1"]',
+            'tile2': '[data-number="2"]',
+            'tile3': '[data-number="3"]',
+            'tile4': '[data-number="4"]',
+            'tile5': '[data-number="5"]'
         },
 
         events: {
             'change .status': 'changeStatus',
             'keyup .status': 'keyupStatus',
             'click .follow': 'follow',
+            'drop .tile.photo': 'drop',
+            'dragover .tile.photo': 'dragover',
+            'dragenter .tile.photo': 'dragenter',
+            'dragleave .tile.photo': 'dragleave',
             'click .edit': function () {
                 return App.navigate('/edit/' + this.model.get('_id'));
             },
@@ -420,6 +436,38 @@ App.module('User', function (User, App) {
         bindings: {
             '.name': 'name',
             '.status': 'status'
+        },
+
+        drop: function (e) {
+            e = e.originalEvent;
+            e.preventDefault();
+            var data = e.dataTransfer.getData('application/json');
+            data = JSON.parse(data);
+            var dropzone = e.target;
+            if (!dropzone.hasAttribute('data-number')) {
+                dropzone = dropzone.parentNode;
+            }
+            var params = {tile: dropzone.getAttribute('data-number'), file_id: data._id};
+            console.log(params);
+            $.sendJSON('PATCH', '/api/user', params, function () {
+                var model = new App.File.Model(data);
+                dropzone.classList.remove('empty');
+                dropzone.setBackground(model.getFileURL());
+            });
+        },
+
+        dragover: function (e) {
+            e.preventDefault(e);
+        },
+
+        dragenter: function (e) {
+            e.preventDefault(e);
+            e.target.classList.add('dragover');
+        },
+
+        dragleave: function (e) {
+            e.preventDefault(e);
+            e.target.classList.remove('dragover');
         },
 
         follow: function () {
@@ -443,40 +491,32 @@ App.module('User', function (User, App) {
         },
 
         keyupStatus: function (e) {
-            if (KeyCode.ENTER === e.keyCode) {
+            if ('ENTER' === e.key) {
                 return this.changeStatus();
             }
         },
 
-        dropAvatar: function (e) {
-            var self = this;
-            e.preventDefault();
-            var file = e.originalEvent.dataTransfer.files[0];
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/photo');
-            xhr.onload = function () {
-                if (xhr.status < 300) {
-                    var response = JSON.parse(xhr.responseText);
-                    return $.post('/api/user/change?field=avatar&value=' + response._id, function () {
-                        return self.ui.avatar[0].setBackground(response._id);
-                    });
-                }
-            };
-            xhr.send(file);
-        },
-
         onRender: function () {
+            var self = this;
             document.title = this.model.getName();
-            var back = this.ui.background[0];
-            back.setBackground(this.model.get('background'));
+            var back = this.model.get('background');
+            if (back) {
+                this.ui.background[0].setBackground();
+            }
             if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();
             }
-            return this.setAvatar();
-        },
-
-        setAvatar: function () {
-            this.ui.avatar.css('background-image', 'url("' + (App.avatarUrl(this.model.id)) + '")');
+            _.each(this.model.get('tiles'), function (photo, number) {
+                $.getJSON('/api/file?id=' + photo, function (photo) {
+                    photo = new App.File.Model(photo);
+                    var thumbnail = new App.Photo.Thumbnail({model: photo});
+                    thumbnail.$el.on('dragover', this.dragover);
+                    thumbnail.$el.on('drop', this.drop);
+                    self.getRegion('tile' + number).show(thumbnail);
+                    self.ui['tile' + number].removeClass('empty');
+                    thumbnail.$el.removeAttr('class');
+                })
+            });
         },
 
         success: function (data) {

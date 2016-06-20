@@ -6,6 +6,13 @@ if (!self.statistics) {
     };
 }
 
+var SocketReadyState = {
+    0: 'The connection is not yet open',
+    1: 'The connection is open and ready to communicate',
+    2: 'The connection is in the process of closing',
+    3: "The connection is closed or couldn't be opened"
+};
+
 var emoji = {
     "😃": ["Smile", ":)", ":-)"],
     "😄": ["Laugh", ":D", ":-D"],
@@ -64,13 +71,6 @@ var emoji = {
     "🍴": "eat",
     "🍭": "Candy",
     "🍦": "Ice"
-};
-
-var SocketReadyState = {
-    0: 'The connection is not yet open',
-    1: 'The connection is open and ready to communicate',
-    2: 'The connection is in the process of closing',
-    3: "The connection is closed or couldn't be opened"
 };
 
 var code = {
@@ -388,6 +388,7 @@ var countries = [
     ["ZW", "Zimbabwe", 263, "🇿🇼"]
 ];
 
+var country_codes = [];
 setImmediate(function () {
     countries = countries.map(function (country) {
         var o = {
@@ -403,7 +404,6 @@ setImmediate(function () {
         return o;
     });
 
-    var country_codes = [];
     countries.forEach(function (country) {
         if (country.code) {
             country_codes.push(country.code);
@@ -413,10 +413,6 @@ setImmediate(function () {
         return b - a;
     });
 });
-
-var _feature_exists = function (name) {
-    return name in self;
-};
 
 var browser = {
     os: {}

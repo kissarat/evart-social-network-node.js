@@ -18,7 +18,7 @@ App.module('Photo', function (Photo, App) {
             type: 'photo',
             owner_id: null
         },
-        
+
         model: function (attrs, options) {
             return new App.File.Model(attrs, options);
         }
@@ -28,12 +28,36 @@ App.module('Photo', function (Photo, App) {
         template: '#view-empty',
         tagName: 'a',
 
+        attributes: {
+            'class': 'photo-thumbnail',
+            draggable: true
+        },
+
         events: {
-            'click': 'open'
+            'click': 'open',
+            'dragstart': 'dragstart',
+            'dragend': 'dragend'
         },
 
         behaviors: {
             Bindings: {}
+        },
+
+        dragstart: function (e) {
+            e = e.originalEvent;
+            e.stopPropagation();
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('application/json', JSON.stringify(this.model.attributes));
+            // var image = new Image();
+            // image.width = 128;
+            // image.height = 128;
+            // image.src = this.model.getFileURL();
+            // e.dataTransfer.setDragImage(image, 0, 0);
+            // return false;
+        },
+
+        dragend: function (e) {
+            e.preventDefault();
         },
 
         open: function (e) {
@@ -43,6 +67,7 @@ App.module('Photo', function (Photo, App) {
 
         onRender: function () {
             this.el.setBackground(this.model.getFileURL());
+            this.$el.attr('data-id', this.model.get('_id'));
         }
     });
 
@@ -74,9 +99,7 @@ App.module('Photo', function (Photo, App) {
             Bindings: {}
         },
 
-        bindings: {
-            
-        }
+        bindings: {}
     });
 
     Photo.View = Marionette.View.extend({
@@ -91,7 +114,6 @@ App.module('Photo', function (Photo, App) {
                 };
             })(this));
         },
-
         ui: {
             frame: '.frame'
         },

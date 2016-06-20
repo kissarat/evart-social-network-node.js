@@ -1,8 +1,8 @@
 App.module('File', function (File, App) {
     File.Route = Marionette.AppRouter.extend({
-        initialize: function (options) {
-            this.route(/easter-dir(.*)$/, options.controller.dir);
-        }
+        // initialize: function (options) {
+        //     this.route(/easter-dir(.*)$/, options.controller.dir);
+        // }
     });
 
     File.Model = Backbone.Model.extend({

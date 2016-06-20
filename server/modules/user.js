@@ -60,7 +60,12 @@ global.schema.User = new mongoose.Schema({
 
     background: {
         type: T.ObjectId,
-        ref: 'Photo'
+        ref: 'File'
+    },
+
+    tiles: {
+        type: T.Mixed,
+        'default': {}
     },
 
     created: {
@@ -253,25 +258,41 @@ module.exports = {
     },
 
     PATCH: function ($) {
-        if ($.has('online')) {
-            var online = $.param('online');
-            if (isNaN(online)) {
-                $.invalid('online');
+        return new Promise(function (resolve, reject) {
+            var where_me = {_id: $.user._id};
+            if ($.has('online')) {
+                var online = $.param('online');
+                if (isNaN(online)) {
+                    $.invalid('online');
+                }
+                online = +online;
+                var now = Date.now();
+                var delta = 15 * 60000;
+                if (online < 0) {
+                    online = now - online;
+                }
+                if (online < now + delta) {
+                    return User.update(where_me, {$set: {online: online}});
+                }
+                else {
+                    $.invalid('online');
+                }
             }
-            online = +online;
-            var now = Date.now();
-            var delta = 15 * 60000;
-            if (online < 0) {
-                online = now - online;
-            }
-            if (online < now + delta) {
-                return User.update({_id: $.user._id}, {$set: {online: online}});
+            else if ($.has('tile') && $.has('file_id')) {
+                User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
+                    user.tiles[$.param('tile')] = $.param('file_id');
+                    user.markModified('tiles');
+                    user.save().catch(reject).then(function () {
+                        resolve({
+                            tiles: user.tiles
+                        });
+                    })
+                });
             }
             else {
-                $.invalid('online');
+                reject(code.BAD_REQUEST);
             }
-        }
-        $.sendStatus(code.BAD_REQUEST);
+        });
     },
 
     GET: function ($) {
@@ -502,7 +523,7 @@ var list_fields = {
 };
 
 schema.User.user_public_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone",
-    "avatar", "name", "birthday", "languages", "relationship"];
+    "avatar", "name", "birthday", "languages", "relationship", "tiles"];
 var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar",
     "name", "birthday", "languages", "relationship"];
 var group_fields = ["domain", "name", "about", "avatar"];

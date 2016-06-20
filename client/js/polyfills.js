@@ -25,8 +25,11 @@ window.webkit = !!window.webkitRTCPeerConnection;
 
 if (!window.setImmediate) {
     window.setImmediate = function (cb) {
-        setTimeout(cb, 0);
-    }
+        return setTimeout(cb, 0);
+    };
+    window.clearImmediate = function (id) {
+        return clearTimeout(id);
+    };
 }
 
 if (!('requestFullscreen' in Element.prototype)) {

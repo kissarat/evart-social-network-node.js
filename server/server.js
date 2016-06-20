@@ -768,12 +768,17 @@ function serve($) {
                         }
                     })
                     .catch(function (r) {
-                        $.send(code.INTERNAL_SERVER_ERROR, {
-                            error: {
-                                class: r.constructor.name,
-                                message: r.toString()
-                            }
-                        })
+                        if ('number' == typeof r) {
+                            $.sendStatus(r)
+                        }
+                        else {
+                            $.send(code.INTERNAL_SERVER_ERROR, {
+                                error: {
+                                    class: r.constructor.name,
+                                    message: r.toString()
+                                }
+                            })
+                        }
                     });
             }
             else if (null === result) {
