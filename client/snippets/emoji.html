@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emoji</title>
+</head>
+<body>
+<div id="emoji-container"></div>
+<div id="add"></div>
+<script>
+    statistics = {};
+</script>
+<script src="/js/data.js"></script>
+<script>
+    var container = document.getElementById('emoji-container');
+    var add = document.getElementById('add');
+    for(var i = 0; i < emoji.length; i++) {
+        var span = document.createElement('span');
+        span.innerHTML = emoji[i];
+        span.onclick = function () {
+            add.appendChild(this);
+        };
+        container.appendChild(span);
+    }
+</script>
+</body>
+</html>
