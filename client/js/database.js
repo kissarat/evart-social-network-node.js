@@ -50,11 +50,14 @@ if (window.indexedDB) {
                 var schema = options.schema;
                 var db = e.target.result;
                 for (var name in schema) {
-                    db.createObjectStore(name, {keyPath: '_id'});
-                    // var storeSchema = schema[name];
-                    // for(var key in store) {
-                    //
-                    // }
+                    var store  =db.createObjectStore(name, {keyPath: '_id'});
+                    var storeSchema = schema[name];
+                    _.each(storeSchema.keys, function (key) {
+                        store.createIndex(key, key, {unique: true});
+                    });
+                    _.each(storeSchema.indexes, function (key) {
+                        store.createIndex(key, key, {unique: false});
+                    });
                 }
             })
         },
@@ -66,10 +69,7 @@ if (window.indexedDB) {
          * @returns IDBTransaction
          */
         transaction: function (name, mode) {
-            if (!mode) {
-                mode = 'readwrite';
-            }
-            var t = this.db.transaction(name, mode);
+            var t = this.db.transaction(name, mode ? 'readwrite' : 'readonly');
             t.addEventListener('error', App.setupError('IDBTransaction'));
             return t;
         },
@@ -77,7 +77,7 @@ if (window.indexedDB) {
         add: function (name, object) {
             object = _resolveObject(object);
             var request = this
-                .transaction(name)
+                .transaction(name, true)
                 .objectStore(name)
                 .add(object);
             request.addEventListener('success', function () {
@@ -87,9 +87,19 @@ if (window.indexedDB) {
             return request;
         },
 
-        store: function (name) {
+        put: function (name, object) {
+            object = _resolveObject(object);
+            var request = this
+                .transaction(name, true)
+                .objectStore(name)
+                .put(object);
+            request.addEventListener('error', App.setupError('put'));
+            return request;
+        },
+
+        store: function (name, mode) {
             return this
-                .transaction(name)
+                .transaction(name, mode)
                 .objectStore(name);
         },
 
@@ -107,12 +117,21 @@ if (window.indexedDB) {
             }
         },
 
-        insert: function (name, data) {
-
+        iterate: function (name, mode) {
+            return requestPromise(this.store(name, mode).openCursor());
         }
     });
 }
 else {
+    var _put = function (name, object) {
+        object = _resolveObject(object);
+        var storage = this.store(name);
+        return new Promise(function (resolve) {
+            storage[object._id] = object;
+            resolve(object)
+        });
+    };
+    
     App.Database = Marionette.Object.extend({
         initialize: function () {
             this.db = {};
@@ -125,14 +144,8 @@ else {
             return this.db[name];
         },
 
-        add: function (name, object) {
-            object = _resolveObject(object);
-            var storage = this.store(name);
-            return new Promise(function (resolve) {
-                storage[object._id] = object;
-                resolve(object)
-            });
-        },
+        add: _put,
+        put: _put,
 
         getById: function (name, id) {
             var storage = this.store(name);
@@ -148,10 +161,18 @@ App.local = new App.Database({
     version: 1,
     schema: {
         errors: {},
-        file: {},
-        message: {},
-        user: {},
-        video: {}
+        file: {
+            indexes: ['md5']
+        },
+        message: {
+            indexes: ['source', 'target']
+        },
+        user: {
+            keys: ['domain']
+        },
+        video: {},
+        photo: {},
+        user_informer: {}
     }
 });
 
@@ -159,8 +180,9 @@ App.local = new App.Database({
 var _getById = App.local.getById;
 App.local.getById = function (name, id) {
     var self = this;
+    var storage_name = name.replace(/\//g, '_');
     return new Promise(function (resolve, reject) {
-        _getById.call(self, name, id).then(function (object) {
+        _getById.call(self, storage_name, id).then(function (object) {
             if (object) {
                 resolve(object);
             }
@@ -171,10 +193,29 @@ App.local.getById = function (name, id) {
                         resolve(object);
                         if (object) {
                             object._retrived = new Date().toISOString();
-                            self.add(name, object);
+                            self.add(storage_name, object);
                         }
                     });
             }
         })
+    });
+};
+
+App.local.find = function (name, where) {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        var result = [];
+        var match = _.matcher(where);
+        self.iterate(name).catch(reject).then(function (cursor) {
+            if (cursor) {
+                if (match(cursor.value)) {
+                    result.push(cursor.value);
+                }
+                cursor.continue();
+            }
+            else {
+                resolve(result);
+            }
+        });
     });
 };

@@ -345,6 +345,20 @@ _.extend(Application.prototype, {
                     state.currentPage = 1;
                 }
             }
+            var name = /^\/api\/(\w+)/.exec(this.url);
+            if (name) {
+                records.forEach(function (record) {
+                    record = _.clone(record);
+                    ['source', 'target'].forEach(function (key) {
+                        var value = record[key];
+                        if (value && 'object' == typeof value) {
+                            App.local.put('user', value);
+                            record[key] = value._id;
+                        }
+                    });
+                    App.local.put(name[1], record);
+                });
+            }
             return records;
         },
 

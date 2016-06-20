@@ -108,10 +108,6 @@ App.module('Message', function (Message, App) {
             'click > .message-controls .like-slider-container': 'sliderClick'
         },
 
-        setAvatar: function (id) {
-            return this.ui.avatar[0].setBackground(App.avatarUrl(id));
-        },
-
         sliderClick: function (e) {
             var rect, s, x;
             s = this.ui.likeSlider;
@@ -205,12 +201,9 @@ App.module('Message', function (Message, App) {
             this.ui.name.attr('href', '/view/' + source.get('domain'));
             this.ui.name.html(source.getName());
             this.$el.attr('data-id', this.model.get('_id'));
-            source_id = App.id(this.model.get('source'));
             this.ui.info.attr('data-id', source_id);
-            if (source_id) {
-                this.setAvatar(source_id);
-            }
-            if (source_id === App.user._id) {
+            source.setupAvatar(this.ui.avatar[0]);
+            if (source.get('_id') === App.user._id) {
                 this.$el.addClass('me');
                 $('<div class="fa fa-times"></div>').appendTo(this.ui.controls).click((function (_this) {
                     return function () {

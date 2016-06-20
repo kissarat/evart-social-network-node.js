@@ -323,6 +323,42 @@ module.exports = {
         }
     },
 
+    informer: function ($) {
+        var id = $.id || $.user._id;
+        var result = {};
+        return new Promise(function (resolve, reject) {
+            User.findOne({_id: id}, {follow: 1}).catch(reject).then(function (user) {
+                result._id = user._id;
+                var follows = utils.s(user.follow);
+                User.find({_id: {$in: id}}, {_id: 1}).catch(reject).then(function (followers) {
+                    result.followers = utils.s(_.pluck(followers, '_id'));
+                    return Video.count({owner: id});
+                })
+                    .catch(reject)
+                    .then(function (count) {
+                        result.video = count;
+                        return File.count({type: 'audio'});
+                    })
+                    .catch(reject)
+                    .then(function (count) {
+                        result.audio = count;
+                        return User.find({_id: {$in: user.follow}, type: 'group'}, {_id: 1})
+                    })
+                    .catch(reject)
+                    .then(function (groups) {
+                        groups = utils.s(_.pluck(groups, '_id'));
+                        follows = _.difference(follows, groups);
+                        var friends = _.intersection(follows, result.followers);
+                        result.follows = follows.length;
+                        result.followers = result.followers.length;
+                        result.groups = groups.length;
+                        result.friends = friends.length;
+                        resolve(result);
+                    });
+            });
+        })
+    },
+
     exists: {
         GET: function ($) {
             var conditions = {};

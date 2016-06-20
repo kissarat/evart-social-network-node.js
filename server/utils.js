@@ -97,6 +97,12 @@ function hash(data) {
     return algorithm.digest('base64')
 }
 
+function s(array) {
+    return array.map(function (o) {
+        return o.toString();
+    })
+}
+
 var exports = {
     export: function (classes) {
         var exports = {};
@@ -111,5 +117,5 @@ var exports = {
 };
 
 module.exports = merge(exports, exports.export(
-    [Iterator, fields, merge, nano100time, id12, idType, hash]
+    [Iterator, fields, merge, nano100time, id12, idType, hash, s]
 ));

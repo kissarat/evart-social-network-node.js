@@ -79,6 +79,26 @@ App.module('User', function (User, App) {
             }
         },
 
+        setupAvatar: function (el) {
+            var avatar = this.get('avatar');
+            if (avatar) {
+                el.setBackground(avatar);
+            }
+            else {
+                var s = el.style;
+                var degree = this.get('_id').slice(-2);
+                var saturate = [3, 1, 4, 2];
+                saturate = saturate[parseInt(degree[1], 16) % 4];
+                degree = degree[1] + degree[0];
+                degree = parseInt(degree, 16);
+                saturate = ' saturate(' + saturate + '00%)';
+                // degree ^= 0xAA;
+                degree *= Math.round(256 / 360);
+                degree = 'hue-rotate(' + degree + 'deg)';
+                s.setProperty('webkitFilter' in s ? '-webkit-filter' : 'filter', degree + saturate);
+            }
+        },
+
         toString: function () {
             return this.getName();
         },
@@ -394,11 +414,22 @@ App.module('User', function (User, App) {
             'tile2': '[data-number="2"]',
             'tile3': '[data-number="3"]',
             'tile4': '[data-number="4"]',
-            'tile5': '[data-number="5"]'
+            'tile5': '[data-number="5"]',
+            'tile6': '[data-number="5"]'
         },
 
         behaviors: {
             Bindings: {}
+        },
+
+        bindings: {
+            '.name': 'name',
+            '.status': 'status',
+            '.audio .value': 'audio',
+            '.friends .value': 'friends',
+            '.followers .value': 'followers',
+            '.groups .value': 'groups',
+            '.video .value': 'video'
         },
 
         ui: {
@@ -414,7 +445,8 @@ App.module('User', function (User, App) {
             'tile2': '[data-number="2"]',
             'tile3': '[data-number="3"]',
             'tile4': '[data-number="4"]',
-            'tile5': '[data-number="5"]'
+            'tile5': '[data-number="5"]',
+            'tile6': '[data-number="6"]',
         },
 
         events: {
@@ -432,12 +464,6 @@ App.module('User', function (User, App) {
                 return App.logout();
             }
         },
-
-        bindings: {
-            '.name': 'name',
-            '.status': 'status'
-        },
-
         drop: function (e) {
             e = e.originalEvent;
             e.preventDefault();
@@ -506,6 +532,7 @@ App.module('User', function (User, App) {
             if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();
             }
+            this.model.setupAvatar(this.ui.avatar[0]);
             _.each(this.model.get('tiles'), function (photo, number) {
                 $.getJSON('/api/file?id=' + photo, function (photo) {
                     photo = new App.File.Model(photo);
@@ -515,7 +542,7 @@ App.module('User', function (User, App) {
                     self.getRegion('tile' + number).show(thumbnail);
                     self.ui['tile' + number].removeClass('empty');
                     thumbnail.$el.removeAttr('class');
-                })
+                });
             });
         },
 
@@ -619,7 +646,7 @@ App.module('User', function (User, App) {
         onRender: function () {
             this.el.href = '/view/' + this.model.get('domain');
             this.ui.name.text(this.model.getName());
-            this.ui.avatar[0].setBackground('/api/user/avatar?id=' + this.model.get('_id'));
+            this.model.setupAvatar(this.ui.avatar[0]);
             var me = App.user;
             if (me && me.follow && me.follow.indexOf && me.follow.indexOf(this.model.get('_id')) < 0) {
                 var button = new App.Views.Button();
@@ -731,6 +758,7 @@ App.module('User', function (User, App) {
                     domain = App.user.domain;
                 }
                 $.get('/api/user?domain=' + domain, function (user) {
+                    App.local.put('user', user);
                     user = new User.Model(user);
                     var profile = new User.View({model: user});
                     profile.el.classList.add('scroll');
@@ -739,6 +767,9 @@ App.module('User', function (User, App) {
                     // photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
                     profile.getRegion('message-list').show(App.Message.WallView.widget(user.get('_id')));
                     profile.getRegion('buttons').show(new User.OtherProfileButtons({model: user}));
+                    App.local.getById('user/informer', user.get('_id')).then(function (informer) {
+                        user.set(informer);
+                    });
                     App.Photo.ListView.widget(profile.getRegion('photo-list'), {
                         owner_id: user._id
                     });

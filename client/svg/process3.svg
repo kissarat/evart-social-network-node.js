@@ -1,0 +1,41 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="60px" height="20px">
+    <style type="text/css">
+        circle {
+            cy: 10px;
+            r: 8px;
+            fill: white;
+            animation-name: animation;
+            animation-duration: 1200ms;
+            animation-timing-function: ease;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes animation {
+            from {
+                fill: white;
+            }
+
+            50% {
+                fill: rgb(255, 255, 255, 0.3);
+                r: 4px;
+            }
+
+            to {
+                fill: white;
+            }
+        }
+
+        #c2 {
+            animation-delay: 200ms;
+        }
+
+        #c3 {
+            animation-delay: 400ms;
+        }
+    </style>
+    <circle id="c1" cx="10" />
+    <circle id="c2" cx="30" />
+    <circle id="c3" cx="50" />
+</svg>
