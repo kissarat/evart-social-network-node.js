@@ -28,9 +28,6 @@ form
     max-width: 192px
     max-height: 192px
 
-.error
-  color: red
-
 .photo img
   max-width: 80vh
   max-height: 80vh
@@ -89,3 +86,36 @@ video
     position: absolute
     width: 100%
     bottom: 20vh
+
+.uppercase
+  text-transform: uppercase
+
+.error
+  margin: 0
+  background-color: #ECEFF4
+  z-index: 5
+  .bg
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: center
+    background: url("/images/polyhedron-bg.png") top no-repeat
+    background-size: cover
+    margin: 0
+    height: 100vh
+  .uppercase
+    color: white
+    font-size: 2em
+    text-shadow: -1px 1px 1px rgba(150, 150, 150, 1)
+    &:first-child
+      font-size: 3.5em
+  .code
+    color: #72BFFC
+  .evart
+    font-weight: 900
+  .social-network
+    font-weight: 100
+  .text
+    margin: 16px
+    max-width: 30vw
+    text-align: center

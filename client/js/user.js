@@ -558,8 +558,13 @@ App.module('User', function (User, App) {
             Bindings: {}
         },
 
+        bindings: {
+            '.country': 'country',
+            '.city': 'city'
+        },
+
         regions: {
-            control: '.control-region'
+            buttons: '.buttons'
         },
 
         open: function (e) {
@@ -575,18 +580,17 @@ App.module('User', function (User, App) {
             this.el.href = '/view/' + this.model.get('domain');
             this.ui.name.text(this.model.getName());
             this.ui.avatar[0].setBackground('/api/user/avatar?id=' + this.model.get('_id'));
-            this.ui.country.text(this.model.get('country'));
-            this.ui.city.text(this.model.get('city'));
             var me = App.user;
             if (me && me.follow && me.follow.indexOf && me.follow.indexOf(this.model.get('_id')) < 0) {
                 var button = new App.Views.Button();
                 button.setText('Follow');
                 this.getControls().children.push(button);
             }
+            this.getRegion('buttons').show(new User.OtherProfileButtons({model: this.model}))
         },
 
         getControls: function () {
-            var region = this.getRegion('control');
+            var region = this.getRegion('buttons');
             if (!region.currentView) {
                 var collectionView = new App.Views.Collection();
                 region.show(collectionView);

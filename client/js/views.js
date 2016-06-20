@@ -4,7 +4,8 @@ App.module('Views', function (Views, App) {
     Views.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'empty': 'empty',
-            'unavailable': 'unavailable'
+            'unavailable': 'unavailable',
+            '*wtf': 'error'
         }
     });
 
@@ -55,6 +56,7 @@ App.module('Views', function (Views, App) {
 
     Views.Error = Marionette.View.extend({
         template: '#view-error',
+        cidPrefix: 'error',
 
         behaviors: {
             Bindings: {}
@@ -66,7 +68,7 @@ App.module('Views', function (Views, App) {
         },
 
         bindings: {
-            'h1': 'status',
+            'h1': 'title',
             '.text': 'text'
         }
     });
@@ -305,14 +307,14 @@ App.module('Views', function (Views, App) {
             return panel;
         }
     });
-    
+
     Views.Empty = Marionette.View.extend({
         template: '#view-empty'
     });
-    
+
     Views.Placeholder = Marionette.View.extend({
         template: '#view-empty',
-        
+
         attributes: {
             'class': 'view-placeholder'
         }
@@ -350,6 +352,16 @@ App.module('Views', function (Views, App) {
             unavailable: function () {
                 var view = new Views.Unavailable();
                 App.getPlace('main').show(view);
+            },
+
+            error: function () {
+                var view = new Views.Error({
+                    model: new Backbone.Model({
+                        text: "Whatever you were looking for doesn't currently exist at this address. " +
+                        "Unless you were looking for this error page, in which case: Congrats! You totally found it."
+                    })
+                });
+                App.getPlace('modal').show(view);
             }
         }
     });

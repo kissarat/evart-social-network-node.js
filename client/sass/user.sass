@@ -186,6 +186,7 @@
 .other-profile-buttons
   display: flex
   height: 30px
+  width: 90px
   background: url("/images/communicate.png") no-repeat center
   background-size: contain
   > div
@@ -204,6 +205,31 @@
   &[data-name="friend"]
     background-position-y: 60px
 
+.thumbnail-user
+  display: inline-block
+  width: 30%
+  .info > div > div
+    margin-bottom: 4px
+  &:hover
+    .info
+      position: relative
+      border: 1px solid $font
+      > div
+        position: absolute
+        padding: 6px
+        background-color: #F5F5F5
+        border: 1px solid $font
+    .hidden
+      display: block
+  .hidden
+    display: none
+  > div
+    display: flex
+    flex-direction: row
+    align-items: center
+    .avatar
+      margin: 8px
+
 .layout-user-search .record
   display: flex
   flex-direction: row
@@ -213,8 +239,6 @@
     margin: 8px
     width: 48px
     height: 48px
-  .whom
-    text-align: left
   .message
     flex: 1
   .switch

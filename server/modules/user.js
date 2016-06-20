@@ -304,16 +304,12 @@ module.exports = {
 
     exists: {
         GET: function ($) {
-            var conditions, j, key, len, ref, value;
-            key = null;
-            value = null;
-            conditions = {};
-            ref = ['domain', 'phone', 'email'];
-            for (j = 0, len = ref.length; j < len; j++) {
-                key = ref[j];
+            var conditions = {};
+            var keys = ['domain', 'phone', 'email'];
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
                 if ($.has(key)) {
-                    value = $.get(key);
-                    conditions[key] = value;
+                    var value = conditions[key] = $.get(key);
                     break;
                 }
             }
@@ -400,7 +396,7 @@ module.exports = {
             User.findOne($.id, $.wrap(function (user) {
                 if (user) {
                     return $.sendStatus(code.MOVED_TEMPORARILY, 'Avatar found', {
-                        location: user.avatar ? "/photo/" + user.avatar + ".jpg" : "/images/avatar.png"
+                        location: user.avatar ? "/photo/" + user.avatar + ".jpg" : "/images/man.png"
                     });
                 } else {
                     return $.sendStatus(code.NOT_FOUND, 'User not found');

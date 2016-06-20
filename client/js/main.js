@@ -74,9 +74,11 @@ _.extend(jQuery.fn, {
     serialize: function () {
         return this[0].serialize();
     },
+
     busy: function (state) {
         return this.toggleClass('busy', state);
     },
+
     report: function (name, message, cssClass) {
         var parent = this.find("[name=" + name + "]").parent();
         var helpBlock = parent.find(".help-block");
@@ -170,6 +172,16 @@ var StackRegion = Marionette.Region.extend({
 
     removePanel: function () {
         throw new Error('Not implemented');
+    }
+});
+
+var ModalRegion = Marionette.Region.extend({
+    onShow: function () {
+        this.$el.show();
+    },
+
+    onEmpty: function () {
+        this.$el.hide();
     }
 });
 
@@ -280,8 +292,8 @@ _.extend(Application.prototype, {
             addRight: '#root > .add.right',
             right: new StackRegion({el: '#right'}),
             alert: '#alert',
-            dock: '#dock-container'
-            // modalRegion: App.ModalRegion
+            dock: '#dock-container',
+            modal: new ModalRegion({el: '#modal'})
         }
     }),
 
