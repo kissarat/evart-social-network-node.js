@@ -23,6 +23,12 @@ if (!('classList' in Element.prototype)) {
 
 window.webkit = !!window.webkitRTCPeerConnection;
 
+if (!window.setImmediate) {
+    window.setImmediate = function (cb) {
+        setTimeout(cb, 0);
+    }
+}
+
 if (!('requestFullscreen' in Element.prototype)) {
     Element.prototype.requestFullscreen =
         Element.prototype.webkitRequestFullScreen || Element.prototype.mozRequestFullScreen;

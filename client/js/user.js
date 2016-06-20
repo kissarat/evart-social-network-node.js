@@ -224,7 +224,7 @@ App.module('User', function (User, App) {
                 this.model.set('phone', phone.replace(/[^\d]/g, ''));
             }
             if (this.model.isValid('phone')) {
-                var found = _.find(codes, function (code) {
+                var found = _.find(country_codes, function (code) {
                     return self.model.get('phone').indexOf(code) === 0;
                 });
 
