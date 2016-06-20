@@ -5,6 +5,7 @@ App.module('Views', function (Views, App) {
         appRoutes: {
             'empty': 'empty',
             'unavailable': 'unavailable',
+            '': 'root',
             '*wtf': 'error'
         }
     });
@@ -352,6 +353,10 @@ App.module('Views', function (Views, App) {
             unavailable: function () {
                 var view = new Views.Unavailable();
                 App.getPlace('main').show(view);
+            },
+
+            root: function () {
+                App.navigate(App.user ? '/profile' : '/login');
             },
 
             error: function () {

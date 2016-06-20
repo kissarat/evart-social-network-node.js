@@ -505,13 +505,15 @@ App.module('Message', function (Message, App) {
 
         onRender: function () {
             var self = this;
-            emoji.slice(0, 36).forEach(function (smile) {
-                $('<span/>')
+            _.each(emoji, function (info, smile) {
+                var label = 'string' == typeof info ? info : info[0];
+                smile = $('<span/>')
+                    .attr('title', label)
                     .html(smile)
-                    .appendTo(self.$el)
                     .click(function () {
                         self.trigger('insert', this.innerHTML);
-                    })
+                    });
+                self.$el.append(smile);
             });
         }
     });
