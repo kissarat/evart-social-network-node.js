@@ -462,9 +462,10 @@ function loadRelative(model, map) {
             return 'string' == typeof model.get(relation[0])
         })
         .map(function (relation) {
-            return App.local.getById('user', model.get(relation[0])).then(function (relative) {
-                model.set(relation, new relative[1](relative));
-            })
+            return App.local.getById('user', model.get(relation[0]))
+                .then(function (relative) {
+                    model.set(relation, new relation[1](relative));
+                })
         }));
 }
 

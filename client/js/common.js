@@ -302,6 +302,10 @@ _.extend(Service.prototype, {
         this[name] = module;
         define(module, this);
     },
+    
+    updateOnline: function (duration) {
+        $.sendJSON('PATCH', '/api/user', {online: - duration});
+    },
 
     storage: {
         save: function (model, idAttribute) {

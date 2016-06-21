@@ -317,7 +317,9 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            this.$el.addClass(this.model.get('source').get('_id') == App.user._id ? 'me' : 'other');
+            var source = 'string' == typeof this.model.get('source')
+                ? this.model.get('source') : this.model.get('source').get('_id');
+            this.$el.addClass(source == App.user._id ? 'me' : 'other');
             if (!Message.View.lastAnimationStart) {
                 Message.View.lastAnimationStart = Date.now();
             }
@@ -461,7 +463,9 @@ App.module('Message', function (Message, App) {
         },
 
         reply: function (model) {
-            var isReceiver = this.getQuery().get('target_id') == model.get('target').get('_id');
+            var target = 'string' == typeof model.get('target')
+                ? model.get('target') : model.get('target').get('_id');
+            var isReceiver = this.getQuery().get('target_id') == target;
             if (isReceiver) {
                 this.getCollection().add(model);
             }
@@ -499,9 +503,8 @@ App.module('Message', function (Message, App) {
         onRender: function () {
             var self = this;
             _.each(emoji, function (info, smile) {
-                var label = 'string' == typeof info ? info : info[0];
                 smile = $('<span/>')
-                    .attr('title', label)
+                    .attr('title', T(info[1]) + ' ' + info[0])
                     .html(smile)
                     .click(function () {
                         self.trigger('insert', this.innerHTML);
@@ -582,7 +585,15 @@ App.module('Message', function (Message, App) {
             var self = this;
             var text = this.model.get('text');
             if (text) {
-                this.model.save(null, {
+                text = text.replace(/:[a-z_]+:/g, function (match) {
+                    for (var symbol in emoji) {
+                        var info = emoji[symbol];
+                        if (match == info[0]) {
+                            return symbol;
+                        }
+                    }
+                });
+                this.model.save('text', text, {
                     success: function (model) {
                         model.loadRelative().then(function () {
                             Message.channel.request('message', model);

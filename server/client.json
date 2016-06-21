@@ -15,6 +15,10 @@
   "alert": {
     "duration": 10000
   },
+  "online": {
+    "delay": 8000,
+    "duration": 900000
+  },
   "peer": {
     "enabled": true,
     "iceServers": [
@@ -33,7 +37,7 @@
       },
       {
         "urls": "turn:numb.viagenie.ca:3478",
-        "username": "Taras Labiak",
+        "username": "taras",
         "credential": "labiak"
       },
       {

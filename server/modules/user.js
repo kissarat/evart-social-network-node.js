@@ -263,19 +263,19 @@ module.exports = {
             if ($.has('online')) {
                 var online = $.param('online');
                 if (isNaN(online)) {
-                    $.invalid('online');
+                    reject(code.BAD_REQUEST);
                 }
                 online = +online;
                 var now = Date.now();
-                var delta = 15 * 60000;
+                var delta = (15 * 60 + 10) * 1000;
                 if (online < 0) {
                     online = now - online;
                 }
                 if (online < now + delta) {
-                    return User.update(where_me, {$set: {online: online}});
+                    User.update(where_me, {$set: {online: online}}).then(resolve, reject);
                 }
                 else {
-                    $.invalid('online');
+                    reject(code.BAD_REQUEST);
                 }
             }
             else if ($.has('tile') && $.has('file_id')) {

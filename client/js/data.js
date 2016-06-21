@@ -43,10 +43,10 @@ var emoji = {
     "👎": "Dislike",
     "👌": "Good",
     "👊": "Beet",
-    "✌": "",
+    // "✌": "",
     "💋": "Lips",
     "🙏": "Pray",
-    "☝": "",
+    // "☝": "",
     "👏": "Pop",
     "💪": "Power",
     "🔒": "Lock",
@@ -65,10 +65,10 @@ var emoji = {
     "🎩": "Hat",
     "💄": "Pomade",
     "💎": "Diamond",
-    "☕": "",
+    // "☕": "",
     "🍹": "Cocktail",
     "🍺": "Beer",
-    "🍴": "eat",
+    "🍴": "Eat",
     "🍭": "Candy",
     "🍦": "Ice"
 };
@@ -392,6 +392,16 @@ var countries = [
 
 var country_codes = [];
 setImmediate(function () {
+    _.each(emoji, function (array, symbol) {
+        if ('string' == typeof array) {
+            array = [array];
+            emoji[symbol] = array;
+        }
+        var s = array[0].toLowerCase().replace(/\s+/g, '_');
+        array.unshift(':' + s + ':');
+    });
+    Object.freeze(emoji);
+    
     countries = countries.map(function (country) {
         var o = {
             iso: country[0],
@@ -508,6 +518,10 @@ self.defaultConfig = {
     alert: {
         duration: 12000
     },
+    online: {
+        delay: 10 * 1000,
+        duration: 5 * 60 * 1000
+    },
     peer: {
         iceServers: [
             {
@@ -537,7 +551,6 @@ self.features = {
     }
 };
 
-Object.freeze(emoji);
 Object.freeze(SocketReadyState);
 Object.freeze(browser);
 Object.freeze(code);

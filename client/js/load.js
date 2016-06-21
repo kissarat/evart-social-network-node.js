@@ -122,6 +122,14 @@ function load3_languageLoaded(xhr) {
         }, 0);
     }
 
+    setInterval(function () {
+        App.updateOnline(App.config.online.duration + App.config.online.delay);
+    }, App.config.online.duration);
+    
+    setTimeout(function () {
+        App.updateOnline(App.config.online.duration);
+    }, App.config.online.delay);
+
     Backbone.history.start({
         pushState: true,
         root: '/'
