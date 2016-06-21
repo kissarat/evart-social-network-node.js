@@ -16,6 +16,12 @@ function player(id, src) {
     return audio;
 }
 
+function sound(name) {
+    var audio = player('sound-' + name, '/sound/' + name + '.mp3');
+    audio.play();
+    return audio;
+}
+
 function oclock() {
     // var audio = player('oclock', '/images/church-bell.mp3');
     // audio.play();

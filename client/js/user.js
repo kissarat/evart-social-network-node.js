@@ -62,6 +62,8 @@ App.module('User', function (User, App) {
     });
 
     User.Model = Backbone.Model.extend({
+        cidPrefix: 'usr',
+        
         initialize: function () {
             resolveRelative(this, {
                 source: App.User.Model,
@@ -77,6 +79,13 @@ App.module('User', function (User, App) {
             phone: {
                 pattern: /^\w{9,16}$/
             }
+        },
+
+        getAvatarURL: function () {
+            var avatar = this.get('avatar');
+            return avatar
+                ? ('string' == typeof avatar ? '/api/file/' + avatar : avatar.getFileURL())
+                : '/images/man.png';
         },
 
         setupAvatar: function (el) {

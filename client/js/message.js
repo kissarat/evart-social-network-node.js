@@ -10,12 +10,34 @@ App.module('Message', function (Message, App) {
     App.socket.on('message', function (message) {
         var model = new Message.Model(message);
         model.loadRelative().then(function () {
-            Message.channel.request('message', model);
+            if (!Message.channel.request('message', model)) {
+                Message.notify(model);
+            }
         });
     });
 
+    Message.notify = function (model) {
+        if (!(model instanceof Message.Model)) {
+            model = new Message.Model(model);
+        }
+        return model.loadRelative().then(function () {
+            var source = model.get('source');
+            if (!isFirefox) {
+                sound(model.get('sound') ? model.get('sound') : 'notification');
+            }
+            return App.notify({
+                tag: model.get('_id'),
+                icon: source.getAvatarURL(),
+                title: source.getName(),
+                body: model.get('text'),
+                silent: true
+            });
+        });
+    };
+
     Message.Model = Backbone.Model.extend({
         url: '/api/message',
+        cidPrefix: 'msg',
 
         initialize: function () {
             resolveRelative(this, {
@@ -604,10 +626,6 @@ App.module('Message', function (Message, App) {
                 });
             }
         }
-    });
-
-    App.on('message', function (model) {
-        throw new Error('Not impletemted');
     });
 
     return new Message.Router({

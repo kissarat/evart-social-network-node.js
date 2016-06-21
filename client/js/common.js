@@ -10,8 +10,7 @@ self.Labiak = function Labiak() {
         this.construct.apply(constructor);
     }
 };
-self.LabiakFunction = function LabiakFunction() {
-};
+self.LabiakFunction = function LabiakFunction() {};
 self.isService = !(self.window && window.document);
 
 _.mixin({
@@ -164,10 +163,6 @@ function resolve(path) {
         throw new Error('Invalid property', path[0]);
     }
     return path.length > 1 ? resolve.call(property, path.slice(1)) : property;
-}
-
-function getMyId() {
-    return App.user._id;
 }
 
 function logPromise(p) {

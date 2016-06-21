@@ -464,7 +464,7 @@ function loadRelative(model, map) {
         .map(function (relation) {
             return App.local.getById('user', model.get(relation[0]))
                 .then(function (relative) {
-                    model.set(relation, new relation[1](relative));
+                    model.set(relation[0], new relation[1](relative));
                 })
         }));
 }

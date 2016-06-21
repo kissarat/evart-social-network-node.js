@@ -448,20 +448,6 @@ module.exports = {
         user.save($.success);
     },
 
-    avatar: {
-        GET: function ($) {
-            User.findOne($.id, $.wrap(function (user) {
-                if (user) {
-                    return $.sendStatus(code.MOVED_TEMPORARILY, 'Avatar found', {
-                        location: user.avatar ? "/photo/" + user.avatar + ".jpg" : "/images/man.png"
-                    });
-                } else {
-                    return $.sendStatus(code.NOT_FOUND, 'User not found');
-                }
-            }));
-        }
-    },
-
     change: {
         POST: function ($) {
             var field = $.param('field');

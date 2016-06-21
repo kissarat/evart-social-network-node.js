@@ -117,25 +117,28 @@ module.exports = {
     },
 
     GET: function ($) {
-        var conditions, owner_id;
         if ($.has('id')) {
-            return  File.findOne($.id);
-            // return File.findOne($.param('id')).then(function (file) {
-            //     $.res.writeHead(code.MOVED_PERMANENTLY, {
-            //         'content-type': file.mime,
-            //         location: '/md5/' + file.md5 + '/' + file.filename
-            //     });
-            //     return $.res.end();
-            // });
+            var q = File.findOne($.id);
+            if ($.req.headers.accept.indexOf('json') > 0) {
+                return q;
+            }
+            else {
+                return File.findOne($.param('id')).then(function (file) {
+                    $.res.writeHead(code.MOVED_PERMANENTLY, {
+                        'content-type': file.mime,
+                        location: '/md5/' + file.md5 + '/' + file.name + '.' + file.ext
+                    });
+                    return $.res.end();
+                });
+            }
         } else {
-            owner_id = $.has('owner_id') ? $.param('owner_id') : $.user._id;
-            conditions = {
+            var owner_id = $.has('owner_id') ? $.param('owner_id') : $.user._id;
+            var conditions = {
                 owner: owner_id
             };
             if ($.has('type')) {
                 conditions.type = $.param('type');
             }
-            console.log(conditions);
             return File.find(conditions);
         }
     },
