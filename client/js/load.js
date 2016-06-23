@@ -98,6 +98,7 @@ function load2_registerAgent() {
         } else {
             self.show(App.Views.Error, {
                 title: 'Server Error',
+                code: 502,
                 text: 'Service Temporarily Unavailable'
             });
         }
@@ -134,6 +135,13 @@ function load3_languageLoaded(xhr) {
         pushState: true,
         root: '/'
     });
+
+    $.datepicker.setDefaults(
+        $.extend(
+            $.datepicker.regional[App.language],
+            {'dateFormat':'yy-mm-dd'}
+        )
+    );
 
     App.start();
 

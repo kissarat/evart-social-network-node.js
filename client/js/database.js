@@ -161,6 +161,7 @@ App.local = new App.Database({
     version: 1,
     schema: {
         errors: {},
+        notification: {},
         file: {
             indexes: ['md5']
         },

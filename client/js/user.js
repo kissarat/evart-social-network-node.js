@@ -9,6 +9,7 @@ App.module('User', function (User, App) {
             'profile': 'view',
             'view/:id': 'view',
             'edit/:id': 'edit',
+            'settings': 'edit',
             'group/create': 'create',
             'users': 'index',
             'record/:type': 'record',
@@ -16,59 +17,15 @@ App.module('User', function (User, App) {
         }
     });
 
-    User.Login = Backbone.Model.extend({
-        url: '/api/user/login',
-
-        validation: {
-            login: {
-                required: true,
-                pattern: /^[\w\-_]|\d{9,16}|[0-9a-f]{24}$/i
-            },
-            password: {
-                required: true
-            }
-        }
-    });
-
-    User.Signup = Backbone.Model.extend({
-        validation: {
-            phone: {
-                required: true,
-                pattern: /^\w{9,16}$/
-            },
-            code: {
-                required: true,
-                pattern: /^\d{6}$/
-            },
-            domain: {
-                required: true
-            },
-            email: {
-                required: true
-            },
-            password: {
-                required: true
-            },
-            passwordRepeat: {
-                equalTo: 'password'
-            },
-            forename: {
-                required: true
-            },
-            surname: {
-                required: true
-            }
-        }
-    });
-
     User.Model = Backbone.Model.extend({
         cidPrefix: 'usr',
-        
+        idAttribute: '_id',
+
         initialize: function () {
-            resolveRelative(this, {
-                source: App.User.Model,
-                target: App.User.Model
-            })
+            var id = this.get('_id');
+            if (id) {
+                this.url = '/api/user?id=' + id;
+            }
         },
 
         validation: {
@@ -95,7 +52,11 @@ App.module('User', function (User, App) {
             }
             else {
                 var s = el.style;
-                var degree = this.get('_id').slice(-2);
+                var id = this.get('_id');
+                if (!id) {
+                    throw new Error('Model is not initialized');
+                }
+                var degree = id.slice(-2);
                 var saturate = [3, 1, 4, 2];
                 saturate = saturate[parseInt(degree[1], 16) % 4];
                 degree = degree[1] + degree[0];
@@ -164,6 +125,51 @@ App.module('User', function (User, App) {
         queryModelInitial: {
             name: '',
             q: ''
+        }
+    });
+
+    User.Login = Backbone.Model.extend({
+        url: '/api/user/login',
+
+        validation: {
+            login: {
+                required: true,
+                pattern: /^[\w\-_]|\d{9,16}|[0-9a-f]{24}$/i
+            },
+            password: {
+                required: true
+            }
+        }
+    });
+
+    User.Signup = Backbone.Model.extend({
+        validation: {
+            phone: {
+                required: true,
+                pattern: /^\w{9,16}$/
+            },
+            code: {
+                required: true,
+                pattern: /^\d{6}$/
+            },
+            domain: {
+                required: true
+            },
+            email: {
+                required: true
+            },
+            password: {
+                required: true
+            },
+            passwordRepeat: {
+                equalTo: 'password'
+            },
+            forename: {
+                required: true
+            },
+            surname: {
+                required: true
+            }
         }
     });
 
@@ -249,6 +255,7 @@ App.module('User', function (User, App) {
         phone: function () {
             var self = this;
             var phone = this.model.get('phone');
+            
             if (phone) {
                 this.model.set('phone', phone.replace(/[^\d]/g, ''));
             }
@@ -331,46 +338,68 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
+            'h1 .title': 'domain',
             '[name=type]': 'type',
             '[name=name]': 'name',
             '[name=phone]': 'phone',
             '[name=domain]': 'domain',
             '[name=email]': 'email',
-            '[name=about]': 'about'
+            '[name=birthday]': 'birthday',
+            '[name=about]': 'about',
+            '[name=language]': 'language',
+            '[name=country]': 'country'
         },
 
         ui: {
             title: 'h1 .title',
+            icon: 'h1 .fa',
             domain: '[name=domain]',
+            birthday: '[name=birthday]',
             button: 'button',
             avatar: '.field-avatar',
-            origin: '.origin'
+            origin: '.origin',
+            country: '[name=country]'
         },
 
         events: {
             'submit': 'submit'
         },
-
+        
         submit: function (e) {
+            var model = this.model;
             e.preventDefault();
-            return $.sendJSON('POST', '/api/user', this.$el.serialize(), function (xhr) {
-                var data;
-                data = xhr.responseJSON;
-                if (data.success) {
-                    return App.navigate('/view/' + data.domain);
-                } else {
-                    return alert(T('Something wrong happend'));
-                }
+            if ('group' != this.model.get('type')) {
+                this.model.set('model', this.model.get('surname') + ' ' + this.model.get('forename'));
+            }
+            $.sendJSON('POST', '/api/user?id=' + this.model.id, this.$el.serialize(), function (xhr) {
+                var data = xhr.responseJSON;
+                data.success
+                    ? App.navigate('/view/' + model.get('_id'))
+                    : App.alert('Something wrong happened');
             });
         },
 
         onRender: function () {
             var self = this;
+            if ('group' != this.model.get('type')) {
+                this.$('.user-only').removeClass('user-only');
+                // if (!Modernizr.inputtypes.date) {
+                    this.ui.birthday.datepicker({
+                        changeMonth: true,
+                        changeYear: true
+                    });
+                // }
+                if ('user' == this.model.get('type')) {
+                    this.ui.icon.attr('class', 'fa fa-user');
+                }
+                else if ('admin' == this.model.get('type')) {
+                    this.ui.icon.attr('class', 'fa fa-beer');
+                }
+            }
             if (this.model.id) {
-                return document.title = this.model.getName() + ' - ' + T('Settings');
+                document.title = this.model.getName() + ' - ' + T('Settings');
             } else {
                 document.title = T('Create Group');
-                this.ui.title.html(document.title);
                 this.ui.button.html(T('Create'));
                 this.ui.avatar.hide();
                 this.$('.create-only').removeClass('create-only');
@@ -387,6 +416,29 @@ App.module('User', function (User, App) {
                     });
                 });
                 this.ui.origin.html(location.origin);
+            }
+            this.ui.title.html(document.title);
+
+            this.ui.country.append(getCountriesFragment());
+        }
+    });
+
+    User.ProfileButtons = Marionette.View.extend({
+        template: '#view-profile-buttons',
+
+        attributes: {
+            'class': 'profile-buttons'
+        },
+
+        events: {
+            'click .settings': function () {
+                App.navigate('/edit/' + this.model.get('_id'));
+            },
+            'click .statistics': function () {
+                App.navigate('/unavailable');
+            },
+            'click .logout': function () {
+                App.logout();
             }
         }
     });
@@ -424,7 +476,7 @@ App.module('User', function (User, App) {
             'tile3': '[data-number="3"]',
             'tile4': '[data-number="4"]',
             'tile5': '[data-number="5"]',
-            'tile6': '[data-number="5"]'
+            'tile6': '[data-number="6"]'
         },
 
         behaviors: {
@@ -455,7 +507,7 @@ App.module('User', function (User, App) {
             'tile3': '[data-number="3"]',
             'tile4': '[data-number="4"]',
             'tile5': '[data-number="5"]',
-            'tile6': '[data-number="6"]',
+            'tile6': '[data-number="6"]'
         },
 
         events: {
@@ -483,7 +535,6 @@ App.module('User', function (User, App) {
                 dropzone = dropzone.parentNode;
             }
             var params = {tile: dropzone.getAttribute('data-number'), file_id: data._id};
-            console.log(params);
             $.sendJSON('PATCH', '/api/user', params, function () {
                 var model = new App.File.Model(data);
                 dropzone.classList.remove('empty');
@@ -531,12 +582,20 @@ App.module('User', function (User, App) {
             }
         },
 
+        success: function (data) {
+            if (data.verified) {
+                App.navigate('login');
+            } else {
+                this.report('code', 'Invalid code');
+            }
+        },
+
         onRender: function () {
             var self = this;
             document.title = this.model.getName();
             var back = this.model.get('background');
             if (back) {
-                this.ui.background[0].setBackground();
+                this.ui.background[0].setBackground(back);
             }
             if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();
@@ -553,14 +612,6 @@ App.module('User', function (User, App) {
                     thumbnail.$el.removeAttr('class');
                 });
             });
-        },
-
-        success: function (data) {
-            if (data.verified) {
-                App.navigate('login');
-            } else {
-                this.report('code', 'Invalid code');
-            }
         }
     });
 
@@ -752,12 +803,11 @@ App.module('User', function (User, App) {
             },
 
             signup: function (step) {
-                var signup;
-                signup = new User.SignupForm({
+                var signup = new User.SignupForm({
                     model: new User.Signup()
                 });
                 App.getPlace('main').show(signup);
-                return signup.loginRegion.show(new User.LoginForm({
+                signup.loginRegion.show(new User.LoginForm({
                     model: new User.Login()
                 }));
             },
@@ -766,16 +816,18 @@ App.module('User', function (User, App) {
                 if (!domain) {
                     domain = App.user.domain;
                 }
-                $.get('/api/user?domain=' + domain, function (user) {
+                var url = '/api/user?' + (/^[0-9a-f]{24}$/.test(domain) ? 'id=' + domain : 'domain=' + domain);
+                $.get(url, function (user) {
                     App.local.put('user', user);
                     user = new User.Model(user);
                     var profile = new User.View({model: user});
                     profile.el.classList.add('scroll');
                     profile.el.classList.add(user.get('type'));
                     App.getPlace('main').show(profile);
-                    // photoList.state.pageSize = Math.floor(2 * (profile.ui.photoList.width() / 64)) - 1;
+                    var buttons = user.get('_id') == App.user._id ? User.ProfileButtons : User.OtherProfileButtons;
+                    buttons = new buttons({model: user});
                     profile.getRegion('message-list').show(App.Message.WallView.widget(user.get('_id')));
-                    profile.getRegion('buttons').show(new User.OtherProfileButtons({model: user}));
+                    profile.getRegion('buttons').show(buttons);
                     App.local.getById('user/informer', user.get('_id')).then(function (informer) {
                         user.set(informer);
                     });
@@ -786,14 +838,23 @@ App.module('User', function (User, App) {
             },
 
             edit: function (id) {
-                var model;
-                model = new User.Model({
-                    _id: id
+                if (!id) {
+                    if ('settings' == App.route[0]) {
+                        App.navigate('/edit/' + App.user._id);
+                    }
+                    else {
+                        App.alert('ID is required');
+                    }
+                    return;
+                }
+                var model = new User.Model({_id: id});
+                model.fetch({
+                    success: function () {
+                        App.getPlace('main').show(new User.EditForm({
+                            model: model
+                        }));
+                    }
                 });
-                model.fetch();
-                return App.getPlace('main').show(new User.EditForm({
-                    model: model
-                }));
             },
 
             create: function () {

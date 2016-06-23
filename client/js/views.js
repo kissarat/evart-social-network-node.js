@@ -65,12 +65,14 @@ App.module('Views', function (Views, App) {
 
         ui: {
             status: 'h1',
+            code: '.code',
             text: 'p'
         },
 
         bindings: {
             'h1': 'title',
-            '.text': 'text'
+            '.text': 'text',
+            '.code': 'code'
         }
     });
 
@@ -192,6 +194,10 @@ App.module('Views', function (Views, App) {
     });
 
     App.alert = function (type, message) {
+        if (!message) {
+            message = type;
+            type = 'info';
+        }
         var region = App.getRegion('alert');
         if (!region.currentView || !region.currentView.collection) {
             var collection = new Backbone.Collection();
@@ -202,19 +208,6 @@ App.module('Views', function (Views, App) {
             message: message
         }));
     };
-
-    Views.Error = Marionette.View.extend({
-        template: '#view-error',
-
-        behaviors: {
-            Bindings: {}
-        },
-
-        bindings: {
-            'h1': 'title',
-            '.text': 'text'
-        }
-    });
 
     App.show = function (View, data) {
         var region = App.getRegion('main');
@@ -359,9 +352,13 @@ App.module('Views', function (Views, App) {
                 App.navigate(App.user ? '/profile' : '/login');
             },
 
-            error: function () {
+            error: function (code) {
+                if (!code) {
+                    code = 404;
+                }
                 var view = new Views.Error({
                     model: new Backbone.Model({
+                        code: code,
                         text: "Whatever you were looking for doesn't currently exist at this address. " +
                         "Unless you were looking for this error page, in which case: Congrats! You totally found it."
                     })

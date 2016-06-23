@@ -11,7 +11,6 @@ self.Labiak = function Labiak() {
     }
 };
 self.LabiakFunction = function LabiakFunction() {};
-self.isService = !(self.window && window.document);
 
 _.mixin({
     merge: function () {

@@ -24,6 +24,7 @@
     "marionette": "^3",
     "moment": "^2.12.0",
     "pdfjs-dist": "^1.5.285",
-    "underscore": "*"
+    "underscore": "*",
+    "modernizr": "^3.3.1"
   }
 }

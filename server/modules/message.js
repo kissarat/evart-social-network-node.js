@@ -282,8 +282,18 @@ var user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos
 var admin_fields = ['domain', 'type'];
 
 function populate(r) {
-    return r.populate('source', '_id domain avatar').populate('target', '_id domain avatar').populate('videos', '_id thumbnail_url thumbnail_width thumbnail_height').populate('repost', '_id source target photos videos text').populate('children', '_id source target photos videos text time');
+    for(var collection in populate.map) {
+        r.populate(collection, populate.map[collection]);
+    }
 }
+
+populate.map = {
+    source: '_id domain avatar',
+    target: '_id domain avatar',
+    videos: '_id thumbnail_url thumbnail_width thumbnail_height',
+    repost: '_id source target photos videos text',
+    children: '_id source target photos videos text time'
+};
 
 function dialogs_condition(me) {
     return [

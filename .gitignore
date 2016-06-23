@@ -1,8 +1,6 @@
 .DS_Store
 .idea/
 app/
-gulpfile.js*
 node_modules/
-RecordRTC-master
 static/
 taras/

@@ -22,14 +22,15 @@ App.module('Message', function (Message, App) {
         }
         return model.loadRelative().then(function () {
             var source = model.get('source');
-            if (!isFirefox) {
+            // if (!isFirefox) {
                 sound(model.get('sound') ? model.get('sound') : 'notification');
-            }
+            // }
             return App.notify({
                 tag: model.get('_id'),
                 icon: source.getAvatarURL(),
                 title: source.getName(),
                 body: model.get('text'),
+                timeout: model.get('timeout'),
                 silent: true
             });
         });
@@ -218,12 +219,11 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            var source, source_id;
-            source = this.model.get('source');
+            var source = this.model.get('source');
             this.ui.name.attr('href', '/view/' + source.get('domain'));
             this.ui.name.html(source.getName());
             this.$el.attr('data-id', this.model.get('_id'));
-            this.ui.info.attr('data-id', source_id);
+            this.ui.info.attr('data-id', source.get('_id'));
             source.setupAvatar(this.ui.avatar[0]);
             if (source.get('_id') === App.user._id) {
                 this.$el.addClass('me');
@@ -339,8 +339,9 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            var source = 'string' == typeof this.model.get('source')
-                ? this.model.get('source') : this.model.get('source').get('_id');
+            // var source = 'string' == typeof this.model.get('source')
+            //     ? this.model.get('source') : this.model.get('source').get('_id');
+            var source = this.model.get('source');
             this.$el.addClass(source == App.user._id ? 'me' : 'other');
             if (!Message.View.lastAnimationStart) {
                 Message.View.lastAnimationStart = Date.now();
@@ -485,8 +486,9 @@ App.module('Message', function (Message, App) {
         },
 
         reply: function (model) {
-            var target = 'string' == typeof model.get('target')
-                ? model.get('target') : model.get('target').get('_id');
+            // var target = 'string' == typeof model.get('target')
+            //     ? model.get('target') : model.get('target').get('_id');
+            var target = model.get('target'); 
             var isReceiver = this.getQuery().get('target_id') == target;
             if (isReceiver) {
                 this.getCollection().add(model);
@@ -505,10 +507,14 @@ App.module('Message', function (Message, App) {
             list.queryModel.set('target_id', options.target_id);
             list.comparator = '_id';
             var listView = new Message.ListView({collection: list.fullCollection});
+            var message = {
+                target: options.target_id
+            };
+            if (options.source) {
+                message.source = options.source;
+            }
             var editor = new Message.Editor({
-                model: new Message.Model({
-                    target: options.target_id
-                })
+                model: new Message.Model(message)
             });
             var dialog = new Message.Dialog();
             region.show(dialog);

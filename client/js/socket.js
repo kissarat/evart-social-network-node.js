@@ -3,6 +3,8 @@
 function Socket(options) {
     _.extend(this, Backbone.Events);
     this.address = options.address;
+    this.pull = this.pull.bind(this);
+    this.push = this.push.bind(this);
 }
 
 Socket.prototype = {
@@ -64,11 +66,12 @@ App.notify = function (options) {
                         options = {title: options};
                     }
                     var n = new Notification(options.title, options);
-                    if (options.timeout > 0) {
+                    if (!isNaN(options.timeout) && options.timeout > 0) {
                         setTimeout(function () {
                             n.close();
                         }, options.timeout);
                     }
+                    App.local.add('notification', options);
                 };
                 App.notify(options);
             }

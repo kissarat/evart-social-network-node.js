@@ -1,5 +1,23 @@
 "use strict";
 
+var isNode = 'undefined' !== typeof module && module.exports;
+if (isNode) {
+    global.self = global;
+}
+self.isService = !isNode && !(self.window && window.document);
+
+if (isNode) {
+    var _ = require('underscore');
+}
+else {
+    self.isFirefox = !isNode && self.InstallTrigger;
+    self.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+    self.isIE = /*@cc_on!@*/false || !!document.documentMode;
+    self.isEdge = !isIE && !!window.StyleMedia;
+    self.isChrome = !!window.chrome && !!window.chrome.webstore;
+    self.isBlink = (isChrome || isOpera) && !!window.CSS;
+}
+
 if (!self.statistics) {
     self.statistics = {
         start: Date.now()
@@ -139,8 +157,6 @@ var Scroll = {
     UP: false,
     DOWN: true
 };
-
-var remap = [22,61,43,121,105,210,0,228,16,88,41,32,168,196,126,54,158,125,83,149,98,23,239,234,114,230,49,139,172,7,107,156,217,39,82,9,225,252,221,164,170,185,96,144,92,53,246,74,176,199,109,138,127,29,84,214,235,112,70,122,153,99,38,206,87,215,91,113,6,229,202,205,78,24,31,26,103,145,191,77,120,218,75,203,94,161,253,115,33,140,80,166,10,137,85,2,200,160,55,244,62,28,3,76,174,42,165,222,37,251,131,102,132,249,67,86,186,180,241,208,48,194,51,81,116,4,182,100,237,118,50,141,224,207,201,130,123,69,119,243,40,134,59,66,184,93,247,18,21,232,150,223,231,157,216,45,233,46,248,189,117,195,213,15,57,19,142,58,204,227,163,193,108,97,30,101,219,236,1,175,178,152,14,255,65,5,13,162,179,197,209,198,34,226,110,71,254,143,25,159,212,173,240,167,27,187,146,44,89,220,188,169,95,73,60,242,79,90,11,64,177,17,238,20,136,63,47,155,245,8,133,12,111,151,35,124,183,36,56,72,211,129,106,104,52,250,68,171,147,192,148,128,190,154,135,181];
 
 var twilio = {
     INVALID_NUMBER: 21211
@@ -391,7 +407,8 @@ var countries = [
 ];
 
 var country_codes = [];
-setImmediate(function () {
+
+function _generate_data() {
     _.each(emoji, function (array, symbol) {
         if ('string' == typeof array) {
             array = [array];
@@ -401,7 +418,7 @@ setImmediate(function () {
         array.unshift(':' + s + ':');
     });
     Object.freeze(emoji);
-    
+
     countries = countries.map(function (country) {
         var o = {
             iso: country[0],
@@ -416,6 +433,18 @@ setImmediate(function () {
         return o;
     });
 
+    countries.sort(function (a, b) {
+        if (a.name == b.name) {
+            return 0;
+        }
+        else if (a.name > b.name) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    });
+
     countries.forEach(function (country) {
         if (country.code) {
             country_codes.push(country.code);
@@ -424,13 +453,26 @@ setImmediate(function () {
     country_codes.sort(function (a, b) {
         return b - a;
     });
-});
+}
+
+if (isNode) {
+    _generate_data();
+    module.exports = {
+      countries: countries  
+    };
+}
+else {
+    setImmediate(_generate_data)
+}
 
 var browser = {
     os: {}
 };
 
 (function () {
+    if (isNode) {
+        return;
+    }
     var b;
 
     if (b = /(MSIE |Edge\/)([0-9\.]+)/.exec(navigator.userAgent)) {
@@ -500,56 +542,55 @@ var browser = {
     }
 
     statistics.agent = browser;
+
+    self.defaultConfig = {
+        search: {
+            delay: 250
+        },
+        trace: {
+            history: true
+        },
+        socket: {
+            address: 'ws://' + location.hostname + '/socket',
+            wait: 800
+        },
+        alert: {
+            duration: 12000
+        },
+        online: {
+            delay: 10 * 1000,
+            duration: 5 * 60 * 1000
+        },
+        peer: {
+            iceServers: [
+                {
+                    urls: "stun:stun.services.mozilla.com",
+                    username: "louis@mozilla.com",
+                    credential: "webrtcdemo"
+                }, {
+                    urls: [
+                        'stun:stun.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302',
+                        'stun:stun.services.mozilla.com', "stun:23.21.150.121"]
+                }
+            ]
+        }
+    };
+
+    self.features = {
+        peer: {
+            available: !!(self.RTCPeerConnection || self.webkitRTCPeerConnection)
+        },
+        notification: {
+            available: !!self.Notification,
+            enabled: false
+        },
+        fullscreen: {
+            available: !!(self.Element
+            && (Element.prototype.requestFullscreen || (Element.prototype.requestFullscreen = Element.prototype.webkitRequestFullscreen)))
+        }
+    };
 })();
 
-self.isFirefox = self.InstallTrigger && 'Firefox' == browser.name;
-
-self.defaultConfig = {
-    search: {
-        delay: 250
-    },
-    trace: {
-        history: true
-    },
-    socket: {
-        address: 'ws://' + location.hostname + '/socket',
-        wait: 800
-    },
-    alert: {
-        duration: 12000
-    },
-    online: {
-        delay: 10 * 1000,
-        duration: 5 * 60 * 1000
-    },
-    peer: {
-        iceServers: [
-            {
-                urls: "stun:stun.services.mozilla.com",
-                username: "louis@mozilla.com",
-                credential: "webrtcdemo"
-            }, {
-                urls: [
-                    'stun:stun.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302',
-                    'stun:stun.services.mozilla.com', "stun:23.21.150.121"]
-            }
-        ]
-    }
-};
-
-self.features = {
-    peer: {
-        available: !!(self.RTCPeerConnection || self.webkitRTCPeerConnection)
-    },
-    notification: {
-        available: !!self.Notification,
-        enabled: false
-    },
-    fullscreen: {
-        available: !!(self.Element
-        && (Element.prototype.requestFullscreen || (Element.prototype.requestFullscreen = Element.prototype.webkitRequestFullscreen)))
-    }
-};
 
 Object.freeze(SocketReadyState);
 Object.freeze(browser);

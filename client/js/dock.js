@@ -26,7 +26,16 @@ App.module('Dock', function (Dock, App) {
 
     Dock.ListView = Marionette.CollectionView.extend({
         // tagName: 'ul',
-        childView: Dock.View
+        childView: Dock.View,
+
+        events: {
+            'click a': 'navigate'
+        },
+
+        navigate: function (e) {
+            e.preventDefault();
+            App.navigate(e.target.getAttribute('href'));
+        }
     });
 
     Dock.Layout = Marionette.View.extend({

@@ -470,10 +470,26 @@ function loadRelative(model, map) {
 }
 
 function resolveRelative(model, map) {
+    // if (!(model instanceof App.Message.Model)) {
+    //     throw 'hello';
+    // }
     _.each(map, function (modelClass, name) {
         var relative = model.get(name);
-        if ('object' == typeof relative && !(relative instanceof modelClass)) {
+        if (relative && 'object' == typeof relative && !(relative instanceof modelClass)) {
             model.set(name, new modelClass(relative));
         }
     });
+}
+
+function getCountriesFragment() {
+    var fragment = document.createDocumentFragment('fragment');
+    countries.forEach(function (country) {
+        if (country.flag) {
+            var option = document.createElement('option');
+            option.innerHTML = T(country.name) + ' ' + country.flag;
+            option.value = country.iso;
+            fragment.appendChild(option);
+        }
+    });
+    return fragment;
 }

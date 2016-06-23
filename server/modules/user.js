@@ -138,6 +138,132 @@ global.schema.User = new mongoose.Schema({
 });
 
 module.exports = {
+    GET: function ($) {
+        var params = ['id', 'domain'];
+        var fields = schema.User.user_public_fields.join(' ');
+        if ($.hasAny(params) && !$.has('list')) {
+            return User.findOne($.paramsObject(params)).select(fields);
+        } else if ($.has('ids')) {
+            return User.find({
+                _id: {
+                    $in: $.ids('ids')
+                }
+            }).select(fields);
+        } else {
+            if ($.has('domain') && $.has('list')) {
+                var list_name = $.param('list');
+                if (list_name !== 'follow' && list_name !== 'deny') {
+                    $.invalid('list', 'is not follow or deny');
+                }
+                User.findOne({
+                    domain: $.param('domain')
+                }).select(list_name).then(function (user) {
+                    return search($, user[list_name]);
+                });
+            } else {
+                return search($);
+            }
+        }
+    },
+
+    PUT: function ($) {
+        var data = $.allowFields(group_fields, admin_fields);
+        data.type = 'group';
+        var user = new User(data);
+        user.save($.wrap(function () {
+            return $.send(code.CREATED, {
+                success: true,
+                _id: user._id,
+                domain: user.domain,
+                type: user.type
+            });
+        }));
+    },
+
+    POST: function ($) {
+        var data = $.allowFields(user_fields, admin_fields);
+        data.time = Date.now();
+        return User.update({_id: $.id}, {
+            $set: data
+        }, {
+            "new": true
+        });
+    },
+
+    PATCH: function ($) {
+        return new Promise(function (resolve, reject) {
+            var where_me = {_id: $.user._id};
+            if ($.has('online')) {
+                var online = $.param('online');
+                if (isNaN(online)) {
+                    reject(code.BAD_REQUEST);
+                }
+                online = +online;
+                var now = Date.now();
+                var delta = (15 * 60 + 10) * 1000;
+                if (online < 0) {
+                    online = now - online;
+                }
+                if (online < now + delta) {
+                    User.update(where_me, {$set: {online: online}}).then(resolve, reject);
+                }
+                else {
+                    reject(code.BAD_REQUEST);
+                }
+            }
+            else if ($.has('tile') && $.has('file_id')) {
+                User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
+                    user.tiles[$.param('tile')] = $.param('file_id');
+                    user.markModified('tiles');
+                    user.save().catch(reject).then(function () {
+                        resolve({
+                            tiles: user.tiles
+                        });
+                    })
+                });
+            }
+            else {
+                reject(code.BAD_REQUEST);
+            }
+        });
+    },
+
+    informer: function ($) {
+        var id = $.id || $.user._id;
+        var result = {};
+        return new Promise(function (resolve, reject) {
+            User.findOne({_id: id}, {follow: 1}).catch(reject).then(function (user) {
+                result._id = user._id;
+                var follows = utils.s(user.follow);
+                User.find({_id: {$in: id}}, {_id: 1}).catch(reject).then(function (followers) {
+                    result.followers = utils.s(_.pluck(followers, '_id'));
+                    return Video.count({owner: id});
+                })
+                    .catch(reject)
+                    .then(function (count) {
+                        result.video = count;
+                        return File.count({type: 'audio'});
+                    })
+                    .catch(reject)
+                    .then(function (count) {
+                        result.audio = count;
+                        return User.find({_id: {$in: user.follow}, type: 'group'}, {_id: 1})
+                    })
+                    .catch(reject)
+                    .then(function (groups) {
+                        groups = utils.s(_.pluck(groups, '_id'));
+                        follows = _.difference(follows, groups);
+                        var friends = _.intersection(follows, result.followers);
+                        result.follows = follows.length;
+                        result.followers = result.followers.length;
+                        result.groups = groups.length;
+                        result.friends = friends.length;
+                        resolve(result);
+                    });
+            });
+        })
+    },
+
     login: function ($) {
         if ($.user) {
             return $.sendStatus(code.FORBIDDEN, 'User is authorized');
@@ -231,132 +357,6 @@ module.exports = {
                 status: status
             }
         });
-    },
-
-    PUT: function ($) {
-        var data = $.allowFields(group_fields, admin_fields);
-        data.type = 'group';
-        var user = new User(data);
-        user.save($.wrap(function () {
-            return $.send(code.CREATED, {
-                success: true,
-                _id: user._id,
-                domain: user.domain,
-                type: user.type
-            });
-        }));
-    },
-
-    POST: function ($) {
-        var data = $.allowFields(user_fields, admin_fields);
-        date.time = Date.now();
-        return User.findByIdAndUpdate($.id, {
-            $set: data
-        }, {
-            "new": true
-        });
-    },
-
-    PATCH: function ($) {
-        return new Promise(function (resolve, reject) {
-            var where_me = {_id: $.user._id};
-            if ($.has('online')) {
-                var online = $.param('online');
-                if (isNaN(online)) {
-                    reject(code.BAD_REQUEST);
-                }
-                online = +online;
-                var now = Date.now();
-                var delta = (15 * 60 + 10) * 1000;
-                if (online < 0) {
-                    online = now - online;
-                }
-                if (online < now + delta) {
-                    User.update(where_me, {$set: {online: online}}).then(resolve, reject);
-                }
-                else {
-                    reject(code.BAD_REQUEST);
-                }
-            }
-            else if ($.has('tile') && $.has('file_id')) {
-                User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
-                    user.tiles[$.param('tile')] = $.param('file_id');
-                    user.markModified('tiles');
-                    user.save().catch(reject).then(function () {
-                        resolve({
-                            tiles: user.tiles
-                        });
-                    })
-                });
-            }
-            else {
-                reject(code.BAD_REQUEST);
-            }
-        });
-    },
-
-    GET: function ($) {
-        var params = ['id', 'domain'];
-        var fields = schema.User.user_public_fields.join(' ');
-        if ($.hasAny(params) && !$.has('list')) {
-            return User.findOne($.paramsObject(params)).select(fields);
-        } else if ($.has('ids')) {
-            return User.find({
-                _id: {
-                    $in: $.ids('ids')
-                }
-            }).select(fields);
-        } else {
-            if ($.has('domain') && $.has('list')) {
-                var list_name = $.param('list');
-                if (list_name !== 'follow' && list_name !== 'deny') {
-                    $.invalid('list', 'is not follow or deny');
-                }
-                User.findOne({
-                    domain: $.param('domain')
-                }).select(list_name).then(function (user) {
-                    return search($, user[list_name]);
-                });
-            } else {
-                return search($);
-            }
-        }
-    },
-
-    informer: function ($) {
-        var id = $.id || $.user._id;
-        var result = {};
-        return new Promise(function (resolve, reject) {
-            User.findOne({_id: id}, {follow: 1}).catch(reject).then(function (user) {
-                result._id = user._id;
-                var follows = utils.s(user.follow);
-                User.find({_id: {$in: id}}, {_id: 1}).catch(reject).then(function (followers) {
-                    result.followers = utils.s(_.pluck(followers, '_id'));
-                    return Video.count({owner: id});
-                })
-                    .catch(reject)
-                    .then(function (count) {
-                        result.video = count;
-                        return File.count({type: 'audio'});
-                    })
-                    .catch(reject)
-                    .then(function (count) {
-                        result.audio = count;
-                        return User.find({_id: {$in: user.follow}, type: 'group'}, {_id: 1})
-                    })
-                    .catch(reject)
-                    .then(function (groups) {
-                        groups = utils.s(_.pluck(groups, '_id'));
-                        follows = _.difference(follows, groups);
-                        var friends = _.intersection(follows, result.followers);
-                        result.follows = follows.length;
-                        result.followers = result.followers.length;
-                        result.groups = groups.length;
-                        result.friends = friends.length;
-                        resolve(result);
-                    });
-            });
-        })
     },
 
     exists: {
@@ -544,8 +544,8 @@ var list_fields = {
     request: null
 };
 
-schema.User.user_public_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone",
-    "avatar", "name", "birthday", "languages", "relationship", "tiles"];
+schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename", "city", "country", "address", "phone",
+    "avatar", "birthday", "languages", "relationship", "tiles"];
 var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar",
     "name", "birthday", "languages", "relationship"];
 var group_fields = ["domain", "name", "about", "avatar"];
