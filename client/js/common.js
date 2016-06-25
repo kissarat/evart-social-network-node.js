@@ -1,8 +1,7 @@
 "use strict";
 
-//noinspection JSUnresolvedFunction
-
 self.DEV = !self.version;
+
 self.T = function (text) {
     return text;
 };
@@ -12,7 +11,8 @@ self.Labiak = function Labiak() {
         this.construct.apply(constructor);
     }
 };
-self.LabiakFunction = function LabiakFunction() {};
+self.LabiakFunction = function LabiakFunction() {
+};
 
 _.mixin({
     merge: function () {
@@ -119,26 +119,6 @@ function reverse(array) {
     return array.reverse();
 }
 
-function _instanceof(instance, clazz) {
-    return instance instanceof clazz;
-}
-
-function _is(child, parent) {
-    return child.__super__ && (child.__super__.constructor == parent || _is(child.__super__, parent))
-}
-
-function _get(name) {
-    var regex = new RegExp(name + '=([^&]+)');
-    if (regex.test(location.search)) {
-        return regex.exec(location.search)[1];
-    }
-    return null
-}
-
-function preventDefault(e) {
-    e.preventDefault();
-}
-
 function register(target, listeners) {
     var _add = target.addEventListener || target.on;
     for (var name in listeners) {
@@ -184,8 +164,6 @@ function Service() {
         this.initialize.apply(this, arguments);
     }
 
-    this.DEV_MODE = true;
-
     this.defaultConfig = {
         search: {
             delay: 250
@@ -229,7 +207,7 @@ function Service() {
             available: Element.prototype.requestFullscreen
         }
     };
-    
+
     this.jsonpCount = {
         vk: 0
     };
@@ -264,7 +242,7 @@ _.extend(Service.prototype, {
             }
         }
     },
-    
+
     cookie: function (name, value) {
         document.cookie = name + '=' + value + '; path=/; expires=Tue, 01 Jan 2030 00:00:00 GMT';
     },
@@ -288,7 +266,7 @@ _.extend(Service.prototype, {
     logout: function () {
         var self = this;
         if (this.user) {
-            return $.getJSON('/api/user/logout', function (response) {
+            return $.getJSON('/api/user/logout', function () {
                 $('#dock-container').hide();
                 self.trigger('logout');
                 return self.navigate('login');
@@ -298,7 +276,7 @@ _.extend(Service.prototype, {
             return this.navigate('login');
         }
     },
-    
+
     jsonpCallback: function (prefix) {
         this.jsonpCount[prefix]++;
         return prefix + this.jsonpCount[prefix];
@@ -311,9 +289,22 @@ _.extend(Service.prototype, {
         this[name] = module;
         define(module, this);
     },
-    
+
     updateOnline: function (duration) {
-        $.sendJSON('PATCH', '/api/user', {online: - duration});
+        $.sendJSON('PATCH', '/api/user', {online: -duration});
+    },
+
+    unimplemented: unimplemented,
+
+    debounce: function (context, fn) {
+        if (context._debounce_timeout) {
+            clearTimeout(context._debounce_timeout);
+            context._debounce_timeout = 0;
+        }
+        context._debounce_timeout = setTimeout(function () {
+            fn.call(context);
+            context._debounce_timeout = 0;
+        }, 500);
     },
 
     storage: {
@@ -440,13 +431,6 @@ _.extend(Service.prototype, {
         }
     })
 });
-
-function uptime() {
-    var delta = Date.now() - statistics.start;
-    var minutes = Math.floor(delta / 60000);
-    var seconds = Math.floor(delta / 1000 - minutes * 60);
-    return [minutes, seconds];
-}
 
 if (isService) {
     self.App = new Service();

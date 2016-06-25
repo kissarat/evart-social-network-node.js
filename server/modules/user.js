@@ -94,6 +94,9 @@ global.schema.User = new mongoose.Schema({
     country: {
         type: String
     },
+    city_id: {
+        type: Number
+    },
     city: {
         type: String
     },
@@ -171,7 +174,7 @@ module.exports = {
         }
     },
 
-    PUT: function ($) {
+    POST: function ($) {
         var data = $.allowFields(group_fields, admin_fields);
         data.type = 'group';
         var user = new User(data);
@@ -185,7 +188,7 @@ module.exports = {
         }));
     },
 
-    POST: function ($) {
+    PUT: function ($) {
         var data = $.allowFields(user_fields, admin_fields);
         data.time = Date.now();
         return User.update({_id: $.id}, {
@@ -549,9 +552,9 @@ var list_fields = {
     request: null
 };
 
-schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename", "city", "country", "address", "phone",
+schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename", "city", "city_id", "country", "address", "phone",
     "avatar", "birthday", "languages", "relationship", "tiles", "lang"];
-var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar",
+var user_fields = ["online", "name", "surname", "forename", "city", "city_id", "country", "address", "phone", "password", "avatar",
     "name", "birthday", "languages", "relationship", "lang"];
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];

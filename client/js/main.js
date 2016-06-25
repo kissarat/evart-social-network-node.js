@@ -284,7 +284,7 @@ _.extend(Application.prototype, {
     },
 
     getPlace: function (name) {
-        return this.getRegion().currentView.getRegion(name);
+        return this.getView().getRegion(name);
     },
 
     RootLayout: Marionette.View.extend({
@@ -396,10 +396,10 @@ _.extend(Application.prototype, {
 });
 
 _.extend(Backbone.Validation.callbacks, {
-    valid: function (view, attr, selector) {
+    valid: function (view, attr) {
         return view.$el.report(attr, '', false);
     },
-    invalid: function (view, attr, error, selector) {
+    invalid: function (view, attr, error) {
         return view.$el.report(attr, error, false);
     }
 });

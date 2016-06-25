@@ -151,6 +151,8 @@ var code = {
     NETWORK_AUTHENTICATION_REQUIRED: 511
 };
 
+var EmptyKeys = [' ', '\n', '\t', '\xa0', 'Meta', 'Alt', 'Control', 'Shift', 'CapsLock', 'ArrowLeft', 'ArrowRight'];
+
 var TRANSLIT = {
     "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo", "ж": "zh", "з": "z", "и": "i", "й": "j",
     "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f",
@@ -166,6 +168,7 @@ var Scroll = {
 var twilio = {
     INVALID_NUMBER: 21211
 };
+
 var _countries = [
     {"iso": "AF", "code": 93, "flag": "🇦🇫", "_id": 30},
     {"iso": "AL", "code": 355, "flag": "🇦🇱", "_id": 21},

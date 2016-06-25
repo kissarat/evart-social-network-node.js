@@ -65,7 +65,7 @@ App.module('User', function (User, App) {
                 // degree ^= 0xAA;
                 degree *= Math.round(256 / 360);
                 degree = 'hue-rotate(' + degree + 'deg)';
-                s.setProperty('webkitFilter' in s ? '-webkit-filter' : 'filter', degree + saturate);
+                s.setProperty('webkitFilter' in s ? '-webkit-filter' : 'filter', degree + saturate, '');
             }
         },
 
@@ -209,7 +209,7 @@ App.module('User', function (User, App) {
             this.model.set(this.el.serialize());
             if (this.model.isValid(true)) {
                 return this.model.save(null, {
-                    success: function (model, data) {
+                    success: function () {
                         App.once('login', function () {
                             App.navigate('/profile');
                         });
@@ -351,7 +351,12 @@ App.module('User', function (User, App) {
             '[name=phone]': 'phone',
             '[name=domain]': 'domain',
             '[name=email]': 'email',
-            '[name=birthday]': 'birthday',
+            '[name=birthday]': {
+                observe: 'birthday',
+                onGet: function (value) {
+                    return moment(value).format('YYYY-MM-DD')
+                }
+            },
             '[name=about]': 'about',
             '[name=language]': 'language',
             '[name=country]': 'country'
@@ -380,20 +385,16 @@ App.module('User', function (User, App) {
             }
             var isLanguageChanged = App.language == model.get('language');
             App.language = model.get('language');
-            $.sendJSON('POST', '/api/user?id=' + this.model.id, this.$el.serialize(), function (xhr) {
-                var data = xhr.responseJSON;
-                if (data.success) {
-                    var url = '/view/' + model.get('_id');
-                    if (isLanguageChanged) {
-                        location.href = url;
-                    }
-                    else {
-                        App.navigate(url);
-                    }
-                }
-                else {
-                    App.alert('Something wrong happened');
-                }
+            model.save(null, {
+               success: function () {
+                   var url = '/view/' + model.get('_id');
+                   if (isLanguageChanged) {
+                       location.href = url;
+                   }
+                   else {
+                       App.navigate(url);
+                   }
+               }
             });
         },
 
@@ -401,10 +402,7 @@ App.module('User', function (User, App) {
             var self = this;
             if ('group' != this.model.get('type')) {
                 this.$('.user-only').removeClass('user-only');
-                this.ui.birthday.datepicker({
-                    changeMonth: true,
-                    changeYear: true
-                });
+                this.ui.birthday.datepicker(App.config.datepicker.birthday);
                 if ('user' == this.model.get('type')) {
                     this.ui.icon.attr('class', 'fa fa-user');
                 }
@@ -436,15 +434,30 @@ App.module('User', function (User, App) {
             this.ui.title.html(document.title);
             var citySearch = App.Geo.CitySearch.widget(this.getRegion('city'));
 
-            this.model.on('change:country', function () {
-                citySearch.model.set('country_id', self.model.getCountryId());
-                citySearch.search();
+            if (this.model.has('city')) {
+                citySearch.model.set('q', this.model.get('city'));
+            }
+            citySearch.on('clear', function () {
+                // self.model.set('city_id', null);
+                self.model.set('city', '');
             });
+
+            citySearch.model.on('change:cid', function (model, value) {
+                self.model.set('city_id', value);
+            });
+            citySearch.model.on('change:title', function (model, value) {
+                self.model.set('city', value);
+            });
+
+            function changeCountry() {
+                citySearch.model.set('country_id', self.model.getCountryId());
+            }
+            this.model.on('change:country', changeCountry);
 
             App.Geo.getCountriesFragment(function (fragment) {
                 self.ui.country.append(fragment);
                 self.stickit();
-                citySearch.search();
+                changeCountry();
             });
         }
     });
@@ -519,7 +532,14 @@ App.module('User', function (User, App) {
             '.friends .value': 'friends',
             '.followers .value': 'followers',
             '.groups .value': 'groups',
-            '.video .value': 'video'
+            '.video .value': 'video',
+            '.country': 'country',
+            '.city': {
+                observe: 'city',
+                onGet: function (value) {
+                    return value ? value + ',' : value;
+                }
+            }
         },
 
         ui: {
@@ -836,7 +856,7 @@ App.module('User', function (User, App) {
                 return App.logout();
             },
 
-            signup: function (step) {
+            signup: function () {
                 var signup = new User.SignupForm({
                     model: new User.Signup()
                 });
@@ -922,7 +942,7 @@ App.module('User', function (User, App) {
                 pageable.getFirstPage();
             },
 
-            record: function (type) {
+            record: function () {
                 var pageable = new User.RecordList();
                 pageable.queryModel.set('target_id', App.user._id);
                 var listView = new User.ListView({

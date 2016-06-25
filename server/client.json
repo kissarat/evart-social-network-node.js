@@ -46,5 +46,14 @@
         "credential": "webrtcdemo"
       }
     ]
+  },
+  "datepicker": {
+    "birthday": {
+      "changeMonth": true,
+      "changeYear": true,
+      "yearRange": "1930:2009",
+      "minDate": "1930-01-01",
+      "maxDate": "2009-12-31"
+    }
   }
 }
