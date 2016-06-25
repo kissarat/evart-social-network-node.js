@@ -8,7 +8,7 @@ self.T = function (text) {
 
 self.Labiak = function Labiak() {
     if (this.construct) {
-        this.construct.apply(constructor);
+        this.construct.apply(this, arguments);
     }
 };
 self.LabiakFunction = function LabiakFunction() {
@@ -82,11 +82,15 @@ _.mixin({
 
         child.prototype.construct = hasParent
             ? function () {
-            _.each(mixins, _.extend, this)
+            _.each(mixins, function (mixin) {
+                _.extend(this, mixin)
+            }, this)
         }
             : function () {
             parent.apply(this, arguments);
-            _.each(mixins, _.extend, this);
+            _.each(mixins, function (mixin) {
+                _.extend(this, mixin)
+            }, this);
         };
 
         if (statics) {
@@ -325,112 +329,118 @@ _.extend(Service.prototype, {
             }
             return !!object;
         }
+    }
+});
+
+Service.prototype.Upload = function Upload(options) {
+    _.extend(this, Backbone.Events);
+    this.initialize(options);
+};
+
+Service.prototype.Upload.prototype = {
+    initialize: function (options) {
+        var self = this;
+        this.url = options.url || '/api/file';
+        this.method = options.method || 'POST';
+        this.channel = options.channel || Backbone.Radio.channel('upload');
+        this.channel.reply('upload', _.bind(this.reply, this));
+        this.headers = options.headers || {};
+        this.params = options.params;
+        if (options.contentType) {
+            this.headers['content-type'] = options.contentType;
+        }
+
+        function upload(files) {
+            self.files = reverse(files);
+            self.uploadFile();
+            self.on('response', self.uploadFile);
+        }
+
+        if (options.promise) {
+            options.promise.then(upload);
+        }
+        else {
+            if (options.file) {
+                options.files = [file];
+            }
+            if (options.files) {
+                upload(options.files);
+            }
+        }
     },
 
-    Upload: _.defineClass({
-        initialize: function (options) {
-            var self = this;
-            this.url = options.url || '/api/file';
-            this.method = options.method || 'POST';
-            this.channel = options.channel || Backbone.Radio.channel('upload');
-            this.channel.reply('upload', _.bind(this.reply, this));
-            this.headers = options.headers || {};
-            this.params = options.params;
-            if (options.contentType) {
-                this.headers['content-type'] = options.contentType;
-            }
-
-            function upload(files) {
-                self.files = reverse(files);
-                self.uploadFile();
-                self.on('response', self.uploadFile);
-            }
-
-            if (options.promise) {
-                options.promise.then(upload);
-            }
-            else {
-                if (options.file) {
-                    options.files = [file];
-                }
-                if (options.files) {
-                    upload(options.files);
-                }
-            }
-        },
-
-        uploadFile: function () {
-            var file = this.files.pop();
-            if (file) {
-                this.channel.request('upload', file);
-            }
-        },
-
-        reply: function (options) {
-            var self = this;
-            var headers = {};
-            if (options instanceof Blob) {
-                options.data = options;
-            }
-            else if (options.json) {
-                options.data = JSON.stringify(options.json);
-                headers['content-type'] = 'application/json';
-            }
-            if (options.data.name) {
-                headers['name'] = options.data.name;
-            }
-            if (options.data.type) {
-                headers['content-type'] = options.data.type;
-            }
-            if (options.data.mozFullPath) {
-                headers['path'] = options.data.mozFullPath;
-            }
-            if (options.data.lastModifiedDate) {
-                headers['last-modified'] = options.data.lastModifiedDate;
-            }
-            if (options.data.lastModified) {
-                headers['modified'] = options.data.lastModified;
-            }
-            options.headers = _.merge(this.headers, options.headers, headers);
-            if (!options.headers['accept']) {
-                options.headers['accept'] = 'application/json';
-            }
-            var xhr = new XMLHttpRequest();
-            options.method = options.method || this.method;
-            options.url = options.url || this.url;
-            options.params = options.params || this.params;
-            var url = options.url;
-            if (options.params) {
-                url += '?' + $.param(options.params);
-            }
-            xhr.open(options.method || this.method, url);
-            var isText = false;
-            for (var name in options.headers) {
-                var value = options.headers[name];
-                if ('content-type' == name.toLocaleLowerCase() && (value.indexOf('json') > 0 || value.indexOf('text') === 0)) {
-                    value += '; charset=utf8';
-                    isText = true;
-                }
-                xhr.setRequestHeader(name, value);
-            }
-            if (!isText) {
-                xhr.responseType = 'arraybuffer';
-            }
-            xhr.addEventListener('load', function () {
-                var data = null;
-                try {
-                    data = JSON.parse(this.responseText);
-                }
-                catch (ex) {
-                }
-                self.trigger('response', data, xhr, options);
-            });
-            this.trigger('upload', xhr, options);
-            xhr.send(options.data);
-            return xhr;
+    uploadFile: function () {
+        var file = this.files.pop();
+        if (file) {
+            this.channel.request('upload', file);
         }
-    })
-});
+    },
+
+    reply: function (options) {
+        var self = this;
+        var headers = {};
+        if (options instanceof Blob) {
+            options.data = options;
+        }
+        else if (options.json) {
+            options.data = JSON.stringify(options.json);
+            headers['content-type'] = 'application/json';
+        }
+        if (options.data.name) {
+            headers['name'] = options.data.name;
+        }
+        if (options.data.type) {
+            headers['content-type'] = options.data.type;
+        }
+        if (options.data.mozFullPath) {
+            headers['path'] = options.data.mozFullPath;
+        }
+        if (options.data.lastModifiedDate) {
+            headers['last-modified'] = options.data.lastModifiedDate;
+        }
+        if (options.data.lastModified) {
+            headers['modified'] = options.data.lastModified;
+        }
+        options.headers = _.merge(this.headers, options.headers, headers);
+        if (!options.headers['accept']) {
+            options.headers['accept'] = 'application/json';
+        }
+        var xhr = new XMLHttpRequest();
+        options.method = options.method || this.method;
+        options.url = options.url || this.url;
+        options.params = _.merge(options.params, this.params);
+        if (!options.params.owner_id) {
+            options.params.owner_id = App.user._id;
+        }
+        var url = options.url;
+        url += '?' + $.param(options.params);
+        xhr.open(options.method || this.method, url);
+        var isText = false;
+        for (var name in options.headers) {
+            var value = options.headers[name];
+            if ('content-type' == name.toLocaleLowerCase() && (value.indexOf('json') > 0 || value.indexOf('text') === 0)) {
+                value += '; charset=utf8';
+                isText = true;
+            }
+            xhr.setRequestHeader(name, value);
+        }
+        // if (!isText) {
+        //     xhr.responseType = 'arraybuffer';
+        // }
+        xhr.addEventListener('load', function () {
+            var data = null;
+            try {
+                data = JSON.parse(this.responseText);
+            }
+            catch (ex) {
+            }
+            self.trigger('response', data, xhr, options);
+        });
+        this.trigger('upload', xhr, options);
+        xhr.send(options.data);
+        return xhr;
+    }
+};
 
 if (isService) {
     self.App = new Service();

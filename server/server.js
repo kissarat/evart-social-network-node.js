@@ -501,20 +501,14 @@ Context.prototype = {
         else {
             if (2 == arguments.length) {
                 this.res.writeHead(status, {
-                    'content-type': 'text/json; charset=utf-8'
+                    'content-type': 'application/json; charset=utf-8'
                     //'Access-Control-Allow-Origin': '*'
                 });
             }
             else {
-                this.res.setHeader('content-type', 'text/json; charset=utf-8');
+                this.res.setHeader('content-type', 'application/json; charset=utf-8');
             }
-            // console.log('SEND_DATA');
             this.res.end(data);
-
-            // if (this.agent) {
-            //     this.agent.time = Date.now();
-            //     this.agent.save();
-            // }
         }
 
         if ('GET' != this.req.method) {

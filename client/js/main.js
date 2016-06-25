@@ -3,7 +3,7 @@
 _.extend(Element.prototype, {
     setBackground: function (id) {
         if (/^[\da-f]{24}$/.test(id)) {
-            id = '/photo/' + id + '.jpg'
+            id = '/api/file?id=' + id;
         }
         if (id) {
             this.style.backgroundImage = 'url("' + id + '")';
@@ -235,7 +235,7 @@ function Application() {
             $.cookie('lang', value);
             var lang = _.find(languages, {iso: value});
             if (lang) {
-                this.cookie('remixlang', value);
+                this.cookie('remixlang', lang._id);
             }
         },
 

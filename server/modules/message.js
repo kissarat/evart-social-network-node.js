@@ -285,6 +285,7 @@ function populate(r) {
     for(var collection in populate.map) {
         r.populate(collection, populate.map[collection]);
     }
+    return r;
 }
 
 populate.map = {

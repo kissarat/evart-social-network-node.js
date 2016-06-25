@@ -8,6 +8,7 @@
   position: relative
   text-align: center
   header
+    position: relative
     padding: 32px 40px
     margin: auto
     text-align: left
@@ -49,6 +50,9 @@
     width: 100%
     height: 340px
     z-index: -1
+  > .fa-camera
+    left: 6px
+    top: 6px
     //-webkit-filter: blur(1px)
   .tile
     display: inline-block
@@ -97,9 +101,18 @@
       cursor: pointer
 
   .big-avatar
+    position: relative
     background-size: cover
     width: 96px
     height: 96px
+    .fa-camera
+      right: 6px
+      bottom: 6px
+
+  .fa-camera
+    position: absolute
+    color: gainsboro
+    cursor: pointer
 
 .form-edit
   display: inline-block

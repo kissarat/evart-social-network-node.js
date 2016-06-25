@@ -47,10 +47,8 @@ App.module('User', function (User, App) {
 
         setupAvatar: function (el) {
             var avatar = this.get('avatar');
-            if (avatar) {
-                el.setBackground(avatar);
-            }
-            else {
+            el.setBackground(avatar);
+            if (!avatar) {
                 var s = el.style;
                 var id = this.get('_id');
                 if (!id) {
@@ -386,15 +384,15 @@ App.module('User', function (User, App) {
             var isLanguageChanged = App.language == model.get('language');
             App.language = model.get('language');
             model.save(null, {
-               success: function () {
-                   var url = '/view/' + model.get('_id');
-                   if (isLanguageChanged) {
-                       location.href = url;
-                   }
-                   else {
-                       App.navigate(url);
-                   }
-               }
+                success: function () {
+                    var url = '/view/' + model.get('_id');
+                    if (isLanguageChanged) {
+                        location.href = url;
+                    }
+                    else {
+                        App.navigate(url);
+                    }
+                }
             });
         },
 
@@ -452,6 +450,7 @@ App.module('User', function (User, App) {
             function changeCountry() {
                 citySearch.model.set('country_id', self.model.getCountryId());
             }
+
             this.model.on('change:country', changeCountry);
 
             App.Geo.getCountriesFragment(function (fragment) {
@@ -567,12 +566,55 @@ App.module('User', function (User, App) {
             'dragover .tile.photo': 'dragover',
             'dragenter .tile.photo': 'dragenter',
             'dragleave .tile.photo': 'dragleave',
+            'click .big-avatar .fa-camera': 'uploadAvatar',
+            'click .profile-relative > .fa-camera': 'uploadBackground',
             'click .edit': function () {
                 return App.navigate('/edit/' + this.model.get('_id'));
             },
             'click .logout': function () {
                 return App.logout();
             }
+        },
+
+        uploadAvatar: function () {
+            this.upload(
+                function (data) {
+                    return {avatar_id: data._id};
+                },
+                function (file) {
+                    this.ui.avatar[0].setBackground(file.getFileURL());
+                }
+            );
+        },
+
+        uploadBackground: function () {
+            this.upload(
+                function (data) {
+                    return {background_id: data._id};
+                },
+                function (file) {
+                    this.ui.background[0].setBackground(file.getFileURL());
+                }
+            );
+        },
+
+        upload: function (params_cb, success) {
+            var self = this;
+            var owner_id = this.model.get('_id');
+            var upload = App.Views.uploadDialog({
+                accept: 'image/jpeg',
+                params: {
+                    owner_id: owner_id
+                }
+            });
+            upload.on('response', function (data) {
+                var file = new App.File.Model(data);
+                $.sendJSON('PATCH', '/api/user?id=' + owner_id, params_cb.call(self, data), function (response) {
+                    if (response.success) {
+                        success.call(self, file);
+                    }
+                });
+            })
         },
 
         drop: function (e) {
@@ -584,7 +626,11 @@ App.module('User', function (User, App) {
             if (!dropzone.hasAttribute('data-number')) {
                 dropzone = dropzone.parentNode;
             }
-            var params = {tile: dropzone.getAttribute('data-number'), file_id: data._id};
+            var params = {
+                owner_id: this.model.get('_id'),
+                tile: dropzone.getAttribute('data-number'),
+                file_id: data._id
+            };
             $.sendJSON('PATCH', '/api/user', params, function () {
                 var model = new App.File.Model(data);
                 dropzone.classList.remove('empty');
@@ -646,6 +692,11 @@ App.module('User', function (User, App) {
             var back = this.model.get('background');
             if (back) {
                 this.ui.background[0].setBackground(back);
+            }
+            else {
+                back = this.model.get('_id')[23];
+                back = parseInt(back, 16) >> 1;
+                this.ui.background[0].setBackground('/images/bg/' + back + '.jpg');
             }
             if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();

@@ -61,7 +61,7 @@ module.exports = {
         else {
             $.invalid('name');
         }
-        name = name.replace(/[\\:;\/]/g, '.').replace(/\s+/g, ' ');
+        name = name.replace(/[\\:;\/]/g, '.').replace(/\s+/g, ' ').trim();
         var id = utils.id12('File');
         var id_filename = static_dir + '/id/' + id + '.' + ext;
         var stream = fs.createWriteStream(id_filename, {
@@ -71,44 +71,53 @@ module.exports = {
         });
         return new Promise(function (resolve, reject) {
             $.req.on('end', function () {
-                fs.stat(id_filename, $.wrap(function (stat) {
-                    magic.detectFile(id_filename, $.wrap(function (mime) {
-                        hash_md5(id_filename, $.wrap(function (md5) {
-                            mime = mime.replace('; charset=binary', '');
-                            var type = find_handler_type(mime);
-                            var mime_type = mimes[mime];
-                            if (mime_type && mime_type.ext && mime_type.ext.indexOf(ext) < 0) {
-                                ext = mime_type.ext[0];
+                magic.detectFile(id_filename, $.wrap(function (mime) {
+                    mime = mime.replace('; charset=binary', '');
+                    var type = find_handler_type(mime);
+                    var mime_type = mimes[mime];
+                    if (mime_type && mime_type.ext && mime_type.ext.indexOf(ext) < 0) {
+                        ext = mime_type.ext[0];
+                    }
+                    hash_md5(id_filename, $.wrap(function (md5) {
+                        var data = {
+                            name: name,
+                            owner: owner_id,
+                            ext: ext,
+                            mime: mime,
+                            md5: md5,
+                            time: Date.now(),
+                            type: type ? type : 'file'
+                        };
+                        var md5_filename = path.join(md5_dir, md5 + '.' + ext);
+                        fs.stat(md5_filename, function (err, stat) {
+                            var exists = true;
+                            if (err) {
+                                exists ='ENOENT' !== err.code;
+                                if (exists) {
+                                    return reject(err);
+                                }
                             }
-
-                            var data = {
-                                name: name,
-                                owner: owner_id,
-                                ext: ext,
-                                mime: mime,
-                                size: stat.size,
-                                inode: stat.ino,
-                                time: Date.now(),
-                                md5: md5,
-                                type: type ? type : 'file'
-                            };
-                            var md5_filename = path.join(md5_dir, md5 + '.' + ext);
-                            data.path = md5_filename;
-                            data.success = true;
                             function save(created) {
                                 return function (err) {
-                                    data.created = created;
-                                    var file = new File(data);
-                                    resolve(file.save());
+                                    if (err) {
+                                        reject(err);
+                                    }
+                                    else {
+                                        data.created = created;
+                                        var file = new File(data);
+                                        file.save().then(resolve, reject);
+                                    }
                                 }
                             }
 
-                            // if (stat) {
-                            //     fs.unlink(id_filename, save(false));
-                            // } else {
+                            if (exists) {
+                                data.size = stat.size;
+                                data.inode = stat.ino;
+                                fs.unlink(id_filename, save(false));
+                            } else {
                                 fs.rename(id_filename, md5_filename, save(true));
-                            // }
-                        }));
+                            }
+                        });
                     }));
                 }));
             });

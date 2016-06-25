@@ -200,7 +200,7 @@ module.exports = {
 
     PATCH: function ($) {
         return new Promise(function (resolve, reject) {
-            var where_me = {_id: $.user._id};
+            var where_me = {_id: $.id || $.user._id};
             if ($.has('online')) {
                 var online = $.param('online');
                 if (isNaN(online)) {
@@ -229,6 +229,12 @@ module.exports = {
                         });
                     })
                 });
+            }
+            else if ($.has('avatar_id')) {
+                User.update(where_me, {$set: {avatar: $.param('avatar_id')}}).then(resolve, reject);
+            }
+            else if ($.has('background_id')) {
+                User.update(where_me, {$set: {background: $.param('background_id')}}).then(resolve, reject);
             }
             else {
                 reject(code.BAD_REQUEST);
@@ -553,9 +559,9 @@ var list_fields = {
 };
 
 schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename", "city", "city_id", "country", "address", "phone",
-    "avatar", "birthday", "languages", "relationship", "tiles", "lang"];
+    "avatar", "birthday", "languages", "relationship", "tiles", "lang", "avatar", "background"];
 var user_fields = ["online", "name", "surname", "forename", "city", "city_id", "country", "address", "phone", "password", "avatar",
-    "name", "birthday", "languages", "relationship", "lang"];
+    "name", "birthday", "languages", "relationship", "lang", "background"];
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];
 
