@@ -18,8 +18,8 @@ App.module('User', function (User, App) {
     });
 
     User.Model = Backbone.Model.extend({
-        cidPrefix: 'usr',
         idAttribute: '_id',
+        cidPrefix: 'usr',
 
         initialize: function () {
             var id = this.get('_id');
@@ -91,6 +91,11 @@ App.module('User', function (User, App) {
             } else {
                 return this.get('domain');
             }
+        },
+
+        getCountryId: function () {
+            var country = this.get('country');
+            return country ? _.find(countries, {iso: country})._id : country;
         }
     });
 
@@ -255,7 +260,7 @@ App.module('User', function (User, App) {
         phone: function () {
             var self = this;
             var phone = this.model.get('phone');
-            
+
             if (phone) {
                 this.model.set('phone', phone.replace(/[^\d]/g, ''));
             }
@@ -305,7 +310,8 @@ App.module('User', function (User, App) {
                     var result = xhr.responseJSON;
                     if (result.success) {
                         return App.navigate('/login');
-                    } else if (code.BAD_REQUEST === xhr.status && result.invalid) {
+                    }
+                    if (code.BAD_REQUEST === xhr.status && result.invalid) {
                         var results = [];
                         for (var name in result.invalid) {
                             var info = result.invalid[name];
@@ -326,15 +332,16 @@ App.module('User', function (User, App) {
 
     User.EditForm = Marionette.View.extend({
         template: '#form-edit',
+        cidPrefix: 'edit',
 
         tagName: 'form',
 
         attributes: {
-            "class": 'scroll'
+            "class": 'scroll view form-edit'
         },
 
-        behaviors: {
-            Bindings: {}
+        regions: {
+            city: '.city'
         },
 
         bindings: {
@@ -364,18 +371,29 @@ App.module('User', function (User, App) {
         events: {
             'submit': 'submit'
         },
-        
+
         submit: function (e) {
             var model = this.model;
             e.preventDefault();
             if ('group' != this.model.get('type')) {
                 this.model.set('model', this.model.get('surname') + ' ' + this.model.get('forename'));
             }
+            var isLanguageChanged = App.language == model.get('language');
+            App.language = model.get('language');
             $.sendJSON('POST', '/api/user?id=' + this.model.id, this.$el.serialize(), function (xhr) {
                 var data = xhr.responseJSON;
-                data.success
-                    ? App.navigate('/view/' + model.get('_id'))
-                    : App.alert('Something wrong happened');
+                if (data.success) {
+                    var url = '/view/' + model.get('_id');
+                    if (isLanguageChanged) {
+                        location.href = url;
+                    }
+                    else {
+                        App.navigate(url);
+                    }
+                }
+                else {
+                    App.alert('Something wrong happened');
+                }
             });
         },
 
@@ -383,12 +401,10 @@ App.module('User', function (User, App) {
             var self = this;
             if ('group' != this.model.get('type')) {
                 this.$('.user-only').removeClass('user-only');
-                // if (!Modernizr.inputtypes.date) {
-                    this.ui.birthday.datepicker({
-                        changeMonth: true,
-                        changeYear: true
-                    });
-                // }
+                this.ui.birthday.datepicker({
+                    changeMonth: true,
+                    changeYear: true
+                });
                 if ('user' == this.model.get('type')) {
                     this.ui.icon.attr('class', 'fa fa-user');
                 }
@@ -418,13 +434,24 @@ App.module('User', function (User, App) {
                 this.ui.origin.html(location.origin);
             }
             this.ui.title.html(document.title);
+            var citySearch = App.Geo.CitySearch.widget(this.getRegion('city'));
 
-            this.ui.country.append(getCountriesFragment());
+            this.model.on('change:country', function () {
+                citySearch.model.set('country_id', self.model.getCountryId());
+                citySearch.search();
+            });
+
+            App.Geo.getCountriesFragment(function (fragment) {
+                self.ui.country.append(fragment);
+                self.stickit();
+                citySearch.search();
+            });
         }
     });
 
     User.ProfileButtons = Marionette.View.extend({
         template: '#view-profile-buttons',
+        cidPrefix: 'profile-butthons',
 
         attributes: {
             'class': 'profile-buttons'
@@ -445,6 +472,7 @@ App.module('User', function (User, App) {
 
     User.OtherProfileButtons = Marionette.View.extend({
         template: '#view-other-profile-buttons',
+        cidPrefix: 'profile-buttons',
 
         attributes: {
             'class': 'other-profile-buttons'
@@ -465,6 +493,7 @@ App.module('User', function (User, App) {
 
     User.View = Marionette.View.extend({
         template: '#layout-user',
+        cidPrefix: 'user',
 
         regions: {
             'buttons': '.buttons',
@@ -525,6 +554,7 @@ App.module('User', function (User, App) {
                 return App.logout();
             }
         },
+
         drop: function (e) {
             e = e.originalEvent;
             e.preventDefault();
@@ -617,6 +647,7 @@ App.module('User', function (User, App) {
 
     User.RecordView = Marionette.View.extend({
         template: '#view-record',
+        cidPrefix: 'rcdv',
 
         behaviors: {
             Bindings: {}
@@ -669,6 +700,7 @@ App.module('User', function (User, App) {
     User.Thumbnail = Marionette.View.extend({
         template: '#thumbnail-user',
         tagName: 'a',
+        cidPrefix: 'usrt',
 
         ui: {
             avatar: '.avatar',
@@ -732,6 +764,7 @@ App.module('User', function (User, App) {
 
     User.ListView = Marionette.CollectionView.extend({
         childView: User.Thumbnail,
+        cidPrefix: 'usrlv',
 
         behaviors: {
             Pageable: {}
@@ -740,6 +773,7 @@ App.module('User', function (User, App) {
 
     User.SearchView = Marionette.View.extend({
         template: '#layout-user-search',
+        cidPrefix: 'usrsv',
 
         behaviors: {
             Bindings: {}

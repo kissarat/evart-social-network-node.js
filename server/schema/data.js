@@ -9,11 +9,33 @@ var docs = [
         "phone": "380671234567",
         "email": "kissarat@gmail.com",
         "hash": "RMlDIlc4/ChTfFO8EeUnOo1OGNu5zdWBg2OKFvI7pP8="
-    }]
+    }],
+    ["lang", [{
+        _id: 0,
+        name: 'Русский'
+    }, {
+        _id: 3,
+        name: 'English'
+    }]]
 ];
 
+var _docs = [];
+docs.forEach(function (record) {
+    var name = record[0];
+    if (record[1] instanceof Array) {
+        record[1].forEach(function (rd) {
+            _docs.push([name, rd]);
+        });
+    }
+    else {
+        _docs.push(record);
+    }
+});
+docs = _docs;
+
 var ids = {
-    "users": ["domain"]
+    "users": ["domain"],
+    'lang': ['_id']
 };
 
 var db;

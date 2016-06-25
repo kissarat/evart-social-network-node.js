@@ -45,6 +45,11 @@ global.schema.User = new mongoose.Schema({
         }
     },
 
+    lang: {
+        type: String,
+        "enum": ['en', 'ru']
+    },
+
     avatar: {
         type: T.ObjectId,
         ref: 'Photo'
@@ -545,9 +550,9 @@ var list_fields = {
 };
 
 schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename", "city", "country", "address", "phone",
-    "avatar", "birthday", "languages", "relationship", "tiles"];
+    "avatar", "birthday", "languages", "relationship", "tiles", "lang"];
 var user_fields = ["online", "name", "surname", "forename", "city", "country", "address", "phone", "password", "avatar",
-    "name", "birthday", "languages", "relationship"];
+    "name", "birthday", "languages", "relationship", "lang"];
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];
 

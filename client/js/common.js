@@ -1,5 +1,7 @@
 "use strict";
 
+//noinspection JSUnresolvedFunction
+
 self.DEV = !self.version;
 self.T = function (text) {
     return text;
@@ -227,6 +229,10 @@ function Service() {
             available: Element.prototype.requestFullscreen
         }
     };
+    
+    this.jsonpCount = {
+        vk: 0
+    };
 }
 
 if (self.Marionette) {
@@ -258,6 +264,10 @@ _.extend(Service.prototype, {
             }
         }
     },
+    
+    cookie: function (name, value) {
+        document.cookie = name + '=' + value + '; path=/; expires=Tue, 01 Jan 2030 00:00:00 GMT';
+    },
 
     login: function () {
         var self = this;
@@ -287,6 +297,11 @@ _.extend(Service.prototype, {
             this.trigger('logout');
             return this.navigate('login');
         }
+    },
+    
+    jsonpCallback: function (prefix) {
+        this.jsonpCount[prefix]++;
+        return prefix + this.jsonpCount[prefix];
     },
 
     resolve: resolve,

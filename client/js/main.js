@@ -233,6 +233,10 @@ function Application() {
 
         set language(value) {
             $.cookie('lang', value);
+            var lang = _.find(languages, {iso: value});
+            if (lang) {
+                this.cookie('remixlang', value);
+            }
         },
 
         get user() {
@@ -479,17 +483,4 @@ function resolveRelative(model, map) {
             model.set(name, new modelClass(relative));
         }
     });
-}
-
-function getCountriesFragment() {
-    var fragment = document.createDocumentFragment('fragment');
-    countries.forEach(function (country) {
-        if (country.flag) {
-            var option = document.createElement('option');
-            option.innerHTML = T(country.name) + ' ' + country.flag;
-            option.value = country.iso;
-            fragment.appendChild(option);
-        }
-    });
-    return fragment;
 }

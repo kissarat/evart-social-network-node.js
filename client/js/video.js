@@ -11,6 +11,7 @@ App.module('Video', function (Video, App) {
 
     Video.List = App.PageableCollection.extend({
         url: '/api/video',
+        cidPrefix: 'vdol',
 
         queryModelInitial: {
             type: 'video',
@@ -22,6 +23,7 @@ App.module('Video', function (Video, App) {
     Video.Thumbnail = Marionette.View.extend({
         template: '#thumbnail-video',
         tagName: 'a',
+        cidPrefix: 'vdot',
 
         ui: {
             image: 'img',
@@ -54,6 +56,7 @@ App.module('Video', function (Video, App) {
 
     Video.ListView = Marionette.CollectionView.extend({
         childView: Video.Thumbnail,
+        cidPrefix: 'vdolv',
 
         behaviors: {
             Pageable: {}
@@ -62,6 +65,7 @@ App.module('Video', function (Video, App) {
 
     Video.View = Marionette.View.extend({
         template: '#view-video',
+        cidPrefix: 'vdov',
 
         initialize: function () {
             var self = this;
@@ -87,6 +91,7 @@ App.module('Video', function (Video, App) {
 
     Video.Layout = Marionette.View.extend({
         template: '#layout-video-list',
+        cidPrefix: 'vdos',
 
         initialize: function () {
             this.model = new Backbone.Model();
@@ -129,13 +134,12 @@ App.module('Video', function (Video, App) {
         },
 
         search: function (e) {
+            var self = this;
             if (EmptyKeys.indexOf(e.keyCode) < 0) {
                 this.ui.list.busy(true);
-                return this.getCollection().delaySearch((function (_this) {
-                    return function () {
-                        return _this.ui.list.busy(false);
-                    };
-                })(this));
+                return this.getCollection().delaySearch(function () {
+                    return self.ui.list.busy(false);
+                });
             }
         }
 
@@ -156,6 +160,7 @@ App.module('Video', function (Video, App) {
 
     Video.Unsupported = Marionette.View.extend({
         template: '#view-unsupported',
+        cidPrefix: 'unv',
 
         attributes: {
             "class": 'unsupported'
