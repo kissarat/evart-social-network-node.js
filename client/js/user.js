@@ -568,6 +568,7 @@ App.module('User', function (User, App) {
             'dragleave .tile.photo': 'dragleave',
             'click .big-avatar .fa-camera': 'uploadAvatar',
             'click .profile-relative > .fa-camera': 'uploadBackground',
+            'click [data-number]': 'uploadTile',
             'click .edit': function () {
                 return App.navigate('/edit/' + this.model.get('_id'));
             },
@@ -594,6 +595,21 @@ App.module('User', function (User, App) {
                 },
                 function (file) {
                     this.ui.background[0].setBackground(file.getFileURL());
+                }
+            );
+        },
+
+        uploadTile: function (e) {
+            var tile = +e.target.getAttribute('data-number');
+            this.upload(
+                function (data) {
+                    return {
+                        tile: tile,
+                        file_id: data._id
+                    };
+                },
+                function (file) {
+                    this.ui['tile' + tile].setBackground(file.getFileURL());
                 }
             );
         },

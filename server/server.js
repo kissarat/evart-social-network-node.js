@@ -53,7 +53,7 @@ Object.keys(schema).forEach(function (name) {
     global[name] = mongoose.model(name, current);
 });
 
-var o = mongoose.connect(config.mongo.uri, config.mongo.options);
+var o = mongoose.connect(config.mongo.uri, 'freebsd' == process.platform ? {} : config.mongo.options);
 var subscribers = {};
 var server;
 var start;
