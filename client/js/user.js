@@ -38,6 +38,12 @@ App.module('User', function (User, App) {
             }
         },
 
+        canManage: function () {
+            return 'admin' === this.get('type')
+                || App.user._id === this.get('_id')
+                || _.contains(this.get('admin'), App.user._id);
+        },
+
         getAvatarURL: function () {
             var avatar = this.get('avatar');
             return avatar
@@ -600,16 +606,15 @@ App.module('User', function (User, App) {
         },
 
         uploadTile: function (e) {
-            var tile = +e.target.getAttribute('data-number');
             this.upload(
                 function (data) {
                     return {
-                        tile: tile,
+                        tile: this.getTileNumber(e.target),
                         file_id: data._id
                     };
                 },
                 function (file) {
-                    this.ui['tile' + tile][0].setBackground(file.getFileURL());
+                    this.setTile(file, this.getTileRegion(e.target));
                 }
             );
         },
@@ -633,24 +638,49 @@ App.module('User', function (User, App) {
             })
         },
 
+        setTile: function (file, tile) {
+            if (!(file instanceof App.File.Model)) {
+                file = new App.File.Model(file);
+            }
+            var thumbnail = new App.Photo.Thumbnail({model: file});
+            var region = this.getTileRegion(tile);
+            region.show(thumbnail);
+            thumbnail.$el.removeClass('empty');
+            return thumbnail;
+        },
+
+        getTileNumber: function (el) {
+            if (el instanceof App.Photo.Thumbnail) {
+                el = el.el;
+            }
+            if (el instanceof Element) {
+                if (!el.hasAttribute('data-number')) {
+                    el = el.parentNode;
+                }
+                el = el.getAttribute('data-number');
+            }
+            return el;
+        },
+
+        getTileRegion: function (number) {
+            if (number instanceof Marionette.Region) {
+                return number;
+            }
+            return this.getRegion('tile' + +this.getTileNumber(number));
+        },
+
         drop: function (e) {
+            var self = this;
             e = e.originalEvent;
             e.preventDefault();
-            var data = e.dataTransfer.getData('application/json');
-            data = JSON.parse(data);
-            var dropzone = e.target;
-            if (!dropzone.hasAttribute('data-number')) {
-                dropzone = dropzone.parentNode;
-            }
+            var file = e.dataTransfer.getData('application/json');
+            file = JSON.parse(file);
             var params = {
-                owner_id: this.model.get('_id'),
-                tile: dropzone.getAttribute('data-number'),
-                file_id: data._id
+                tile: this.getTileNumber(e.target),
+                file_id: file._id
             };
-            $.sendJSON('PATCH', '/api/user', params, function () {
-                var model = new App.File.Model(data);
-                dropzone.classList.remove('empty');
-                dropzone.setBackground(model.getFileURL());
+            $.sendJSON('PATCH', '/api/user?id=' + this.model.get('_id'), params, function () {
+                self.setTile(file, self.getTileRegion(e.target));
             });
         },
 
@@ -718,17 +748,16 @@ App.module('User', function (User, App) {
                 this.ui.follow.show();
             }
             this.model.setupAvatar(this.ui.avatar[0]);
-            _.each(this.model.get('tiles'), function (photo, number) {
-                $.getJSON('/api/file?id=' + photo, function (photo) {
-                    photo = new App.File.Model(photo);
-                    var thumbnail = new App.Photo.Thumbnail({model: photo});
-                    thumbnail.$el.on('dragover', this.dragover);
-                    thumbnail.$el.on('drop', this.drop);
-                    self.getRegion('tile' + number).show(thumbnail);
-                    self.ui['tile' + number].removeClass('empty');
-                    thumbnail.$el.removeAttr('class');
+            _.each(this.model.get('tiles'), function (file_id, tile) {
+                $.getJSON('/api/file?id=' + file_id, function (file) {
+                    self.setTile(file, tile).$el
+                        .on('dragover', this.dragover)
+                        .on('drop', this.drop);
                 });
             });
+            if (!this.model.canManage()) {
+                this.$('.fa-camera').remove();
+            }
         }
     });
 
@@ -745,7 +774,8 @@ App.module('User', function (User, App) {
                 observe: 'time',
                 onGet: function (value) {
                     var time = moment(value);
-                    return moment.duration(time.diff()).asDays() < 2 ? time.fromNow() : new Date(value).toLocaleString();
+                    return moment.duration(time.diff()).asDays() < 2
+                        ? time.fromNow() : new Date(value).toLocaleString();
                 }
             }
         },

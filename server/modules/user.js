@@ -33,9 +33,7 @@ global.schema.User = new mongoose.Schema({
         }
     },
 
-    status: {
-        type: String
-    },
+    status: String,
 
     type: {
         type: String,
@@ -91,34 +89,18 @@ global.schema.User = new mongoose.Schema({
         type: String,
         match: /^.*@.*\..*$/
     },
-    country: {
-        type: String
-    },
-    city_id: {
-        type: Number
-    },
-    city: {
-        type: String
-    },
-    address: {
-        type: String
-    },
-    name: {
-        type: String
-    },
-    birthday: {
-        type: Date
-    },
-    relationship: {
-        type: Number
-    },
+    country: String,
+    city_id: Number,
+    city: String,
+    address: String,
+    name: String,
+    birthday: Date,
+    relationship: Number,
     languages: {
         type: String,
         match: /^\w{2}$/
     },
-    about: {
-        type: String
-    },
+    about: String,
     verified: {
         type: Boolean,
         get: function () {
@@ -138,6 +120,12 @@ global.schema.User = new mongoose.Schema({
         }
     ],
     deny: [
+        {
+            type: T.ObjectId,
+            ref: 'User'
+        }
+    ],
+    admin: [
         {
             type: T.ObjectId,
             ref: 'User'
@@ -558,10 +546,12 @@ var list_fields = {
     request: null
 };
 
-schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename", "city", "city_id", "country", "address", "phone",
-    "avatar", "birthday", "languages", "relationship", "tiles", "lang", "avatar", "background"];
-var user_fields = ["online", "name", "surname", "forename", "city", "city_id", "country", "address", "phone", "password", "avatar",
-    "name", "birthday", "languages", "relationship", "lang", "background"];
+schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename",
+    "city", "city_id", "country", "address", "phone", "avatar", "birthday", "languages",
+    "relationship", "tiles", "lang", "avatar", "background", "admin"];
+var user_fields = ["online", "name", "surname", "forename", "city", "city_id", "country",
+    "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship",
+    "lang", "background"];
 var group_fields = ["domain", "name", "about", "avatar"];
 var admin_fields = ['domain', 'type'];
 
