@@ -238,9 +238,7 @@ Context.prototype = {
         }
         var obj = {};
         obj[name] = value;
-        throw {
-            invalid: obj
-        };
+        throw new errors.BadRequest(obj);
     },
 
     wrap: function (call) {

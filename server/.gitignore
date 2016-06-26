@@ -1,7 +1,3 @@
-modules/*.map
-modules/admin.js
-modules/test.js
-modules/video.js
 mongodb/data/
 nginx/logs/
 node_modules/

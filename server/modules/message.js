@@ -98,7 +98,16 @@ global.schema.Message = mongoose.Schema({
             "default": null
         }
     ]
+}, {
+    versionKey: false
 });
+
+schema.Message.statics.Type = {
+    DIALOG: 1,
+    WALL: 2,
+    PHOTO: 3,
+    VIDEO: 4
+};
 
 module.exports = {
     POST: function ($) {
@@ -129,49 +138,37 @@ module.exports = {
     },
 
     GET: function ($) {
-        var me, r, target_id;
-        r = null;
-        if ($.has('target_id')) {
-            target_id = $.param('target_id');
-            me = $.user._id;
-            var cnd = {
-                $and: [{
-                    $or: [
-                        {
-                            source: me,
-                            target: target_id
-                        }, {
-                            source: target_id,
-                            target: me
-                        }
-                    ]
-                }]
-            };
-            if ($.has('since')) {
-                cnd.$and.push({
-                    time: {$gte: new Date($.get('since')).toISOString()}
+        var where = {$and: [{type: $.get('type')}]};
+        switch ($.get('type')) {
+            case Message.Type.DIALOG:
+                var target_id = $.param('target_id');
+                var me = $.user._id;
+                where.$and.push({
+                    $or: [{
+                        source: me,
+                        target: target_id
+                    }, {
+                        source: target_id,
+                        target: me
+                    }]
                 });
-            }
-            r = Message.find(cnd);
-        } else if ($.has('video_id')) {
-            r = Message.find({
-                video: $.param('video_id')
-            });
-        } else if ($.has('photo_id')) {
-            r = Message.find({
-                photo: $.param('photo_id')
-            });
-        } else if ($.has('owner_id')) {
-            r = Message.find({
-                owner: $.param('owner_id')
-            });
+                if ($.has('since')) {
+                    where.$and.push({
+                        time: {$gte: new Date($.get('since')).toISOString()}
+                    });
+                }
+                break;
+
+            case Message.Type.WALL:
+                where.$and.push({
+                    owner: $.param('owner_id')
+                });
+                break;
+
+            default:
+                $.sendStatus(code.BAD_REQUEST);
         }
-        if (r) {
-            r.sort('-time');
-            return populate(r);
-        } else {
-            $.sendStatus(code.BAD_REQUEST);
-        }
+        return Message.find(where).sort('-time');
     },
 
     DELETE: function ($) {
@@ -282,7 +279,7 @@ var user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos
 var admin_fields = ['domain', 'type'];
 
 function populate(r) {
-    for(var collection in populate.map) {
+    for (var collection in populate.map) {
         r.populate(collection, populate.map[collection]);
     }
     return r;

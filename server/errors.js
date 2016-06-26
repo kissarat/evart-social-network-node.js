@@ -17,6 +17,17 @@ class Response {
     }
 }
 
+class BadRequest extends Response {
+    constructor(invalid) {
+        if (invalid instanceof Array) {
+            invalid = utils.fields(invalid);
+        }
+        super(code.BAD_REQUEST, {
+            invalid: invalid
+        })
+    }
+}
+
 class Forbidden extends Response {
     constructor(forbidden) {
         if (forbidden instanceof Array) {
@@ -28,4 +39,4 @@ class Forbidden extends Response {
     }
 }
 
-module.exports = utils.export([Response, Forbidden]);
+module.exports = utils.export([Response, BadRequest, Forbidden]);

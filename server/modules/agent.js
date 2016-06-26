@@ -53,6 +53,8 @@ global.schema.Agent = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }
+}, {
+    versionKey: false
 });
 
 module.exports = {
@@ -109,4 +111,4 @@ function extract(agent) {
         };
     }
     return result;
-};
+}

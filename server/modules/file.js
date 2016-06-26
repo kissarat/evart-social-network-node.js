@@ -200,4 +200,6 @@ global.schema.File = new mongoose.Schema({
 
     size: Number,
     inode: Number
+}, {
+    versionKey: false
 });

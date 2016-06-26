@@ -69,6 +69,7 @@ App.module('Message', function (Message, App) {
         url: '/api/message',
 
         queryModelInitial: {
+            type: 0,
             owner_id: null,
             target_id: null
         },
@@ -298,14 +299,16 @@ App.module('Message', function (Message, App) {
             this.animateLoading();
         }
     }, {
-        widget: function (id) {
+        widget: function (region, options) {
             var pageable = new Message.List();
-            pageable.queryModel.set('type', 'wall');
-            pageable.queryModel.set('owner_id', id);
+            pageable.queryModel.set('type', MessageType.WALL);
+            pageable.queryModel.set('owner_id', options.owner_id);
             pageable.getFirstPage();
-            return new Message.WallView({
+            var wall = new Message.WallView({
                 collection: pageable.fullCollection
             });
+            region.show(wall);
+            return wall;
         }
     });
 
@@ -504,17 +507,16 @@ App.module('Message', function (Message, App) {
     }, {
         widget: function (region, options) {
             var list = new Message.List();
+            list.queryModel.set('type', options.type || MessageType.DIALOG);
             list.queryModel.set('target_id', options.target_id);
             list.comparator = '_id';
             var listView = new Message.ListView({collection: list.fullCollection});
-            var message = {
-                target: options.target_id
-            };
+            var draft = {target: options.target_id};
             if (options.source) {
-                message.source = options.source;
+                draft.source = options.source;
             }
             var editor = new Message.Editor({
-                model: new Message.Model(message)
+                model: new Message.Model(draft)
             });
             var dialog = new Message.Dialog();
             region.show(dialog);
@@ -637,9 +639,8 @@ App.module('Message', function (Message, App) {
     return new Message.Router({
         controller: {
             wall: function (id) {
-                var wall = Message.WallView.widget(id);
+                var wall = Message.WallView.widget(App.getPlace('main'), {owner_id: id});
                 wall.$el.addClass('scroll');
-                return App.mainRegion.show(wall);
             },
 
             dialog: function (id) {

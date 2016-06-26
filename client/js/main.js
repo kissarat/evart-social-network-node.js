@@ -252,11 +252,11 @@ function Application() {
 Application.prototype = Object.create(Service.prototype);
 
 _.extend(Application.prototype, {
+    region: '#root-region',
+
     initialize: function () {
         this.showView(new this.RootLayout());
     },
-
-    region: '#root-region',
 
     navigate: function (url) {
         return Backbone.history.navigate(url, {
@@ -310,10 +310,14 @@ _.extend(Application.prototype, {
             return Object.keys(this.queryModelInitial).forEach(function (k) {
                 return self.queryParams[k] = function () {
                     var value = self.queryModel.get(k);
-                    // if ('function' == typeof value) {
-                    //     value = value();
-                    // }
-                    return 'string' == typeof value ? value ? value.trim().replace(/\s+/g, ' ').toLocaleLowerCase() : '' : null;
+                    switch (typeof value) {
+                        case 'number':
+                            return value.toString();
+                        case 'string':
+                            return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+                        default:
+                            return '';
+                    }
                 };
             });
         },

@@ -39,6 +39,8 @@ global.schema.Record = new mongoose.Schema({
         required: true,
         "default": Date.now
     }
+}, {
+    versionKey: false
 });
 
 module.exports = {
@@ -48,7 +50,7 @@ module.exports = {
             var type = $.param('type');
             where.type = type.indexOf('.') > 0 ? {$in: type.split('.')} : type;
         }
-        var populate = $.select(['domain'], schema.User.user_public_fields);
+        var populate = $.select(['domain'], User.select.user);
         return Record.find(where, {type: 1, source: 1, target: 1, status: 1, time: 1})
             .populate('source', populate)
             .populate('target', populate);

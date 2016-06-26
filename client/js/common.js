@@ -6,12 +6,11 @@ self.T = function (text) {
     return text;
 };
 
-self.Labiak = function Labiak() {
-    if (this.construct) {
-        this.construct.apply(this, arguments);
-    }
-};
-self.LabiakFunction = function LabiakFunction() {
+self.MessageType = {
+    DIALOG: 1,
+    WALL: 2,
+    PHOTO: 3,
+    VIDEO: 4
 };
 
 _.mixin({
@@ -45,62 +44,6 @@ _.mixin({
         for (var key in source) {
             Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
         }
-    },
-
-    defineClass: function (parent, mixins, prototype, statics) {
-        var hasParent = 'function' == typeof parent;
-        if (parent && 'object' == typeof parent) {
-            statics = prototype;
-            prototype = mixins;
-            mixins = parent;
-            parent = Labiak;
-        }
-        else if (!hasParent) {
-            throw new Error('Parent is not a function');
-        }
-        if (!(mixins instanceof Array)) {
-            statics = prototype;
-            prototype = mixins;
-            mixins = [];
-        }
-        if (!prototype || 'object' != typeof prototype) {
-            throw new Error('Prototype is not an object');
-        }
-        if (!(mixins instanceof Array)) {
-            throw new Error('Mixins is an instance of array');
-        }
-        var hasConstructor = Object != prototype.constructor;
-        var child = hasConstructor ? prototype.constructor : Function();
-
-        if (parent.prototype && 'object' == typeof parent.prototype) {
-            child.prototype = Object.create(parent.prototype);
-            _.defineProperties(child.prototype);
-        }
-        else {
-            child.prototype = prototype;
-        }
-
-        child.prototype.construct = hasParent
-            ? function () {
-            _.each(mixins, function (mixin) {
-                _.extend(this, mixin)
-            }, this)
-        }
-            : function () {
-            parent.apply(this, arguments);
-            _.each(mixins, function (mixin) {
-                _.extend(this, mixin)
-            }, this);
-        };
-
-        if (statics) {
-            if ('object' != typeof statics) {
-                throw new Error('Statics is not an object');
-            }
-            _.extend(child, statics);
-        }
-
-        return child;
     }
 });
 

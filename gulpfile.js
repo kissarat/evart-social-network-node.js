@@ -53,7 +53,7 @@ gulp.task('app', function () {
     document.head.appendChild(style);
     fs.unlinkSync('client/all.min.css');
     document.querySelector('[http-equiv="Last-Modified"]').setAttribute('content', new Date(version).toUTCString());
-    var iter = document.createNodeIterator(document.documentElement, 128);
+    var iter = document.createNodeIterator(document.documentElement, 128, null, false);
     while (true) {
         var comment = iter.nextNode();
         if (!comment) {
@@ -84,6 +84,7 @@ gulp.task('translate', function () {
     gulp.src('client/sass/*.sass').pipe(sass()).pipe(gulp.dest('client/sass/'));
 });
 
+/*
 gulp.task('countries', function () {
     var css = [];
     data.countries.forEach(function (country) {
@@ -93,5 +94,6 @@ gulp.task('countries', function () {
     });
     fs.writeFileSync('client/sass/countries.css', css.join('\n'));
 });
+*/
 
-gulp.task('default', ['translate', 'country', 'app']);
+gulp.task('default', ['translate', 'app']);

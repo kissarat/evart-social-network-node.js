@@ -977,7 +977,7 @@ App.module('User', function (User, App) {
                     App.getPlace('main').show(profile);
                     var buttons = user.get('_id') == App.user._id ? User.ProfileButtons : User.OtherProfileButtons;
                     buttons = new buttons({model: user});
-                    profile.getRegion('message-list').show(App.Message.WallView.widget(user.get('_id')));
+                    App.Message.WallView.widget(profile.getRegion('message-list'), {owner_id: user.get('_id')});
                     profile.getRegion('buttons').show(buttons);
                     App.local.getById('user/informer', user.get('_id')).then(function (informer) {
                         user.set(informer);

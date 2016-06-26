@@ -1,7 +1,10 @@
+'use strict';
+
 var rs = require('randomstring');
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
+var errors = require('../errors');
 var _ = require('underscore');
 
 var code = utils.code;
@@ -32,8 +35,6 @@ global.schema.User = new mongoose.Schema({
             unique: true
         }
     },
-
-    status: String,
 
     type: {
         type: String,
@@ -85,10 +86,13 @@ global.schema.User = new mongoose.Schema({
         type: String,
         match: /^[a-zA-Z][a-zA-Z0-9\.,\-_]{5,31}$/
     },
+
     email: {
         type: String,
         match: /^.*@.*\..*$/
     },
+
+    status: String,
     country: String,
     city_id: Number,
     city: String,
@@ -96,17 +100,13 @@ global.schema.User = new mongoose.Schema({
     name: String,
     birthday: Date,
     relationship: Number,
+    about: String,
+
     languages: {
         type: String,
         match: /^\w{2}$/
     },
-    about: String,
-    verified: {
-        type: Boolean,
-        get: function () {
-            return !this.code;
-        }
-    },
+
     follow: [
         {
             type: T.ObjectId,
@@ -131,12 +131,30 @@ global.schema.User = new mongoose.Schema({
             ref: 'User'
         }
     ]
+}, {
+    versionKey: false
 });
+
+schema.User.statics.fields = {
+    select: {
+        user: ["online", "domain", "type", "name", "surname", "forename",
+            "city", "city_id", "country", "address", "phone", "avatar", "birthday", "languages",
+            "relationship", "tiles", "lang", "avatar", "background", "admin"]
+    },
+
+    update: {
+        user: ["online", "name", "surname", "forename", "city", "city_id", "country",
+            "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship",
+            "lang", "background"],
+        group: ["domain", "name", "about", "avatar"],
+        admin: ['domain', 'type']
+    }
+};
 
 module.exports = {
     GET: function ($) {
         var params = ['id', 'domain'];
-        var fields = schema.User.user_public_fields.join(' ');
+        var fields = User.fields.select.user.join(' ');
         if ($.hasAny(params) && !$.has('list')) {
             return User.findOne($.paramsObject(params)).select(fields);
         } else if ($.has('ids')) {
@@ -145,29 +163,16 @@ module.exports = {
                     $in: $.ids('ids')
                 }
             }).select(fields);
-        } else {
-            if ($.has('domain') && $.has('list')) {
-                var list_name = $.param('list');
-                if (list_name !== 'follow' && list_name !== 'deny') {
-                    $.invalid('list', 'is not follow or deny');
-                }
-                User.findOne({
-                    domain: $.param('domain')
-                }).select(list_name).then(function (user) {
-                    return search($, user[list_name]);
-                });
-            } else {
-                return search($);
-            }
         }
+        $.sendStatus(code.BAD_REQUEST);
     },
 
     POST: function ($) {
-        var data = $.allowFields(group_fields, admin_fields);
+        var data = $.allowFields(User.fields.update.group, User.fields.update.admin);
         data.type = 'group';
         var user = new User(data);
         user.save($.wrap(function () {
-            return $.send(code.CREATED, {
+            $.send(code.CREATED, {
                 success: true,
                 _id: user._id,
                 domain: user.domain,
@@ -177,7 +182,7 @@ module.exports = {
     },
 
     PUT: function ($) {
-        var data = $.allowFields(user_fields, admin_fields);
+        var data = $.allowFields(User.fields.update.user, User.fields.update.admin);
         data.time = Date.now();
         return User.update({_id: $.id}, {
             $set: data
@@ -189,27 +194,10 @@ module.exports = {
     PATCH: function ($) {
         return new Promise(function (resolve, reject) {
             var where_me = {_id: $.id || $.user._id};
-            if ($.has('online')) {
-                var online = $.param('online');
-                if (isNaN(online)) {
-                    reject(code.BAD_REQUEST);
-                }
-                online = +online;
-                var now = Date.now();
-                var delta = (15 * 60 + 10) * 1000;
-                if (online < 0) {
-                    online = now - online;
-                }
-                if (online < now + delta) {
-                    User.update(where_me, {$set: {online: online}}).then(resolve, reject);
-                }
-                else {
-                    reject(code.BAD_REQUEST);
-                }
-            }
-            else if ($.has('tile') && $.has('file_id')) {
+            if ($.has('tile') && $.has('file_id')) {
                 User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
                     user.tiles[$.param('tile')] = $.param('file_id');
+                    user.time = Date.now();
                     user.markModified('tiles');
                     user.save().catch(reject).then(function () {
                         resolve({
@@ -218,14 +206,40 @@ module.exports = {
                     })
                 });
             }
-            else if ($.has('avatar_id')) {
-                User.update(where_me, {$set: {avatar: $.param('avatar_id')}}).then(resolve, reject);
-            }
-            else if ($.has('background_id')) {
-                User.update(where_me, {$set: {background: $.param('background_id')}}).then(resolve, reject);
+            else if ($.has('online')) {
+                let online = $.param('online');
+                if (isNaN(online)) {
+                    $.invalid('online', 'Is not number');
+                }
+                online = +online;
+                let now = Date.now();
+                let delta = (15 * 60 + 10) * 1000;
+                if (online < 0) {
+                    online = now - online;
+                }
+                if (online <= now + delta) {
+                    User.update(where_me, {$set: {online: online}}).then(resolve, reject);
+                }
+                else {
+                    $.invalid('online', 'Out of range');
+                }
             }
             else {
-                reject(code.BAD_REQUEST);
+                let changes = {time: Date.now()};
+                let a = ['avatar', 'background'];
+                for (let i = 0; i < a.length; i++) {
+                    let p = a[i];
+                    let p_id = p + '_id';
+                    if ($.has(p_id)) {
+                        changes[p] = $.param(p_id);
+                        User.update(where_me, {$set: changes}).then(resolve, reject);
+                        return;
+                    }
+                }
+                var fields = a.concat(['online', 'tile']).join(', ');
+                reject(code.BAD_REQUEST, {
+                    message: `You can update ${fields} only`
+                });
             }
         });
     },
@@ -237,10 +251,12 @@ module.exports = {
             User.findOne({_id: id}, {follow: 1}).catch(reject).then(function (user) {
                 result._id = user._id;
                 var follows = utils.s(user.follow);
-                User.find({_id: {$in: id}}, {_id: 1}).catch(reject).then(function (followers) {
-                    result.followers = utils.s(_.pluck(followers, '_id'));
-                    return Video.count({owner: id});
-                })
+                User.find({_id: {$in: id}}, {_id: 1})
+                    .catch(reject)
+                    .then(function (followers) {
+                        result.followers = utils.s(_.pluck(followers, '_id'));
+                        return Video.count({owner: id});
+                    })
                     .catch(reject)
                     .then(function (count) {
                         result.video = count;
@@ -276,11 +292,14 @@ module.exports = {
             var login = $.post('login').replace(/[\(\)\s]/, '');
             if (login.indexOf('@') >= 0) {
                 conditions.email = login;
-            } else if (/^[\d\-]+$/.exec(login)) {
+            }
+            else if (/^[\d\-]+$/.exec(login)) {
                 login = login.replace('-', '');
-            } else if (/^[0-9a-z]{24}$/i.exec(login)) {
+            }
+            else if (/^[0-9a-z]{24}$/i.exec(login)) {
                 conditions._id = ObjectID(login);
-            } else {
+            }
+            else {
                 conditions.domain = login;
             }
             User.findOne(conditions, $.wrap(function (user) {
@@ -294,19 +313,17 @@ module.exports = {
                             time: Date.now()
                         }
                     };
-                    return Agent.update(conditions, changeset, $.wrap(function (result) {
-                        if (result.nModified > 0) {
-                            return $.send(extract(result));
-                        } else {
-                            return $.send(code.INTERNAL_SERVER_ERROR, {
-                                error: {
-                                    message: 'Unregistered agent'
-                                }
-                            });
-                        }
+                    Agent.update(conditions, changeset, $.wrap(function (result) {
+                        return result.nModified > 0
+                            ? $.send(extract(result))
+                            : $.send(code.INTERNAL_SERVER_ERROR, {
+                            error: {
+                                message: 'Unregistered agent'
+                            }
+                        });
                     }));
                 } else {
-                    return $.sendStatus(code.UNAUTHORIZED);
+                    $.sendStatus(code.UNAUTHORIZED);
                 }
             }));
         }
@@ -345,7 +362,7 @@ module.exports = {
                     result.found = true;
                 }
             }
-            return $.send(result);
+            $.send(result);
         }));
     },
 
@@ -361,35 +378,34 @@ module.exports = {
         });
     },
 
-    exists: {
-        GET: function ($) {
-            var conditions = {};
-            var keys = ['domain', 'phone', 'email'];
-            for (var i = 0; i < keys.length; i++) {
-                var key = keys[i];
-                if ($.has(key)) {
-                    var value = conditions[key] = $.get(key);
-                    break;
-                }
+    exists: function ($) {
+        var conditions = {};
+        var keys = ['domain', 'phone', 'email'];
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            if ($.has(key)) {
+                var value = conditions[key] = $.get(key);
+                break;
             }
-            if (key && value) {
-                User.find(conditions, conditions).count($.wrap(function (result) {
-                    return $.send({
-                        success: true,
-                        exists: result > 0,
-                        key: key,
-                        value: value
-                    });
-                }));
-            } else {
-                $.sendStatus(code.BAD_REQUEST);
-            }
+        }
+        if (key && value) {
+            User.find(conditions, conditions).count($.wrap(function (result) {
+                $.send({
+                    success: true,
+                    exists: result > 0,
+                    key: key,
+                    value: value
+                });
+            }));
+        } else {
+            $.sendStatus(code.BAD_REQUEST);
         }
     },
 
     phone: function ($) {
         if ($.user) {
-            return $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            return;
         }
         $.agent.phone = $.param('phone');
         if (config.sms.enabled) {
@@ -398,19 +414,18 @@ module.exports = {
                 charset: 'numeric'
             });
         }
-        User.findOne({
-            phone: $.agent.phone
-        }, $.wrap(function (user) {
-            var save;
+        User.findOne({phone: $.agent.phone}, $.wrap(function (user) {
             if (user) {
-                return $.send({
+                $.send({
                     error: {
                         message: 'The phone number already registered'
                     }
                 });
             } else {
-                save = function () {
-                    return $.agent.save($.success);
+                let save = function () {
+                    $.agent.save($.success, $.wrap(function () {
+                        $.sendStatus(code.OK);
+                    }));
                 };
                 if (config.sms.enabled) {
                     return $.sendSMS($.agent.phone, 'Code: ' + $.agent.code, save);
@@ -423,21 +438,22 @@ module.exports = {
 
     code: function ($) {
         if ($.user) {
-            return $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            return;
         }
         if ($.param('code') === $.agent.code) {
             $.agent.code = null;
             $.agent.save($.success);
-        } else {
-            return {
-                success: false
-            };
+        }
+        else {
+            return {success: false};
         }
     },
 
     personal: function ($) {
         if ($.user) {
-            return $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            return;
         }
         var user = new User({
             phone: $.agent.phone,
@@ -447,152 +463,12 @@ module.exports = {
             surname: $.param('surname'),
             hash: utils.hash($.param('password'))
         });
-        user.save($.success);
-    },
-
-    change: {
-        POST: function ($) {
-            var field = $.param('field');
-            var changes = {};
-            var fields = ['avatar', 'background'];
-            if (fields.indexOf(field) >= 0) {
-                changes[field] = ObjectID($.param('value'));
-            } else {
-                $.invalid('field', field);
-            }
-            return User.findOneAndUpdate({
-                _id: $.user._id
-            }, changes).select(fields.join(' '));
-        }
-    },
-
-    list: {
-        GET: function ($) {
-            var name = $.param('name');
-            if (!list_fields.hasOwnProperty(name)) {
-                $.invalid('name');
-            }
-            var fields = {};
-            fields['friend' === name ? 'follow' : name] = 1;
-            var id = $.has('id') ? $.id : $.user._id;
-            User.findOne(id, fields, $.wrap(function (user) {
-                if ('friend' === name) {
-                    search($, {
-                        _id: {
-                            $in: user.follow.map(ObjectID)
-                        },
-                        follow: user._id
-                    }, true);
-                } else {
-                    search($, user[name], true);
-                }
-            }));
-        },
-
-        POST: modify_list(true),
-        DELETE: modify_list(false)
-    }
-};
-
-function modify_list(add) {
-    return function ($) {
-        var name = $.param('name');
-        var source_id = $.has('source_id') ? $.get('source_id') : $.user._id;
-        var target_id = $.param('target_id');
-        if (!list_fields.hasOwnProperty(name)) {
-            $.invalid('name');
-        }
-        var result = {success: true};
-        return new Promise(function (resolve, reject) {
-            User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
-                var index = _.findIndex(user.follow, function (current_id) {
-                    return target_id.toString() == current_id.toString();
-                });
-                result.found = index >= 0;
-                if (result.found == add) {
-                    result.success = result.found && !add;
-                    resolve(result);
-                }
-                else {
-                    result.modified = true;
-                    if (add) {
-                        user.follow.push(target_id);
-                    }
-                    else {
-                        user.follow.splice(index, 1);
-                    }
-                    user.save().catch(reject).then(function (user) {
-                        resolve(result);
-                    });
-                }
-            })
-        });
-    }
-}
-
-function toggle(array, element) {
-    var i = array.indexOf(element);
-    if (result) {
-        array.push(element);
-    } else {
-        array.splice(i, 1);
-    }
-}
-
-var list_fields = {
-    follow: 'deny',
-    deny: 'follow',
-    friend: null,
-    request: null
-};
-
-schema.User.user_public_fields = ["online", "domain", "type", "name", "surname", "forename",
-    "city", "city_id", "country", "address", "phone", "avatar", "birthday", "languages",
-    "relationship", "tiles", "lang", "avatar", "background", "admin"];
-var user_fields = ["online", "name", "surname", "forename", "city", "city_id", "country",
-    "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship",
-    "lang", "background"];
-var group_fields = ["domain", "name", "about", "avatar"];
-var admin_fields = ['domain', 'type'];
-
-function search($, where, send) {
-    var isArray = where instanceof Array;
-    var ands = !where || isArray ? {} : where;
-    if ($.has('q')) {
-        var ORs = [];
-        var q = $.search;
-        ['domain', 'surname'].forEach(function (param) {
-            var d = {};
-            d[param] = {
-                $regex: q
-            };
-            ORs.push(d);
-        });
-        if (ORs.length > 0) {
-            ands.$or = ORs;
-        }
-    }
-    ['country', 'city', 'sex', 'forename', 'relationship', 'type'].forEach(function (param) {
-        if ($.has(param)) {
-            ands[param] = $.param(param);
-        }
-    });
-    if (isArray) {
-        ands._id = {
-            $in: where.map(function (id) {
-                return ObjectID(id);
-            })
-        };
-    }
-    var r = User.find(ands).select($.select(['domain'], user_fields));
-    if (send) {
-        r.exec($.wrap(function (users) {
-            return $.send(users);
+        user.save($.success, $.wrap(function () {
+            $.sendStatus(code.OK);
         }));
-    } else {
-        return r;
     }
-}
+};
+
 
 function extract(user) {
     return {
