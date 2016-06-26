@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var code = require(__dirname + '/../../client/code.json');
 var mongoose = require('mongoose');
@@ -113,28 +115,13 @@ module.exports = {
     POST: function ($) {
         var message = new Message($.allowFields(user_fields, admin_fields));
         message.source = $.user._id;
-        message.ip = $.req.connection.remoteAddress;
-        if (message.target) {
-            $.notifyOne(message.target, $.merge(message.toJSON(), {
-                type: 'message'
-            }));
-        }
-        if ($.has('parent_id')) {
-            return message.save(function () {
-                var cnd = {_id: $.param('parent_id')};
-                var push = {$push: {children: message._id}};
-                return $.collection('messages').update(cnd, push);
-            });
-        } else {
-            if ($.has('repost_id')) {
-                var repost_id = $.param('repost_id');
-                Message.findOne(repost_id).then(function (repost) {
-                    message.repost = repost.repost ? repost.repost : repost._id;
-                    message.owner = message.source;
-                });
+        _.each(_.uniq(_.pick(message, 'target', 'owner')), id => $.notifyOne(id, message));
+        message.save($.wrap(function () {
+            if ($.has('parent_id')) {
+                Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
             }
-            return message.save();
-        }
+            $.send(message);
+        }));
     },
 
     GET: function ($) {
@@ -167,6 +154,7 @@ module.exports = {
 
             default:
                 $.sendStatus(code.BAD_REQUEST);
+                return;
         }
         return Message.find(where).sort('-time');
     },
@@ -178,100 +166,97 @@ module.exports = {
     },
 
     read: function ($) {
-        var conditions;
-        if ($.has('id')) {
-            Message.update({
-                _id: $.param('id')
-            }, {
-                $set: {
-                    unread: 0
-                }
-            });
+        if ($.has('id') && $.has('unread')) {
+            return Message.update({_id: $.param('id')}, {$set: {unread: $.param('unread')}});
         }
-        if ($.has('target_id')) {
-            conditions = {
-                target: $.user._id,
-                source: $.param('target_id')
+        if ($.has('dialog_id')) {
+            var me = $.user._id;
+            var you = $.param('dialog_id');
+            let where = {
+                $and: [
+                    {unread: 1},
+                    {
+                        $or: [
+                            {target: me, source: you},
+                            {target: you, source: me}
+                        ]
+                    }
+                ]
             };
-            $.notifyOne(conditions.source, {
-                type: 'read',
-                target_id: conditions.source
-            });
-            return Message.update(conditions, {
-                $set: {
-                    unread: 0
-                }
-            }, {
-                multi: true
-            });
-        } else {
-            return false;
+            $.notifyOne(you, {type: 'read', target_id: where.source});
+            return Message.update(where, {$set: {unread: 0}}, {multi: true});
         }
+        return false;
     },
 
     feed: function ($) {
-        var follows;
-        follows = $.user.follow.map(function (f) {
-            return ObjectID(f);
-        });
         return Message.find({
-            owner: {
-                $in: follows
-            }
+            type: Message.Type.WALL,
+            owner: {$in: $.user.follow.map(id => ObjectID(id))}
         });
     },
 
     dialogs: function ($) {
-        var me;
-        me = $.user._id;
-        Message.aggregate(dialogs_condition(me), $.wrap(function (result) {
-            var dialog, dialog_id, dialogs, i, len, user_ids;
-            if (result.length <= 0) {
-                $.send([]);
+        Message.aggregate([
+            {
+                $match: {
+                    $and: [
+                        {type: Message.Type.DIALOG},
+                        {
+                            $or: [
+                                {source: $.user._id},
+                                {target: $.user._id}
+                            ]
+                        }]
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        source: '$source',
+                        target: '$target'
+                    },
+                    dialog_id: {$first: '$_id'},
+                    unread: {$sum: '$unread'},
+                    count: {$sum: 1},
+                    time: {$first: '$time'},
+                    text: {$first: '$text'}
+                }
+            },
+            {
+                $lookup: {
+                    'as': 'dialog',
+                    localField: 'dialog_id',
+                    from: 'users',
+                    foreignField: '_id'
+                }
+            },
+            {
+                $project: {
+                    _id: 'dialog_id',
+                    time: 1,
+                    count: 1,
+                    unread: 1,
+                    text: 1,
+                    dialog: {
+                        domain: 1,
+                        forename: 1,
+                        surname: 1,
+                        avatar: 1,
+                        online: 1
+                    },
+                    source: '_id.source'
+                }
+            },
+            {
+                $lookup: {
+                    'as': 'dialog.avatar',
+                    localField: 'dialog.avatar',
+                    from: 'files',
+                    foreignField: '_id'
+                }
             }
-            user_ids = [];
-            dialogs = [];
-            for (i = 0, len = result.length; i < len; i++) {
-                dialog = result[i];
-                if (dialog._id.source.toString() !== me.toString()) {
-                    dialog_id = dialog._id.source;
-                } else {
-                    dialog_id = dialog._id.target;
-                }
-                if (!_.some(user_ids, function (user_id) {
-                        return user_id.toString() === dialog_id.toString();
-                    })) {
-                    dialog.dialog_id = dialog_id;
-                    dialogs.push(dialog);
-                    user_ids.push(dialog_id);
-                }
-            }
-            user_ids.push(me);
-            return $.collection('users').find({
-                _id: {
-                    $in: user_ids
-                }
-            }, {
-                _id: 1,
-                domain: 1
-            }, $.wrap(function (reader) {
-                return reader.toArray($.wrap(function (users) {
-                    var j, len1;
-                    for (j = 0, len1 = dialogs.length; j < len1; j++) {
-                        dialog = dialogs[j];
-                        console.log(dialog);
-                        dialog.target = _.find(users, function (u) {
-                            return u._id.toString() === dialog._id.target.toString();
-                        });
-                        dialog.source = _.find(users, function (u) {
-                            return u._id.toString() === dialog._id.source.toString();
-                        });
-                        delete dialog._id;
-                    }
-                    return $.send(dialogs);
-                }));
-            }));
-        }));
+        ]);
     }
 };
 
@@ -292,54 +277,3 @@ populate.map = {
     repost: '_id source target photos videos text',
     children: '_id source target photos videos text time'
 };
-
-function dialogs_condition(me) {
-    return [
-        {
-            $match: {
-                target: {
-                    $exists: true
-                }
-            }
-        },
-        {
-            $match: {
-                $or: [
-                    {
-                        source: me
-                    }, {
-                        target: me
-                    }
-                ]
-            }
-        },
-        {
-            $sort: {
-                time: -1
-            }
-        },
-        {
-            $group: {
-                _id: {
-                    source: '$source',
-                    target: '$target'
-                },
-                message_id: {
-                    $first: '$_id'
-                },
-                unread: {
-                    $sum: '$unread'
-                },
-                count: {
-                    $sum: 1
-                },
-                time: {
-                    $first: '$time'
-                },
-                text: {
-                    $first: '$text'
-                }
-            }
-        }
-    ];
-}
