@@ -609,7 +609,7 @@ App.module('User', function (User, App) {
                     };
                 },
                 function (file) {
-                    this.ui['tile' + tile].setBackground(file.getFileURL());
+                    this.ui['tile' + tile][0].setBackground(file.getFileURL());
                 }
             );
         },
