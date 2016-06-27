@@ -177,21 +177,31 @@ module.exports = {
             return Message.update({_id: $.param('id')}, {$set: {unread: $.param('unread')}});
         }
         if ($.has('dialog_id')) {
-            var me = $.user._id;
-            var you = $.param('dialog_id');
+            let you = $.param('dialog_id');
             let where = {
-                $and: [
-                    {unread: 1},
-                    {
-                        $or: [
-                            {target: me, source: you},
-                            {target: you, source: me}
-                        ]
-                    }
-                ]
+                unread: 1,
+                source: you,
+                target: $.user._id
             };
-            $.notifyOne(you, {type: 'read', target_id: where.source});
-            return Message.update(where, {$set: {unread: 0}}, {multi: true});
+            return new Promise(function (resolve, reject) {
+                Message.find(where).select('_id').catch(reject).then(function (messages) {
+                    Message.update(where, {$set: {unread: 0}}, {multi: true}).catch(reject).then(function (result) {
+                        if (messages.length == result.nModified) {
+                            var ids = _.pluck(messages, '_id'); 
+                            resolve(ids);
+                            $.notifyOne(you, {
+                                type: 'read',
+                                dialog_id: where.source,
+                                ids: ids
+                            });
+                        }
+                        else {
+                            reject(result);
+                        }
+                    });
+                })
+            });
+
         }
         return false;
     },
@@ -204,14 +214,6 @@ module.exports = {
     },
 
     dialogs: function ($) {
-        var user_projection = {
-            _id: 1,
-            domain: 1,
-            online: 1,
-            surname: 1,
-            forename: 1,
-            avatar: 1
-        };
         var match = [
             {type: Message.Type.DIALOG},
             {
@@ -234,11 +236,22 @@ module.exports = {
             {
                 $group: {
                     _id: {
-                        source: '$source',
-                        target: '$target'
+                        $cond: {
+                            if: {$eq: ['$source', $.user._id]},
+                            then: '$target',
+                            else: '$source'
+                        }
                     },
                     last_id: {$last: '$_id'},
-                    unread: {$sum: '$unread'},
+                    unread: {
+                        $sum: {
+                            $cond: {
+                                if: {$eq: ['$target', $.user._id]},
+                                then: '$unread',
+                                else: 0
+                            }
+                        }
+                    },
                     count: {$sum: 1},
                     time: {$last: '$time'},
                     text: {$last: '$text'}
@@ -246,39 +259,32 @@ module.exports = {
             },
             {
                 $lookup: {
-                    'as': 'source',
-                    localField: '_id.source',
+                    'as': 'peer',
+                    localField: '_id',
                     from: 'users',
                     foreignField: '_id'
                 }
             },
             {
                 $unwind: {
-                    path: '$source'
-                }
-            },
-            {
-                $lookup: {
-                    'as': 'target',
-                    localField: '_id.target',
-                    from: 'users',
-                    foreignField: '_id'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$target'
+                    path: '$peer'
                 }
             }
         ];
         var project = {
-            _id: '$last_id',
+            _id: 1,
             time: 1,
             count: 1,
             unread: 1,
             text: 1,
-            source: user_projection,
-            target: user_projection
+            peer: {
+                _id: 1,
+                domain: 1,
+                online: 1,
+                surname: 1,
+                forename: 1,
+                avatar: 1
+            }
         };
         if ($.has('cut')) {
             var cut = +$.param('cut');

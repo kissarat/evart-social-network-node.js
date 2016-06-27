@@ -73,6 +73,14 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.LastMessage = Backbone.Model.extend({
+        initialize: function () {
+            resolveRelative(this, {
+                peer: App.User.Model
+            });
+        }
+    });
+
     Message.List = App.PageableCollection.extend({
         url: '/api/message',
 
@@ -97,7 +105,7 @@ App.module('Message', function (Message, App) {
         },
 
         model: function (attrs, options) {
-            return new Message.Model(attrs, options);
+            return new Message.LastMessage(attrs, options);
         }
     });
 
@@ -134,27 +142,21 @@ App.module('Message', function (Message, App) {
         },
 
         openDialog: function () {
-            App.navigate('/dialog/' + this.model.getPeer().get('domain'));
+            App.navigate('/dialog/' + this.model.get('peer').get('domain'));
         },
 
         openPeer: function () {
-            App.navigate('/view/' + this.model.getPeer().get('domain'));
+            App.navigate('/view/' + this.model.get('peer').get('domain'));
         },
 
         onRender: function () {
-            var source = this.model.get('source');
-            var target = this.model.get('target');
             var ui = this.ui;
-            if (App.user._id == source.get('_id')) {
+            var peer = this.model.get('peer');
+            ui.peer_name.html(peer.getName());
+            peer.setupAvatar(ui.peer_avatar);
+            if (App.user._id == peer.get('_id')) {
                 this.$el.addClass('mine');
-                ui.peer_name.html(target.getName());
-                target.setupAvatar(ui.peer_avatar);
-                // ui.source_name.html(source.getName());
-                source.setupAvatar(ui.source_avatar);
-            }
-            else {
-                ui.peer_name.html(source.getName());
-                source.setupAvatar(ui.peer_avatar);
+                new User.Model(App.user).setupAvatar(ui.source_avatar);
             }
             var unread = this.model.get('unread');
             if (unread > 0) {
@@ -163,7 +165,7 @@ App.module('Message', function (Message, App) {
                     this.ui.unread.html(unread);
                 }
             }
-            var online = new Date(this.model.getPeer().get('online')).getTime();
+            var online = new Date(peer.get('online')).getTime();
             if (online >= Date.now()) {
                 this.$el.addClass('online');
             }
@@ -455,6 +457,14 @@ App.module('Message', function (Message, App) {
             if (Message.View.appearance.length <= 1) {
                 appear();
             }
+
+            if (this.model.get('unread') > 0) {
+                this.$el.addClass('unread');
+                var self = this;
+                this.model.on('change:unread', function () {
+                    self.$el.removeClass('unread');
+                })
+            }
         }
     });
 
@@ -621,6 +631,15 @@ App.module('Message', function (Message, App) {
             dialog.getRegion('list').show(listView);
             dialog.getRegion('editor').show(editor);
             list.getFirstPage();
+            setTimeout(function () {
+                $.getJSON('/api/message/read?dialog_id=' + options.target_id, function (ids) {
+                    list.fullCollection.forEach(function (model) {
+                        if (ids.indexOf(model.get('_id')) >= 0) {
+                            model.set('unread', 0);
+                        }
+                    });
+                });
+            }, _.random(300, 3000));
             return dialog;
         }
     });

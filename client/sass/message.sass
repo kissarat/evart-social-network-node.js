@@ -1,4 +1,5 @@
 $blue: #3892CD
+$unread: rgba(0, 0, 0, 0.05)
 
 .layout-message, .last-message
   .name
@@ -37,7 +38,7 @@ $blue: #3892CD
   align-items: center
   cursor: pointer
   &:hover
-    background-color: rgba(0, 0, 0, 0.05)
+    background-color: $unread
   .content
     display: flex
     flex: 1
@@ -59,9 +60,9 @@ $blue: #3892CD
   .avatar
     margin: 4px
   &.mine.unread .content
-    background-color: rgba(0, 0, 0, 0.05)
-  &:not(.mine)
-    background-color: rgba(0, 0, 0, 0.05)
+    background-color: $unread
+  &:not(.mine).unread
+    background-color: $unread
   &.online .online-indicator
     display: inline-block
     margin-left: 4px
@@ -91,8 +92,6 @@ $blue: #3892CD
     transform: scaleX(-1)
 
 .profile-relative
-  .unread
-    background-color: transparent
   article .right
     min-height: 30vh
 
@@ -116,6 +115,8 @@ $blue: #3892CD
       display: flex
       justify-content: flex-end
       opacity: 0
+      &.unread
+        background-color: $unread
       .text
         position: relative
         margin: 4px
