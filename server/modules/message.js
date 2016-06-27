@@ -120,14 +120,22 @@ schema.Message.statics.Type = MessageType;
 
 module.exports = {
     POST: function ($) {
-        var message = new Message($.allowFields(user_fields, admin_fields));
+        var message = $.allowFields(user_fields, admin_fields);
         message.source = $.user._id;
-        _.each(_.uniq(_.pick(message, 'target', 'owner')), id => $.notifyOne(id, message));
+        var targets = [];
+        ['target', 'owner'].forEach(function (name) {
+            var id = message[name];
+            if (id) {
+                targets.push(id)
+            }
+        });
+        message = new Message(message);
         message.save($.wrap(function () {
             if ($.has('parent_id')) {
                 Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
             }
             $.send(message);
+            _.uniq(targets).forEach(id => $.notifyOne(id, message));
         }));
     },
 

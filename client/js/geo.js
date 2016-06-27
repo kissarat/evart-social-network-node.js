@@ -1,3 +1,5 @@
+'use strict';
+
 App.module('Geo', function (Geo, App) {
     Geo.api = function (method, params, success) {
         return $.getJSON({
@@ -136,23 +138,23 @@ App.module('Geo', function (Geo, App) {
         search: function (e) {
             var self = this;
             var collection = self.getCollection();
+
+            function search() {
+                Geo.api('getCities', self.model.getSearchQuery(), function (data) {
+                    if (data.response.length > 0) {
+                        collection.add(data.response);
+                        self.model.set(data.response[0]);
+                    }
+                    else if (!self.model.get('need_all')) {
+                        self.model.set('need_all', 1);
+                        search();
+                    }
+                });
+            }
             if (e && self.model.get('country_id') && EmptyKeys.indexOf(e.key) < 0) {
                 var q = this.model.get('q');
                 collection.reset();
                 if (q) {
-                    function search() {
-                        Geo.api('getCities', self.model.getSearchQuery(), function (data) {
-                            if (data.response.length > 0) {
-                                collection.add(data.response);
-                                self.model.set(data.response[0]);
-                            }
-                            else if (!self.model.get('need_all')) {
-                                self.model.set('need_all', 1);
-                                search();
-                            }
-                        });
-                    }
-
                     App.debounce(App.Geo, search);
                 }
                 else {

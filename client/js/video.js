@@ -1,3 +1,5 @@
+'use strict';
+
 App.module('Video', function (Video, App) {
     Video.Router = Marionette.AppRouter.extend({
         appRoutes: {

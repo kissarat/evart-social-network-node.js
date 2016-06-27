@@ -1,4 +1,5 @@
 "use strict";
+
 App.module('Peer', function (Peer, App) {
     Peer.Router = Marionette.AppRouter.extend({
         appRoutes: {

@@ -78,12 +78,13 @@ App.module('Views', function (Views, App) {
 
     App.Behaviors.Pageable = Marionette.Behavior.extend({
         onAttach: function () {
+            var reverse = this.options.reverse;
             var view = this.view;
             var el = view.el.findParent(function (current) {
                 return current.classList.contains('scroll');
             });
-            return el.addEventListener('scroll', function (e) {
-                var delta = e.target.scrollHeight - e.target.scrollTop;
+            el.addEventListener('scroll', function (e) {
+                var delta = reverse ? e.target.scrollTop : e.target.scrollHeight - e.target.scrollTop;
                 if (delta < 500) {
                     return view.collection.pageableCollection.getNextPage();
                 }

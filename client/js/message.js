@@ -10,13 +10,16 @@ App.module('Message', function (Message, App) {
     });
 
     Message.channel = Backbone.Radio.channel('message');
-    App.socket.on('message', function (message) {
+    App.socket.on(MessageType.DIALOG, function (message) {
         var model = new Message.Model(message);
         model.loadRelative().then(function () {
-            if (!Message.channel.request('message', model)) {
+            if (!Message.channel.request('dialog', model)) {
                 Message.notify(model);
             }
         });
+    });
+    App.socket.on('read', function (message) {
+        Message.channel.request('read', message.ids);
     });
 
     Message.notify = function (model) {
@@ -26,7 +29,7 @@ App.module('Message', function (Message, App) {
         return model.loadRelative().then(function () {
             var source = model.get('source');
             // if (!isFirefox) {
-            sound(model.get('sound') ? model.get('sound') : 'notification');
+            // sound(model.get('sound') ? model.get('sound') : 'notification');
             // }
             return App.notify({
                 tag: model.get('_id'),
@@ -266,53 +269,6 @@ App.module('Message', function (Message, App) {
             this.ui.hate.html(_.size(this.model.get('hate')));
         },
 
-        share: function () {
-            return $.post('/api/message?repost_id=' + this.model.get('_id'));
-        },
-
-        renderComments: function () {
-            var childrenView;
-            this.ui.comment.remove();
-            childrenView = new App.Layouts.Thresome();
-            this.showChildView('childrenRegion', childrenView);
-            return App.Views.Dialog.build(this.model.get('_id'), this.model.getChildren(), childrenView);
-        },
-
-        renderRepost: function () {
-            var repost, repostView;
-            repost = this.model.get('repost');
-            if (repost) {
-                repost = new App.Models.Message(repost);
-                repost.set('isRepost', true);
-                repostView = new Layouts.MessageLayout({
-                    model: repost
-                });
-                return this.repost.show(repostView);
-            }
-        },
-
-        renderPhotos: function () {
-            var photos;
-            if (_.size(this.model.get('photos')) > 0) {
-                photos = App.Views.PhotoList.create(this.model.get('photos'));
-                this.photos.show(photos);
-                return photos.on('childview:select', function (photo) {
-                    return App.navigate('photo/' + photo.model.get('_id'));
-                });
-            }
-        },
-
-        renderVideos: function () {
-            var videos;
-            if (_.size(this.model.get('videos')) > 0) {
-                videos = App.Views.VideoList.create(this.model.get('videos'));
-                videos.on('childview:select', function (video) {
-                    return App.navigate('video/' + video.model.get('_id'));
-                });
-                return this.videos.show(videos);
-            }
-        },
-
         onRender: function () {
             var source = this.model.get('source');
             this.ui.name.attr('href', '/view/' + source.get('domain'));
@@ -343,13 +299,6 @@ App.module('Message', function (Message, App) {
             } else {
                 this.renderLikes();
             }
-            this.renderPhotos();
-            this.renderVideos();
-            this.renderRepost();
-            if (_.size(this.model.get('children')) > 0) {
-                this.renderComments();
-                this.ui.comment.remove();
-            }
         }
     });
 
@@ -360,23 +309,21 @@ App.module('Message', function (Message, App) {
     });
 
     var listViewMixin = {
-        behaviors: {
-            Pageable: {}
-        },
-
         animateLoading: function () {
-            var loading;
-            this.collection.pageableCollection.on('start', (function (_this) {
-                return function () {
+            var self = this;
+            var loading = false;
+            register(this.collection.pageableCollection, {
+                start: function () {
                     if (!loading) {
-                        return loading = $($('#view-bounce').html()).appendTo(_this.$el);
+                        loading = self.$el.append($('#view-bounce').html());
                     }
-                };
-            })(this));
-            return this.collection.pageableCollection.on('finish', function () {
-                if (loading) {
-                    loading.remove();
-                    loading = null;
+                },
+
+                finish: function () {
+                    if (loading) {
+                        loading.remove();
+                        loading = false;
+                    }
                 }
             });
         },
@@ -436,8 +383,6 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            // var source = 'string' == typeof this.model.get('source')
-            //     ? this.model.get('source') : this.model.get('source').get('_id');
             var source = this.model.get('source');
             this.$el.addClass(source == App.user._id ? 'me' : 'other');
             if (!Message.View.lastAnimationStart) {
@@ -451,7 +396,7 @@ App.module('Message', function (Message, App) {
                         current.$el.addClass('visible');
                         appear();
                     }
-                }, 120)
+                }, 120);
             }
 
             if (Message.View.appearance.length <= 1) {
@@ -469,6 +414,59 @@ App.module('Message', function (Message, App) {
     });
 
     Message.View.appearance = [];
+    function attachHtml(collectionView, itemView, index) {
+        if (this._isAttached) {
+            var now = new Date(itemView.model.get('time'));
+            if (index >= 1) {
+                var previousHour = new Date(collectionView.children.findByIndex(index - 1).model.get('time')).getHours();
+            }
+            if (index < 1 || now.getHours() < previousHour) {
+                $('<div></div>')
+                    .html(now.toLocaleDateString())
+                    .appendTo(collectionView.$el);
+            }
+        }
+        itemView.$('a').each(function (i, anchor) {
+            var image = new Image();
+            anchor.setAttribute('target', '_black');
+            image.addEventListener('load', function () {
+                anchor.classList.remove('busy');
+                anchor.classList.add('image');
+                anchor.appendChild(image);
+            });
+            image.addEventListener('error', function () {
+                anchor.classList.remove('busy');
+                var url = decodeURIComponent(anchor.href);
+                var origin = /\w+:\/\/([^\/]+)\//.exec(url);
+                var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
+                if (youtube) {
+                    App.local.getById('video', youtube[1]).then(function (oembed) {
+                        $(anchor).replaceWith(
+                            $(oembed.html)
+                                .removeAttr('width')
+                                .removeAttr('height')
+                        );
+                    });
+                }
+                else {
+                    if (origin[1].indexOf('wikipedia.org') > 0) {
+                        url = _.last(url.split('/')).replace(/_/g, ' ');
+                    }
+                    else if (url.length > 64) {
+                        var remain = -64 + origin[1].length;
+                        url = origin[1];
+                        if (remain < 0) {
+                            url += '/...' + anchor.href.slice(remain);
+                        }
+                    }
+                    anchor.innerHTML = url;
+                }
+            });
+            image.classList.add('busy');
+            image.src = anchor.href;
+        });
+        Marionette.CollectionView.prototype.attachHtml.apply(this, arguments);
+    }
 
     Message.ListView = Marionette.CollectionView.extend({
         childView: Message.View,
@@ -477,63 +475,26 @@ App.module('Message', function (Message, App) {
             this.animateLoading();
         },
 
-        attachHtml: function (collectionView, itemView, index) {
-            if (this._isAttached) {
-                var now = new Date(itemView.model.get('time'));
-                if (index >= 1) {
-                    var previousHour = new Date(collectionView.children.findByIndex(index - 1).model.get('time')).getHours();
-                }
-                if (index < 1 || now.getHours() < previousHour) {
-                    $('<div></div>')
-                        .html(now.toLocaleDateString())
-                        .appendTo(collectionView.$el);
-                }
-            }
-            itemView.$('a').each(function (i, anchor) {
-                var image = new Image();
-                anchor.setAttribute('target', '_black');
-                image.addEventListener('load', function () {
-                    anchor.classList.remove('busy');
-                    anchor.classList.add('image');
-                    anchor.appendChild(image);
-                });
-                image.addEventListener('error', function () {
-                    anchor.classList.remove('busy');
-                    var url = decodeURIComponent(anchor.href);
-                    var origin = /\w+:\/\/([^\/]+)\//.exec(url);
-                    var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
-                    if (youtube) {
-                        App.local.getById('video', youtube[1]).then(function (oembed) {
-                            $(anchor).replaceWith(
-                                $(oembed.html)
-                                    .removeAttr('width')
-                                    .removeAttr('height')
-                            );
-                        });
-                    }
-                    else {
-                        if (origin[1].indexOf('wikipedia.org') > 0) {
-                            url = _.last(url.split('/')).replace(/_/g, ' ');
-                        }
-                        else if (url.length > 64) {
-                            var remain = -64 + origin[1].length;
-                            url = origin[1];
-                            if (remain < 0) {
-                                url += '/...' + anchor.href.slice(remain);
-                            }
-                        }
-                        anchor.innerHTML = url;
-                    }
-                });
-                image.classList.add('busy');
-                image.src = anchor.href;
-            });
-            Marionette.CollectionView.prototype.attachHtml.apply(this, arguments);
-        }
+        attachHtml: attachHtml
     });
 
     _.extend(Message.ListView.prototype, listViewMixin);
 
+    Message.DialogListView = Marionette.CollectionView.extend({
+        childView: Message.View,
+
+        behaviours: {
+            Pageable: {reverse: true}
+        },
+
+        onRender: function () {
+            this.animateLoading();
+        },
+
+        attachHtml: attachHtml
+    });
+
+    _.extend(Message.DialogListView.prototype, listViewMixin);
 
     Message.Dialog = Marionette.View.extend({
         template: '#layout-dialog',
@@ -580,25 +541,52 @@ App.module('Message', function (Message, App) {
 
         initialize: function () {
             this.reply = _.bind(this.reply, this);
-            this.send = _.bind(this.send, this);
-            Message.channel.reply('message', this.reply);
+            this.read = _.bind(this.read, this);
+            Message.channel.reply('dialog', this.reply);
+            Message.channel.reply('read', this.read);
             window.addEventListener('keyup', this.send);
+            this.send = _.bind(this.send, this);
         },
 
         destroy: function () {
-            window.removeEventListener('keydown', this.send);
-            Message.channel.stopReplying('message', this.reply);
+            window.removeEventListener('keyup', this.send);
+            Message.channel.stopReplying('read', this.read);
+            Message.channel.stopReplying('dialog', this.reply);
         },
 
         reply: function (model) {
-            // var target = 'string' == typeof model.get('target')
-            //     ? model.get('target') : model.get('target').get('_id');
-            var target = model.get('target');
-            var isReceiver = this.getQuery().get('target_id') == target;
+            var self = this;
+            var id = model.get('source').get('_id');
+            var isReceiver = this.getQuery().get('target_id') === id;
+
+            function read() {
+                setTimeout(function () {
+                    self.read(id)
+                }, _.random(800, 1600));
+                document.removeEventListener('visibilitychange', read);
+            }
+
             if (isReceiver) {
                 this.getCollection().add(model);
+                if ('visible' === document.visibilityState) {
+                    read();
+                }
+                else {
+                    document.addEventListener('visibilitychange', read);
+                }
             }
             return isReceiver;
+        },
+
+        read: function (ids) {
+            var count = 0;
+            this.getCollection().forEach(function (model) {
+                if (ids.indexOf(model.get('_id')) >= 0) {
+                    model.set('unread', 0);
+                    count++;
+                }
+            });
+            return count;
         },
 
         send: function (e) {
@@ -615,7 +603,7 @@ App.module('Message', function (Message, App) {
             list.queryModel.set('type', options.type);
             list.queryModel.set('target_id', options.target_id);
             list.comparator = '_id';
-            var listView = new Message.ListView({collection: list.fullCollection});
+            var listView = new Message.DialogListView({collection: list.fullCollection});
             var draft = {
                 type: options.type,
                 target: options.target_id
@@ -632,14 +620,13 @@ App.module('Message', function (Message, App) {
             dialog.getRegion('editor').show(editor);
             list.getFirstPage();
             setTimeout(function () {
-                $.getJSON('/api/message/read?dialog_id=' + options.target_id, function (ids) {
-                    list.fullCollection.forEach(function (model) {
-                        if (ids.indexOf(model.get('_id')) >= 0) {
-                            model.set('unread', 0);
-                        }
-                    });
-                });
-            }, _.random(300, 3000));
+                // var hasUnread = _.some(list.fullCollection.models, function (model) {
+                //     return model.get('unread')
+                // });
+                // if (hasUnread) {
+                $.getJSON('/api/message/read?dialog_id=' + options.target_id, dialog.read);
+                // }
+            }, _.random(600, 3000));
             return dialog;
         }
     });

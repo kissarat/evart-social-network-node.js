@@ -1,3 +1,5 @@
+'use strict';
+
 App.module('File', function (File, App) {
     File.Route = Marionette.AppRouter.extend({
         // initialize: function (options) {

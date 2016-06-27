@@ -1,3 +1,5 @@
+'use strict';
+
 function player(id, src) {
     var audio = document.getElementById(id);
     if (!audio) {
