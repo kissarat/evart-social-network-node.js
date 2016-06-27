@@ -91,15 +91,15 @@ global.schema.Message = mongoose.Schema({
     text: {
         type: String
     },
-/*
-    ip: {
-        type: String
-    },
+    /*
+     ip: {
+     type: String
+     },
 
-    geo: {
-        type: Array
-    },
-*/
+     geo: {
+     type: Array
+     },
+     */
     repost: {
         type: T.ObjectId,
         ref: 'Message'
@@ -212,18 +212,24 @@ module.exports = {
             forename: 1,
             avatar: 1
         };
-        return Message.aggregate([
+        var match = [
+            {type: Message.Type.DIALOG},
             {
-                $match: {
-                    $and: [
-                        {type: Message.Type.DIALOG},
-                        {
-                            $or: [
-                                {source: $.user._id},
-                                {target: $.user._id}
-                            ]
-                        }]
-                }
+                $or: [
+                    {source: $.user._id},
+                    {target: $.user._id}
+                ]
+            }
+        ];
+        if ($.has('unread') && $.param('unread')) {
+            match.push({unread: 1});
+        }
+        if ($.has('since')) {
+            match.push({time: {$gt: $.param('since')}});
+        }
+        var where = [
+            {
+                $match: {$and: match}
             },
             {
                 $group: {
@@ -263,19 +269,28 @@ module.exports = {
                 $unwind: {
                     path: '$target'
                 }
-            },
-            {
-                $project: {
-                    _id: '$last_id',
-                    time: 1,
-                    count: 1,
-                    unread: 1,
-                    text: 1,
-                    source: user_projection,
-                    target: user_projection
-                }
             }
-        ]);
+        ];
+        var project = {
+            _id: '$last_id',
+            time: 1,
+            count: 1,
+            unread: 1,
+            text: 1,
+            source: user_projection,
+            target: user_projection
+        };
+        if ($.has('cut')) {
+            var cut = +$.param('cut');
+            if (cut > 0) {
+                project.text = {$substr: ['$text', 0, $.param('cut')]};
+            }
+            else {
+                $.invalid('cut', 'Must be positive');
+            }
+        }
+        where.push({$project: project});
+        return Message.aggregate(where);
     }
 };
 

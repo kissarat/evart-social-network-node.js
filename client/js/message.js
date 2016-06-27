@@ -1,8 +1,11 @@
+"use strict";
+
 App.module('Message', function (Message, App) {
     Message.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'wall/:id': 'wall',
-            'dialog/:id': 'dialog'
+            'dialog/:id': 'dialog',
+            'dialogs': 'dialogs'
         }
     });
 
@@ -23,7 +26,7 @@ App.module('Message', function (Message, App) {
         return model.loadRelative().then(function () {
             var source = model.get('source');
             // if (!isFirefox) {
-                sound(model.get('sound') ? model.get('sound') : 'notification');
+            sound(model.get('sound') ? model.get('sound') : 'notification');
             // }
             return App.notify({
                 tag: model.get('_id'),
@@ -62,6 +65,11 @@ App.module('Message', function (Message, App) {
 
         isPost: function () {
             return !!this.get('owner');
+        },
+
+        getPeer: function () {
+            return App.user._id === this.get('source').get('_id')
+                ? this.get('target') : this.get('source');
         }
     });
 
@@ -79,16 +87,100 @@ App.module('Message', function (Message, App) {
         }
     });
 
-
     Message.DialogList = App.PageableCollection.extend({
         url: '/api/message/dialogs',
 
         queryModelInitial: {
-            owner_id: null
+            type: 'dialog',
+            cut: 140,
+            unread: 0
         },
 
         model: function (attrs, options) {
             return new Message.Model(attrs, options);
+        }
+    });
+
+    Message.LastMessageView = Marionette.View.extend({
+        template: '#view-last-message',
+
+        bindings: {
+            '.text': 'text',
+            '.time': {
+                observe: 'time',
+                onGet: function (value) {
+                    // return moment(value).format('YY-MM-DD HH:mm');
+                    return _.passed(value);
+                }
+            }
+        },
+
+        ui: {
+            unread: '.unread',
+            peer_name: '.peer .name',
+            peer_avatar: '.peer .avatar',
+            time: '.peer .time',
+            source_name: '.source .name',
+            source_avatar: '.source .avatar'
+        },
+
+        events: {
+            'click .content': 'openDialog',
+            'click .peer': 'openPeer'
+        },
+
+        attributes: {
+            'class': 'view last-message'
+        },
+
+        openDialog: function () {
+            App.navigate('/dialog/' + this.model.getPeer().get('domain'));
+        },
+
+        openPeer: function () {
+            App.navigate('/view/' + this.model.getPeer().get('domain'));
+        },
+
+        onRender: function () {
+            var source = this.model.get('source');
+            var target = this.model.get('target');
+            var ui = this.ui;
+            if (App.user._id == source.get('_id')) {
+                this.$el.addClass('mine');
+                ui.peer_name.html(target.getName());
+                target.setupAvatar(ui.peer_avatar);
+                // ui.source_name.html(source.getName());
+                source.setupAvatar(ui.source_avatar);
+            }
+            else {
+                ui.peer_name.html(source.getName());
+                source.setupAvatar(ui.peer_avatar);
+            }
+            var unread = this.model.get('unread');
+            if (unread > 0) {
+                this.$el.addClass('unread');
+                if (unread > 1) {
+                    this.ui.unread.html(unread);
+                }
+            }
+            var online = new Date(this.model.getPeer().get('online')).getTime();
+            if (online >= Date.now()) {
+                this.$el.addClass('online');
+            }
+            this.stickit();
+        }
+    });
+
+    Message.DialogListView = Marionette.CollectionView.extend({
+        childView: Message.LastMessageView
+    }, {
+        widget: function (region, options) {
+            var list = new Message.DialogList();
+            list.queryModel.set(_.pick(options, 'unread', 'cut', 'since'));
+            var listView = new Message.DialogListView({collection: list.fullCollection});
+            region.show(listView);
+            list.getFirstPage();
+            return listView;
         }
     });
 
@@ -243,7 +335,7 @@ App.module('Message', function (Message, App) {
             if (this.model.get('unread')) {
                 this.$el.addClass('unread');
             }
-            this.ui.time.html(moment.utc(this.model.get('time')).fromNow());
+            this.ui.time.html(_.passed(this.model.get('time')));
             if (this.model.get('isRepost')) {
                 this.ui.controls.remove();
             } else {
@@ -491,7 +583,7 @@ App.module('Message', function (Message, App) {
         reply: function (model) {
             // var target = 'string' == typeof model.get('target')
             //     ? model.get('target') : model.get('target').get('_id');
-            var target = model.get('target'); 
+            var target = model.get('target');
             var isReceiver = this.getQuery().get('target_id') == target;
             if (isReceiver) {
                 this.getCollection().add(model);
@@ -644,6 +736,10 @@ App.module('Message', function (Message, App) {
                         Message.Dialog.widget(App.getPlace('main'), {target_id: user._id});
                     })
                 }
+            },
+
+            dialogs: function () {
+                Message.DialogListView.widget(App.getPlace('main'), {cut: 140});
             }
         }
     });

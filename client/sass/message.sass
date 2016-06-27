@@ -33,9 +33,38 @@ $blue: #3892CD
 .last-message
   display: flex
   flex-direction: row
+  justify-content: space-between
+  align-items: center
   cursor: pointer
   &:hover
-    background-color: ghostwhite
+    background-color: rgba(0, 0, 0, 0.05)
+  .content
+    display: flex
+    flex: 1
+    justify-content: space-between
+    align-items: center
+  .text
+    flex: 1
+    text-align: left
+  .peer
+    display: flex
+    min-width: 136px
+    .details
+      display: flex
+      flex-direction: column
+      justify-content: space-around
+      align-items: flex-start
+  .name, .time
+    font-size: 0.8em
+  .avatar
+    margin: 4px
+  &.mine.unread .content
+    background-color: rgba(0, 0, 0, 0.05)
+  &:not(.mine)
+    background-color: rgba(0, 0, 0, 0.05)
+  &.online .online-indicator
+    display: inline-block
+    margin-left: 4px
 
 .wall-like
   width: 56px
@@ -186,3 +215,9 @@ $blue: #3892CD
     &:hover
       font-size: 1.5em
       transition: font-size 0.2s
+
+.online .online-indicator
+  border-radius: 50%
+  background-color: #8FC44B
+  width: 8px
+  height: 8px

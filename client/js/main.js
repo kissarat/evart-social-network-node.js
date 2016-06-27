@@ -441,10 +441,10 @@ function findStyleRules(selector, match) {
 }
 
 App.on('login', function () {
-    if (App.user && 'admin' == App.user.type) {
-        var rule = findStyleRules('.admin')[0];
-        rule.style.removeProperty('display');
-    }
+    // if (App.user && 'admin' == App.user.type) {
+        // var rule = findStyleRules('.admin')[0];
+        // rule.style.removeProperty('display');
+    // }
     setTimeout(function () {
         document.getElementById('left').classList.add('visible');
         document.getElementById('right').classList.add('visible');

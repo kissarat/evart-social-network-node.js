@@ -15,7 +15,7 @@ else {
     self.isIE = /*@cc_on!@*/false || !!document.documentMode;
     self.isEdge = !isIE && !!self.StyleMedia;
     self.isChrome = !!self.chrome && !!window.chrome.webstore;
-    self.isBlink = (isChrome || isOpera) && !!window.CSS;
+    self.isBlink = isChrome && !!window.CSS;
 }
 
 if (!self.statistics) {

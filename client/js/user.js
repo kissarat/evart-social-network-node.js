@@ -52,6 +52,9 @@ App.module('User', function (User, App) {
         },
 
         setupAvatar: function (el) {
+            if (el instanceof jQuery) {
+                el = el[0];
+            }
             var avatar = this.get('avatar');
             el.setBackground(avatar);
             if (!avatar) {

@@ -44,6 +44,9 @@ _.mixin({
         for (var key in source) {
             Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
         }
+    },
+    passed: function (time) {
+        return moment.utc(time).fromNow()
     }
 });
 
