@@ -151,20 +151,62 @@ schema.User.statics.fields = {
     }
 };
 
+schema.User.statics.search = function search($, where, send) {
+    var isArray = where instanceof Array;
+    var ands = !where || isArray ? {} : where;
+    if ($.has('q')) {
+        var ORs = [];
+        var q = $.search;
+        ['domain', 'surname'].forEach(function (param) {
+            var d = {};
+            d[param] = {
+                $regex: q
+            };
+            ORs.push(d);
+        });
+        if (ORs.length > 0) {
+            ands.$or = ORs;
+        }
+    }
+    ['country', 'city', 'sex', 'forename', 'relationship', 'type'].forEach(function (param) {
+        if ($.has(param)) {
+            ands[param] = $.param(param);
+        }
+    });
+    if (isArray) {
+        ands._id = {
+            $in: where.map(function (id) {
+                return ObjectID(id);
+            })
+        };
+    }
+    var r = User.find(ands).select($.select(['domain'], User.fields.update.user));
+    if (send) {
+        r.exec($.wrap(function (users) {
+            return $.send(users);
+        }));
+    } else {
+        return r;
+    }
+};
+
 module.exports = {
     GET: function ($) {
         var params = ['id', 'domain'];
         var fields = User.fields.select.user.join(' ');
         if ($.hasAny(params) && !$.has('list')) {
             return User.findOne($.paramsObject(params)).select(fields);
-        } else if ($.has('ids')) {
+        }
+        else if ($.has('ids')) {
             return User.find({
                 _id: {
                     $in: $.ids('ids')
                 }
             }).select(fields);
         }
-        $.sendStatus(code.BAD_REQUEST);
+        else {
+            return User.search($);
+        }
     },
 
     POST: function ($) {

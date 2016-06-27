@@ -716,7 +716,7 @@ function serve($) {
     switch (typeof result) {
         case 'object':
             if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
-                if ('find' == result.op) {
+                if ('find' == result.op || result instanceof mongoose.Aggregate) {
                     var order = $.order;
                     if (order) {
                         result.sort(order);

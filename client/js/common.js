@@ -7,10 +7,10 @@ self.T = function (text) {
 };
 
 self.MessageType = {
-    DIALOG: 1,
-    WALL: 2,
-    PHOTO: 3,
-    VIDEO: 4
+    DIALOG: 'dialog',
+    WALL: 'wall',
+    PHOTO: 'photo',
+    VIDEO: 'video'
 };
 
 _.mixin({

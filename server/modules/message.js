@@ -8,8 +8,20 @@ var utils = require('../utils');
 
 var T = mongoose.Schema.Types;
 
+var MessageType = {
+    DIALOG: 'dialog',
+    WALL: 'wall',
+    PHOTO: 'photo',
+    VIDEO: 'video'
+};
+
 global.schema.Message = mongoose.Schema({
     _id: utils.idType('Message'),
+
+    type: {
+        type: String,
+        enum: _.values(MessageType)
+    },
 
     source: {
         type: T.ObjectId,
@@ -54,13 +66,13 @@ global.schema.Message = mongoose.Schema({
 
     file: {
         type: T.ObjectId,
-        ref: 'Photo'
+        ref: 'File'
     },
 
     files: [
         {
             type: T.ObjectId,
-            ref: 'Photo',
+            ref: 'File',
             "default": null
         }
     ],
@@ -79,7 +91,7 @@ global.schema.Message = mongoose.Schema({
     text: {
         type: String
     },
-
+/*
     ip: {
         type: String
     },
@@ -87,7 +99,7 @@ global.schema.Message = mongoose.Schema({
     geo: {
         type: Array
     },
-
+*/
     repost: {
         type: T.ObjectId,
         ref: 'Message'
@@ -104,12 +116,7 @@ global.schema.Message = mongoose.Schema({
     versionKey: false
 });
 
-schema.Message.statics.Type = {
-    DIALOG: 1,
-    WALL: 2,
-    PHOTO: 3,
-    VIDEO: 4
-};
+schema.Message.statics.Type = MessageType;
 
 module.exports = {
     POST: function ($) {
@@ -197,7 +204,15 @@ module.exports = {
     },
 
     dialogs: function ($) {
-        Message.aggregate([
+        var user_projection = {
+            _id: 1,
+            domain: 1,
+            online: 1,
+            surname: 1,
+            forename: 1,
+            avatar: 1
+        };
+        return Message.aggregate([
             {
                 $match: {
                     $and: [
@@ -216,51 +231,56 @@ module.exports = {
                         source: '$source',
                         target: '$target'
                     },
-                    dialog_id: {$first: '$_id'},
+                    last_id: {$last: '$_id'},
                     unread: {$sum: '$unread'},
                     count: {$sum: 1},
-                    time: {$first: '$time'},
-                    text: {$first: '$text'}
+                    time: {$last: '$time'},
+                    text: {$last: '$text'}
                 }
             },
             {
                 $lookup: {
-                    'as': 'dialog',
-                    localField: 'dialog_id',
+                    'as': 'source',
+                    localField: '_id.source',
                     from: 'users',
                     foreignField: '_id'
                 }
             },
             {
-                $project: {
-                    _id: 'dialog_id',
-                    time: 1,
-                    count: 1,
-                    unread: 1,
-                    text: 1,
-                    dialog: {
-                        domain: 1,
-                        forename: 1,
-                        surname: 1,
-                        avatar: 1,
-                        online: 1
-                    },
-                    source: '_id.source'
+                $unwind: {
+                    path: '$source'
                 }
             },
             {
                 $lookup: {
-                    'as': 'dialog.avatar',
-                    localField: 'dialog.avatar',
-                    from: 'files',
+                    'as': 'target',
+                    localField: '_id.target',
+                    from: 'users',
                     foreignField: '_id'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$target'
+                }
+            },
+            {
+                $project: {
+                    _id: '$last_id',
+                    time: 1,
+                    count: 1,
+                    unread: 1,
+                    text: 1,
+                    source: user_projection,
+                    target: user_projection
                 }
             }
         ]);
     }
 };
 
-var user_fields = ['source', 'target', 'owner', 'like', 'hake', 'photo', 'photos', 'video', 'videos', 'text', 'repost'];
+var user_fields = ['type', 'source', 'target', 'owner', 'like', 'hake',
+    'photo', 'photos', 'video', 'videos', 'text', 'repost'];
 var admin_fields = ['domain', 'type'];
 
 function populate(r) {

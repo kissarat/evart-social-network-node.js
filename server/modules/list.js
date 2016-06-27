@@ -18,14 +18,14 @@ module.exports = {
         var id = $.has('id') ? $.id : $.user._id;
         User.findOne(id, fields, $.wrap(function (user) {
             if ('friend' === name) {
-                search($, {
+                User.search($, {
                     _id: {
                         $in: user.follow.map(ObjectID)
                     },
                     follow: user._id
                 }, true);
             } else {
-                search($, user[name], true);
+                User.search($, user[name], true);
             }
         }));
 /*
@@ -37,10 +37,10 @@ module.exports = {
             User.findOne({
                 domain: $.param('domain')
             }).select(list_name).then(function (user) {
-                return search($, user[list_name]);
+                return User.search($, user[list_name]);
             });
         } else {
-            return search($);
+            return User.search($);
         }
   */
     },
@@ -82,44 +82,5 @@ function modify_list(add) {
                 }
             })
         });
-    }
-}
-
-function search($, where, send) {
-    var isArray = where instanceof Array;
-    var ands = !where || isArray ? {} : where;
-    if ($.has('q')) {
-        var ORs = [];
-        var q = $.search;
-        ['domain', 'surname'].forEach(function (param) {
-            var d = {};
-            d[param] = {
-                $regex: q
-            };
-            ORs.push(d);
-        });
-        if (ORs.length > 0) {
-            ands.$or = ORs;
-        }
-    }
-    ['country', 'city', 'sex', 'forename', 'relationship', 'type'].forEach(function (param) {
-        if ($.has(param)) {
-            ands[param] = $.param(param);
-        }
-    });
-    if (isArray) {
-        ands._id = {
-            $in: where.map(function (id) {
-                return ObjectID(id);
-            })
-        };
-    }
-    var r = User.find(ands).select($.select(['domain'], User.fields.update.user));
-    if (send) {
-        r.exec($.wrap(function (users) {
-            return $.send(users);
-        }));
-    } else {
-        return r;
     }
 }

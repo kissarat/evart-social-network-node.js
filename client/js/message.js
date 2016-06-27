@@ -507,11 +507,17 @@ App.module('Message', function (Message, App) {
     }, {
         widget: function (region, options) {
             var list = new Message.List();
-            list.queryModel.set('type', options.type || MessageType.DIALOG);
+            if (!options.type) {
+                options.type = MessageType.DIALOG;
+            }
+            list.queryModel.set('type', options.type);
             list.queryModel.set('target_id', options.target_id);
             list.comparator = '_id';
             var listView = new Message.ListView({collection: list.fullCollection});
-            var draft = {target: options.target_id};
+            var draft = {
+                type: options.type,
+                target: options.target_id
+            };
             if (options.source) {
                 draft.source = options.source;
             }
@@ -595,20 +601,6 @@ App.module('Message', function (Message, App) {
             if (this.model.get('text')) {
                 App.storage.save(this.model, 'target');
             }
-        },
-
-        escape: function (value, options) {
-            if (value) {
-                value = value
-                    .replace(/(&tab;|&nbsp;)+/ig, ' ')
-                    .replace(/\s+/ig, ' ')
-                    .replace(/<\w+\s*>([^<])<\/\w+>/ig, '')
-                    .replace(/<br\s*\/>/ig, '\n')
-                    .replace(/\s*\n+\s*/ig, '\n')
-                    .trim();
-
-            }
-            return value;
         },
 
         send: function () {
