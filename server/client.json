@@ -6,7 +6,7 @@
     "delay": 250
   },
   "trace": {
-    "history": false
+    "history": true
   },
   "socket": {
     "address": "ws://{hostname}/socket",

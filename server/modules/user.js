@@ -39,6 +39,7 @@ global.schema.User = new mongoose.Schema({
     type: {
         type: String,
         "enum": ['user', 'group', 'admin'],
+        "default": "user",
         index: {
             unique: false
         }
@@ -49,6 +50,12 @@ global.schema.User = new mongoose.Schema({
         "enum": ['en', 'ru']
     },
 
+    sex: {
+        type: String,
+        "enum": ["male", "female"],
+        "default": "male"
+    },
+
     avatar: {
         type: T.ObjectId,
         ref: 'Photo'
@@ -56,10 +63,7 @@ global.schema.User = new mongoose.Schema({
 
     online: {
         type: Date,
-        "default": function () {
-            return Date.now() + 5 * 60000;
-        }
-
+        "default": Date.now
     },
 
     background: {
@@ -91,16 +95,25 @@ global.schema.User = new mongoose.Schema({
         type: String,
         match: /^.*@.*\..*$/
     },
+    
+    country: {
+        type: String,
+        "enum": ["AF", "AL", "DZ", "AD", "AO", "AI", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BA", "BW", "BR", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CO", "KM", "CK", "CR", "HR", "CU", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "ET", "FO", "FJ", "FI", "FR", "GF", "PF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HN", "HK", "HU", "IS", "IN", "ID", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KW", "KG", "LV", "LB", "LS", "LR", "LI", "LT", "LU", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "MX", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MP", "NO", "OM", "PK", "PW", "PA", "PG", "PY", "PE", "PH", "PL", "PT", "PR", "QA", "RO", "RU", "RW", "RE", "WS", "SM", "SA", "SN", "RS", "SC", "SL", "SG", "SK", "SI", "SB", "SO", "ZA", "ES", "LK", "SD", "SR", "SJ", "SZ", "SE", "CH", "TJ", "TH", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "UY", "UZ", "VU", "WF", "YE", "ZM", "ZW"],
+        "default": "RU"
+    },
 
-    status: String,
-    country: String,
+    relationship: {
+        type: String,
+        "enum": [null, "single", "in", "engaged", "married", "love", "complex", "search"]
+    },
+
+    status: utils.StringType(140),
     city_id: Number,
-    city: String,
-    address: String,
-    name: String,
+    city: utils.StringType(),
+    address: utils.StringType(128),
+    name:  utils.StringType(48),
     birthday: Date,
-    relationship: Number,
-    about: String,
+    about: utils.StringType(512),
 
     languages: {
         type: String,
@@ -248,24 +261,6 @@ module.exports = {
                     })
                 });
             }
-            else if ($.has('online')) {
-                let online = $.param('online');
-                if (isNaN(online)) {
-                    $.invalid('online', 'Is not number');
-                }
-                online = +online;
-                let now = Date.now();
-                let delta = (15 * 60 + 10) * 1000;
-                if (online < 0) {
-                    online = now - online;
-                }
-                if (online <= now + delta) {
-                    User.update(where_me, {$set: {online: online}}).then(resolve, reject);
-                }
-                else {
-                    $.invalid('online', 'Out of range');
-                }
-            }
             else {
                 let changes = {time: Date.now()};
                 let a = ['avatar', 'background'];
@@ -278,7 +273,7 @@ module.exports = {
                         return;
                     }
                 }
-                var fields = a.concat(['online', 'tile']).join(', ');
+                var fields = a.concat(['tile']).join(', ');
                 reject(code.BAD_REQUEST, {
                     message: `You can update ${fields} only`
                 });

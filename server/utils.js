@@ -61,7 +61,7 @@ function nano100time() {
     return (start + (now[0] * 1000000000 + now[1])) / 100;
 }
 
-var entities = ['User', 'Agent', 'Record', 'Message', 'File', 'Stream', 'Video'];
+var entities = ['User', 'Agent', 'Record', 'Message', 'File', 'Stream', 'Video', 'Stat'];
 
 function id12(name) {
     var now = process.hrtime();
@@ -73,21 +73,41 @@ function id12(name) {
         number += 1;
     }
     var first = ('00' + number).slice(-2);
-    // var second = ('00' + config.machine_id.toString(16)).slice(-2);
-    var third = ((start_second + now[0]) * 1000000000 + now[1]).toString(16);
+    var time = (start_second + now[0]) * 1000000000 + now[1];
+    var third = time.toString(16);
     var forth = Math.round(Math.random() * 0xFFFFFF).toString(16);
     third = ('00000000' + third).slice(-16);
-    forth =  ('000000' + forth).slice(-6);
-    return  first + third + forth;
+    forth = ('000000' + forth).slice(-6);
+    var object_id = ObjectID(first + third + forth);
+    object_id.time = time;
+    return object_id;
 }
 
 function idType(name) {
     return {
         type: ObjectIdSchema,
         default: function () {
-            return new ObjectID(id12(name));
+            return id12(name);
         }
     };
+}
+
+function StringType(max, min) {
+    return {
+        type: String,
+        min: min || 2,
+        max: max || 64,
+        trim: true,
+        set: function (value) {
+            if (value) {
+                value = value.replace(/[\s\xA0]/g, ' ');
+            }
+            if (!value) {
+                value = null
+            }
+            return value;
+        }
+    }
 }
 
 function hash(data) {
@@ -117,5 +137,5 @@ var exports = {
 };
 
 module.exports = merge(exports, exports.export(
-    [Iterator, fields, merge, nano100time, id12, idType, hash, s]
+    [Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType]
 ));

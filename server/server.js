@@ -13,6 +13,7 @@ var ws = require('ws');
 
 global.config = require('./config.json');
 global.code = require('../client/code.json');
+global.constants = require('../client/js/data.js');
 var code = require('./code');
 var errors = require('./errors');
 
@@ -660,6 +661,17 @@ Context.prototype = {
 
     model: function () {
         this.o.apply(this.o, arguments);
+    },
+
+    get bodySize() {
+        var size = this.req.headers ? this.req.headers['content-length'] : 0;
+        return size > 0 ? size : 0;
+    },
+
+    maxBody: function (maxLength) {
+        if (this.bodySize > maxLength) {
+            throw new errors.EntityTooLarge(maxLength);
+        }
     }
 };
 
@@ -841,50 +853,70 @@ function exec($, action) {
     var must_upload_route = /^.(photo|file)/.test($.req.url.original);
 
     if ($.user || is_unauthoried_route || ('GET' == $.req.method && $.isCache)) {
-        var size = $.req.headers['content-length'];
-        if (size && size > 0 && !must_upload_route) {
-            return receive($.req, function (data) {
-                if ($.req.headers['content-type'].indexOf('x-www-form-urlencoded') > 0) {
-                    try {
-                        $.body = qs.parse(data.toString('utf8'));
-                        $.params = $.merge($.params, $.body);
-                    }
-                    catch (ex) {
-                        $.send(code.BAD_REQUEST, {
-                            error: ex.getMessage()
-                        })
-                    }
-                }
-                else if ($.req.headers['content-type'].indexOf('json') > 0 || 'test' == $.req.url.route[0]) {
-                    try {
-                        data = data.toString('utf8');
-                        $.body = JSON.parse(data);
-                        $.params = $.merge($.params, $.body);
-                        for (var key in $.params) {
-                            var value = $.params[key];
-                            if (value.replace && /[<>"']/.test(value)) {
-                                $.params[key] = value
-                                    .replace(/</g, '&lt;')
-                                    .replace(/>/g, '&gt;')
-                                    .replace(/"([^"]+)"/g, '«$1»')
-                                    .replace(/"/g, '&quot;')
-                                    .replace(/'/g, '’');
-                            }
+        if ('GET' != $.req.method) {
+            var mime_name = $.req.headers['content-type'];
+            mime_name = mime_name.split(';')[0];
+            var mime = constants.mimes[mime_name];
+            if (!mime) {
+                $.sendStatus(code.UNSUPPORTED_MEDIA_TYPE, {
+                    mime: mime_name
+                });
+                return;
+            }
+        }
+        var size = $.bodySize;
+        if (size > 0) {
+            if (size > mime.size) {
+                $.sendStatus(code.REQUEST_TOO_LONG, {
+                    max: mime.size,
+                    size: size,
+                    mime: mime_name
+                });
+                return;
+            }
+            if (!must_upload_route) {
+                return receive($.req, function (data) {
+                    if ($.req.headers['content-type'].indexOf('x-www-form-urlencoded') > 0) {
+                        try {
+                            $.body = qs.parse(data.toString('utf8'));
+                            $.params = $.merge($.params, $.body);
+                        }
+                        catch (ex) {
+                            $.send(code.BAD_REQUEST, {
+                                error: ex.getMessage()
+                            })
                         }
                     }
-                    catch (ex) {
-                        console.log(ex);
-                        $.send(code.BAD_REQUEST, {
-                            error: ex
-                        })
+                    else if ($.req.headers['content-type'].indexOf('json') > 0 || 'test' == $.req.url.route[0]) {
+                        try {
+                            data = data.toString('utf8');
+                            $.body = JSON.parse(data);
+                            $.params = $.merge($.params, $.body);
+                            for (var key in $.params) {
+                                var value = $.params[key];
+                                if (value.replace && /[<>"']/.test(value)) {
+                                    $.params[key] = value
+                                        .replace(/</g, '&lt;')
+                                        .replace(/>/g, '&gt;')
+                                        .replace(/"([^"]+)"/g, '«$1»')
+                                        .replace(/"/g, '&quot;')
+                                        .replace(/'/g, '’');
+                                }
+                            }
+                        }
+                        catch (ex) {
+                            console.log(ex);
+                            $.send(code.BAD_REQUEST, {
+                                error: ex
+                            })
+                        }
                     }
-                }
-                else {
-                    throw 'data received';
-                    $.data = data;
-                }
-                return call_action();
-            });
+                    else {
+                        console.error('UNPROCESSED_DATA', data);
+                    }
+                    return call_action();
+                });
+            }
         }
         else {
             return call_action();

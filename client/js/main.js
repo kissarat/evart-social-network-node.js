@@ -259,6 +259,9 @@ _.extend(Application.prototype, {
     },
 
     navigate: function (url) {
+        if (statistics.history) {
+            statistics.history.push([Date.now() - statistics.start, url]);
+        }
         return Backbone.history.navigate(url, {
             trigger: true
         });

@@ -119,7 +119,7 @@ function Service() {
             delay: 250
         },
         trace: {
-            history: true
+            history: false
         },
         socket: {
             address: 'ws://' + location.hostname + '/socket',
@@ -241,7 +241,7 @@ _.extend(Service.prototype, {
     },
 
     updateOnline: function (duration) {
-        $.sendJSON('PATCH', '/api/user', {online: -duration});
+        $.sendJSON('PATCH', '/api/agent/online', {till: -duration});
     },
 
     unimplemented: unimplemented,
@@ -275,6 +275,17 @@ _.extend(Service.prototype, {
             }
             return !!object;
         }
+    },
+
+    sendStatistics: function () {
+        statistics.end = Date.now() - statistics.start;
+        $.ajax({
+            type: 'PUT',
+            url: '/api/agent/stat',
+            data: JSON.stringify(statistics),
+            async: false,
+            contentType: 'application/json'
+        });
     }
 });
 

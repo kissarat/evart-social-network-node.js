@@ -752,11 +752,13 @@ App.module('User', function (User, App) {
             }
             this.model.setupAvatar(this.ui.avatar[0]);
             _.each(this.model.get('tiles'), function (file_id, tile) {
-                $.getJSON('/api/file?id=' + file_id, function (file) {
-                    self.setTile(file, tile).$el
-                        .on('dragover', this.dragover)
-                        .on('drop', this.drop);
-                });
+                if (file_id) {
+                    $.getJSON('/api/file?id=' + file_id, function (file) {
+                        self.setTile(file, tile).$el
+                            .on('dragover', this.dragover)
+                            .on('drop', this.drop);
+                    });
+                }
             });
             if (!this.model.canManage()) {
                 this.$('.fa-camera').remove();

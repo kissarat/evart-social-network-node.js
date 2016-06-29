@@ -19,47 +19,59 @@ global.schema.Agent = new mongoose.Schema({
             return rs.generate(40);
         }
     },
+
     start: {
         type: Date,
         required: true,
-        "default": Date.now
+        "default": Date.now,
+        min: new Date('2016-01-01'),
+        max: new Date('2020-01-01')
     },
+
     time: {
         type: Date,
         required: true,
-        "default": Date.now
+        "default": Date.now,
+        min: new Date('2016-01-01'),
+        max: new Date('2020-01-01')
     },
+
     about: {
         os: {
-            name: String,
+            name: utils.StringType(32),
             version: Number,
-            device: String,
-            vendor: String
+            device: utils.StringType(32),
+            vendor: utils.StringType(32)
         },
-        name: String,
+        name: utils.StringType(32),
         version: Number
     },
+
     code: {
         type: String,
         match: /^\d{6}$/,
         trim: true
     },
+
     phone: {
         type: String,
         trim: true,
         match: /^\d{9,15}$/
     },
+
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }
+    },
+
+    ip: utils.StringType()
 }, {
     versionKey: false
 });
 
 module.exports = {
     POST: function ($) {
-        function update (agent) {
+        function update(agent) {
             if (!agent) {
                 agent = new Agent({
                     about: $.body
@@ -70,16 +82,18 @@ module.exports = {
             }
 
             agent.time = Date.now();
+            agent.ip = $.req.headers.ip;
             agent.save($.wrap(function () {
                 // if ((Math.random() > (1 - config.auth_generation))) {}
                 if (!$.req.auth) {
                     $.setCookie('auth', agent.auth, config.forever);
                 }
-                agent = extract(agent);
+                agent = extract(agent, $.req.headers);
                 agent.config = client;
                 $.send(agent);
             }));
         }
+
         if ($.req.auth) {
             Agent.findOne({
                 auth: $.req.auth
@@ -88,18 +102,65 @@ module.exports = {
             update();
         }
     },
+
     GET: function ($) {
         return $.send(extract($.agent));
+    },
+
+    online: function ($) {
+        let till = $.param('till');
+        till = +till;
+        if (isNaN(till)) {
+            $.invalid('online', 'Is not number');
+        }
+        var now = Date.now();
+        if (till <= 0) {
+            till = now - till;
+        }
+
+        $.agent.time = now;
+        $.agent.ip = $.req.headers.ip;
+        $.agent.save($.wrap(function () {
+            $.agent.user.online = till;
+            $.agent.user.save($.wrap(function () {
+                $.send({
+                    success: true,
+                    time: now,
+                    till: till,
+                    ip: $.agent.ip
+                });
+            }))
+        }))
+    },
+
+    stat: function ($) {
+        var data = $.body;
+        data.agent = $.agent._id;
+        data._id = utils.id12('Stat');
+        if ($.user) {
+            data.user = $.user._id;
+        }
+        $.collection('stat').insert(data, $.wrap(function (r) {
+            var response = {
+                success: r.result.n > 0,
+                time: data._id.time
+            };
+            if (response.success) {
+                response._id = data._id;
+            }
+            $.send(code.CREATED, response);
+        }));
     }
 };
 
-function extract(agent) {
+function extract(agent, headers) {
     var result;
     if ('function' === typeof agent.toObject) {
         agent = agent.toObject();
     }
     result = {
         _id: agent._id,
+        ip: agent.ip,
         auth: agent.auth
     };
     if (agent.user) {
@@ -109,6 +170,9 @@ function extract(agent) {
             type: agent.user.type,
             follow: agent.user.follow
         };
+    }
+    if (headers) {
+        result.headers = headers;
     }
     return result;
 }

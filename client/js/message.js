@@ -176,19 +176,6 @@ App.module('Message', function (Message, App) {
         }
     });
 
-    Message.DialogListView = Marionette.CollectionView.extend({
-        childView: Message.LastMessageView
-    }, {
-        widget: function (region, options) {
-            var list = new Message.DialogList();
-            list.queryModel.set(_.pick(options, 'unread', 'cut', 'since'));
-            var listView = new Message.DialogListView({collection: list.fullCollection});
-            region.show(listView);
-            list.getFirstPage();
-            return listView;
-        }
-    });
-
     Message.PostView = Marionette.View.extend({
         template: '#layout-post',
 
@@ -484,7 +471,7 @@ App.module('Message', function (Message, App) {
         childView: Message.View,
 
         behaviours: {
-            Pageable: {reverse: true}
+            // Pageable: {reverse: true}
         },
 
         onRender: function () {
@@ -492,6 +479,15 @@ App.module('Message', function (Message, App) {
         },
 
         attachHtml: attachHtml
+    }, {
+        widget: function (region, options) {
+            var list = new Message.DialogList();
+            list.queryModel.set(_.pick(options, 'unread', 'cut', 'since'));
+            var listView = new Message.DialogListView({collection: list.fullCollection});
+            region.show(listView);
+            list.getFirstPage();
+            return listView;
+        }
     });
 
     _.extend(Message.DialogListView.prototype, listViewMixin);

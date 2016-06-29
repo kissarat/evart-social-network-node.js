@@ -48,35 +48,25 @@ function load1_windowLoad() {
             }
         });
 
-    // var deferreds;
-    // $('#select-language').val(App.language).change(function (e) {
-    //     $.cookie('lang', e.target.value, {
-    //         expires: 365,
-    //         path: '/'
-    //     });
-    //     return location.reload();
-    // });
-    if (DEV) {
-        var deferreds = [];
-        $('[data-src]').each(function (i, script) {
-            return deferreds.push($.get(script.dataset.src, function (template) {
-                script.innerHTML = template.replace(/>\s+</g, '><');
-                return script.removeAttribute('data-src');
-            }));
+    var deferreds = _.toArray(document.querySelectorAll('.include[data-src]')).map(function (script) {
+        return $.get(script.dataset.src, function (template) {
+            script.innerHTML = template.replace(/>\s+</g, '><');
+            script.removeAttribute('data-src');
         });
-        return $.when(deferreds).then(function () {
+    });
+    if (deferreds.length > 0) {
+        $.when(deferreds).then(function () {
             load2_registerAgent.call(App);
         });
-    } else if (window.addEventListener && navigator.sendBeacon) {
-        addEventListener('beforeunload', function () {
-            return navigator.sendBeacon('/api/statistics', JSON.stringify(statistics));
-        });
+    }
+    else {
         load2_registerAgent.call(App);
     }
 }
 
 function load2_registerAgent() {
     var self = this;
+    addEventListener('beforeunload', App.sendStatistics);
     $.sendJSON('POST', '/api/agent', statistics, function (xhr) {
         var language;
         $('#boot-loading').hide();
@@ -107,9 +97,9 @@ function load2_registerAgent() {
 
 function load3_languageLoaded(xhr) {
     App.agent = xhr.responseJSON;
-    var isAuthorized = !!(code.UNAUTHORIZED !== xhr.status && App.agent.user);
+    App.isAuthorized = !!(code.UNAUTHORIZED !== xhr.status && App.agent.user);
 
-    if (isAuthorized) {
+    if (App.isAuthorized) {
         $('body').removeAttr('class');
         App.trigger('login');
     }
@@ -123,13 +113,19 @@ function load3_languageLoaded(xhr) {
         }, 0);
     }
 
-    setInterval(function () {
-        App.updateOnline(App.config.online.duration + App.config.online.delay);
-    }, App.config.online.duration);
-    
-    setTimeout(function () {
-        App.updateOnline(App.config.online.duration);
-    }, App.config.online.delay);
+    if (App.config.online) {
+        setInterval(function () {
+            App.updateOnline(App.config.online.duration + App.config.online.delay);
+        }, App.config.online.duration);
+
+        setTimeout(function () {
+            App.updateOnline(App.config.online.duration);
+        }, App.config.online.delay);
+    }
+
+    if (App.config.trace.history) {
+        statistics.history = [];
+    }
 
     Backbone.history.start({
         pushState: true,

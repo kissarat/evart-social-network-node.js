@@ -39,4 +39,12 @@ class Forbidden extends Response {
     }
 }
 
-module.exports = utils.export([Response, BadRequest, Forbidden]);
+class EntityTooLarge extends Response {
+    constructor(maxLength) {
+        super(code.REQUEST_TOO_LONG, {
+            max: maxLength
+        })
+    }
+}
+
+module.exports = utils.export([Response, BadRequest, Forbidden, EntityTooLarge]);
