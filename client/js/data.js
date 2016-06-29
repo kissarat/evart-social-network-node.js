@@ -510,6 +510,14 @@ var mimes = [
 
 var extensions = {};
 
+var filetypes = [
+    {mime: ['image/jpeg'], type: 'photo'},
+    {mime: ['audio/mpeg', 'audio/ogg', 'audio/ogg'], type: 'audio'},
+    {mime: ['video/mp4', 'video/webm'], type: 'video'},
+    {mime: ['text/html', 'text/plain'], type: 'text'},
+    {mime: ['application/pdf'], type: 'pdf'}
+];
+
 function _generate_data() {
     _.each(emoji, function (array, symbol) {
         if ('string' == typeof array) {
@@ -549,13 +557,24 @@ function _generate_data() {
     });
     mimes = _mimes;
     Object.freeze(mimes);
+
+    var _filetypes = {};
+    filetypes.forEach(function (record) {
+        record.mime.forEach(function (mime) {
+            _filetypes[mime] = record.type;
+        })
+    });
+    filetypes = _filetypes;
+    Object.freeze(filetypes);
 }
 
 if (isNode) {
     _generate_data();
     module.exports = {
         countries: countries,
-        mimes: mimes
+        mimes: mimes,
+        extensions: extensions,
+        filetypes: filetypes
     };
 }
 else {

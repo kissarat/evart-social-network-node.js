@@ -12,36 +12,8 @@ var utils = require('../utils.js');
 
 var magic = new mmm.Magic(mmm.MAGIC_MIME);
 var md5_dir = static_dir + '/md5';
-var mimes = {};
-fs.readFileSync(__dirname + '/../../client/mime.csv').toString('utf8').split('\n').map(function (mime) {
-    mime = mime.split(',');
-    if (mime.length == 3) {
-        mimes[mime[0]] = {
-            ext: mime[2].split(' '),
-            size: parseInt(mime[1])
-        };
-    }
-});
 
 var ext_regex = /\.(\w+)$/;
-
-var handlers = [
-    {mime: ['image/jpeg'], type: 'photo'},
-    {mime: ['audio/mpeg', 'audio/ogg', 'audio/ogg'], type: 'audio'},
-    {mime: ['video/mp4', 'video/webm'], type: 'video'},
-    {mime: ['text/html', 'text/plain'], type: 'text'},
-    {mime: ['application/pdf'], type: 'pdf'},
-];
-
-function find_handler_type(mime) {
-    for (var i = 0; i < handlers.length; i++) {
-        var handler = handlers[i];
-        if (handler.mime.indexOf(mime) >= 0) {
-            return handler.type;
-        }
-    }
-    return false;
-}
 
 module.exports = {
     POST: function ($) {
@@ -73,10 +45,10 @@ module.exports = {
             $.req.on('end', function () {
                 magic.detectFile(id_filename, $.wrap(function (mime) {
                     mime = mime.replace('; charset=binary', '');
-                    var type = find_handler_type(mime);
-                    var mime_type = mimes[mime];
-                    if (mime_type && mime_type.ext && mime_type.ext.indexOf(ext) < 0) {
-                        ext = mime_type.ext[0];
+                    var filetype = constants.filetypes[mime];
+                    var type = constants.mimes[mime];
+                    if (type && type.ext && type.ext.indexOf(ext) < 0) {
+                        ext = type.ext[0];
                     }
                     hash_md5(id_filename, $.wrap(function (md5) {
                         var data = {
@@ -86,7 +58,7 @@ module.exports = {
                             mime: mime,
                             md5: md5,
                             time: Date.now(),
-                            type: type ? type : 'file'
+                            type: filetype ? filetype : 'file'
                         };
                         var md5_filename = path.join(md5_dir, md5 + '.' + ext);
                         fs.stat(md5_filename, function (err, stat) {
@@ -132,13 +104,12 @@ module.exports = {
                 return q;
             }
             else {
-                return File.findOne($.param('id')).then(function (file) {
-                    $.res.writeHead(code.MOVED_PERMANENTLY, {
+                File.findOne($.id, $.wrap(function (file) {
+                    $.sendStatus(code.MOVED_PERMANENTLY, {
                         'content-type': file.mime,
                         location: '/md5/' + file.md5 + '/' + file.name + '.' + file.ext
                     });
-                    return $.res.end();
-                });
+                }));
             }
         } else {
             var owner_id = $.has('owner_id') ? $.param('owner_id') : $.user._id;

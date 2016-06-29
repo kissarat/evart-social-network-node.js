@@ -269,34 +269,36 @@ App.module('User', function (User, App) {
             var phone = this.model.get('phone');
 
             if (phone) {
-                this.model.set('phone', phone.replace(/[^\d]/g, ''));
+                phone = phone.replace(/[^\d]/g, '');
+                this.model.set('phone', phone);
             }
             if (this.model.isValid('phone')) {
-                var found = _.find(country_codes, function (code) {
-                    return self.model.get('phone').indexOf(code) === 0;
+                var code = _.find(country_codes, function (code) {
+                    return phone.indexOf(code) === 0;
                 });
 
-                if (!found) {
-                    this.$el.report('phone', T('Phone number must starts with country code'), 'error');
-                } else {
-                    $.sendJSON('POST', '/api/user/phone', {phone: this.model.get('phone')}, function (xhr) {
-                        var message, response;
-                        response = xhr.responseJSON;
-                        if (response.success) {
+                if (code) {
+                    var data = {phone: this.model.get('phone')};
+                    $.sendJSON('POST', '/api/user/phone', data, function (data) {
+                        if (data.success) {
                             App.navigate('/signup/code');
-                        } else if (response.error) {
-                            message = (twilio.INVALID_NUMBER = response.error.code) ? 'Invalid phone number' : response.error.message;
+                        } else if (data.error) {
+                            var error = data.error;
+                            message = (twilio.INVALID_NUMBER = error.code) ? 'Invalid phone number' : error.message;
                             self.$el.report('phone', T(message), 'error');
                         }
                     });
+                }
+                else {
+                    this.$el.report('phone', T('Phone number must starts with country code'), 'error');
                 }
             }
         },
 
         code: function () {
             if (this.model.isValid('code')) {
-                $.sendJSON('POST', '/api/user/code', {code: this.model.get('code')}, function (xhr) {
-                    if (xhr.responseJSON.success) {
+                $.sendJSON('POST', '/api/user/code', {code: this.model.get('code')}, function (data) {
+                    if (data.success) {
                         App.navigate('/signup/personal');
                     }
                 });
@@ -313,18 +315,15 @@ App.module('User', function (User, App) {
                     var key = fields[j];
                     data[key] = this.model.get(key);
                 }
-                return $.sendJSON('POST', '/api/user/personal', data, function (xhr) {
-                    var result = xhr.responseJSON;
-                    if (result.success) {
-                        return App.navigate('/login');
+                $.sendJSON('POST', '/api/user/personal', data, function (data) {
+                    if (data.success) {
+                        App.navigate('/login');
                     }
-                    if (code.BAD_REQUEST === xhr.status && result.invalid) {
-                        var results = [];
-                        for (var name in result.invalid) {
-                            var info = result.invalid[name];
-                            results.push(self.$el.report(name, info.message, 'error'));
+                    else if (data.invalid) {
+                        for (var name in data.invalid) {
+                            var info = data.invalid[name];
+                            self.$el.report(name, info.message, 'error');
                         }
-                        return results;
                     }
                 });
             }
@@ -682,8 +681,10 @@ App.module('User', function (User, App) {
                 tile: this.getTileNumber(e.target),
                 file_id: file._id
             };
-            $.sendJSON('PATCH', '/api/user?id=' + this.model.get('_id'), params, function () {
-                self.setTile(file, self.getTileRegion(e.target));
+            $.sendJSON('PATCH', '/api/user?id=' + this.model.get('_id'), params, function (data) {
+                if (data.success) {
+                    self.setTile(file, self.getTileRegion(e.target));
+                }
             });
         },
 
@@ -703,9 +704,11 @@ App.module('User', function (User, App) {
 
         follow: function () {
             var self = this;
-            $.sendJSON('POST', '/api/user/list?name=follow&target_id=' + this.model.get('_id'), {}, function (data) {
+            var url = '/api/user/list?name=follow&target_id=' + this.model.get('_id');
+            $.sendJSON('POST', url, {}, function (data) {
                 if (data.success) {
-                    $.sendJSON('PUT', '/api/record?type=follow&target_id=' + self.model.get('_id'), {type: 'follow'}, function (data) {
+                    var url = '/api/record?type=follow&target_id=' + self.model.get('_id');
+                    $.sendJSON('PUT', url, {type: 'follow'}, function (data) {
                         if (data.success) {
                             App.navigate('/list/friend');
                         }
@@ -716,8 +719,11 @@ App.module('User', function (User, App) {
 
         changeStatus: function () {
             var self = this;
-            return $.sendJSON('POST', '/api/user/status?id=' + this.model.get('_id'), {status: this.model.get('status')}, function () {
-                return self.ui.status.blur();
+            var data = {status: this.model.get('status')};
+            return $.sendJSON('POST', '/api/user/status?id=' + this.model.get('_id'), data, function (data) {
+                if (data.success) {
+                    self.ui.status.blur();
+                }
             });
         },
 

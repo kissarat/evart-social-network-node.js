@@ -19,6 +19,10 @@
     "delay": 8000,
     "duration": 900000
   },
+  "cookie": {
+    "future": "Thu, 31 Jan 2030 22:00:00 GMT",
+    "past": "Thu, 01 Jan 1970 00:00:00 GMT"
+  },
   "peer": {
     "enabled": true,
     "iceServers": [

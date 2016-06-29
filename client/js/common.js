@@ -241,7 +241,8 @@ _.extend(Service.prototype, {
     },
 
     updateOnline: function (duration) {
-        $.sendJSON('PATCH', '/api/agent/online', {till: -duration});
+        $.sendJSON('PATCH', '/api/agent/online', {till: -duration}, function (xhr) {
+        });
     },
 
     unimplemented: unimplemented,

@@ -69,14 +69,8 @@ o.connection.on('open', function () {
             var $ = new Context(req);
             $.res = res;
             $.subscribers = subscribers;
-            $.COOKIE_AGE_FOREVER = config.forever;
-
-            if (0 === req.url.original.indexOf('/headers')) {
-                $.send({
-                    url: req.url,
-                    method: req.method,
-                    headers: req.headers
-                });
+            if ('/agent' === req.url.original) {
+                serve($)
             }
             else {
                 $.authorize(() => serve($));
@@ -457,7 +451,17 @@ Context.prototype = {
         var cookie = name + '=' + value;
         cookie += '; path=' + (path || '/');
         if (age) {
-            cookie += '; expires=' + new Date(Date.now() + age).toUTCString();
+            if (true === age) {
+                age = new Date();
+                age.setYear(age.getYear() + 10);
+            }
+            if (age instanceof Date) {
+                age = age.toUTCString();
+            }
+            if (!isNaN(age)) {
+                age = new Date(Date.now() + age).toUTCString();
+            }
+            cookie += '; expires=' + age;
         }
         if (this.res.headersSent) {
             console.error(`Setting cookie when headers sent ${name}=${value}`);
@@ -488,16 +492,17 @@ Context.prototype = {
             status = arguments[0];
             object = arguments[1];
         }
-        var data = JSON.stringify(object);
+
         if (this.socket) {
-            this.socket.send(data);
+            this.socket.send(JSON.stringify(object));
             return;
         }
 
         if (this.res.finished) {
-            console.error('Response already send', data);
+            console.error('Response already send ', this.req.url.original, object);
         }
         else {
+            var data = JSON.stringify(object);
             if (2 == arguments.length) {
                 this.res.writeHead(status, {
                     'content-type': 'application/json; charset=utf-8'
@@ -536,22 +541,30 @@ Context.prototype = {
     },
 
     authorize: function (cb) {
-        // var constructor_name = this.socket ? 'socket' : 'http';
+        function agent_not_found() {
+            self.send(code.UNAUTHORIZED, {
+                success: false,
+                error: {
+                    code: 'AGENT_NOT_FOUND',
+                    message: 'User agent is not registered'
+                }
+            });
+        }
+
         if (this.req.auth) {
             var self = this;
             Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function (agent) {
                 if (agent) {
                     self.agent = agent;
-                    // console.log('AUTHORIZE', agent.auth, constructor_name);
+                    cb(agent);
                 }
-                cb(agent);
+                else {
+                    agent_not_found();
+                }
             }));
         }
         else {
-            var agent = new Agent();
-            agent.save(this.wrap(function (agent) {
-                cb(agent);
-            }));
+            agent_not_found();
         }
     },
 
@@ -672,6 +685,11 @@ Context.prototype = {
         if (this.bodySize > maxLength) {
             throw new errors.EntityTooLarge(maxLength);
         }
+    },
+
+    get isUpdate() {
+        var m = this.req.method;
+        return 'POST' == m || 'PUT' == m || 'PATCH' == m;
     }
 };
 
@@ -853,7 +871,7 @@ function exec($, action) {
     var must_upload_route = /^.(photo|file)/.test($.req.url.original);
 
     if ($.user || is_unauthoried_route || ('GET' == $.req.method && $.isCache)) {
-        if ('GET' != $.req.method) {
+        if ($.isUpdate) {
             var mime_name = $.req.headers['content-type'];
             mime_name = mime_name.split(';')[0];
             var mime = constants.mimes[mime_name];

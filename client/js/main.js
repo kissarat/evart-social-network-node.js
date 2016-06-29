@@ -66,7 +66,10 @@ jQuery.sendJSON = function (type, url, data, complete) {
         contentType: 'application/json; charset=UTF-8',
         dataType: 'json',
         data: JSON.stringify(data),
-        complete: complete
+        complete: function (xhr) {
+            var response = xhr.responseJSON;
+            complete(response, xhr);
+        }
     });
 };
 

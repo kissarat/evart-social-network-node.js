@@ -1,6 +1,7 @@
 {
-  "code": "SERVICE_UNAVAILABLE",
+  "success": false,
   "error": {
+    "code": "SERVICE_UNAVAILABLE",
     "message": "Service is unavailable"
   }
 }

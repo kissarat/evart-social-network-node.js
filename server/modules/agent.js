@@ -86,7 +86,7 @@ module.exports = {
             agent.save($.wrap(function () {
                 // if ((Math.random() > (1 - config.auth_generation))) {}
                 if (!$.req.auth) {
-                    $.setCookie('auth', agent.auth, config.forever);
+                    $.setCookie('auth', agent.auth, true);
                 }
                 agent = extract(agent, $.req.headers);
                 agent.config = client;
@@ -104,7 +104,29 @@ module.exports = {
     },
 
     GET: function ($) {
-        return $.send(extract($.agent));
+        var agent = $.agent;
+        if (agent) {
+            agent = extract(agent);
+            if (agent.user) {
+                $.send(agent);
+            }
+            else {
+                $.send(code.UNAUTHORIZED, agent);
+            }
+        }
+        else {
+            $.sendStatus(code.NOT_FOUND, agent);
+        }
+    },
+
+    DELETE: function ($) {
+        var agent = $.agent;
+        if (agent) {
+            agent.remove($.answer);
+        }
+        else {
+            $.sendStatus(code.NOT_FOUND, agent);
+        }
     },
 
     online: function ($) {
@@ -150,15 +172,28 @@ module.exports = {
             }
             $.send(code.CREATED, response);
         }));
+    },
+
+    teapot: function ($) {
+        $.sendStatus(418);
+    },
+
+    trace: function ($) {
+        var status = $.has('status') ? +$.param('status') : code.OK;
+        var data = {
+            method: $.req.method,
+            url: $.req.url.original,
+            headers: $.req.headers
+        };
+        if ($.body) {
+            data.data = $.body;
+        }
+        $.send(status, data);
     }
 };
 
 function extract(agent, headers) {
-    var result;
-    if ('function' === typeof agent.toObject) {
-        agent = agent.toObject();
-    }
-    result = {
+    var result = {
         _id: agent._id,
         ip: agent.ip,
         auth: agent.auth

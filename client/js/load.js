@@ -24,29 +24,21 @@ function load1_windowLoad() {
         });
     }
 
-    $('#dock a')
-        .click(function (e) {
-            var href, region, widget;
-            e.preventDefault();
-            region = this.getAttribute('data-open');
-            href = this.getAttribute('href');
-            widget = App.widgets[href.slice(1)];
-            if (region && widget) {
-                $('#' + region).show();
-                region = App[region + 'Region'];
-                return widget(null, region);
-            } else {
-                return App.navigate(href);
-            }
-        })
-        .on('mouseover', function () {
-            _.each(document.querySelectorAll('#dock a.prev'), function (prev) {
-                return prev.classList.remove('prev');
-            });
-            if (this.getAttribute('href')) {
-                return this.classList.add('prev');
-            }
-        });
+    App.on('login', function () {
+        if (App.config.online) {
+            App._online_timer = setInterval(function () {
+                App.updateOnline(App.config.online.duration + App.config.online.delay);
+            }, App.config.online.duration);
+
+            setTimeout(function () {
+                App.updateOnline(App.config.online.duration);
+            }, App.config.online.delay);
+        }
+    });
+
+    App.on('logout', function () {
+        clearInterval(App._online_timer);
+    });
 
     var deferreds = _.toArray(document.querySelectorAll('.include[data-src]')).map(function (script) {
         return $.get(script.dataset.src, function (template) {
@@ -67,12 +59,12 @@ function load1_windowLoad() {
 function load2_registerAgent() {
     var self = this;
     addEventListener('beforeunload', App.sendStatistics);
-    $.sendJSON('POST', '/api/agent', statistics, function (xhr) {
-        var language;
+    $.sendJSON('POST', '/api/agent', statistics, function (data, xhr) {
+        App.agent = data;
         $('#boot-loading').hide();
         $('#root').show();
         if (xhr.status <= code.UNAUTHORIZED) {
-            language = App.language;
+            var language = App.language;
             if (language && 'en' !== language) {
                 document.documentElement.setAttribute('lang', language);
                 $.getJSON("/languages/" + language + ".json", function (_dict) {
@@ -96,7 +88,6 @@ function load2_registerAgent() {
 }
 
 function load3_languageLoaded(xhr) {
-    App.agent = xhr.responseJSON;
     App.isAuthorized = !!(code.UNAUTHORIZED !== xhr.status && App.agent.user);
 
     if (App.isAuthorized) {
@@ -113,16 +104,6 @@ function load3_languageLoaded(xhr) {
         }, 0);
     }
 
-    if (App.config.online) {
-        setInterval(function () {
-            App.updateOnline(App.config.online.duration + App.config.online.delay);
-        }, App.config.online.duration);
-
-        setTimeout(function () {
-            App.updateOnline(App.config.online.duration);
-        }, App.config.online.delay);
-    }
-
     if (App.config.trace.history) {
         statistics.history = [];
     }
@@ -135,19 +116,15 @@ function load3_languageLoaded(xhr) {
     $.datepicker.setDefaults(
         $.extend(
             $.datepicker.regional[App.language],
-            {'dateFormat':'yy-mm-dd'}
+            {'dateFormat': 'yy-mm-dd'}
         )
     );
 
     App.start();
-
-    /*
-    if (navigator.serviceWorker) {
-        navigator.serviceWorker.register('/service.js', {scope: '/'})
-            .catch(function (e) {
-                console.error('The service worker registration error ', e);
-            })
-        ;
+    
+    if (App.config.service && navigator.serviceWorker) {
+        navigator.serviceWorker.register('/service.js', {scope: '/'}).catch(function (e) {
+            console.error('The service worker registration error ', e);
+        });
     }
-    */
 }
