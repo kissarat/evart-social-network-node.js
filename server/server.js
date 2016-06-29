@@ -151,6 +151,8 @@ function call_modules_method(name, $) {
 
 function Context(req) {
     this.config = config;
+    var now = process.hrtime();
+    req.start = now[0] * 1000000000 + now[1];
     this.o = o;
     this.isCache = req.url.indexOf('/api-cache') == 0;
     var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
@@ -482,6 +484,12 @@ Context.prototype = {
         return data;
     },
 
+    get spend () {
+        var now = process.hrtime();
+        now = now[0] * 1000000000 + now[1];
+        return (now - this.req.start) / 1000000;
+    },
+
     send: function () {
         var object;
         var status = code.OK;
@@ -502,8 +510,15 @@ Context.prototype = {
             console.error('Response already send ', this.req.url.original, object);
         }
         else {
+            if ('GET' != this.req.method && 'boolean' == typeof object.success) {
+                if (!object.ip) {
+                    object.ip = this.req.headers.ip;
+                }
+                object.spend = this.spend;
+            }
+
             var data = JSON.stringify(object);
-            if (2 == arguments.length) {
+            if (code.OK !== status) {
                 this.res.writeHead(status, {
                     'content-type': 'application/json; charset=utf-8'
                     //'Access-Control-Allow-Origin': '*'
@@ -541,9 +556,11 @@ Context.prototype = {
     },
 
     authorize: function (cb) {
+        var self = this;
         function agent_not_found() {
             self.send(code.UNAUTHORIZED, {
                 success: false,
+                ip: self.req.headers.ip,
                 error: {
                     code: 'AGENT_NOT_FOUND',
                     message: 'User agent is not registered'
@@ -552,7 +569,6 @@ Context.prototype = {
         }
 
         if (this.req.auth) {
-            var self = this;
             Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function (agent) {
                 if (agent) {
                     self.agent = agent;
@@ -622,8 +638,8 @@ Context.prototype = {
     },
 
     get order() {
-        if (this.has('sort')) {
-            var sort = this.get('sort');
+        if (this.has('sort') && this.get('sort')) {
+            var sort = this.get('sort').split('.');
             var _order = {};
             if (this.has('order')) {
                 _order[sort] = 'a' == this.get('order')[0] ? 1 : -1;
@@ -767,7 +783,7 @@ function serve($) {
                             return $.sendStatus(c);
                         }
                         if (r) {
-                            if ('GET' != $.req.method) {
+                            if ('GET' !== $.req.method) {
                                 var success = [
                                     code.OK,
                                     code.CREATED,
@@ -780,10 +796,11 @@ function serve($) {
                             else if ($.req.since && r.time && new Date(r.time).getTime() <= $.req.since.getTime()) {
                                 return $.sendStatus(code.NOT_MODIFIED);
                             }
+
                             $.send(r);
                         }
-                        else if (arguments.length > 0 && undefined === r) {
-                            // console.error('Undefined promise result');
+                        else if (arguments.length > 0) {
+                            console.error('Undefined promise result', $.req.method, $.req.url.original);
                         }
                         else {
                             $.sendStatus(code.NOT_FOUND);

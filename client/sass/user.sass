@@ -227,13 +227,15 @@
 .thumbnail-user
   display: inline-block
   width: 30%
-  .info
+  text-align: left
+  .user-info
     position: relative
+    width: 100%
     margin-top: -1em
     > div
       position: absolute
   &:hover
-    .info
+    .user-info
       padding: 6px 0
       z-index: 1
       > div
@@ -246,7 +248,7 @@
       display: block
   .hidden
     display: none
-  .info > div
+  .user-info > div
     margin-left: 6px
     margin-top: -8px
     padding: 8px

@@ -4,3 +4,10 @@ app/
 node_modules/
 static/
 taras/
+default-photos.json
+generators/criminal.js
+modules/message.js
+modules/photo-upload.js
+modules/signup.js
+modules/upload.js
+socex.json

@@ -1,7 +1,7 @@
 config = require __dirname + '/../server/config.json'
 MongoClient = require('mongodb').MongoClient
 
-MongoClient.connect config.mongo, (err, db) ->
+MongoClient.connect config.mongo.uri, config.mongo.options, (err, db) ->
   generator = process.argv[2]
   generator = require __dirname + '/generators/' + generator
   i = 0

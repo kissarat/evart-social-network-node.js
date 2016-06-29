@@ -329,8 +329,6 @@ _.extend(Application.prototype, {
         },
 
         state: {
-            order: -1,
-            sort: '_id',
             limit: 48,
             currentPage: 1,
             totalRecords: 2000
@@ -338,13 +336,23 @@ _.extend(Application.prototype, {
 
         queryParams: {
             pageSize: 'limit',
-            sortKey: '_id',
             currentPage: null,
             totalPages: null,
             totalRecords: null,
+            sortKey: 'sort',
             skip: function () {
                 return (this.state.currentPage - 1) * this.state.pageSize;
             }
+            // s: function () {
+            //     var keys = [];
+            //     _.each(this.queryModel.get('sort'), function (order, key) {
+            //         if (order < 0) {
+            //             key = '-key';
+            //         }
+            //         keys.push(key);
+            //     });
+            //     return keys.join('.');
+            // }
         },
 
         parseRecords: function (records) {

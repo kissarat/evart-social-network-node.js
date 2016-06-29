@@ -59,11 +59,11 @@ function load1_windowLoad() {
 function load2_registerAgent() {
     var self = this;
     addEventListener('beforeunload', App.sendStatistics);
-    $.sendJSON('POST', '/api/agent', statistics, function (data, xhr) {
-        App.agent = data;
+    $.sendJSON('POST', '/api/agent', statistics, function (data) {
         $('#boot-loading').hide();
         $('#root').show();
-        if (xhr.status <= code.UNAUTHORIZED) {
+        if (data.success) {
+            App.agent = data;
             var language = App.language;
             if (language && 'en' !== language) {
                 document.documentElement.setAttribute('lang', language);
@@ -72,10 +72,10 @@ function load2_registerAgent() {
                     window.T = function (name) {
                         return dictionary[name] || name;
                     };
-                    load3_languageLoaded.call(self, xhr);
+                    load3_languageLoaded();
                 });
             } else {
-                load3_languageLoaded.call(self, xhr);
+                load3_languageLoaded();
             }
         } else {
             self.show(App.Views.Error, {
@@ -87,10 +87,8 @@ function load2_registerAgent() {
     });
 }
 
-function load3_languageLoaded(xhr) {
-    App.isAuthorized = !!(code.UNAUTHORIZED !== xhr.status && App.agent.user);
-
-    if (App.isAuthorized) {
+function load3_languageLoaded() {
+    if (App.isAuthorized()) {
         $('body').removeAttr('class');
         App.trigger('login');
     }

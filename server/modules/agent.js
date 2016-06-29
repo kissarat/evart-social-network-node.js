@@ -90,6 +90,7 @@ module.exports = {
                 }
                 agent = extract(agent, $.req.headers);
                 agent.config = client;
+                agent.success = true;
                 $.send(agent);
             }));
         }
@@ -158,6 +159,7 @@ module.exports = {
     stat: function ($) {
         var data = $.body;
         data.agent = $.agent._id;
+        data.ip = $.req.headers.ip;
         data._id = utils.id12('Stat');
         if ($.user) {
             data.user = $.user._id;

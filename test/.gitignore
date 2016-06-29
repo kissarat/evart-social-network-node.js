@@ -1,4 +1,9 @@
 node_modules/
-*.js*
-modules/*.js*
+generate.js
+test.js
+generators/friend.js
+generators/user.js
+generators/message.js
+modules/*.js
+*.map
 sample/

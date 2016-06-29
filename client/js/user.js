@@ -111,6 +111,7 @@ App.module('User', function (User, App) {
 
         queryModelInitial: {
             type: 'user',
+            select: 'surname.forename.avatar.online.country.city.birthday',
             q: ''
         },
 
@@ -846,8 +847,7 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            '.country': 'country',
-            '.city': 'city'
+            '.country': 'country'
         },
 
         regions: {
@@ -873,7 +873,10 @@ App.module('User', function (User, App) {
                 button.setText('Follow');
                 this.getControls().children.push(button);
             }
-            this.getRegion('buttons').show(new User.OtherProfileButtons({model: this.model}))
+            this.getRegion('buttons').show(new User.OtherProfileButtons({model: this.model}));
+            if (this.model.get('city')) {
+                this.ui.city.html(', ' + this.model.get('city'));
+            }
         },
 
         getControls: function () {

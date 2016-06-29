@@ -232,6 +232,10 @@ _.extend(Service.prototype, {
         return prefix + this.jsonpCount[prefix];
     },
 
+    isAuthorized: function () {
+        return !!(this.agent && this.agent.user);
+    },
+
     resolve: resolve,
 
     module: function (name, define) {
@@ -241,7 +245,10 @@ _.extend(Service.prototype, {
     },
 
     updateOnline: function (duration) {
-        $.sendJSON('PATCH', '/api/agent/online', {till: -duration}, function (xhr) {
+        $.sendJSON('PATCH', '/api/agent/online', {till: -duration}, function (data) {
+            if (data.success) {
+                App.user.online = new Date(data.till).toUTCString();
+            }
         });
     },
 
