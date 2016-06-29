@@ -12,6 +12,19 @@
       "pass": "eequ2eizain8Etohxei0yoGaixeeviey3rei"
     }
   },
+  "mongoose": {
+    "schema": {
+      "options": {
+        "versionKey": "v",
+        "strict": true,
+        "pluralization": false,
+        "minimize": true,
+        "updatedAt": "time",
+        "id": false,
+        "noVirtualId": true
+      }
+    }
+  },
   "auth": {
     "length": 40
   },

@@ -1,4 +1,4 @@
-config = require __dirname + '/../server/config.json'
+config = require '../server/config.json'
 MongoClient = require('mongodb').MongoClient
 
 MongoClient.connect config.mongo.uri, config.mongo.options, (err, db) ->

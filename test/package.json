@@ -11,6 +11,7 @@
   "dependencies": {
     "colour": "*",
     "faker": "^3.1.0",
+    "jsdom": "^9.3.0",
     "md5-file": "^2.0.4",
     "mongodb": "^2.1.18",
     "request": "^2.69.0",

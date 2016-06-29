@@ -15,7 +15,7 @@ App.module('Video', function (Video, App) {
         url: '/api/video',
         cidPrefix: 'vdol',
 
-        queryModelInitial: {
+        query: {
             type: 'video',
             owner_id: null,
             q: ''

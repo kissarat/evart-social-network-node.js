@@ -11,7 +11,7 @@ var code = utils.code;
 
 var T = mongoose.Schema.Types;
 
-global.schema.User = new mongoose.Schema({
+var _schema = {
     _id: utils.idType('User'),
 
     phone: {
@@ -95,7 +95,7 @@ global.schema.User = new mongoose.Schema({
         type: String,
         match: /^.*@.*\..*$/
     },
-    
+
     country: {
         type: String,
         "enum": ["AF", "AL", "DZ", "AD", "AO", "AI", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BA", "BW", "BR", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CO", "KM", "CK", "CR", "HR", "CU", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "ET", "FO", "FJ", "FI", "FR", "GF", "PF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HN", "HK", "HU", "IS", "IN", "ID", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KW", "KG", "LV", "LB", "LS", "LR", "LI", "LT", "LU", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "MX", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MP", "NO", "OM", "PK", "PW", "PA", "PG", "PY", "PE", "PH", "PL", "PT", "PR", "QA", "RO", "RU", "RW", "RE", "WS", "SM", "SA", "SN", "RS", "SC", "SL", "SG", "SK", "SI", "SB", "SO", "ZA", "ES", "LK", "SD", "SR", "SJ", "SZ", "SE", "CH", "TJ", "TH", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "UY", "UZ", "VU", "WF", "YE", "ZM", "ZW"],
@@ -115,10 +115,10 @@ global.schema.User = new mongoose.Schema({
     birthday: Date,
     about: utils.StringType(512),
 
-    languages: {
+    languages: [{
         type: String,
         match: /^\w{2}$/
-    },
+    }],
 
     follow: [
         {
@@ -144,9 +144,14 @@ global.schema.User = new mongoose.Schema({
             ref: 'User'
         }
     ]
-}, {
-    versionKey: false
+};
+
+var _schema_options = utils.merge(config.mongoose.schema.options, {
+    collection: 'user',
+    createAt: 'created'
 });
+
+global.schema.User = new mongoose.Schema(_schema, _schema_options);
 
 schema.User.statics.fields = {
     select: {
@@ -204,11 +209,15 @@ schema.User.statics.search = function search($, where, send) {
 };
 
 module.exports = {
+    _meta: {
+        schema: _schema
+    },
+    
     GET: function ($) {
         var params = ['id', 'domain'];
-        var fields = User.fields.select.user.join(' ');
+        var fields = User.fields.select.user;
         if ($.hasAny(params) && !$.has('list')) {
-            return User.findOne($.paramsObject(params)).select(fields);
+            return User.findOne($.paramsObject(params)).select(fields.join(' '));
         }
         else if ($.has('ids')) {
             return User.find({

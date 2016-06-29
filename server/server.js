@@ -208,8 +208,6 @@ function Context(req) {
 
     this.req = req;
 
-    database(this);
-
     for (var i in this) {
         var f = this[i];
         if ('function' == typeof f) {
@@ -353,7 +351,7 @@ Context.prototype = {
         this.res.end();
     },
 
-    _param: function (object, name) {
+    _param: function (object, name, defaultValue) {
         if (name in object) {
             var value = object[name];
             if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
@@ -362,17 +360,23 @@ Context.prototype = {
                 }
                 value = ObjectID(value);
             }
+            if (defaultValue instanceof Array && 'string' === typeof value) {
+                value = value.split('.');
+            }
             return value;
+        }
+        if (defaultValue) {
+            return defaultValue
         }
         this.invalid(name, 'required');
     },
 
-    param: function (name) {
-        return this._param(this.params, name);
+    param: function (name, defaultValue) {
+        return this._param(this.params, name, defaultValue);
     },
 
-    get: function (name) {
-        return this._param(this.req.url.query, name);
+    get: function (name, defaultValue) {
+        return this._param(this.req.url.query, name, defaultValue);
     },
 
     post: function (name) {
@@ -484,7 +488,7 @@ Context.prototype = {
         return data;
     },
 
-    get spend () {
+    get spend() {
         var now = process.hrtime();
         now = now[0] * 1000000000 + now[1];
         return (now - this.req.start) / 1000000;
@@ -557,6 +561,7 @@ Context.prototype = {
 
     authorize: function (cb) {
         var self = this;
+
         function agent_not_found() {
             self.send(code.UNAUTHORIZED, {
                 success: false,
@@ -684,8 +689,8 @@ Context.prototype = {
             }
             array = array.concat(allowed_fields);
         }
-        array = _.uniq(array);
-        return array.join(' ');
+        array.push('time');
+        return _.uniq(array);
     },
 
     model: function () {
@@ -706,6 +711,10 @@ Context.prototype = {
     get isUpdate() {
         var m = this.req.method;
         return 'POST' == m || 'PUT' == m || 'PATCH' == m;
+    },
+
+    collection: function (name) {
+        return this.db.collection(name);
     }
 };
 
@@ -744,10 +753,32 @@ function walk($, object, path) {
 
 function serve($) {
     if (!$.req.url.route[0]) {
+        var schema = {};
+        _.each(modules, function (module, name) {
+            if (module._meta) {
+                var meta = module._meta;
+                _.each(meta.schema, function (field, key) {
+                    if (field.constructor === Function) {
+                        field = {
+                            type: field
+                        };
+                        meta[key] = field;
+                    }
+                    if (field instanceof Array) {
+                        field = field[0]
+                    }
+                    field.type = field.type.name;
+                    if (field.match) {
+                        field.match = field.match.toString()
+                    }
+                });
+                schema[name] = meta.schema;
+            }
+        });
         return $.send({
             api: 'socex',
-            version: 0.4,
-            dir: Object.keys(modules).filter(m => modules[m])
+            v: 0.5,
+            schema: schema
         });
     }
 
@@ -992,72 +1023,6 @@ function parse(url) {
     }
     a.route = a.pathname.split('/').slice(1);
     return a;
-}
-
-function database($) {
-    $.collection = function (name) {
-        return $.db.collection(name);
-    };
-
-    function resolve_callback(cb) {
-        if ('function' == typeof cb) {
-            return $.wrap(result => {
-                if (result) {
-                    cb(result)
-                }
-                else {
-                    $.sendStatus(code.NOT_FOUND);
-                }
-            })
-        }
-        // else if (cb) {
-        //     throw cb.constructor.name;
-        // }
-        else {
-            return $.answer;
-        }
-    }
-
-    $.data = {
-        updateOne: function (entity, id, mods, cb) {
-            return $.collection(entity).updateOne({_id: id}, mods, resolve_callback(cb));
-        },
-
-        find: function (entity, match, cb) {
-            var aggr = [
-                {$sort: {time: -1}}
-            ];
-            if (match instanceof Array) {
-                aggr = match.concat(aggr);
-            }
-            else {
-                aggr.unshift({$match: match});
-            }
-            $.collection(entity).aggregate(aggr)
-                .toArray(resolve_callback(cb));
-        },
-
-        deleteOne: function (entity, id, cb) {
-            if (!id) {
-                id = $('id');
-            }
-            $.collection(entity).deleteOne({_id: id}, resolve_callback(cb));
-        },
-
-        findOne: function (entity, id, cb) {
-            if (!id) {
-                id = $.param('id');
-            }
-            if (id instanceof ObjectID) {
-                id = {_id: id};
-            }
-            return $.collection(entity).findOne(id, resolve_callback(cb));
-        },
-
-        insertOne: function (entity, mods, cb) {
-            $.collection(entity).insertOne(mods, resolve_callback(cb));
-        }
-    };
 }
 
 function receive(readable, call) {

@@ -15,7 +15,7 @@ var MessageType = {
     VIDEO: 'video'
 };
 
-global.schema.Message = mongoose.Schema({
+var _schema = {
     _id: utils.idType('Message'),
 
     type: {
@@ -88,18 +88,8 @@ global.schema.Message = mongoose.Schema({
         "default": 1
     },
 
-    text: {
-        type: String
-    },
-    /*
-     ip: {
-     type: String
-     },
+    text: utils.StringType(2048),
 
-     geo: {
-     type: Array
-     },
-     */
     repost: {
         type: T.ObjectId,
         ref: 'Message'
@@ -112,15 +102,27 @@ global.schema.Message = mongoose.Schema({
             "default": null
         }
     ]
-}, {
-    versionKey: false
-});
+};
+
+global.schema.Message = mongoose.Schema(_schema, utils.merge(config.mongoose.schema.options, {
+    collection: 'message'
+}));
 
 schema.Message.statics.Type = MessageType;
+schema.Message.statics.fields = {
+    select: {
+        user: ['type', 'source', 'target', 'owner', 'like', 'hate',
+            'file', 'files', 'video', 'videos', 'text', 'repost']
+    }
+};
 
 module.exports = {
+    _meta: {
+        schema: _schema
+    },
+
     POST: function ($) {
-        var message = $.allowFields(user_fields, admin_fields);
+        var message = $.allowFields(Message.fields.select.user);
         message.source = $.user._id;
         var targets = [];
         ['target', 'owner'].forEach(function (name) {
@@ -140,12 +142,13 @@ module.exports = {
     },
 
     GET: function ($) {
-        var where = {$and: [{type: $.get('type')}]};
+        var where = [{type: $.get('type')}];
+        var project = $.select(['time', 'text'], Message.fields.select.user);
         switch ($.get('type')) {
             case Message.Type.DIALOG:
-                var target_id = $.param('target_id');
+                var target_id = $.get('target_id');
                 var me = $.user._id;
-                where.$and.push({
+                where.push({
                     $or: [{
                         source: me,
                         target: target_id
@@ -155,15 +158,15 @@ module.exports = {
                     }]
                 });
                 if ($.has('since')) {
-                    where.$and.push({
+                    where.push({
                         time: {$gte: new Date($.get('since')).toISOString()}
                     });
                 }
                 break;
 
             case Message.Type.WALL:
-                where.$and.push({
-                    owner: $.param('owner_id')
+                where.push({
+                    owner: $.get('owner_id')
                 });
                 break;
 
@@ -171,7 +174,44 @@ module.exports = {
                 $.sendStatus(code.BAD_REQUEST);
                 return;
         }
-        return Message.find(where).sort('-time');
+
+        var aggregate = [
+            {
+                $match: {
+                    $and: where
+                }
+            }
+        ];
+        var _project = {};
+
+        var user_fields = $.get('user', []);
+
+        user_fields.forEach(function (name) {
+            aggregate.push({
+                $lookup: {
+                    'as': name,
+                    localField: name,
+                    from: 'user',
+                    foreignField: '_id'
+                }
+            });
+            aggregate.push({
+                $unwind: {
+                    path: '$' + name
+                }
+            });
+            _project[name] = user_projection
+        });
+
+        project.forEach(function (name) {
+            _project[name] = 1;
+        });
+
+        aggregate.push({
+            $project: _project
+        });
+
+        return Message.aggregate(aggregate);
     },
 
     DELETE: function ($) {
@@ -269,7 +309,7 @@ module.exports = {
                 $lookup: {
                     'as': 'peer',
                     localField: '_id',
-                    from: 'users',
+                    from: 'user',
                     foreignField: '_id'
                 }
             },
@@ -285,14 +325,7 @@ module.exports = {
             count: 1,
             unread: 1,
             text: 1,
-            peer: {
-                _id: 1,
-                domain: 1,
-                online: 1,
-                surname: 1,
-                forename: 1,
-                avatar: 1
-            }
+            peer: user_projection
         };
         if ($.has('cut')) {
             var cut = +$.param('cut');
@@ -308,9 +341,15 @@ module.exports = {
     }
 };
 
-var user_fields = ['type', 'source', 'target', 'owner', 'like', 'hake',
-    'photo', 'photos', 'video', 'videos', 'text', 'repost'];
-var admin_fields = ['domain', 'type'];
+var user_projection = {
+    _id: 1,
+    domain: 1,
+    online: 1,
+    surname: 1,
+    forename: 1,
+    name: 1,
+    avatar: 1
+};
 
 function populate(r) {
     for (var collection in populate.map) {

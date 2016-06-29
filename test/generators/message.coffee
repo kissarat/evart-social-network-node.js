@@ -16,7 +16,7 @@ module.exports = (db, $) ->
     }
   ]
 
-  db.collection('users').aggregate conveyor, (err, users) ->
+  db.collection('user').aggregate conveyor, (err, users) ->
     loop_fn = () ->
       sample = _.sample(users, _.random(2, users.length))
       insert_message = () ->
@@ -29,7 +29,7 @@ module.exports = (db, $) ->
             text: faker.lorem.sentences()
             time: new Date().toISOString()
           #          console.log message
-          db.collection('messages').insertOne message, (err, result) ->
+          db.collection('message').insertOne message, (err, result) ->
             if err
               console.error err
             else

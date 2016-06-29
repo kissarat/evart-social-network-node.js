@@ -87,10 +87,8 @@ App.module('Message', function (Message, App) {
     Message.List = App.PageableCollection.extend({
         url: '/api/message',
 
-        queryModelInitial: {
-            type: 0,
-            owner_id: null,
-            target_id: null
+        query: {
+            type: 0
         },
 
         model: function (attrs, options) {
@@ -101,7 +99,7 @@ App.module('Message', function (Message, App) {
     Message.DialogList = App.PageableCollection.extend({
         url: '/api/message/dialogs',
 
-        queryModelInitial: {
+        query: {
             type: 'dialog',
             cut: 140,
             unread: 0
@@ -197,7 +195,7 @@ App.module('Message', function (Message, App) {
         ui: {
             name: '> .content .name',
             content: '> .content',
-            info: '> .content .info',
+            info: '> .content .user-info',
             avatar: '> .content .avatar',
             time: '> .content .time',
             text: '> .content .text',
@@ -257,25 +255,25 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            var source = this.model.get('source');
-            this.ui.name.attr('href', '/view/' + source.get('domain'));
-            this.ui.name.html(source.getName());
-            this.$el.attr('data-id', this.model.get('_id'));
-            this.ui.info.attr('data-id', source.get('_id'));
-            source.setupAvatar(this.ui.avatar[0]);
-            if (source.get('_id') === App.user._id) {
+            var self = this;
+            var owner = this.model.get('owner');
+            this.ui.name.attr('href', '/view/' + owner.get('domain'));
+            this.ui.name.html(owner.getName());
+            owner.setupAvatar(this.ui.avatar[0]);
+            if ('admin' === App.user.type) {
                 this.$el.addClass('me');
-                $('<div class="fa fa-times"></div>').appendTo(this.ui.controls).click((function (_this) {
-                    return function () {
-                        return $.ajax({
-                            url: '/api/message?id=' + _this.model.get('_id'),
-                            type: 'DELETE',
-                            success: function () {
-                                return _this.el.remove();
-                            }
-                        });
-                    };
-                })(this));
+                $('<div class="fa fa-times"></div>')
+                    .appendTo(this.ui.controls)
+                    .show()
+                    .click(function () {
+                    $.ajax({
+                        url: '/api/message?id=' + self.model.get('_id'),
+                        type: 'DELETE',
+                        success: function () {
+                            return self.el.remove();
+                        }
+                    });
+                });
             }
             if (this.model.get('unread')) {
                 this.$el.addClass('unread');
@@ -328,14 +326,19 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            var pageable = new Message.List();
-            pageable.queryModel.set('type', MessageType.WALL);
-            pageable.queryModel.set('owner_id', options.owner_id);
-            pageable.getFirstPage();
+            var pageable = new Message.List([], {
+                query: _.merge({
+                    type: MessageType.WALL,
+                    owner_id: App.user._id,
+                    user: 'owner',
+                    select: 'like.hate.files.videos'
+                }, _.pick(options, 'owner_id', 'user', 'select'))
+            });
             var wall = new Message.WallView({
                 collection: pageable.fullCollection
             });
             region.show(wall);
+            pageable.getFirstPage();
             return wall;
         }
     });
@@ -481,8 +484,11 @@ App.module('Message', function (Message, App) {
         attachHtml: attachHtml
     }, {
         widget: function (region, options) {
-            var list = new Message.DialogList();
-            list.queryModel.set(_.pick(options, 'unread', 'cut', 'since'));
+            var list = new Message.DialogList([], {
+                query: _.merge({
+                    id: App.user._id
+                }, _.pick(options, 'unread', 'cut', 'since'))
+            });
             var listView = new Message.DialogListView({collection: list.fullCollection});
             region.show(listView);
             list.getFirstPage();
@@ -512,10 +518,6 @@ App.module('Message', function (Message, App) {
 
         events: {
             'keyup .editor': 'resize'
-        },
-
-        queryModelInitial: {
-            target_id: null
         },
 
         resize: function () {

@@ -7,7 +7,7 @@ module.exports = (db, $) ->
     {$sample: {size: 50000}}
   ]
 #  i = 200
-  db.collection('users').aggregate aggregation, (err, users) ->
+  db.collection('user').aggregate aggregation, (err, users) ->
     users = _.map users, (u) -> u._id
     insert_user = () ->
 #      i--
@@ -19,7 +19,7 @@ module.exports = (db, $) ->
         hash: utils.hash '1'
       if users.length > 0
         user.freind = _.sample(users, _.random(1, 500))
-      db.collection('users').insertOne user, (err, result) ->
+      db.collection('user').insertOne user, (err, result) ->
         if err
           console.error err
         else

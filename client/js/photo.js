@@ -14,7 +14,7 @@ App.module('Photo', function (Photo, App) {
     Photo.List = App.PageableCollection.extend({
         url: '/api/file',
 
-        queryModelInitial: {
+        query: {
             type: 'photo',
             owner_id: null
         },

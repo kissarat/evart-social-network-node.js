@@ -48,7 +48,7 @@ module.exports = function (db, $) {
             users.forEach(function (user) {
                 object[user.domain] = user;
             });
-            db.collection('users').insertMany(_.values(object), function (err, result) {
+            db.collection('user').insertMany(_.values(object), function (err, result) {
                 articles = _.pairs(articles).sort((a, b) => a[1] - b[1]);
                 console.log(articles);
                 process.exit();

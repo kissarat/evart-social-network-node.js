@@ -43,14 +43,21 @@ function fields(array) {
 }
 
 function merge() {
-    var object = {};
-    for (var i = 0; i < arguments.length; i++) {
-        var arg = arguments[i];
-        for (var key in arg) {
-            object[key] = arg[key];
-        }
+    if (arguments.length <= 1) {
+        return arguments[0] || {};
     }
-    return object;
+    else {
+        var result = {};
+        for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            if (arg) {
+                for (var j in arg) {
+                    result[j] = arg[j];
+                }
+            }
+        }
+        return result;
+    }
 }
 
 var start_second = Math.round(Date.now() / 1000) - process.hrtime()[0];

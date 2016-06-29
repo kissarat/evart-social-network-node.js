@@ -109,7 +109,7 @@ App.module('User', function (User, App) {
     User.List = App.PageableCollection.extend({
         url: '/api-cache/user',
 
-        queryModelInitial: {
+        query: {
             type: 'user',
             select: 'surname.forename.avatar.online.country.city.birthday',
             q: ''
@@ -125,7 +125,7 @@ App.module('User', function (User, App) {
     User.RecordList = User.List.extend({
         url: '/api/record',
 
-        queryModelInitial: {
+        query: {
             type: 'follow',
             target_id: '',
             q: ''
@@ -135,7 +135,7 @@ App.module('User', function (User, App) {
     User.RelationList = User.List.extend({
         url: '/api/user/list',
 
-        queryModelInitial: {
+        query: {
             name: '',
             q: ''
         }

@@ -310,11 +310,15 @@ _.extend(Application.prototype, {
     PageableCollection: Backbone.PageableCollection.extend({
         mode: 'infinite',
 
-        initialize: function () {
-            this.queryModel = new Backbone.Model(this.queryModelInitial);
+        initialize: function (models, options) {
+            if (!options) {
+                options = {};
+            }
             var self = this;
-            return Object.keys(this.queryModelInitial).forEach(function (k) {
-                return self.queryParams[k] = function () {
+            var query = _.merge(this.query, options.query);
+            this.queryModel = new Backbone.Model(query);
+            Object.keys(query).forEach(function (k) {
+                self.queryParams[k] = function () {
                     var value = self.queryModel.get(k);
                     switch (typeof value) {
                         case 'number':
