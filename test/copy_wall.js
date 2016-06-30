@@ -36,15 +36,16 @@ MongoClient.connect(config.mongo.uri, config.mongo.options, function (err, _db) 
 function run() {
     db.collection('ukrbash').find({}, function (err, reader) {
         function wall() {
+            var message = db.collection('message');
             reader.each(function (err, quote) {
                 if (quote) {
-                    var data = {
+                    let data = {
                         owner: _.sample(users),
                         type: 'wall',
                         time: quote.add_date,
                         text: quote.text
                     };
-                    db.collection('message').insert(data, wall);
+                    message.insert(data, wall);
                 }
                 else {
                     process.exit();

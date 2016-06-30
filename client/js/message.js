@@ -101,7 +101,6 @@ App.module('Message', function (Message, App) {
 
         query: {
             type: 'dialog',
-            cut: 140,
             unread: 0
         },
 
@@ -743,7 +742,7 @@ App.module('Message', function (Message, App) {
             },
 
             dialogs: function () {
-                Message.DialogListView.widget(App.getPlace('main'), {cut: 140});
+                Message.DialogListView.widget(App.getPlace('main'), {});
             }
         }
     });
