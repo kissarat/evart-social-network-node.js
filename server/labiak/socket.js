@@ -2,7 +2,7 @@
 
 var _ = require('underscore');
 var ws = require('ws');
-var utils = require('./utils');
+var utils = require('../utils');
 
 function WebSocketServer(options) {
     _.extend(this, options);
@@ -13,7 +13,8 @@ function WebSocketServer(options) {
 
 WebSocketServer.prototype = {
     onConnection: function (socket) {
-        var context = this.server.createContext({
+        var self = this;
+        var $ = this.server.createContext({
             type: 'websocket',
             socket: new WebSocket({
                 // server: this.server,
@@ -21,37 +22,34 @@ WebSocketServer.prototype = {
             }),
             req: this.socketServer.upgradeReq
         });
-        context.authorize(this.authorize)
+        $.authorize(function (agent) {
+            if (agent.user) {
+                self.subscribe($);
+                $.socket.on('close', function () {
+                    delete subscriber[cid];
+                    if (_.isEmpty(subscriber)) {
+                        delete subscribers[uid];
+                    }
+                });
+                subscriber[cid] = $;
+            }
+            else {
+                $.socket.close();
+            }
+        });
     },
 
-    authorize: function (agent) {
-        var context = this;
-        if (agent.user) {
-            this.subscribe(context);
-            context.socket.on('close', function () {
-                delete subscriber[cid];
-                if (_.isEmpty(subscriber)) {
-                    delete subscribers[uid];
-                }
-            });
-            subscriber[cid] = context;
-        }
-        else {
-            context.socket.close();
-        }
-    },
-
-    subscribe: function (context) {
-        let user_id = context.user._id.toString();
-        let agent_id = context.agent._id.toString();
-        let subscriber = context.getSubscribers(user_id);
+    subscribe: function ($) {
+        let user_id = $.user._id.toString();
+        let agent_id = $.agent._id.toString();
+        let subscriber = $.getSubscribers(user_id);
         if (!subscriber) {
             subscribers[user_id] = subscriber = {};
         }
         else if (agent_id in subscriber) {
             this.unsubscribe(user_id, agent_id);
         }
-        utils.subscribe('socket', context.socket, subscriber);
+        utils.subscribe('socket', $.socket, subscriber);
     },
 
     onMessage: function (message) {

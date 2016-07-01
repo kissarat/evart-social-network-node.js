@@ -3,6 +3,7 @@ var _ = require('underscore');
 var ObjectID = require('mongodb').ObjectID;
 var twilio = require('twilio');
 var qs = require('querystring');
+var web_extension = require('./web_extension');
 var url_parse = require('url').parse;
 
 function Context(options) {
@@ -572,6 +573,8 @@ Context.prototype = {
         return a;
     }
 };
+
+_.extend(Context.prototype, web_extension);
 
 module.exports = {
     Context: Context

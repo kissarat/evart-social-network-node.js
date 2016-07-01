@@ -142,6 +142,34 @@ function subscribe(prefix, source, target) {
     });
 }
 
+function receive(readable, call) {
+    var chunks = [];
+    return new Promise(function (resolve, reject) {
+        readable.on('data', function (chunk) {
+            chunks.push(chunk);
+        });
+        readable.on('end', function () {
+            var data;
+            if (0 == chunks.length) {
+                data = new Buffer();
+            }
+            else if (1 == chunks.length) {
+                data = chunks[0];
+            }
+            else {
+                data = Buffer.concat(chunks);
+            }
+            if (call) {
+                resolve(call(data));
+            }
+            else {
+                resolve(data)
+            }
+        });
+        readable.on('error', reject)
+    })
+}
+
 var exports = {
     export: function (classes) {
         var exports = {};
@@ -156,5 +184,5 @@ var exports = {
 };
 
 module.exports = merge(exports, exports.export(
-    [Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe]
+    [Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe, receive]
 ));
