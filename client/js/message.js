@@ -99,10 +99,7 @@ App.module('Message', function (Message, App) {
     Message.DialogList = App.PageableCollection.extend({
         url: '/api/message/dialogs',
 
-        query: {
-            type: 'dialog',
-            unread: 0
-        },
+        query: {},
 
         model: function (attrs, options) {
             return new Message.LastMessage(attrs, options);
@@ -471,10 +468,6 @@ App.module('Message', function (Message, App) {
 
     Message.DialogListView = Marionette.CollectionView.extend({
         childView: Message.View,
-
-        behaviours: {
-            // Pageable: {reverse: true}
-        },
 
         onRender: function () {
             this.animateLoading();

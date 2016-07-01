@@ -575,7 +575,7 @@ if (isNode) {
         mimes: mimes,
         extensions: extensions,
         filetypes: filetypes,
-        t13n
+        t13n: t13n
     };
 }
 else {

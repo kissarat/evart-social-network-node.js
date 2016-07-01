@@ -144,8 +144,8 @@ module.exports = {
         $.agent.time = now;
         $.agent.ip = $.req.headers.ip;
         $.agent.save($.wrap(function () {
-            $.agent.user.online = till;
-            $.agent.user.save($.wrap(function () {
+            $.user.online = till;
+            $.user.save($.wrap(function () {
                 $.send({
                     success: true,
                     time: now,

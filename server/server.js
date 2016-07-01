@@ -632,7 +632,7 @@ Context.prototype = {
     },
 
     get limit() {
-        var value = 960;
+        var value = 96;
         if (this.has('limit')) {
             value = this.get('limit');
             if (value > 100 || value <= 0) {

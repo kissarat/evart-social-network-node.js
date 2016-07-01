@@ -20,7 +20,10 @@ var _schema = {
 
     type: {
         type: String,
-        enum: _.values(MessageType)
+        enum: _.values(MessageType),
+        index: {
+            unique: false
+        }
     },
 
     source: {
@@ -28,6 +31,7 @@ var _schema = {
         ref: 'User',
         required: true,
         index: {
+            sparse: true,
             unique: false
         }
     },
@@ -36,6 +40,7 @@ var _schema = {
         type: T.ObjectId,
         ref: 'User',
         index: {
+            sparse: true,
             unique: false
         }
     },
@@ -44,6 +49,7 @@ var _schema = {
         type: T.ObjectId,
         ref: 'User',
         index: {
+            sparse: true,
             unique: false
         }
     },
@@ -85,7 +91,11 @@ var _schema = {
 
     unread: {
         type: Number,
-        "default": 1
+        "default": 1,
+        index: {
+            unique: false,
+            partialFilterExpression: {unread: 1}
+        }
     },
 
     text: utils.StringType(2048),
@@ -142,12 +152,15 @@ module.exports = {
     },
 
     GET: function ($) {
-        var where = [{type: $.get('type')}];
+        var where = [];
+        if ($.has('type')) {
+            where.push({type: $.get('type')})
+        }
         var project = $.select(['time', 'text'], Message.fields.select.user);
-        switch ($.get('type')) {
+        var me = $.user._id;
+        switch ($.get('type', true)) {
             case Message.Type.DIALOG:
                 var target_id = $.get('target_id');
-                var me = $.user._id;
                 where.push({
                     $or: [{
                         source: me,
@@ -165,14 +178,21 @@ module.exports = {
                 break;
 
             case Message.Type.WALL:
-                where.push({
-                    owner: $.get('owner_id')
-                });
+                where.push({owner: $.get('owner_id', me)});
                 break;
 
             default:
-                $.sendStatus(code.BAD_REQUEST);
-                return;
+                if ($.has('unread') && $.get('unread')) {
+                    where.push({unread: $.get('unread')});
+                }
+                where.push({
+                    $or: [
+                        {owner: $.get('owner_id', me)},
+                        {source: me},
+                        {target: me}
+                    ]
+                });
+                break;
         }
 
         var aggregate = [
@@ -233,9 +253,9 @@ module.exports = {
             };
             return new Promise(function (resolve, reject) {
                 Message.find(where).select('_id').catch(reject).then(function (messages) {
-                    Message.update(where, {$set: {unread: 0}}, {multi: true}).catch(reject).then(function (result) {
+                    Message.update(where, {$set: {unread: $.get('unread', 0)}}, {multi: true}).catch(reject).then(function (result) {
                         if (messages.length == result.nModified) {
-                            var ids = _.pluck(messages, '_id'); 
+                            var ids = _.pluck(messages, '_id');
                             resolve(ids);
                             $.notifyOne(you, {
                                 type: 'read',
