@@ -86,7 +86,10 @@ var _schema = {
     time: {
         type: Date,
         required: true,
-        "default": Date.now
+        "default": Date.now,
+        index: {
+            unique: false
+        }
     },
 
     unread: {
@@ -160,13 +163,13 @@ module.exports = {
         var me = $.user._id;
         switch ($.get('type', true)) {
             case Message.Type.DIALOG:
-                var target_id = $.get('target_id');
+                var id = $.get('id');
                 where.push({
                     $or: [{
                         source: me,
-                        target: target_id
+                        target: id
                     }, {
-                        source: target_id,
+                        source: id,
                         target: me
                     }]
                 });
@@ -244,34 +247,34 @@ module.exports = {
         if ($.has('id') && $.has('unread')) {
             return Message.update({_id: $.param('id')}, {$set: {unread: $.param('unread')}});
         }
-        if ($.has('dialog_id')) {
-            let you = $.param('dialog_id');
+        if ($.has('target_id')) {
+            let you = $.param('target_id');
             let where = {
                 unread: 1,
                 source: you,
                 target: $.user._id
             };
-            return new Promise(function (resolve, reject) {
-                Message.find(where).select('_id').catch(reject).then(function (messages) {
-                    Message.update(where, {$set: {unread: $.get('unread', 0)}}, {multi: true}).catch(reject).then(function (result) {
-                        if (messages.length == result.nModified) {
-                            var ids = _.pluck(messages, '_id');
-                            resolve(ids);
-                            $.notifyOne(you, {
-                                type: 'read',
-                                dialog_id: where.source,
-                                ids: ids
-                            });
-                        }
-                        else {
-                            reject(result);
-                        }
+            $.collection('message').find(where, {_id: 1}, $.wrapArray(function (messages) {
+                $.collection('message').update(where, {multi: true}, $.wrap(function (result) {
+                    result = $.merge(result.result, {
+                        success: !!result.result.ok,
+                        type: 'read',
+                        dialog_id: where.source,
+                        ids: _.pluck(messages, '_id')
                     });
-                })
-            });
-
+                    $.notifyOne(you, result);
+                    $.send(result);
+                }));
+            }));
         }
-        return false;
+        else {
+            return {
+                select: true,
+                query: {
+                    unread: 1
+                }
+            };
+        }
     },
 
     feed: function ($) {
@@ -326,6 +329,11 @@ module.exports = {
                 }
             },
             {
+                $sort: {
+                    time: -1
+                }
+            },
+            {
                 $lookup: {
                     'as': 'peer',
                     localField: '_id',
@@ -357,7 +365,7 @@ module.exports = {
             }
         }
         where.push({$project: project});
-        return Message.aggregate(where);
+        return where;
     }
 };
 

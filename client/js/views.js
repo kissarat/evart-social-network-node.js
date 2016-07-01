@@ -55,6 +55,22 @@ App.module('Views', function (Views, App) {
         }
     });
 
+    App.Behaviors.Pageable = Marionette.Behavior.extend({
+        onAttach: function () {
+            var reverse = this.options.reverse;
+            var view = this.view;
+            var el = view.el.findParent(function (current) {
+                return current.classList.contains('scroll');
+            });
+            el.addEventListener('scroll', function (e) {
+                var delta = reverse ? e.target.scrollTop : e.target.scrollHeight - e.target.scrollTop;
+                if (delta < 500) {
+                    return view.collection.pageableCollection.getNextPage();
+                }
+            });
+        }
+    });
+
     Views.Error = Marionette.View.extend({
         template: '#view-error',
         cidPrefix: 'error',
@@ -73,42 +89,6 @@ App.module('Views', function (Views, App) {
             'h1': 'title',
             '.text': 'text',
             '.code': 'code'
-        }
-    });
-
-    App.Behaviors.Pageable = Marionette.Behavior.extend({
-        onAttach: function () {
-            var reverse = this.options.reverse;
-            var view = this.view;
-            var el = view.el.findParent(function (current) {
-                return current.classList.contains('scroll');
-            });
-            el.addEventListener('scroll', function (e) {
-                var delta = reverse ? e.target.scrollTop : e.target.scrollHeight - e.target.scrollTop;
-                if (delta < 500) {
-                    return view.collection.pageableCollection.getNextPage();
-                }
-            });
-        }
-    });
-
-    Views.PhotoThumbnail = Marionette.View.extend({
-        template: '#view-photo-thumbnail',
-
-        ui: {},
-
-        attributes: {
-            'class': 'photo-thumbnail thumbnail'
-        },
-
-        events: {
-            'click': function () {
-                return this.trigger('select');
-            }
-        },
-
-        onRender: function () {
-            return this.$el.css('background-image', "url(/photo/" + (this.model.get('_id')) + ".jpg)");
         }
     });
 
@@ -138,32 +118,6 @@ App.module('Views', function (Views, App) {
 
     Views.AlertList = Marionette.View.extend({
         childView: Views.Alert
-    });
-
-    Views.Button = Backbone.View.extend({
-        setText: function (value) {
-            this.el.innerHTML = T(value);
-        }
-    });
-
-    Views.Collection = Backbone.View.extend({
-        constructor: function (options) {
-            if (!options) {
-                options = {};
-            }
-            Backbone.View.call(this, options);
-            this.children = options.children || [];
-        },
-
-        render: function () {
-            this.el.innerHTML = '';
-            this.children.forEach(function (child) {
-                child.render();
-                this.appendChild(child.el);
-                console.log(child.el);
-            });
-            return this;
-        }
     });
 
     Views.Alert = Marionette.View.extend({

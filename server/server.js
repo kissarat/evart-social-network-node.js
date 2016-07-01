@@ -5,15 +5,14 @@ var _ = require('underscore');
 var fs = require('fs');
 var http = require('http');
 var mongoose = require('mongoose');
-var ObjectID = require('mongodb').ObjectID;
 var qs = require('querystring');
-var twilio = require('twilio');
-var url_parse = require('url').parse;
-var ws = require('ws');
 
 global.config = require('./config.json');
+global.config.client = require('./client.json');
 global.code = require('../client/code.json');
 global.constants = require('../client/js/data.js');
+var web = require('./web');
+var socket = require('./socket');
 var code = require('./code');
 var errors = require('./errors');
 
@@ -54,667 +53,87 @@ Object.keys(schema).forEach(function (name) {
     global[name] = mongoose.model(name, current);
 });
 
-var o = mongoose.connect(config.mongo.uri, 'freebsd' == process.platform ? {} : config.mongo.options);
-var subscribers = {};
 var server;
 var start;
 
-o.connection.on('error', function (err) {
-    console.log(err);
-});
+function Server() {
+    this.mongoose = mongoose.connect(config.mongo.uri, 'freebsd' == process.platform ? {} : config.mongo.options);
+    this.subscribe('mongoose', this.mongoose);
+    this.subscribers = {};
+}
 
-o.connection.on('open', function () {
-    server = http.createServer(function (req, res) {
-        try {
-            var $ = new Context(req);
-            $.res = res;
-            $.subscribers = subscribers;
-            if ('/agent' === req.url.original) {
-                serve($)
-            }
-            else {
-                $.authorize(() => serve($));
-            }
-        }
-        catch (ex) {
-            if (ex.invalid) {
-                res.writeHead(code.BAD_REQUEST);
-                res.end(JSON.stringify(ex));
-            }
-            throw ex;
-        }
-    });
+Server.prototype = {
+    subscribe: utils.subscribe,
+    
+    onMongooseError: function (err) {
+        console.log(err);
+    },
 
-    server.listen(config.file, function () {
-        fs.chmodSync(config.file, parseInt('777', 8));
-        var socketServer = new ws.Server(config.socket);
-        socketServer.on('connection', function (socket) {
-            // console.log('SOCKET_CONNECTION');
-            var $ = new Context(socket.upgradeReq, o.connection);
-            $.socket = socket;
-            $.authorize(function (agent) {
-                if (agent.user) {
-                    var uid = agent.user._id.toString();
-                    var cid = agent._id.toString();
-                    var subscriber = subscribers[uid];
-                    if (!subscriber) {
-                        subscribers[uid] = subscriber = {};
-                    }
-                    else if (subscriber[cid]) {
-                        var client = subscriber[cid];
-                        client.socket.close();
-                    }
-                    socket.on('close', function () {
-                        delete subscriber[cid];
-                        if (_.isEmpty(subscriber)) {
-                            delete subscribers[uid];
-                        }
-                    });
-                    subscriber[cid] = $;
-                    // console.log('AUTHORIZE_SOCKET', subscribers);
-                    socket.on('message', function (message) {
-                        message = JSON.parse(message);
-                        console.log('SOCKET', message);
-                        if (message.target_id) {
-                            $.notifyOne(message.target_id, message);
-                        }
-                        else {
-                            console.warn('NO_TARGET', message.target_id);
-                        }
-                    });
+    onMongooseOpen: function () {
+        this.httpServer = http.createServer(function (req, res) {
+            try {
+                var $ = new web.Context({
+                    server: this,
+                    req: req,
+                    res: res
+                });
+                if ('/agent' === req.url.original) {
+                    serve($)
                 }
                 else {
-                    socket.close();
+                    $.authorize(() => serve($));
                 }
-            });
+            }
+            catch (ex) {
+                if (ex.invalid) {
+                    res.writeHead(code.BAD_REQUEST);
+                    res.end(JSON.stringify(ex));
+                }
+                throw ex;
+            }
         });
-        call_modules_method('_boot', {
+        
+        this.subscribe('http', this.httpServer);
+        this.httpServer.listen(config.file);
+    },
+
+    onHttpListening: function () {
+        fs.chmodSync(config.file, parseInt('777', 8));
+        this.webSocketServer = socket.WebSocketServer({
+            config: config.socket
+        });
+        
+        server.callModulesMethod('_boot', {
             server: server,
             socketServer: socketServer
         });
-    });
 
-    start = new Date();
+        this.start = new Date();
 
-    var startMessage = 'Started:\t' + start;
-    console.log(startMessage.bgBlue.black);
-});
-
-function call_modules_method(name, $) {
-    for (var i in modules) {
-        var module = modules[i];
-        if (module && name in module && module[name] instanceof Function) {
-            module[name]($);
-        }
-    }
-}
-
-function Context(req) {
-    this.config = config;
-    var now = process.hrtime();
-    req.start = now[0] * 1000000000 + now[1];
-    this.o = o;
-    this.isCache = req.url.indexOf('/api-cache') == 0;
-    var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
-    // console.log('URL', raw_url);
-    req.url = parse(raw_url);
-    this.params = req.url.query;
-    // req.cookies = qs.parse(req.headers.cookie, /;\s+/);
-    req.cookies = {};
-    if ('string' == typeof req.headers.cookie) {
-        req.headers.cookie.split(/;\s+/).forEach(function (item) {
-            var parts = item.split('=');
-            req.cookies[parts[0].trim()] = parts[1].trim();
-        });
-    }
-
-    if (req.url.query.auth) {
-        req.auth = req.url.query.auth;
-        delete req.url.query.auth;
-    }
-    else if (req.cookies.auth) {
-        req.auth = req.cookies.auth;
-    }
-
-    if (req.cookies.cid && /^[0-9a-z]{24}$/.test(req.cookies.cid)) {
-        req.client_id = ObjectID(req.cookies.cid);
-    }
-
-    if (req.cookies.last) {
-        var last = parseInt(req.cookies.last);
-        if (!isNaN(last)) {
-            req.last = new Date(last);
-        }
-    }
-
-    var since = req.headers['if-modified-since'];
-    if (since) {
-        since = new Date(since);
-        if (isNaN(since)) {
-            this.invalid('if-modified-since');
-        }
-        else {
-            req.since = since;
-        }
-    }
-
-    var geo = req.headers.geo;
-    if (geo) try {
-        req.geo = JSON.parse(geo);
-    }
-    catch (ex) {
-        this.invalid('geo');
-    }
-
-    this.req = req;
-
-    for (var i in this) {
-        var f = this[i];
-        if ('function' == typeof f) {
-            this[i] = f.bind(this);
-        }
-    }
-}
-
-Context.prototype = {
-    twilio: new twilio.RestClient(config.sms.sid, config.sms.token),
-
-    sendSMS: function (phone, text, cb) {
-        this.twilio.sms.messages.create({
-            to: '+' + phone,
-            from: '+' + config.sms.phone,
-            body: text
-        }, this.wrap(cb))
+        var startMessage = 'Started:\t' + start;
+        console.log(startMessage.bgBlue.black);
+    },
+    
+    createContext: function (options) {
+        options.server = this;
     },
 
-    invalid: function invalid(name, value) {
-        if (!value) {
-            value = 'invalid';
-        }
-        var obj = {};
-        obj[name] = value;
-        throw new errors.BadRequest(obj);
-    },
-
-    wrap: function (call) {
-        var self = this;
-        return function (err, result) {
-            if (err) {
-                if (err instanceof mongoose.Error.ValidationError) {
-                    self.send(code.BAD_REQUEST, {
-                        invalid: err.errors
-                    });
-                }
-                else {
-                    self.send(code.INTERNAL_SERVER_ERROR, {
-                        error: err
-                    });
-                }
-            }
-            else {
-                call(result);
-            }
-        }
-    },
-
-    answer: function (err, result) {
-        if (err) {
-            this.send(code.INTERNAL_SERVER_ERROR, {
-                error: err.message
-            });
-        }
-        else {
-            this.send(result);
-        }
-    },
-
-    success: function (err, result) {
-        if (err) {
-            if (err instanceof mongoose.Error.ValidationError) {
-                this.send(code.BAD_REQUEST, {
-                    invalid: err.errors
-                });
-            }
-            else {
-                this.send(code.INTERNAL_SERVER_ERROR, {
-                    error: err
-                });
-            }
-        }
-        else {
-            this.send({success: !!result});
-        }
-    },
-
-    notifyOne: function (target_id, data) {
-        data.time = new Date().toISOString();
-        if ('string' != typeof data) {
-            data = JSON.stringify(data);
-        }
-        var sockets = this.getSockets(target_id);
-        // console.log('NOTIFY_ONE', target_id, Object.keys(sockets), data);
-        for (var agent_id in sockets) {
-            var $ = sockets[agent_id];
-            $.socket.send(data);
-        }
-    },
-
-    getSubscribers: function () {
-        return subscribers;
-    },
-
-    getSockets: function (user_id) {
-        if (!user_id) {
-            user_id = this.user._id;
-        }
-        return subscribers[user_id.toString()] || {};
-    },
-
-    notify: function (target_id, event) {
-        var data = {};
-        for (var key in event) {
-            data[key] = event[key];
-        }
-        if (!(target_id instanceof ObjectID)) {
-            target_id = ObjectID(target_id);
-        }
-        data.target_id = target_id;
-        if (data._id) {
-            data.object_id = data._id;
-            delete data._id;
-        }
-        if (!data.time) {
-            data.time = Date.now();
-        }
-        var subscriber = subscribers[target_id.toString()];
-        var sendSubscribers = subscriber ? function () {
-            for (var cid in subscriber) {
-                var o = subscriber[cid];
-                if (o.socket) {
-                    o.socket.send(JSON.stringify(data));
-                }
-                else {
-                    o.send(data);
-                }
-            }
-        } : Function();
-        if (Number.isFinite(data.end) && data.end < data.time) {
-            sendSubscribers();
-        }
-        else {
-            $.data.insertOne('queue', data, sendSubscribers);
-        }
-    },
-
-    sendStatus: function (code, message, headers) {
-        this.res.writeHead(code, message, headers);
-        this.res.end();
-    },
-
-    _param: function (object, name, defaultValue) {
-        if (name in object) {
-            var value = object[name];
-            if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
-                if (!/[\da-f]{24}/i.test(value)) {
-                    this.invalid(name, 'ObjectID');
-                }
-                value = ObjectID(value);
-            }
-            if (defaultValue instanceof Array && 'string' === typeof value) {
-                value = value.split('.');
-            }
-            return value;
-        }
-        if (defaultValue) {
-            return defaultValue
-        }
-        this.invalid(name, 'required');
-    },
-
-    param: function (name, defaultValue) {
-        return this._param(this.params, name, defaultValue);
-    },
-
-    get: function (name, defaultValue) {
-        return this._param(this.req.url.query, name, defaultValue);
-    },
-
-    post: function (name) {
-        return this._param(this.body, name);
-    },
-
-    has: function (name, isGet) {
-        var params = isGet ? this.req.url.query : this.params;
-        if (name in params) {
-            var value = params[name];
-            if (value instanceof Array) {
-                return value.length > 0;
-            }
-            return true;
-        }
-        return false;
-    },
-
-    hasAny: function (array) {
-        for (var i = 0; i < array.length; i++) {
-            if (this.has(array[i])) {
-                return true;
-            }
-        }
-        return false;
-    },
-
-    paramsObject: function (array) {
-        var params = {};
-        for (var i = 0; i < array.length; i++) {
-            var name = array[i];
-            if (this.has(name)) {
-                params[name] = this.param(name);
-            }
-        }
-        if (params.id) {
-            params._id = params.id;
-            delete params.id
-        }
-        return params;
-    },
-
-    ids: function () {
-        return $.param('ids').split('.').map(function (id) {
-            return ObjectID(id)
+    onWebSocketConnection: function (socket) {
+        // console.log('SOCKET_CONNECTION');
+        var $ = new web.Context(god, socket.upgradeReq);
+        $.socket = socket;
+        $.authorize(function (agent) {
+            
         });
     },
 
-    merge: function () {
-        var o = {};
-        for (var i = 0; i < arguments.length; i++) {
-            var a = arguments[i];
-            for (var j in a) {
-                o[j] = a[j];
+    callModulesMethod: function (name, $) {
+        for (var i in modules) {
+            var module = modules[i];
+            if (module && name in module && module[name] instanceof Function) {
+                module[name]($);
             }
         }
-        return o;
-    },
-
-    validate: function (object) {
-        return true; // schema_validator.validate(object, old_schema);
-    },
-
-    getUserAgent: function () {
-        var agent = {
-            ip: this.req.connection.remoteAddress
-        };
-        if (this.req.headers['user-agent']) {
-            agent.agent = this.req.headers['user-agent'];
-        }
-        if (this.req.geo) {
-            agent.geo = this.req.geo;
-        }
-        return agent;
-    },
-
-    setCookie: function (name, value, age, path) {
-        var cookie = name + '=' + value;
-        cookie += '; path=' + (path || '/');
-        if (age) {
-            if (true === age) {
-                age = new Date();
-                age.setYear(age.getYear() + 10);
-            }
-            if (age instanceof Date) {
-                age = age.toUTCString();
-            }
-            if (!isNaN(age)) {
-                age = new Date(Date.now() + age).toUTCString();
-            }
-            cookie += '; expires=' + age;
-        }
-        if (this.res.headersSent) {
-            console.error(`Setting cookie when headers sent ${name}=${value}`);
-        }
-        else {
-            this.res.setHeader('set-cookie', cookie);
-        }
-        // console.log(cookie);
-    },
-
-    allowFields: function (user_fields, admin_fields) {
-        var data = {};
-        for (var key in this.body) {
-            if (('admin' == this.user.type && admin_fields.indexOf(key) >= 0) || user_fields.indexOf(key) >= 0) {
-                data[key] = this.body[key];
-            }
-        }
-        return data;
-    },
-
-    get spend() {
-        var now = process.hrtime();
-        now = now[0] * 1000000000 + now[1];
-        return (now - this.req.start) / 1000000;
-    },
-
-    send: function () {
-        var object;
-        var status = code.OK;
-        if (1 == arguments.length) {
-            object = arguments[0];
-        }
-        else if (2 == arguments.length) {
-            status = arguments[0];
-            object = arguments[1];
-        }
-
-        if (this.socket) {
-            this.socket.send(JSON.stringify(object));
-            return;
-        }
-
-        if (this.res.finished) {
-            console.error('Response already send ', this.req.url.original, object);
-        }
-        else {
-            if ('GET' != this.req.method && 'boolean' == typeof object.success) {
-                if (!object.ip) {
-                    object.ip = this.req.headers.ip;
-                }
-                object.spend = this.spend;
-            }
-
-            var data = JSON.stringify(object);
-            if (code.OK !== status) {
-                this.res.writeHead(status, {
-                    'content-type': 'application/json; charset=utf-8'
-                    //'Access-Control-Allow-Origin': '*'
-                });
-            }
-            else {
-                this.res.setHeader('content-type', 'application/json; charset=utf-8');
-            }
-            this.res.end(data);
-        }
-
-        if ('GET' != this.req.method) {
-            var record = {
-                client_id: this.req.client_id,
-                route: this.req.url.route.length > 1 ? this.req.url.route : this.req.url.route[0],
-                method: this.req.method,
-                code: status,
-                time: Date.now()
-            };
-            if (object) {
-                record.result = object.result;
-            }
-            if (this.user) {
-                record.user_id = this.user._id;
-            }
-            for (var i in this.req.url.query) {
-                record.params = this.req.url.query;
-                break;
-            }
-            if (this.body) {
-                record.body = this.body;
-            }
-            this.db.collection('log').insertOne(record, Function());
-        }
-    },
-
-    authorize: function (cb) {
-        var self = this;
-
-        function agent_not_found() {
-            self.send(code.UNAUTHORIZED, {
-                success: false,
-                ip: self.req.headers.ip,
-                error: {
-                    code: 'AGENT_NOT_FOUND',
-                    message: 'User agent is not registered'
-                }
-            });
-        }
-
-        if (this.req.auth) {
-            Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function (agent) {
-                if (agent) {
-                    self.agent = agent;
-                    cb(agent);
-                }
-                else {
-                    agent_not_found();
-                }
-            }));
-        }
-        else {
-            agent_not_found();
-        }
-    },
-
-    just: function (object, keys) {
-        var result = {};
-        for (var key in object) {
-            if (keys.indexOf(key) >= 0) {
-                result[key] = object[key];
-            }
-        }
-        return result;
-    },
-
-    get id() {
-        if (!('id' in this.req) && this.req.url.query.id) {
-            try {
-                this.req.id = ObjectID(this.req.url.query.id);
-            }
-            catch (ex) {
-                this.req.id = this.req.url.query.id;
-            }
-        }
-        return this.req.id;
-    },
-
-    get user() {
-        return this.agent ? this.agent.user : null;
-    },
-
-    get db() {
-        // console.warn('MongoDB connection usage');
-        return this.o.connection;
-    },
-
-    get skip() {
-        var value = 0;
-        if (this.has('skip')) {
-            value = this.get('skip');
-            if (value < 0) {
-                value = 0;
-            }
-        }
-        return value;
-    },
-
-    get limit() {
-        var value = 96;
-        if (this.has('limit')) {
-            value = this.get('limit');
-            if (value > 100 || value <= 0) {
-                value = 96;
-            }
-        }
-        return value;
-    },
-
-    get order() {
-        if (this.has('sort') && this.get('sort')) {
-            var sort = this.get('sort').split('.');
-            var _order = {};
-            if (this.has('order')) {
-                _order[sort] = 'a' == this.get('order')[0] ? 1 : -1;
-            }
-            else {
-                sort.forEach(function (field) {
-                    var direction = 1;
-                    if ('-' == field[0]) {
-                        field = field.slice(1);
-                        direction = -1;
-                    }
-                    _order[field] = direction;
-                })
-            }
-            return _order;
-        }
-        return false;
-    },
-
-    get search() {
-        if (this.has('q')) {
-            var q = this.get('q');
-            q = q ? q.toString().trim().replace(/[\+\s]+/g, '.*').toLowerCase() : '';
-            return q ? new RegExp(`.*${q}.*`, 'i') : false;
-        }
-        return false;
-    },
-
-    select: function (array, allow) {
-        if (!array) {
-            array = [];
-        }
-        if (this.has('select')) {
-            var param = this.get('select').split('.').sort();
-            var allowed_fields = [];
-            if (allow) {
-                allow.forEach(function (field) {
-                    if (param.indexOf(field) >= 0) {
-                        allowed_fields.push(field);
-                    }
-                });
-            }
-            array = array.concat(allowed_fields);
-        }
-        array.push('time');
-        return _.uniq(array);
-    },
-
-    model: function () {
-        this.o.apply(this.o, arguments);
-    },
-
-    get bodySize() {
-        var size = this.req.headers ? this.req.headers['content-length'] : 0;
-        return size > 0 ? size : 0;
-    },
-
-    maxBody: function (maxLength) {
-        if (this.bodySize > maxLength) {
-            throw new errors.EntityTooLarge(maxLength);
-        }
-    },
-
-    get isUpdate() {
-        var m = this.req.method;
-        return 'POST' == m || 'PUT' == m || 'PATCH' == m;
-    },
-
-    collection: function (name) {
-        return this.db.collection(name);
     }
 };
 
@@ -792,7 +211,26 @@ function serve($) {
 
     switch (typeof result) {
         case 'object':
-            if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
+            if (Object === result.constructor) {
+                let collection = $.collection(result.collection || $.req.url.route[0]);
+                if (true === result.select) {
+                    result.select = $.select(false, false, true);
+                }
+                else if (result.select instanceof Array) {
+                    result.select = $.select([], result.select, true);
+                }
+                if (!(result.query instanceof Array)) {
+                    result.query = result.query ? [{$match: result.query}] : [];
+                }
+                if (result.select) {
+                    result.query.push({$project: result.select});
+                }
+                console.log(result.query);
+                result.query.push({$skip: $.skip});
+                result.query.push({$limit: $.limit});
+                collection.aggregate(result.query, $.answer);
+            }
+            else if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
                 if ('find' == result.op || result instanceof mongoose.Aggregate) {
                     var order = $.order;
                     if (order) {
@@ -803,7 +241,7 @@ function serve($) {
                 }
                 result = result.exec();
             }
-            if ('Promise' == result.constructor.name) {
+            else if ('Promise' == result.constructor.name) {
                 result
                     .then(function (c, r) {
                         if ('number' != typeof c) {
@@ -856,15 +294,18 @@ function serve($) {
             }
             break;
         case 'boolean':
-            if (false === result) {
-                $.sendStatus(code.METHOD_NOT_ALLOWED);
-            }
+            $.send({success: result});
             break;
         case 'number':
             $.res.writeHead(result);
             break;
         case 'string':
-            $.res.end(result);
+            $.send(code.BAD_REQUEST, {
+                success: false,
+                error: {
+                    message: result
+                }
+            });
             break;
         default:
             if (undefined !== result) {
@@ -998,32 +439,6 @@ function exec($, action) {
 }
 
 // -------------------------------------------------------------------------------
-
-function morozov(err, results) {
-    console.log(results);
-}
-
-function parse(url) {
-    var a = url_parse(url);
-    a.original = url;
-    if (a.query) {
-        a.query = qs.parse(a.query);
-        for (var i in a.query) {
-            var value = a.query[i];
-            if (!value) {
-                delete a.query[i];
-            }
-            else if (24 != value.length && /^\-?\d+$/.test(value)) {
-                a.query[i] = parseFloat(value);
-            }
-        }
-    }
-    else {
-        a.query = {};
-    }
-    a.route = a.pathname.split('/').slice(1);
-    return a;
-}
 
 function receive(readable, call) {
     var chunks = [];

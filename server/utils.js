@@ -130,6 +130,18 @@ function s(array) {
     })
 }
 
+function subscribe(prefix, source, target) {
+    var self = this;
+    prefix = 'on' + prefix;
+    _.each(source, function (name, handler) {
+        name = name.toLowerCase();
+        if (0 === name.indexOf(prefix)) {
+            name = name.replace(onmongoose, '');
+            self.mongoose.on(name, handler)
+        }
+    });
+}
+
 var exports = {
     export: function (classes) {
         var exports = {};
@@ -144,5 +156,5 @@ var exports = {
 };
 
 module.exports = merge(exports, exports.export(
-    [Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType]
+    [Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe]
 ));

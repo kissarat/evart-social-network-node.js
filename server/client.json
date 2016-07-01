@@ -1,4 +1,7 @@
 {
+  "jsonp": {
+    "enabled": true
+  },
   "file": {
     "max": 32768
   },
@@ -21,7 +24,14 @@
   },
   "cookie": {
     "future": "Thu, 31 Jan 2030 22:00:00 GMT",
-    "past": "Thu, 01 Jan 1970 00:00:00 GMT"
+    "past": "Thu, 01 Jan 1970 00:00:00 GMT",
+    "forever": 1000000000000
+  },
+  "message": {
+    "read": {
+      "empty": true,
+      "delay": 2000
+    }
   },
   "peer": {
     "enabled": true,
