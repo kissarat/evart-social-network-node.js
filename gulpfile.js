@@ -10,9 +10,17 @@ var minifier = require('minifier');
 var fse = require('fs.extra');
 var data = require('./client/js/data');
 
-var now = Date.now();
-var author = '/**\n* @author Taras Labiak <kissarat@gmail.com>\n*/';
+var jsVersion = 1;
+var cssVersion = 1;
+var htmlVersion = 1;
 var newlines = '\n\n\n\n';
+
+function version(v) {
+    return ['/**',
+    '* @author Taras Labiak <kissarat@gmail.com>',
+    `* @version ${v}`,
+    '*/'].join('\n') + '\n\n';
+}
 
 gulp.task('translate', function () {
     gulp.src('client/sass/*.sass').pipe(sass()).pipe(gulp.dest('client/sass/'));
@@ -57,7 +65,6 @@ gulp.task('app', function () {
     link.setAttribute('type', 'text/css');
     link.setAttribute('href', '/style.css');
     doc.head.appendChild(link);
-    doc.querySelector('[http-equiv="Last-Modified"]').setAttribute('content', new Date(now).toUTCString());
     var iter = doc.createNodeIterator(doc.documentElement, 128, null, false);
     while (true) {
         var comment = iter.nextNode();
@@ -74,15 +81,15 @@ gulp.task('app', function () {
             newlines +
             '<a id="author" href="http://kissarat.github.io/">\n\tDeveloped by Taras Labiak\n</a>' +
             newlines + '</body>')
-        // .replace(/<script/g, '\n<script')
         .replace('<meta name="robots" content="index,nofollow">',
             newlines +
             '<meta name="author"  content="Taras Labiak"/>' +
             '\n<meta name="contact" content="kissarat@gmail.com"/>' +
+            `\n<!-- @version ${htmlVersion} -->` +
             newlines +
             '<meta name="robots" content="index,nofollow"/>'
         );
-    fs.writeFileSync('app/index.html', '<!DOCTYPE html>\n' + string);
+    fs.writeFileSync('app/index.html', `<!DOCTYPE html>\n` + string);
     fs.readdirSync('client/languages').filter(function (name) {
         return /\.json$/.test(name);
     }).forEach(function (name) {
@@ -101,20 +108,14 @@ gulp.task('app', function () {
 
 gulp.task('minify', function () {
     minifier.minify('app/style.css');
-    var style = fs.readFileSync('app/style.min.css');
+    var string = fs.readFileSync('app/style.min.css');
     fs.unlinkSync('app/style.min.css');
-    style = style.toString('utf8').replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '');
-    style = author + style;
-    fs.writeFileSync('app/style.css', style);
+    string = string.toString('utf8').replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '');
+    fs.writeFileSync('app/style.css', version(cssVersion) + string);
 
     minifier.minify('app/script.js');
-    var version = Math.round((now - (new Date(2016, 6, 1).getTime())) / (1000 * 3600));
-    var string = fs.readFileSync('app/script.min.js');
-    fs.writeFileSync('app/script.js', [
-        author,
-        `var version = ${version};`,
-        string
-    ].join('\n\n'));
+    string = fs.readFileSync('app/script.min.js');
+    fs.writeFileSync('app/script.js',  version(jsVersion) + string);
     fs.unlinkSync('app/script.min.js');
 });
 
