@@ -107,7 +107,7 @@ App.module('User', function (User, App) {
     });
 
     User.List = App.PageableCollection.extend({
-        url: '/api-cache/user',
+        url: '/api/user',
 
         query: {
             type: 'user',
@@ -856,7 +856,7 @@ App.module('User', function (User, App) {
 
         open: function (e) {
             e.preventDefault();
-            App.navigate('/view/' + this.model.get('domain'));
+            App.navigate(this.el.getAttribute('href'));
         },
 
         message: function () {
@@ -868,24 +868,15 @@ App.module('User', function (User, App) {
             this.ui.name.text(this.model.getName());
             this.model.setupAvatar(this.ui.avatar[0]);
             var me = App.user;
-            if (me && me.follow && me.follow.indexOf && me.follow.indexOf(this.model.get('_id')) < 0) {
-                var button = new App.Views.Button();
-                button.setText('Follow');
-                this.getControls().children.push(button);
-            }
+            // if (me && me.follow && me.follow.indexOf && me.follow.indexOf(this.model.get('_id')) < 0) {
+            //     var button = new App.Views.Button();
+            //     button.setText('Follow');
+            //     this.getControls().children.push(button);
+            // }
             this.getRegion('buttons').show(new User.OtherProfileButtons({model: this.model}));
             if (this.model.get('city')) {
                 this.ui.city.html(', ' + this.model.get('city'));
             }
-        },
-
-        getControls: function () {
-            var region = this.getRegion('buttons');
-            if (!region.currentView) {
-                var collectionView = new App.Views.Collection();
-                region.show(collectionView);
-            }
-            return region.currentView;
         },
 
         follow: function () {
@@ -940,8 +931,8 @@ App.module('User', function (User, App) {
         },
 
         search: function () {
-            this.getCollection().delaySearch();
             var self = this;
+            this.getCollection().delaySearch();
             this.ui.list.busy(true);
             this.getCollection().delaySearch(function () {
                 self.ui.list.busy(false);
@@ -981,7 +972,15 @@ App.module('User', function (User, App) {
                 if (!domain) {
                     domain = App.user.domain;
                 }
-                var url = '/api/user?' + (/^[0-9a-f]{24}$/.test(domain) ? 'id=' + domain : 'domain=' + domain);
+                var params = {};
+                if (_.isObjectID(domain)) {
+                    params.id = domain
+                }
+                else {
+                    params.domain = domain;
+                }
+                params.select = 'domain.surname.forename.name.country.city.city_id.tiles.avatar';
+                var url = '/api/user?' + $.param(params);
                 $.get(url, function (user) {
                     App.local.put('user', user);
                     user = new User.Model(user);
@@ -993,7 +992,7 @@ App.module('User', function (User, App) {
                     buttons = new buttons({model: user});
                     App.Message.WallView.widget(profile.getRegion('message-list'), {owner_id: user.get('_id')});
                     profile.getRegion('buttons').show(buttons);
-                    App.local.getById('user/informer', user.get('_id')).then(function (informer) {
+                    $.getJSON('/api/user/informer?select=follows.followers.groups.video.audio&id=' + user.get('_id'), function (informer) {
                         user.set(informer);
                     });
                     App.Photo.ListView.widget(profile.getRegion('photo-list'), {
@@ -1034,8 +1033,12 @@ App.module('User', function (User, App) {
             },
 
             index: function () {
-                var pageable = new User.List();
-                pageable.queryModel.set('type', 'user');
+                var pageable = new User.List([], {
+                    query: {
+                        type: 'user',
+                        select: 'domain.surname.forename.name.country.city.city_id'
+                    }
+                });
                 var listView = new User.ListView({collection: pageable.fullCollection});
                 var layout = new User.SearchView({model: pageable.queryModel});
                 App.getPlace('main').show(layout);

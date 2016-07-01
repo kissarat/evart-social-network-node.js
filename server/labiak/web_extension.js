@@ -30,7 +30,7 @@ module.exports = {
         else if (isUpdate) {
             return collection.update(task.query, _.pick(task, '$set', '$unset'), task.options);
         }
-        console.log(JSON.stringify(task.query, null, '  '));
+        // console.log(JSON.stringify(task.query, null, '  '));
         if (task.count) {
             return collection.count(task.query);
         }

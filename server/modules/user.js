@@ -111,7 +111,7 @@ var _schema = {
     city_id: Number,
     city: utils.StringType(),
     address: utils.StringType(128),
-    name:  utils.StringType(48),
+    name: utils.StringType(48),
     birthday: Date,
     about: utils.StringType(512),
 
@@ -167,7 +167,7 @@ schema.User.statics.fields = {
         group: ["domain", "name", "about", "avatar"],
         admin: ['domain', 'type']
     },
-    
+
     project: {
         _id: 1,
         domain: 1,
@@ -176,7 +176,7 @@ schema.User.statics.fields = {
         forename: 1,
         name: 1,
         avatar: 1
-    } 
+    }
 };
 
 schema.User.statics.search = function search($, where) {
@@ -213,11 +213,12 @@ module.exports = {
     _meta: {
         schema: _schema
     },
-    
+
     GET: function ($) {
         var params = ['id', 'domain'];
-        var r = {select: User.fields.select.user};
+        var r = {select: $.select(User.fields.select.user)};
         if ($.hasAny(params)) {
+            r.single = true;
             r.query = $.paramsObject(params);
         }
         else if ($.has('ids')) {
@@ -228,8 +229,9 @@ module.exports = {
             };
         }
         else {
-            r.query = User.search($);
+            r.query = User.search($, r.query);
         }
+        console.log(r.select);
         return r;
     },
 
@@ -294,38 +296,34 @@ module.exports = {
 
     informer: function ($) {
         var id = $.id || $.user._id;
-        return [
-            {
-                name: 'follows',
+        var object = {
+            follows: {
                 pick: 'follow',
                 select: {follow: 1},
                 query: {_id: id}
             },
-            {
-                name: 'groups',
+            groups: {
                 pick: '_id',
                 select: {follow: 1},
                 query: function (bundle) {
+                    bundle.follows = _.isEmpty(bundle.follows) ? [] : bundle.follows;
                     return {
                         type: 'group',
                         _id: {$in: bundle.follows}
                     }
                 }
             },
-            {
-                name: 'followers',
+            followers: {
                 pick: '_id',
                 count: true,
                 query: {follow: id}
             },
-            {
-                name: 'video',
+            video: {
                 collection: 'video',
                 count: true,
                 query: {owner: id}
             },
-            {
-                name: 'audio',
+            audio: {
                 collection: 'file',
                 count: true,
                 query: {
@@ -333,8 +331,7 @@ module.exports = {
                     owner: id
                 }
             },
-            {
-                name: 'photo',
+            photo: {
                 collection: 'file',
                 count: true,
                 query: {
@@ -342,50 +339,48 @@ module.exports = {
                     owner: id
                 }
             },
-            function (result, bundle) {
-                bundle._id = id;
-                bundle.follows = _.difference(bundle.follows, bundle.groups, utils.equals);
-                bundle.friends = _.intersection(bundle.follows, bundle.followers, utils.equals);
-                bundle.follows = bundle.follows.length;
-                bundle.friends = bundle.friends.length;
-                bundle.groups = bundle.groups.length;
-                $.send(bundle);
+            files: {
+                collection: 'file',
+                count: true,
+                query: {
+                    type: {$nin: ['photo', 'audio']},
+                    owner: id
+                }
             }
-        ];
-        var result = {};
-        return new Promise(function (resolve, reject) {
-            User.findOne({_id: id}, {follow: 1}).catch(reject).then(function (user) {
-                result._id = user._id;
-                var follows = utils.s(user.follow);
-                User.find({_id: {$in: id}}, {_id: 1})
-                    .catch(reject)
-                    .then(function (followers) {
-                        result.followers = utils.s(_.pluck(followers, '_id'));
-                        return Video.count({owner: id});
-                    })
-                    .catch(reject)
-                    .then(function (count) {
-                        result.video = count;
-                        return File.count({type: 'audio'});
-                    })
-                    .catch(reject)
-                    .then(function (count) {
-                        result.audio = count;
-                        return User.find({_id: {$in: user.follow}, type: 'group'}, {_id: 1})
-                    })
-                    .catch(reject)
-                    .then(function (groups) {
-                        groups = utils.s(_.pluck(groups, '_id'));
-                        follows = _.difference(follows, groups);
-                        var friends = _.intersection(follows, result.followers);
-                        result.follows = follows.length;
-                        result.followers = result.followers.length;
-                        result.groups = groups.length;
-                        result.friends = friends.length;
-                        resolve(result);
-                    });
-            });
-        })
+        };
+
+        var queries = [];
+        var select = $.select();
+        var showFriends = _.contains(select, 'friends');
+        if (showFriends) {
+            select.push('followers')
+        }
+        if (_.intersection(select, ['groups', 'followers']).length > 0) {
+            select.push('follows');
+        }
+        _.each(object, function (field, name) {
+            if (_.contains(select, name)) {
+                field.name = name;
+                queries.push(field);
+            }
+        });
+
+        queries.push(function (result, bundle) {
+            bundle._id = id;
+            if (bundle.follows) {
+                if (bundle.groups) {
+                    bundle.follows = _.difference(bundle.follows, bundle.groups, utils.equals);
+                    bundle.groups = bundle.groups.length;
+                }
+                if (showFriends && bundle.followers) {
+                    bundle.friends = _.intersection(bundle.follows, bundle.followers, utils.equals);
+                    bundle.friends = bundle.friends.length;
+                }
+                bundle.follows = bundle.follows.length;
+            }
+            $.send(bundle);
+        });
+        return queries;
     },
 
     login: function ($) {
