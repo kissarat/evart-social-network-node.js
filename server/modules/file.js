@@ -99,9 +99,11 @@ module.exports = {
 
     GET: function ($) {
         if ($.has('id')) {
-            var q = File.findOne($.id);
+            let where = {_id: $._id};
             if ($.req.headers.accept.indexOf('json') > 0) {
-                return q;
+                return {
+                    query: where
+                };
             }
             else {
                 File.findOne($.id, $.wrap(function (file) {
@@ -111,15 +113,17 @@ module.exports = {
                     });
                 }));
             }
-        } else {
-            var owner_id = $.has('owner_id') ? $.param('owner_id') : $.user._id;
-            var conditions = {
-                owner: owner_id
+        }
+        else {
+            let where = {
+                owner: $.has('owner_id') ? $.param('owner_id') : $.user._id
             };
             if ($.has('type')) {
-                conditions.type = $.param('type');
+                where.type = $.param('type');
             }
-            return File.find(conditions);
+            return {
+                query: where
+            }
         }
     },
 

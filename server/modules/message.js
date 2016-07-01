@@ -138,6 +138,7 @@ module.exports = {
 
     GET: function ($) {
         var where = [];
+        var permission;
         if ($.has('type')) {
             where.push({type: $.get('type')})
         }
@@ -163,7 +164,17 @@ module.exports = {
                 break;
 
             case Message.Type.WALL:
-                where.push({owner: $.get('owner_id', me)});
+                var owner_id = $.get('owner_id', me);
+                if (!owner_id.equals(me)) {
+                    permission = {
+                        collection: 'user',
+                        deny: {
+                            _id: owner_id,
+                            deny: me
+                        }
+                    };
+                }
+                where.push({owner: me});
                 break;
 
             case 'feed':
@@ -174,17 +185,7 @@ module.exports = {
                 break;
 
             default:
-                if ($.has('unread') && $.get('unread')) {
-                    where.push({unread: $.get('unread')});
-                }
-                where.push({
-                    $or: [
-                        {owner: $.get('owner_id', me)},
-                        {source: me},
-                        {target: me}
-                    ]
-                });
-                break;
+                return code.BAD_REQUEST;
         }
 
         var aggregate = [
@@ -223,9 +224,13 @@ module.exports = {
             $project: _project
         });
 
-        return {
-            query: aggregate
-        };
+        if (_.isEmpty(permission)) {
+            return {query: aggregate};
+        }
+        return [
+            permission,
+            {query: aggregate}
+        ]
     },
 
     POST: function ($) {
@@ -238,26 +243,36 @@ module.exports = {
                 targets.push(id)
             }
         });
-        message = new Message(message);
-        message.save($.wrap(function () {
-            if ($.has('parent_id')) {
-                Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
-            }
-            $.send(message);
-            _.uniq(targets).forEach(id => $.notifyOne(id, message));
-        }));
+        $.accessUser(targets, function () {
+            message = new Message(message);
+            message.save($.wrap(function () {
+                if ($.has('parent_id')) {
+                    Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
+                }
+                $.send(message);
+                _.uniq(targets).forEach(id => $.notifyOne(id, message));
+            }));
+        });
     },
 
     DELETE: function ($) {
-        return Message.remove({
-            _id: $.id
-        });
+        if ('admin' === $.user.type) {
+            return Message.remove({
+                _id: $.id
+            });
+        }
+        else {
+            return code.FORBIDDEN;
+        }
     }
 };
 
 function read($) {
     if ($.has('id') && $.has('unread')) {
-        return Message.update({_id: $.param('id')}, {$set: {unread: $.param('unread')}});
+        return [
+            {query: {_id: $.param('id')}},
+            {$set: {unread: $.param('unread')}}
+        ];
     }
     if ($.has('target_id')) {
         let you = $.param('target_id');
@@ -287,22 +302,35 @@ function read($) {
         ]
     }
     else {
+        let id = $.user._id;
         return {
             select: true,
             query: {
-                unread: 1
+                $and: [
+                    {unread: 1},
+                    {
+                        $or: [
+                            {owner: id},
+                            {target: id}
+                        ]
+                    }
+                ] 
             }
         };
     }
 }
 
 function dialogs($) {
+    var id = $.user._id;
+    if ('admin' === $.user.type) {
+        id = $.get('id', id);
+    }
     var match = [
         {type: Message.Type.DIALOG},
         {
             $or: [
-                {source: $.user._id},
-                {target: $.user._id}
+                {source: id},
+                {target: id}
             ]
         }
     ];

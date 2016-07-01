@@ -24,7 +24,7 @@ App.module('User', function (User, App) {
         initialize: function () {
             var id = this.get('_id');
             if (id) {
-                this.url = '/api/user?id=' + id;
+                this.url = '/api/user?select=domain.surname.forename.name.country.city.city_id.tiles.avatar.birthday&id=' + id;
             }
         },
 
@@ -39,7 +39,7 @@ App.module('User', function (User, App) {
         },
 
         canManage: function () {
-            return 'admin' === this.get('type')
+            return 'admin' === App.user.type
                 || App.user._id === this.get('_id')
                 || _.contains(this.get('admin'), App.user._id);
         },
@@ -992,7 +992,7 @@ App.module('User', function (User, App) {
                     buttons = new buttons({model: user});
                     App.Message.WallView.widget(profile.getRegion('message-list'), {owner_id: user.get('_id')});
                     profile.getRegion('buttons').show(buttons);
-                    $.getJSON('/api/user/informer?select=follows.followers.groups.video.audio&id=' + user.get('_id'), function (informer) {
+                    $.getJSON('/api/user/informer?select=follows.followers.groups.video.audio.friends.photo&id=' + user.get('_id'), function (informer) {
                         user.set(informer);
                     });
                     App.Photo.ListView.widget(profile.getRegion('photo-list'), {

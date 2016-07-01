@@ -295,7 +295,7 @@ Context.prototype = {
     allowFields: function (user_fields, admin_fields) {
         var data = {};
         for (var key in this.body) {
-            if (('admin' == this.user.type && admin_fields.indexOf(key) >= 0) || user_fields.indexOf(key) >= 0) {
+            if ('admin' == this.user.type || (!admin_fields && admin_fields.indexOf(key) >= 0) || user_fields.indexOf(key) >= 0) {
                 data[key] = this.body[key];
             }
         }
@@ -562,6 +562,10 @@ Context.prototype = {
         }
         a.route = a.pathname.split('/').slice(1);
         return a;
+    },
+
+    get module() {
+        return this.server.modules[this.req.url.route[0]];
     }
 };
 

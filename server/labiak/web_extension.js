@@ -6,8 +6,9 @@ var _ = require('underscore');
 
 module.exports = {
     process: function (task, bundle) {
-        var collection = this.collection(task.collection || this.req.url.route[0]);
+        var collection = this.collection(task.collection);
         var isUpdate = task.$set || task.$unset;
+        // console.log(JSON.stringify(task, null, '  '));
         if (true === task.select) {
             task.select = this.select(false, false, true);
         }
@@ -30,7 +31,6 @@ module.exports = {
         else if (isUpdate) {
             return collection.update(task.query, _.pick(task, '$set', '$unset'), task.options);
         }
-        // console.log(JSON.stringify(task.query, null, '  '));
         if (task.count) {
             return collection.count(task.query);
         }
@@ -59,6 +59,7 @@ module.exports = {
                     if (!result.single) {
                         result.limit = true;
                     }
+                    result.collection = result.collection || this.req.url.route[0];
                     this.process(result, true).toArray(function (err, array) {
                         self.answer(err, result.single ? array[0] : array);
                     });
@@ -75,37 +76,61 @@ module.exports = {
                             }
                         }
                         else if (Object === task.constructor) {
-                            let cursor = self.process(task, bundle);
-                            if (task.cursor) {
-                                run(cursor);
-                            }
-                            else {
-                                var process_result = function (result) {
-                                    if (task.name) {
-                                        bundle[task.name] = result;
-                                    }
-                                    result = task.single ? result[0] : result;
-                                    if (task.pick) {
-                                        result = result[task.pick];
-                                    }
-                                    else if (task.pluck) {
-                                        result = _.pluck(result, task.pluck);
-                                    }
-                                    if (tasks.length > 0) {
-                                        run(result);
-                                    }
-                                    else {
-                                        self.send(result);
-                                    }
-                                };
-                                if (cursor.then) {
-                                    cursor.then(process_result).catch(function (err) {
-                                        self.send(code.INTERNAL_SERVER_ERROR, {error: err});
-                                    })
+                            task.collection = task.collection || self.req.url.route[0];
+                            let process_task = function (task) {
+                                task.collection = task.collection || self.req.url.route[0];
+                                let cursor = self.process(task, bundle);
+                                if (task.cursor) {
+                                    run(cursor);
                                 }
                                 else {
-                                    cursor.toArray(self.wrap(process_result));
+                                    let process_result = function (result) {
+                                        if (task.name) {
+                                            bundle[task.name] = result;
+                                        }
+                                        result = task.single ? result[0] : result;
+                                        if (task.pick) {
+                                            result = result[task.pick];
+                                        }
+                                        else if (task.pluck) {
+                                            result = _.pluck(result, task.pluck);
+                                        }
+                                        if (tasks.length > 0) {
+                                            run(result);
+                                        }
+                                        else {
+                                            self.send(result);
+                                        }
+                                    };
+                                    if (cursor.then) {
+                                        cursor.then(process_result).catch(function (err) {
+                                            self.send(code.INTERNAL_SERVER_ERROR, {error: err});
+                                        })
+                                    }
+                                    else {
+                                        cursor.toArray(self.wrap(process_result));
+                                    }
                                 }
+                            };
+
+                            var permission = task.allow || task.deny;
+                            if (permission) {
+                                self.collection(task.collection).count(permission, self.wrap(function (count) {
+                                    var allow = task.deny || count > 0;
+                                    if (allow) {
+                                        process_task(tasks.shift());
+                                    }
+                                    else {
+                                        $.send(code.FORBIDDEN, {
+                                            error: permission.error || {
+                                                message: 'Access Deny'
+                                            }
+                                        })
+                                    }
+                                }));
+                            }
+                            else {
+                                process_task(task);
                             }
                         }
                     };
@@ -315,18 +340,45 @@ module.exports = {
     },
 
     runAction: function (action) {
+        var self = this;
         if (this.req.headers['user-agent'] && this.req.headers['user-agent'].indexOf('PhantomJS') > 0) {
             console.log('\t' + this.req.method + ' ' + this.req.url.original);
             if (this.body) {
                 console.log(this.body);
             }
         }
+        var module = this.module;
+        var _action;
+        if (module._before) {
+            var promise = module._before(this);
+            if (promise.constructor.name === 'Promise') {
+                _action = function () {
+                    promise.then(function (allow) {
+                        if (allow) {
+                            action(self);
+                        }
+                    })
+                        .catch(function (err) {
+                            self.send(code.INTERNAL_SERVER_ERROR, err);
+                        })
+                }
+            }
+            else if (promise) {
+                _action = action
+            }
+            else {
+                return;
+            }
+        }
+        else {
+            _action = action;
+        }
         if (config.dev) {
-            return action(this);
+            return _action(this);
         }
         else {
             try {
-                return action(this);
+                return _action(this);
             }
             catch (ex) {
                 if (ex.invalid) {
@@ -351,5 +403,57 @@ module.exports = {
                 }
             }
         }
+    },
+
+    accessUser: function (user_id) {
+        var self = this;
+        user_id = user_id instanceof Array ? {$in: user_id} : user_id;
+        var where = {_id: user_id, deny: {$not: user_id}};
+        return new Promise(function (resolve, reject) {
+            if (user_id.length = 1 && user_id.equals(self.user._id)) {
+                resolve(1);
+            }
+            else {
+                self.collection('user').count(where, function (err, count) {
+                    if (err) {
+                        reject(err)
+                    }
+                    else {
+                        resolve(count);
+                    }
+                });
+            }
+        });
+    },
+
+    canManage: function (user_id) {
+        var self = this;
+        var id = $.user._id;
+        var where = {
+            $and: [
+                {_id: user_id},
+                {
+                    $or: [
+                        {admin: id},
+                        {deny: {$ne: id}}
+                    ]
+                }
+            ]
+        };
+        return new Promise(function (resolve, reject) {
+            if (user_id.equals(self.user._id)) {
+                resolve(1);
+            }
+            else {
+                self.collection('user').count(where, function (err, count) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else {
+                        resolve(count)
+                    }
+                })
+            }
+        });
     }
 };

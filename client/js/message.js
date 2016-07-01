@@ -607,13 +607,12 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            _.defaults(options, {
+            var query = _.defaults(_.pick(options, 'type', 'id', 'user', 'sort'), {
                 type: MessageType.DIALOG,
+                user: 'source.target',
+                select: 'unread',
                 sort: '-_id'
             });
-            var query = _.pick(options, 'type', 'id');
-            query.user = 'source.target';
-            query.select = 'unread';
             var list = new Message.List([], {query: query});
             list.comparator = options.sort;
             var listView = new Message.Dialog({collection: list.fullCollection});
