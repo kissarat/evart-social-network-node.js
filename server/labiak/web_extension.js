@@ -2,8 +2,43 @@
 var qs = require('querystring');
 var utils = require('../utils');
 var mongoose = require('mongoose');
+var _ = require('underscore');
 
 module.exports = {
+    process: function (task, bundle) {
+        var collection = this.collection(task.collection || this.req.url.route[0]);
+        var isUpdate = task.$set || task.$unset;
+        if (true === task.select) {
+            task.select = this.select(false, false, true);
+        }
+        else if (task.select instanceof Array) {
+            task.select = this.select([], task.select, true);
+        }
+        if ('function' == typeof task.query) {
+            task.query = task.query(bundle);
+        }
+        if (!isUpdate && !(task.query instanceof Array) && !task.count) {
+            task.query = [{$match: task.query}];
+        }
+        if (task.select) {
+            task.query.push({$project: task.select});
+        }
+        if (task.limit) {
+            task.query.push({$skip: this.skip});
+            task.query.push({$limit: 'number' == typeof task.limit ? task.limit : this.limit});
+        }
+        else if (isUpdate) {
+            return collection.update(task.query, _.pick(task, '$set', '$unset'), task.options);
+        }
+        console.log(JSON.stringify(task.query, null, '  '));
+        if (task.count) {
+            return collection.count(task.query);
+        }
+        else {
+            return collection.aggregate(task.query);
+        }
+    },
+
     serve: function () {
         var self = this;
         if (!this.req.url.route[0]) {
@@ -21,23 +56,60 @@ module.exports = {
         switch (typeof result) {
             case 'object':
                 if (Object === result.constructor) {
-                    let collection = this.collection(result.collection || this.req.url.route[0]);
-                    if (true === result.select) {
-                        result.select = this.select(false, false, true);
+                    if (!result.single) {
+                        result.limit = true;
                     }
-                    else if (result.select instanceof Array) {
-                        result.select = this.select([], result.select, true);
-                    }
-                    if (!(result.query instanceof Array)) {
-                        result.query = result.query ? [{$match: result.query}] : [];
-                    }
-                    if (result.select) {
-                        result.query.push({$project: result.select});
-                    }
-                    console.log(result.query);
-                    result.query.push({$skip: this.skip});
-                    result.query.push({$limit: this.limit});
-                    collection.aggregate(result.query, this.answer);
+                    this.process(result, true).toArray(function (err, array) {
+                        self.answer(err, result.single ? array[0] : array);
+                    });
+                }
+                else if (result instanceof Array) {
+                    let bundle = {};
+                    let tasks = result;
+                    let run = function (result) {
+                        var task = tasks.shift();
+                        if ('function' == typeof task) {
+                            result = task(result, bundle);
+                            if (result) {
+                                self.send(result);
+                            }
+                        }
+                        else if (Object === task.constructor) {
+                            let cursor = self.process(task, bundle);
+                            if (task.cursor) {
+                                run(cursor);
+                            }
+                            else {
+                                var process_result = function (result) {
+                                    if (task.name) {
+                                        bundle[task.name] = result;
+                                    }
+                                    result = task.single ? result[0] : result;
+                                    if (task.pick) {
+                                        result = result[task.pick];
+                                    }
+                                    else if (task.pluck) {
+                                        result = _.pluck(result, task.pluck);
+                                    }
+                                    if (tasks.length > 0) {
+                                        run(result);
+                                    }
+                                    else {
+                                        self.send(result);
+                                    }
+                                };
+                                if (cursor.then) {
+                                    cursor.then(process_result).catch(function (err) {
+                                        self.send(code.INTERNAL_SERVER_ERROR, {error: err});
+                                    })
+                                }
+                                else {
+                                    cursor.toArray(self.wrap(process_result));
+                                }
+                            }
+                        }
+                    };
+                    run();
                 }
                 else if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
                     if ('find' == result.op || result instanceof mongoose.Aggregate) {
@@ -238,7 +310,7 @@ module.exports = {
             else {
                 console.error('UNPROCESSED_DATA', data);
             }
-            return self.runAction(action); 
+            return self.runAction(action);
         });
     },
 

@@ -134,25 +134,7 @@ module.exports = {
         schema: _schema
     },
 
-    POST: function ($) {
-        var message = $.allowFields(Message.fields.select.user);
-        message.source = $.user._id;
-        var targets = [];
-        ['target', 'owner'].forEach(function (name) {
-            var id = message[name];
-            if (id) {
-                targets.push(id)
-            }
-        });
-        message = new Message(message);
-        message.save($.wrap(function () {
-            if ($.has('parent_id')) {
-                Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
-            }
-            $.send(message);
-            _.uniq(targets).forEach(id => $.notifyOne(id, message));
-        }));
-    },
+    read, dialogs,
 
     GET: function ($) {
         var where = [];
@@ -182,6 +164,13 @@ module.exports = {
 
             case Message.Type.WALL:
                 where.push({owner: $.get('owner_id', me)});
+                break;
+
+            case 'feed':
+                where.push({
+                    type: Message.Type.WALL,
+                    owner: {$in: $.user.follow.map(id => ObjectID(id))}
+                });
                 break;
 
             default:
@@ -223,7 +212,7 @@ module.exports = {
                     path: '$' + name
                 }
             });
-            _project[name] = user_projection
+            _project[name] = User.fields.project
         });
 
         project.forEach(function (name) {
@@ -234,162 +223,161 @@ module.exports = {
             $project: _project
         });
 
-        return Message.aggregate(aggregate);
+        return {
+            query: aggregate
+        };
+    },
+
+    POST: function ($) {
+        var message = $.allowFields(Message.fields.select.user);
+        message.source = $.user._id;
+        var targets = [];
+        ['target', 'owner'].forEach(function (name) {
+            var id = message[name];
+            if (id) {
+                targets.push(id)
+            }
+        });
+        message = new Message(message);
+        message.save($.wrap(function () {
+            if ($.has('parent_id')) {
+                Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
+            }
+            $.send(message);
+            _.uniq(targets).forEach(id => $.notifyOne(id, message));
+        }));
     },
 
     DELETE: function ($) {
         return Message.remove({
             _id: $.id
         });
-    },
+    }
+};
 
-    read: function ($) {
-        if ($.has('id') && $.has('unread')) {
-            return Message.update({_id: $.param('id')}, {$set: {unread: $.param('unread')}});
-        }
-        if ($.has('target_id')) {
-            let you = $.param('target_id');
-            let where = {
-                unread: 1,
-                source: you,
-                target: $.user._id
-            };
-            $.collection('message').find(where, {_id: 1}, $.wrapArray(function (messages) {
-                $.collection('message').update(where, {multi: true}, $.wrap(function (result) {
-                    result = $.merge(result.result, {
-                        success: !!result.result.ok,
-                        type: 'read',
-                        dialog_id: where.source,
-                        ids: _.pluck(messages, '_id')
-                    });
-                    $.notifyOne(you, result);
-                    $.send(result);
-                }));
-            }));
-        }
-        else {
-            return {
-                select: true,
-                query: {
-                    unread: 1
-                }
-            };
-        }
-    },
-
-    feed: function ($) {
-        return Message.find({
-            type: Message.Type.WALL,
-            owner: {$in: $.user.follow.map(id => ObjectID(id))}
-        });
-    },
-
-    dialogs: function ($) {
-        var match = [
-            {type: Message.Type.DIALOG},
-            {
-                $or: [
-                    {source: $.user._id},
-                    {target: $.user._id}
-                ]
-            }
-        ];
-        if ($.has('unread') && $.param('unread')) {
-            match.push({unread: 1});
-        }
-        if ($.has('since')) {
-            match.push({time: {$gt: $.param('since')}});
-        }
-        var where = [
-            {
-                $match: {$and: match}
-            },
-            {
-                $group: {
-                    _id: {
-                        $cond: {
-                            if: {$eq: ['$source', $.user._id]},
-                            then: '$target',
-                            else: '$source'
-                        }
-                    },
-                    last_id: {$last: '$_id'},
-                    unread: {
-                        $sum: {
-                            $cond: {
-                                if: {$eq: ['$target', $.user._id]},
-                                then: '$unread',
-                                else: 0
-                            }
-                        }
-                    },
-                    count: {$sum: 1},
-                    time: {$last: '$time'},
-                    text: {$last: '$text'}
-                }
-            },
-            {
-                $sort: {
-                    time: -1
-                }
-            },
-            {
-                $lookup: {
-                    'as': 'peer',
-                    localField: '_id',
-                    from: 'user',
-                    foreignField: '_id'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$peer'
-                }
-            }
-        ];
-        var project = {
-            _id: 1,
-            time: 1,
-            count: 1,
+function read($) {
+    if ($.has('id') && $.has('unread')) {
+        return Message.update({_id: $.param('id')}, {$set: {unread: $.param('unread')}});
+    }
+    if ($.has('target_id')) {
+        let you = $.param('target_id');
+        let where = {
             unread: 1,
-            text: 1,
-            peer: user_projection
+            source: you,
+            target: $.user._id
         };
-        if ($.has('cut')) {
-            var cut = +$.param('cut');
-            if (cut > 0) {
-                project.text = {$substr: ['$text', 0, $.param('cut')]};
+        return [{
+            name: 'messages',
+            query: where,
+            select: ['_id']
+        }, {
+            query: where,
+            $set: {unread: 0}
+        },
+            function (result, bundle) {
+                result = $.merge(result.result, {
+                    success: !!result.result.ok,
+                    type: 'read',
+                    dialog_id: where.source,
+                    ids: _.pluck(bundle.messages, '_id')
+                });
+                $.send(result);
+                $.notifyOne(you, result);
             }
-            else {
-                $.invalid('cut', 'Must be positive');
+        ]
+    }
+    else {
+        return {
+            select: true,
+            query: {
+                unread: 1
             }
-        }
-        where.push({$project: project});
-        return where;
+        };
     }
-};
-
-var user_projection = {
-    _id: 1,
-    domain: 1,
-    online: 1,
-    surname: 1,
-    forename: 1,
-    name: 1,
-    avatar: 1
-};
-
-function populate(r) {
-    for (var collection in populate.map) {
-        r.populate(collection, populate.map[collection]);
-    }
-    return r;
 }
 
-populate.map = {
-    source: '_id domain avatar',
-    target: '_id domain avatar',
-    videos: '_id thumbnail_url thumbnail_width thumbnail_height',
-    repost: '_id source target photos videos text',
-    children: '_id source target photos videos text time'
-};
+function dialogs($) {
+    var match = [
+        {type: Message.Type.DIALOG},
+        {
+            $or: [
+                {source: $.user._id},
+                {target: $.user._id}
+            ]
+        }
+    ];
+    if ($.has('unread') && $.param('unread')) {
+        match.push({unread: 1});
+    }
+    if ($.has('since')) {
+        match.push({time: {$gt: $.param('since')}});
+    }
+    var where = [
+        {
+            $match: {$and: match}
+        },
+        {
+            $group: {
+                _id: {
+                    $cond: {
+                        if: {$eq: ['$source', $.user._id]},
+                        then: '$target',
+                        else: '$source'
+                    }
+                },
+                last_id: {$last: '$_id'},
+                unread: {
+                    $sum: {
+                        $cond: {
+                            if: {$eq: ['$target', $.user._id]},
+                            then: '$unread',
+                            else: 0
+                        }
+                    }
+                },
+                count: {$sum: 1},
+                time: {$last: '$time'},
+                text: {$last: '$text'}
+            }
+        },
+        {
+            $sort: {
+                time: -1
+            }
+        },
+        {
+            $lookup: {
+                'as': 'peer',
+                localField: '_id',
+                from: 'user',
+                foreignField: '_id'
+            }
+        },
+        {
+            $unwind: {
+                path: '$peer'
+            }
+        }
+    ];
+    var project = {
+        _id: 1,
+        time: 1,
+        count: 1,
+        unread: 1,
+        text: 1,
+        peer: User.fields.project
+    };
+    if ($.has('cut')) {
+        var cut = +$.param('cut');
+        if (cut > 0) {
+            project.text = {$substr: ['$text', 0, $.param('cut')]};
+        }
+        else {
+            $.invalid('cut', 'Must be positive');
+        }
+    }
+    where.push({$project: project});
+    return {
+        query: where
+    };
+}

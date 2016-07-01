@@ -182,5 +182,8 @@ function receive(readable, call) {
     })
 }
 
+function equals(a, b) {
+    return a.equals(b);
+}
 
-module.exports = {Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe, receive};
+module.exports = {Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe, receive, equals};

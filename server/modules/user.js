@@ -166,12 +166,23 @@ schema.User.statics.fields = {
             "lang", "background"],
         group: ["domain", "name", "about", "avatar"],
         admin: ['domain', 'type']
-    }
+    },
+    
+    project: {
+        _id: 1,
+        domain: 1,
+        online: 1,
+        surname: 1,
+        forename: 1,
+        name: 1,
+        avatar: 1
+    } 
 };
 
-schema.User.statics.search = function search($, where, send) {
-    var isArray = where instanceof Array;
-    var ands = !where || isArray ? {} : where;
+schema.User.statics.search = function search($, where) {
+    if (!where) {
+        where = {};
+    }
     if ($.has('q')) {
         var ORs = [];
         var q = $.search;
@@ -183,29 +194,19 @@ schema.User.statics.search = function search($, where, send) {
             ORs.push(d);
         });
         if (ORs.length > 0) {
-            ands.$or = ORs;
+            where.push({$or: ORs});
         }
     }
+    var ANDs = [];
     ['country', 'city', 'sex', 'forename', 'relationship', 'type'].forEach(function (param) {
         if ($.has(param)) {
-            ands[param] = $.param(param);
+            ANDs[param] = $.param(param);
         }
     });
-    if (isArray) {
-        ands._id = {
-            $in: where.map(function (id) {
-                return ObjectID(id);
-            })
-        };
+    if (ANDs.length > 0) {
+        where.push({$and: ANDs})
     }
-    var r = User.find(ands).select($.select(['domain'], User.fields.update.user));
-    if (send) {
-        r.exec($.wrap(function (users) {
-            return $.send(users);
-        }));
-    } else {
-        return r;
-    }
+    return where;
 };
 
 module.exports = {
@@ -215,20 +216,21 @@ module.exports = {
     
     GET: function ($) {
         var params = ['id', 'domain'];
-        var fields = User.fields.select.user;
-        if ($.hasAny(params) && !$.has('list')) {
-            return User.findOne($.paramsObject(params)).select(fields.join(' '));
+        var r = {select: User.fields.select.user};
+        if ($.hasAny(params)) {
+            r.query = $.paramsObject(params);
         }
         else if ($.has('ids')) {
-            return User.find({
+            r.query = {
                 _id: {
                     $in: $.ids('ids')
                 }
-            }).select(fields);
+            };
         }
         else {
-            return User.search($);
+            r.query = User.search($);
         }
+        return r;
     },
 
     POST: function ($) {
@@ -292,6 +294,64 @@ module.exports = {
 
     informer: function ($) {
         var id = $.id || $.user._id;
+        return [
+            {
+                name: 'follows',
+                pick: 'follow',
+                select: {follow: 1},
+                query: {_id: id}
+            },
+            {
+                name: 'groups',
+                pick: '_id',
+                select: {follow: 1},
+                query: function (bundle) {
+                    return {
+                        type: 'group',
+                        _id: {$in: bundle.follows}
+                    }
+                }
+            },
+            {
+                name: 'followers',
+                pick: '_id',
+                count: true,
+                query: {follow: id}
+            },
+            {
+                name: 'video',
+                collection: 'video',
+                count: true,
+                query: {owner: id}
+            },
+            {
+                name: 'audio',
+                collection: 'file',
+                count: true,
+                query: {
+                    type: 'audio',
+                    owner: id
+                }
+            },
+            {
+                name: 'photo',
+                collection: 'file',
+                count: true,
+                query: {
+                    type: 'photo',
+                    owner: id
+                }
+            },
+            function (result, bundle) {
+                bundle._id = id;
+                bundle.follows = _.difference(bundle.follows, bundle.groups, utils.equals);
+                bundle.friends = _.intersection(bundle.follows, bundle.followers, utils.equals);
+                bundle.follows = bundle.follows.length;
+                bundle.friends = bundle.friends.length;
+                bundle.groups = bundle.groups.length;
+                $.send(bundle);
+            }
+        ];
         var result = {};
         return new Promise(function (resolve, reject) {
             User.findOne({_id: id}, {follow: 1}).catch(reject).then(function (user) {

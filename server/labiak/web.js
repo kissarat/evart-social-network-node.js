@@ -4,6 +4,7 @@ var ObjectID = require('mongodb').ObjectID;
 var twilio = require('twilio');
 var qs = require('querystring');
 var web_extension = require('./web_extension');
+var mongoose = require('mongoose');
 var url_parse = require('url').parse;
 var utils = require('../utils');
 var errors = require('../errors');
