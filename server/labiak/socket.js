@@ -3,16 +3,18 @@
 var _ = require('underscore');
 var ws = require('ws');
 var utils = require('../utils');
+var EventEmitter = require('events');
 
-function WebSocketServer(options) {
-    _.extend(this, options);
-    this.socketServer = new ws.Server(this.config);
-    utils.subscribe('server', this.socketServer, this);
-    this.subscribers = {};
-}
+class WebSocketServer extends EventEmitter {
+    constructor(options) {
+        super();
+        _.extend(this, options);
+        this.socketServer = new ws.Server(this.config);
+        utils.subscribe('server', this.socketServer, this);
+        this.subscribers = {};
+    }
 
-WebSocketServer.prototype = {
-    onConnection: function (socket) {
+    onConnection(socket) {
         var self = this;
         var $ = this.server.createContext({
             type: 'websocket',
@@ -37,9 +39,10 @@ WebSocketServer.prototype = {
                 $.socket.close();
             }
         });
-    },
+        this.trigger('connection', this);
+    }
 
-    subscribe: function ($) {
+    subscribe($) {
         let user_id = $.user._id.toString();
         let agent_id = $.agent._id.toString();
         let subscriber = $.getSubscribers(user_id);
@@ -50,9 +53,9 @@ WebSocketServer.prototype = {
             this.unsubscribe(user_id, agent_id);
         }
         utils.subscribe('socket', $.socket, subscriber);
-    },
+    }
 
-    onMessage: function (message) {
+    onMessage(message) {
         message = JSON.parse(message);
         console.log('SOCKET', message);
         if (message.target_id) {
@@ -61,20 +64,20 @@ WebSocketServer.prototype = {
         else {
             console.warn('NO_TARGET', message.target_id);
         }
-    },
+    }
 
-    onClose: function () {
+    onClose() {
+        this.server.log('warn', 'WebSocket server closed');
+    }
 
-    },
-
-    getSubscribers: function (user_id) {
+    getSubscribers(user_id) {
         if (!user_id) {
             throw new Error('Invalid user_id', user_id);
         }
         return this.subscribers[user_id.toString()];
-    },
+    }
 
-    unsubscribe: function (user_id, agent_id) {
+    unsubscribe(user_id, agent_id) {
         var subscribers = this.getSubscribers(user_id);
         if (agent_id) {
             if (subscribers) {
@@ -97,14 +100,14 @@ WebSocketServer.prototype = {
             return _.isEmpty(subscribers) ? false : subscribers;
         }
         return false;
-    },
+    }
 
-    notifyOne: function (user_id, message) {
-        _.each(this.getSubscribers(target_id), function (context) {
+    notifyOne(user_id, message) {
+        _.each(this.getSubscribers(user_id), function (context) {
             context.socket.send(message)
         });
     }
-};
+}
 
 function WebSocket(options) {
     _.extend(this, options);

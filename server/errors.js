@@ -1,7 +1,7 @@
 'use strict';
 
 var code = require('./code');
-var utils = require('./utils');
+// var utils = require('./utils');
 
 class Response {
     // public code;
@@ -47,4 +47,4 @@ class EntityTooLarge extends Response {
     }
 }
 
-module.exports = utils.export([Response, BadRequest, Forbidden, EntityTooLarge]);
+module.exports = {Response, BadRequest, Forbidden, EntityTooLarge};

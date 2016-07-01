@@ -5,6 +5,7 @@ var crc = require('crc');
 var crypto = require('crypto');
 var config = require('./config.json');
 var code = require('../client/code.json');
+var _ = require('underscore');
 
 class Iterator {
     constructor(array) {
@@ -131,15 +132,26 @@ function s(array) {
 }
 
 function subscribe(prefix, source, target) {
-    var self = this;
+    if (undefined === target) {
+        target = this;
+    }
+    if (undefined === source) {
+        source = this;
+    }
     prefix = 'on' + prefix;
-    _.each(source, function (name, handler) {
+    // console.log(Object.keys(target.constructor.prototype));
+    // console.log((target.__proto__.constructor.name));
+    // console.log((target.__proto__.__proto__.constructor.name));
+    for(var name in target) {
+        let handler = target[name];
         name = name.toLowerCase();
         if (0 === name.indexOf(prefix)) {
-            name = name.replace(onmongoose, '');
-            self.mongoose.on(name, handler)
+            name = name.replace(prefix, '');
+            source.on(name, function () {
+                handler.apply(target, arguments);
+            })
         }
-    });
+    }
 }
 
 function receive(readable, call) {
@@ -170,19 +182,5 @@ function receive(readable, call) {
     })
 }
 
-var exports = {
-    export: function (classes) {
-        var exports = {};
-        for (var i = 0; i < classes.length; i++) {
-            var clazz = classes[i];
-            exports[clazz.name] = clazz
-        }
-        return exports;
-    },
 
-    code: code
-};
-
-module.exports = merge(exports, exports.export(
-    [Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe, receive]
-));
+module.exports = {Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe, receive};

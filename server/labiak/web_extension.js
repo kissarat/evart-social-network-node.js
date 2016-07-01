@@ -1,5 +1,7 @@
 'use strict';
 var qs = require('querystring');
+var utils = require('../utils');
+var mongoose = require('mongoose');
 
 module.exports = {
     serve: function () {
@@ -14,7 +16,7 @@ module.exports = {
             this.req.url.query.id = last;
             path.pop();
         }
-        var result = this.walk(modules, path);
+        var result = this.walk(this.server.modules, path);
 
         switch (typeof result) {
             case 'object':
@@ -137,9 +139,9 @@ module.exports = {
                             this.module._before(this);
                         }
                     }
-                    return walk(this, object, path, route);
+                    return this.walk(object, path, route);
                 case 'function':
-                    return exec(this, object);
+                    return this.exec(object);
                 default:
                     return object;
             }

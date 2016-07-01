@@ -5,11 +5,14 @@ var twilio = require('twilio');
 var qs = require('querystring');
 var web_extension = require('./web_extension');
 var url_parse = require('url').parse;
+var utils = require('../utils');
+var errors = require('../errors');
 
 function Context(options) {
     _.extend(this, options);
     var now = process.hrtime();
-    req.start = now[0] * 1000000000 + now[1];
+    var req = options.req;
+    this.start = now[0] * 1000000000 + now[1];
     this.isCache = req.url.indexOf('/api-cache') == 0;
     var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
     // console.log('URL', raw_url);
@@ -59,8 +62,6 @@ function Context(options) {
             this.invalid('geo');
         }
     }
-
-    this.req = req;
 
     for (var i in this) {
         var f = this[i];
@@ -303,7 +304,7 @@ Context.prototype = {
     get spend() {
         var now = process.hrtime();
         now = now[0] * 1000000000 + now[1];
-        return (now - this.req.start) / 1000000;
+        return (now - this.start) / 1000000;
     },
 
     send: function () {
@@ -370,14 +371,13 @@ Context.prototype = {
             if (this.user) {
                 record.user_id = this.user._id;
             }
-            for (var i in this.req.url.query) {
+            if (!_.isEmpty(this.req.url.query)) {
                 record.params = this.req.url.query;
-                break;
             }
-            if (this.body) {
+            if (!_.isEmpty(this.body)) {
                 record.body = this.body;
             }
-            this.db.collection('log').insertOne(record, Function());
+            this.collection('log').insert(record);
         }
     },
 
@@ -411,16 +411,6 @@ Context.prototype = {
         }
     },
 
-    just: function (object, keys) {
-        var result = {};
-        for (var key in object) {
-            if (keys.indexOf(key) >= 0) {
-                result[key] = object[key];
-            }
-        }
-        return result;
-    },
-
     get id() {
         if (!('id' in this.req) && this.req.url.query.id) {
             try {
@@ -438,7 +428,7 @@ Context.prototype = {
     },
 
     get db() {
-        return this.mongoose.connection;
+        return this.server.mongoose.connection;
     },
 
     get skip() {
@@ -528,7 +518,7 @@ Context.prototype = {
     },
 
     model: function () {
-        this.mongoose.apply(this.mongoose, arguments);
+        this.server.mongoose.apply(this.mongoose, arguments);
     },
 
     get bodySize() {

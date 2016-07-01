@@ -1,10 +1,13 @@
 'use strict';
 
+var start = Date.now();
+
 require('colors');
 var _ = require('underscore');
 var fs = require('fs');
 var http = require('http');
 var mongoose = require('mongoose');
+var utils = require('./utils');
 
 global.config = require('./config.json');
 global.config.client = require('./client.json');
@@ -52,24 +55,32 @@ Object.keys(schema).forEach(function (name) {
 });
 
 function Server() {
+    this.start = start;
     this.mongoose = mongoose.connect(config.mongo.uri, 'freebsd' == process.platform ? {} : config.mongo.options);
-    utils.subscribe('mongoose', this.mongoose, this);
+    utils.subscribe('mongo', this.mongoose.connection, this);
 }
 
 Server.prototype = {
-    onMongooseError: function (err) {
+    onMongoError: function (err) {
         console.log(err);
     },
 
-    onMongooseOpen: function () {
+    log: function (type, message) {
+        var spend = Date.now() - this.start;
+        console.log(message.blue, spend);
+    },
+
+    onMongoOpen: function () {
+        var self = this;
+        this.log('info', 'MongoDB connection opened');
         this.httpServer = http.createServer(function (req, res) {
             try {
-                var $ = this.createContext({req: req, res: res});
+                var $ = self.createContext({req: req, res: res});
                 if ('/agent' === req.url.original) {
-                    serve($)
+                    $.serve();
                 }
                 else {
-                    $.authorize(() => serve($));
+                    $.authorize(() => $.serve());
                 }
             }
             catch (ex) {
@@ -81,39 +92,22 @@ Server.prototype = {
             }
         });
 
-        this.subscribe('http', this.httpServer);
+        utils.subscribe('http', this.httpServer, this);
         this.httpServer.listen(config.file);
     },
 
+    onHttpClose: function () {
+        this.log('info', 'HTTP server close');
+    },
+
     onHttpListening: function () {
+        this.log('info', 'HTTP server connection opened');
         fs.chmodSync(config.file, parseInt('777', 8));
-        this.webSocketServer = socket.WebSocketServer({
+        var server = new socket.WebSocketServer({
             config: config.socket
         });
-
-        server.callModulesMethod('_boot', {
-            server: server,
-            socketServer: socketServer
-        });
-
-        this.start = new Date();
-
-        var startMessage = 'Started:\t' + start;
-        console.log(startMessage.bgBlue.black);
-    },
-
-    createContext: function (options) {
-        options.server = this;
-        return new Context(options);
-    },
-
-    onWebSocketConnection: function (socket) {
-        // console.log('SOCKET_CONNECTION');
-        var $ = new web.Context(god, socket.upgradeReq);
-        $.socket = socket;
-        $.authorize(function (agent) {
-
-        });
+        utils.subscribe('websocket', server, this);
+        this.onWebSocketConnection(server);
     },
 
     callModulesMethod: function (name) {
@@ -124,7 +118,25 @@ Server.prototype = {
             }
         }
     },
-    
+
+    onWebSocketConnection: function (webSocketServer) {
+        this.log('info', 'WebSocket server connection opened');
+        this.webSocketServer = webSocketServer;
+        this.modules = modules;
+        this.callModulesMethod('_boot', this);
+        this.onModulesLoaded();
+    },
+
+    onModulesLoaded: function () {
+        this.log('info', 'Modules loaded');
+        this.start = new Date();
+    },
+
+    createContext: function (options) {
+        options.server = this;
+        return new web.Context(options);
+    },
+
     getDescription: function () {
         var schema = {};
         _.each(modules, function (module, name) {
@@ -155,3 +167,5 @@ Server.prototype = {
         };
     }
 };
+
+var server = new Server();
