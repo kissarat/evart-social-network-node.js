@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quorum</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        form {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: lightgreen;
+            border-bottom: green;
+            padding: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 50px;
+        }
+
+        [data-name="time"] {
+            min-width: 100px;
+            padding-left: 8px;
+        }
+
+        thead tr {
+            background-color: lightgreen;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: rgba(144, 238, 144, 0.33);
+        }
+    </style>
+</head>
+<body>
+<script>
+    var params = {
+        page: 1,
+        limit: 1000,
+        sort: '-rating',
+        q: ''
+    };
+
+    document.cookie = 'auth=4cuUW2joIXeLCBiWpATHfggZWuKvdwHyqcVFnW4S';
+
+    function query(e) {
+        if (e && e.target) {
+            params[e.target.getAttribute('name')] = e.target.value;
+        }
+        var array = [];
+        for (let key in params) {
+            array.push(key + '=' + params[key]);
+        }
+
+        var ajax = new XMLHttpRequest();
+        ajax.open('GET', '/api/quorum?' + array.join('&'));
+        ajax.send(null);
+        tbody.innerHTML = '';
+        ajax.addEventListener('load', render)
+    }
+
+    function render(e) {
+        var ajax = e.target;
+        var template = document.querySelector('thead > tr');
+        var rows = JSON.parse(ajax.responseText);
+        var fragment = document.createDocumentFragment();
+        rows.forEach(function (row) {
+            row = {
+                rating: row.rating,
+                time: new Date(row.time).toLocaleDateString(),
+                text: row.text.replace(/\n/g, '<br/>')
+            };
+            var tr = document.importNode(template, true);
+            for (let key in row) {
+                tr.querySelector(`[data-name="${key}"]`).innerHTML = row[key]
+            }
+            fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+        template.scrollIntoView(false);
+    }
+
+    var tbody;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('[type="search"]').addEventListener('keyup', query);
+        document.querySelector('select').addEventListener('change', query);
+        tbody = document.querySelector('tbody');
+        query();
+    });
+
+    addEventListener('keydown', function (e) {
+        switch (e.key) {
+            case 'ArrowUp':
+                e.preventDefault();
+                if (params.page > 1) {
+                    params.page--;
+                }
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                params.page++;
+                break;
+        }
+        document.getElementById('page-number').innerHTML = params.page.toString();
+        query();
+    })
+</script>
+<form>
+    <input type="search" name="q" placeholder="Search"/>
+    <span id="page-number">1</span> page
+    <select name="sort" title="Sort">
+        <option value="-rating">Rating</option>
+        <option value="-time">Time</option>
+    </select>
+</form>
+<table>
+    <thead>
+    <tr>
+        <td data-name="rating">Rating</td>
+        <td data-name="time">Time</td>
+        <td data-name="text">Text</td>
+    </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+</table>
+</body>
+</html>

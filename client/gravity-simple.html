@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gravity 2D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas></canvas>
+<script>
+    'use strict';
+    var number = 1000;
+    var k = 0.1;
+    var t = performance.now();
+    var sun = {
+        x: innerWidth / 2,
+        y: innerHeight / 2,
+        r: 2000
+    };
+    var play = false;
+    var canvas = document.querySelector('canvas');
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    var g = canvas.getContext('2d');
+    var objects = [];
+    for (var i = 0; i < number; i++) {
+        objects.push({
+            x: Math.random() * innerWidth,
+            y: Math.random() * innerHeight,
+            r: 3 + Math.random() * 25,
+            vx: 0,
+            vy: 0
+        })
+    }
+
+    function animate() {
+        var now = performance.now();
+        var dt = now - t;
+        t = now;
+        for (let i = 0; i < number; i++) {
+            let a = objects[i];
+            let dx = a.x - sun.x;
+            let dy = a.y - sun.y;
+            let m = a.r * sun.r;
+            let ax = Math.pow(dx, 2) / m;
+            let ay = Math.pow(dy, 2) / m;
+            if (dx > 0) {
+                ax = -ax;
+            }
+            if (dy > 0) {
+                ay = -ay;
+            }
+            a.vx += ax;
+            a.vy += ay;
+
+        }
+
+        g.fillStyle = 'rgba(0,0,0,0.1)';
+        g.fillRect(0, 0, innerWidth, innerHeight);
+        g.strokeStyle = 'white';
+        g.beginPath();
+        for (let i = 0; i < number; i++) {
+            let a = objects[i];
+            a.x += a.vx * k * dt / number;
+            a.y += a.vy * k * dt / number;
+            g.moveTo(a.x + a.r, a.y);
+            g.arc(a.x, a.y, a.r, 0, 2 * Math.PI, false);
+        }
+        g.stroke();
+        if (play) {
+            requestAnimationFrame(animate);
+        }
+    }
+    addEventListener('keyup', function (e) {
+        if (' ' == e.key) {
+            play = !play;
+        }
+        if (play) {
+            t = performance.now();
+            requestAnimationFrame(animate);
+        }
+    });
+
+    animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gravity 2D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas></canvas>
+<script>
+    'use strict';
+    var number = 200;
+    var k = 0.000002;
+    var t = performance.now();
+    var play = false;
+    var canvas = document.querySelector('canvas');
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    var center = {
+        x: innerWidth / 2,
+        y: innerHeight / 2
+    };
+    var dc = Math.max(innerHeight, innerWidth);
+    var g = canvas.getContext('2d');
+    var objects = [];
+    for(var i = 0; i < number; i++) {
+        let color = [256 * Math.random(), 256 * Math.random(), 256 * Math.random()];
+        objects.push({
+            x: Math.random() * innerWidth,
+            y: Math.random() * innerHeight,
+            r: 3 + Math.random() * 50,
+            vx: 0,
+            vy: 0,
+            color: color
+        })
+    }
+
+    g.fillStyle = 'black';
+    g.fillRect(0, 0, innerWidth, innerHeight);
+
+    function animate() {
+        var now = performance.now();
+        var dt = now - t;
+        t = now;
+        for(let i = 0; i < number; i++) {
+            let a = objects[i];
+            for(let j = 0; j < number; j++) {
+                if (i !== j) {
+                    let b = objects[j];
+                    let dx = a.x - b.x;
+                    let dy = a.y - b.y;
+                    let m = a.r * b.r;
+                    let ax = Math.pow(dx, 2) / m;
+                    let ay = Math.pow(dy, 2) / m;
+                    if (dx > 0) {
+                        ax = -ax;
+                    }
+                    if (dy > 0) {
+                        ay = -ay;
+                    }
+                    a.vx += ax;
+                    a.vy += ay;
+                }
+            }
+        }
+
+//        var bg = Math.round(Math.sin(t/1000) * 128 + 128);
+//        g.fillStyle = 'rgba(' + [bg,bg,bg].join(',') + ',0.1)';
+        var opacity = 0.002 + Math.abs(Math.pow(Math.sin(t / 1500), 0.5)) * 0.1;
+        g.fillStyle = 'rgba(0,0,0,' + opacity + ')';
+        g.fillRect(0, 0, innerWidth, innerHeight);
+        for(let i = 0; i < number; i++) {
+            let a = objects[i];
+            a.x += a.vx * k * dt / number;
+            a.y += a.vy * k * dt / number;
+            g.beginPath();
+            let dx = a.x - center.x;
+            let dy = a.y - center.y;
+            let d = Math.pow(Math.sqrt(dx * dx + dy * dy) / dc, 0.2);
+            if (d > 1) {
+                d = 1;
+            }
+            let color = a.color.map(Math.round);
+            color = 'rgba(' + color.join(',') + ',' + d + ')';
+            g.strokeStyle = color;
+            g.moveTo(a.x + a.r, a.y);
+            g.arc(a.x, a.y, a.r, 0, 2 * Math.PI, false);
+            g.stroke();
+        }
+        if (play) {
+            requestAnimationFrame(animate);
+        }
+    }
+    addEventListener('keyup', function (e) {
+        if (' ' == e.key) {
+            play = !play;
+        }
+        if (play) {
+            t = performance.now();
+            requestAnimationFrame(animate);
+        }
+    });
+
+    animate();
+</script>
+</body>
+</html>

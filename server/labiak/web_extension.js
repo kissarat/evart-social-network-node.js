@@ -24,6 +24,10 @@ module.exports = {
         if (task.select) {
             task.query.push({$project: task.select});
         }
+        var order = this.order;
+        if (order) {
+            task.query.push({$sort: order});
+        }
         if (task.limit) {
             task.query.push({$skip: this.skip});
             task.query.push({$limit: 'number' == typeof task.limit ? task.limit : this.limit});
@@ -252,7 +256,7 @@ module.exports = {
     },
 
     exec: function (action) {
-        var is_unauthoried_route = /^.(agent|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
+        var is_unauthoried_route = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
         var must_upload_route = /^.(photo|file)/.test(this.req.url.original);
 
         if (this.user || is_unauthoried_route || ('GET' == this.req.method && this.isCache)) {

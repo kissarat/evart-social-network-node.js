@@ -440,6 +440,10 @@ Context.prototype = {
                 value = 0;
             }
         }
+        else if (this.has('page') && this.has('limit')) {
+            value = this.get('page') - 1;
+            value *= this.limit;
+        }
         return value;
     },
 
@@ -447,7 +451,7 @@ Context.prototype = {
         var value = 96;
         if (this.has('limit')) {
             value = this.get('limit');
-            if (value > 100 || value <= 0) {
+            if (value > 100000 || value <= 0) {
                 value = 96;
             }
         }
