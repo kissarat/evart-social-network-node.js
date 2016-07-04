@@ -1,4 +1,5 @@
 'use strict';
+
 var ObjectID = require('mongodb').ObjectID;
 var ObjectIdSchema = require('mongoose').Schema.Types.ObjectId;
 var crc = require('crc');

@@ -389,7 +389,7 @@ class Context {
             Agent.findOne({auth: this.req.auth}).populate('user').exec(this.wrap(function (agent) {
                 if (agent) {
                     self.agent = agent;
-                    cb.call(this, agent);
+                    cb.call(self, agent);
                 }
                 else {
                     agent_not_found();
@@ -561,8 +561,8 @@ class Context {
         return a;
     }
 
-    get module() {
-        return this.server.modules[this.req.url.route[0]];
+    get isStatic() {
+        return this.req.headers['user-agent'] && this.req.headers['user-agent'].indexOf('PhantomJS') >= 0;
     }
 }
 

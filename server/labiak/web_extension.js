@@ -1,11 +1,13 @@
 'use strict';
+
 var qs = require('querystring');
 var utils = require('../utils');
+var errors = require('../errors');
 var mongoose = require('mongoose');
 var _ = require('underscore');
 
 module.exports = {
-    process: function (task, bundle) {
+    processTask: function (task, bundle) {
         var collection = this.collection(task.collection);
         var isUpdate = task.$set || task.$unset;
         // console.log(JSON.stringify(task, null, '  '));
@@ -44,7 +46,6 @@ module.exports = {
     },
 
     serve: function () {
-        var self = this;
         if (!this.req.url.route[0]) {
             return this.send(this.getDescription());
         }
@@ -55,8 +56,11 @@ module.exports = {
             this.req.url.query.id = last;
             path.pop();
         }
-        var result = this.walk(this.server.modules, path);
+        this.walk(this.server.modules, path);
+    },
 
+    processResult: function (result) {
+        var self = this;
         switch (typeof result) {
             case 'object':
                 if (Object === result.constructor) {
@@ -64,9 +68,9 @@ module.exports = {
                         result.limit = true;
                     }
                     result.collection = result.collection || this.req.url.route[0];
-                    this.process(result, true).toArray(function (err, array) {
-                        self.answer(err, result.single ? array[0] : array);
-                    });
+                    this.processTask(result, true).toArray((err, array) =>
+                        this.answer(err, result.single ? array[0] : array)
+                    );
                 }
                 else if (result instanceof Array) {
                     let bundle = {};
@@ -83,7 +87,7 @@ module.exports = {
                             task.collection = task.collection || self.req.url.route[0];
                             let process_task = function (task) {
                                 task.collection = task.collection || self.req.url.route[0];
-                                let cursor = self.process(task, bundle);
+                                let cursor = self.processTask(task, bundle);
                                 if (task.cursor) {
                                     run(cursor);
                                 }
@@ -125,7 +129,7 @@ module.exports = {
                                         process_task(tasks.shift());
                                     }
                                     else {
-                                        $.send(code.FORBIDDEN, {
+                                        self.send(code.FORBIDDEN, {
                                             error: permission.error || {
                                                 message: 'Access Deny'
                                             }
@@ -142,7 +146,7 @@ module.exports = {
                 }
                 else if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
                     if ('find' == result.op || result instanceof mongoose.Aggregate) {
-                        var order = this.order;
+                        let order = this.order;
                         if (order) {
                             result.sort(order);
                         }
@@ -151,7 +155,7 @@ module.exports = {
                     }
                     result = result.exec();
                 }
-                else if ('Promise' == result.constructor.name) {
+                if ('Promise' == result.constructor.name) {
                     result
                         .then(function (c, r) {
                             if ('number' != typeof c) {
@@ -163,7 +167,7 @@ module.exports = {
                             }
                             if (r) {
                                 if ('GET' !== self.req.method) {
-                                    var success = [
+                                    let success = [
                                         code.OK,
                                         code.CREATED,
                                         code.ACCEPTED
@@ -207,7 +211,7 @@ module.exports = {
                 this.send({success: result});
                 break;
             case 'number':
-                this.res.writeHead(result);
+                this.sendStatus(result);
                 break;
             case 'string':
                 this.send(code.BAD_REQUEST, {
@@ -226,9 +230,11 @@ module.exports = {
 
     walk: function (object, path) {
         var route = path.shift() || this.req.method;
-        //var methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
-        if ('_' == route[0]) {
-            return false;
+        if ('_' in object && '_' == route) {
+            return object._(this);
+        }
+        else if ('_' == route[0] || !(route in object)) {
+            return code.METHOD_NOT_ALLOWED;
         }
         else if (route in object) {
             object = object[route];
@@ -236,9 +242,6 @@ module.exports = {
                 case 'object':
                     if (!this.module) {
                         this.module = object;
-                        if ('function' == typeof this.module._before) {
-                            this.module._before(this);
-                        }
                     }
                     return this.walk(object, path, route);
                 case 'function':
@@ -247,105 +250,93 @@ module.exports = {
                     return object;
             }
         }
-        else if ('_' in object) {
-            return object._(this);
-        }
-        else {
-            return false;
-        }
     },
 
     exec: function (action) {
-        var is_unauthoried_route = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
-        var must_upload_route = /^.(photo|file)/.test(this.req.url.original);
-
-        if (this.user || is_unauthoried_route || ('GET' == this.req.method && this.isCache)) {
+        var anonymous_route = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
+        
+        if (this.isAuthenticated || anonymous_route || this.isCache) {
+            let size = this.bodySize;
             if (this.isUpdate) {
-                var mime_name = this.req.headers['content-type'];
+                let mime_name = this.req.headers['content-type'];
                 mime_name = mime_name.split(';')[0];
-                var mime = constants.mimes[mime_name];
+                let mime = constants.mimes[mime_name];
                 if (!mime) {
-                    this.sendStatus(code.UNSUPPORTED_MEDIA_TYPE, {
-                        mime: mime_name
-                    });
+                    this.sendStatus(code.UNSUPPORTED_MEDIA_TYPE, {mime: mime_name});
                     return;
                 }
-            }
-            var size = this.bodySize;
-            if (size > 0) {
-                if (size > mime.size) {
-                    this.sendStatus(code.REQUEST_TOO_LONG, {
-                        max: mime.size,
-                        size: size,
-                        mime: mime_name
-                    });
-                    return;
+                if (size > 0) {
+                    if (size > mime.size) {
+                        this.sendStatus(code.REQUEST_TOO_LONG, {
+                            max: mime.size,
+                            size: size,
+                            mime: mime_name
+                        });
+                        return;
+                    }
+                    if ('file' !== this.req.url.route[0]) {
+                        utils.receive(this.req, data => this.receive(data, action));
+                    }
                 }
-                if (!must_upload_route) {
-                    return this.receive(action);
+                else {
+                    this.runAction(action);
                 }
             }
             else {
-                return this.runAction(action);
+                this.runAction(action);
             }
         }
         else {
-            this.send(code.UNAUTHORIZED, {
-                error: {
-                    auth: 'required'
-                }
-            });
+            this.send(code.UNAUTHORIZED, {error: {auth: 'required'}});
         }
     },
 
-    receive: function (action) {
-        var self = this;
-        return utils.receive(this.req, function (data) {
-            if (self.req.headers['content-type'].indexOf('x-www-form-urlencoded') > 0) {
-                try {
-                    self.body = qs.parse(data.toString('utf8'));
-                    self.params = self.merge(self.params, self.body);
-                }
-                catch (ex) {
-                    self.send(code.BAD_REQUEST, {
-                        error: ex.getMessage()
-                    })
-                }
+    receive: function (data, action) {
+        if (this.req.headers['content-type'].indexOf('x-www-form-urlencoded') > 0) {
+            try {
+                this.body = qs.parse(data.toString('utf8'));
+                this.params = this.merge(this.params, this.body);
             }
-            else if (self.req.headers['content-type'].indexOf('json') > 0 || 'test' == self.req.url.route[0]) {
-                try {
-                    data = data.toString('utf8');
-                    self.body = JSON.parse(data);
-                    self.params = self.merge(self.params, self.body);
-                    for (var key in self.params) {
-                        var value = self.params[key];
-                        if (value.replace && /[<>"']/.test(value)) {
-                            self.params[key] = value
-                                .replace(/</g, '&lt;')
-                                .replace(/>/g, '&gt;')
-                                .replace(/"([^"]+)"/g, '«$1»')
-                                .replace(/"/g, '&quot;')
-                                .replace(/'/g, '’');
-                        }
+            catch (ex) {
+                console.error('INVALID_URLENCODED', data);
+                this.send(code.BAD_REQUEST, {
+                    error: ex.getMessage()
+                })
+            }
+        }
+        else if (this.req.headers['content-type'].indexOf('json') > 0 || 'test' == this.req.url.route[0]) {
+            try {
+                data = data.toString('utf8');
+                this.body = JSON.parse(data);
+                this.params = utils.merge(this.params, this.body);
+                for (let key in this.params) {
+                    let value = this.params[key];
+                    if (value.replace && /[<>"']/.test(value)) {
+                        this.params[key] = value
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"([^"]+)"/g, '«$1»')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '’');
                     }
                 }
-                catch (ex) {
-                    console.log(ex);
-                    self.send(code.BAD_REQUEST, {
-                        error: ex
-                    })
-                }
             }
-            else {
-                console.error('UNPROCESSED_DATA', data);
+            catch (ex) {
+                console.error('INVALID_JSON', data);
+                this.send(code.BAD_REQUEST, {
+                    error: ex
+                })
             }
-            return self.runAction(action);
-        });
+        }
+        else {
+            console.error('UNPROCESSED_DATA', data);
+        }
+        this.runAction(action);
     },
 
     runAction: function (action) {
         var self = this;
-        if (this.req.headers['user-agent'] && this.req.headers['user-agent'].indexOf('PhantomJS') > 0) {
+        if (this.isStatic) {
             console.log('\t' + this.req.method + ' ' + this.req.url.original);
             if (this.body) {
                 console.log(this.body);
@@ -359,7 +350,15 @@ module.exports = {
                 _action = function () {
                     promise.then(function (allow) {
                         if (allow) {
-                            action(self);
+                            self.processResult(action(self));
+                        }
+                        else {
+                            self.send(code.FORBIDDEN, {
+                                success: false,
+                                error: {
+                                    message: 'Forbidden'
+                                }
+                            });
                         }
                     })
                         .catch(function (err) {
@@ -368,21 +367,27 @@ module.exports = {
                 }
             }
             else if (promise) {
-                _action = action
+                _action = function () {
+                    self.processResult(action(self));
+                };
             }
             else {
+                console.error('Unknown _before result', promise);
                 return;
             }
         }
         else {
-            _action = action;
+            _action = function () {
+                self.processResult(action(self));
+            };
         }
+
         if (config.dev) {
-            return _action(this);
+            _action(this);
         }
         else {
             try {
-                return _action(this);
+                _action(this);
             }
             catch (ex) {
                 if (ex.invalid) {
@@ -433,7 +438,7 @@ module.exports = {
     canManage: function (user_id) {
         return new Promise((resolve, reject) => {
             if (this.isAuthenticated) {
-                var id = this.user._id;
+                let id = this.user._id;
                 if (user_id.equals(id)) {
                     resolve(1);
                 }
@@ -456,7 +461,7 @@ module.exports = {
                         else {
                             resolve(count)
                         }
-                    })
+                    });
                 }
             }
             else {

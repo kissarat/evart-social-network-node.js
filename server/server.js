@@ -79,8 +79,17 @@ class Server {
         this.log('info', 'MongoDB connection opened');
         this.httpServer = http.createServer(function (req, res) {
             try {
+                //var methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
                 let $ = self.createContext({req: req, res: res});
-                if ('/agent' === req.url.original) {
+                if (config.request.methods.indexOf(req.method) < 0) {
+                    $.send(code.METHOD_NOT_ALLOWED, {
+                        success: false,
+                        error: {
+                            message: config.request.methods.join(', ') + ' allowed'
+                        }
+                    })
+                }
+                else if ('/agent' === req.url.original) {
                     $.serve();
                 }
                 else {

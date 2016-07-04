@@ -9,6 +9,7 @@
     "delay": 250
   },
   "trace": {
+    "enabled": false,
     "history": true
   },
   "socket": {

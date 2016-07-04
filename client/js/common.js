@@ -276,6 +276,26 @@ _.extend(Service.prototype, {
         }, this.search.delay);
     },
 
+    sendStatistics: function () {
+        statistics.end = Date.now() - statistics.start;
+        if (this.config.trace.enabled) {
+            $.ajax({
+                type: 'PUT',
+                url: '/api/agent/stat',
+                data: JSON.stringify(statistics),
+                async: false,
+                contentType: 'application/json'
+            });
+        }
+    },
+
+    clearCookies: function () {
+        var names = ['auth', 'lang', 'remixlang'];
+        for(var i = 0; i < names.length; i++) {
+            document.cookie = names[i] + '=; path=/; expires=' + this.config.cookie.past;
+        }
+    },
+
     storage: {
         save: function (model, idAttribute) {
             var id = model.get(idAttribute || '_id');
@@ -293,24 +313,6 @@ _.extend(Service.prototype, {
                 model.set(object);
             }
             return !!object;
-        }
-    },
-
-    sendStatistics: function () {
-        statistics.end = Date.now() - statistics.start;
-        $.ajax({
-            type: 'PUT',
-            url: '/api/agent/stat',
-            data: JSON.stringify(statistics),
-            async: false,
-            contentType: 'application/json'
-        });
-    },
-
-    clearCookies: function () {
-        var names = ['auth', 'lang', 'remixlang'];
-        for(var i = 0; i < names.length; i++) {
-            document.cookie = names[i] + '=; path=/; expires=' + this.config.cookie.past;
         }
     }
 });
