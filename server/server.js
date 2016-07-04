@@ -8,6 +8,7 @@ var fs = require('fs');
 var http = require('http');
 var mongoose = require('mongoose');
 var utils = require('./utils');
+var twilio = require('twilio');
 
 global.config = require('./config.json');
 global.config.client = require('./client.json');
@@ -20,29 +21,29 @@ var errors = require('./errors');
 
 var modules = {};
 
-var socket_files = [config.file];
+var socketFileNames = [config.file];
 
-function cleanup_socket() {
-    var filename = socket_files.pop();
+function cleanupSocket() {
+    var filename = socketFileNames.pop();
     if (filename) {
         fs.access(filename, function (err) {
             if (!err) {
                 fs.unlinkSync(filename);
             }
-            cleanup_socket();
+            cleanupSocket();
         })
     }
 }
 
-cleanup_socket();
+cleanupSocket();
 
 global.schema = {};
 
 fs.readdirSync(__dirname + '/modules').forEach(function (file) {
     var match = /^(\w+)\.js$/.exec(file);
     if (match) {
-        var module_name = match[1];
-        modules[module_name] = false === config.modules[module_name]
+        let module = match[1];
+        modules[module] = false === config.modules[module]
             ? false
             : require(__dirname + '/modules/' + match[0]);
     }
@@ -54,28 +55,31 @@ Object.keys(schema).forEach(function (name) {
     global[name] = mongoose.model(name, current);
 });
 
-function Server() {
-    this.start = start;
-    this.mongoose = mongoose.connect(config.mongo.uri, 'freebsd' == process.platform ? {} : config.mongo.options);
-    utils.subscribe('mongo', this.mongoose.connection, this);
-}
+class Server {
+    constructor() {
+        this.start = start;
+        var options = 'freebsd' == process.platform ? {} : config.mongo.options;
+        this.mongoose = mongoose.connect(config.mongo.uri, options);
+        this.mongoose.connection.on('error', Server.onMongoError.bind(this));
+        this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
+        this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token);
+    }
 
-Server.prototype = {
-    onMongoError: function (err) {
+    static onMongoError(err) {
         console.log(err);
-    },
+    }
 
-    log: function (type, message) {
+    log(type, message) {
         var spend = Date.now() - this.start;
         console.log(message.blue, spend);
-    },
+    }
 
-    onMongoOpen: function () {
+    onMongoOpen() {
         var self = this;
         this.log('info', 'MongoDB connection opened');
         this.httpServer = http.createServer(function (req, res) {
             try {
-                var $ = self.createContext({req: req, res: res});
+                let $ = self.createContext({req: req, res: res});
                 if ('/agent' === req.url.original) {
                     $.serve();
                 }
@@ -92,56 +96,64 @@ Server.prototype = {
             }
         });
 
-        utils.subscribe('http', this.httpServer, this);
+        this.httpServer.on('listening', this.onHttpListening.bind(this));
         this.httpServer.listen(config.file);
-    },
+    }
 
-    onHttpClose: function () {
+    onHttpClose() {
         this.log('info', 'HTTP server close');
-    },
+    }
 
-    onHttpListening: function () {
+    onHttpListening() {
         this.log('info', 'HTTP server connection opened');
         fs.chmodSync(config.file, parseInt('777', 8));
         var server = new socket.WebSocketServer({
             config: config.socket
         });
-        utils.subscribe('websocket', server, this);
+        server.on('connection', this.onWebSocketConnection.bind(this));
         this.onWebSocketConnection(server);
-    },
+    }
 
-    callModulesMethod: function (name) {
+    callModulesMethod(name) {
         for (var i in modules) {
             var module = modules[i];
             if (module && name in module && module[name] instanceof Function) {
                 module[name](this);
             }
         }
-    },
+    }
 
-    onWebSocketConnection: function (webSocketServer) {
+    onWebSocketConnection(webSocketServer) {
         this.log('info', 'WebSocket server connection opened');
         this.webSocketServer = webSocketServer;
         this.modules = modules;
         this.callModulesMethod('_boot', this);
         this.onModulesLoaded();
-    },
+    }
 
-    onModulesLoaded: function () {
+    onModulesLoaded() {
         this.log('info', 'Modules loaded');
         this.start = new Date();
-    },
+    }
 
-    createContext: function (options) {
+    createContext(options) {
         options.server = this;
         return new web.Context(options);
-    },
+    }
 
-    getDescription: function () {
+    sendSMS(phone, text, cb) {
+        this.twilio.sms.messages.create({
+            to: '+' + phone,
+            from: '+' + config.sms.phone,
+            body: text
+        }, this.wrap(cb))
+    }
+
+    getDescription() {
         var schema = {};
         _.each(modules, function (module, name) {
             if (module._meta) {
-                var meta = module._meta;
+                let meta = module._meta;
                 _.each(meta.schema, function (field, key) {
                     if (field.constructor === Function) {
                         field = {
@@ -166,6 +178,6 @@ Server.prototype = {
             schema: schema
         };
     }
-};
+}
 
 var server = new Server();

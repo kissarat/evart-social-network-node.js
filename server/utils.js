@@ -131,19 +131,19 @@ function s(array) {
     })
 }
 
-function subscribe(prefix, source, target) {
+function subscribe(prefix, source, target, proto) {
     if (undefined === target) {
         target = this;
     }
     if (undefined === source) {
         source = this;
     }
+    if (undefined === proto) {
+        proto = target;
+    }
     prefix = 'on' + prefix;
-    // console.log(Object.keys(target.constructor.prototype));
-    // console.log((target.__proto__.constructor.name));
-    // console.log((target.__proto__.__proto__.constructor.name));
-    for(var name in target) {
-        let handler = target[name];
+    for(var name in proto) {
+        let handler = proto[name];
         name = name.toLowerCase();
         if (0 === name.indexOf(prefix)) {
             name = name.replace(prefix, '');

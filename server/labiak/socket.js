@@ -109,26 +109,26 @@ class WebSocketServer extends EventEmitter {
     }
 }
 
-function WebSocket(options) {
-    _.extend(this, options);
-}
+class WebSocket {
+    constructor() {
+        _.extend(this, options);
+    }
 
-WebSocket.prototype = {
-    send: function (message) {
+    send(message) {
         if (!message.time) {
             message.time = new Date().toISOString();
         }
         this.socket.send(JSON.stringify(message));
-    },
+    }
 
-    close: function () {
+    close() {
         var isOpen = true;
         if (isOpen) {
             this.socket.close();
         }
         return isOpen;
     }
-};
+}
 
 module.exports = {
     WebSocketServer,

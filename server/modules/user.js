@@ -515,7 +515,7 @@ module.exports = {
     },
 
     phone: function ($) {
-        if ($.user) {
+        if ($.isAuthenticated) {
             $.sendStatus(code.FORBIDDEN, 'User is authorized');
             return;
         }
@@ -527,6 +527,11 @@ module.exports = {
             });
         }
         User.findOne({phone: $.agent.phone}, $.wrap(function (user) {
+            function save() {
+                $.agent.save($.success, $.wrap(function () {
+                    $.sendStatus(code.OK);
+                }));
+            }
             if (user) {
                 $.send({
                     error: {
@@ -534,22 +539,17 @@ module.exports = {
                     }
                 });
             } else {
-                let save = function () {
-                    $.agent.save($.success, $.wrap(function () {
-                        $.sendStatus(code.OK);
-                    }));
-                };
                 if (config.sms.enabled) {
-                    return $.sendSMS($.agent.phone, 'Code: ' + $.agent.code, save);
+                    $.server.sendSMS($.agent.phone, 'Code: ' + $.agent.code, save);
                 } else {
-                    return save();
+                    save();
                 }
             }
         }));
     },
 
     code: function ($) {
-        if ($.user) {
+        if ($.isAuthenticated) {
             $.sendStatus(code.FORBIDDEN, 'User is authorized');
             return;
         }
@@ -563,7 +563,7 @@ module.exports = {
     },
 
     personal: function ($) {
-        if ($.user) {
+        if ($.isAuthenticated) {
             $.sendStatus(code.FORBIDDEN, 'User is authorized');
             return;
         }
