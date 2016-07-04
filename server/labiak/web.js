@@ -151,7 +151,7 @@ Context.prototype = {
             this.send({success: !!result});
         }
     },
-    
+
     notifyOne: function (user_id, message) {
         return this.server.webSocketServer.notifyOne(user_id, message);
     },
@@ -529,6 +529,10 @@ Context.prototype = {
     get bodySize() {
         var size = this.req.headers ? this.req.headers['content-length'] : 0;
         return size > 0 ? size : 0;
+    },
+
+    get isAuthenticated() {
+        return !!this.user;
     },
 
     maxBody: function (maxLength) {

@@ -431,32 +431,36 @@ module.exports = {
     },
 
     canManage: function (user_id) {
-        var self = this;
-        var id = $.user._id;
-        var where = {
-            $and: [
-                {_id: user_id},
-                {
-                    $or: [
-                        {admin: id},
-                        {deny: {$ne: id}}
-                    ]
+        return new Promise((resolve, reject) => {
+            if (this.isAuthenticated) {
+                var id = this.user._id;
+                if (user_id.equals(id)) {
+                    resolve(1);
                 }
-            ]
-        };
-        return new Promise(function (resolve, reject) {
-            if (user_id.equals(self.user._id)) {
-                resolve(1);
+                else {
+                    let where = {
+                        $and: [
+                            {_id: user_id},
+                            {
+                                $or: [
+                                    {admin: id},
+                                    {deny: {$ne: id}}
+                                ]
+                            }
+                        ]
+                    };
+                    this.collection('user').count(where, function (err, count) {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve(count)
+                        }
+                    })
+                }
             }
             else {
-                self.collection('user').count(where, function (err, count) {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        resolve(count)
-                    }
-                })
+                resolve(0);
             }
         });
     }

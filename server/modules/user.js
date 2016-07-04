@@ -216,7 +216,7 @@ module.exports = {
 
     _before: function ($) {
         var last = _.last($.req.url.route);
-        if ($.isUpdate && !_.contains(['exists', 'phone', 'code', 'personal'], last)) {
+        if ($.isUpdate && !_.contains(['exists', 'phone', 'code', 'personal', 'login', 'logout'], last)) {
             return $.canManage($.id);
         }
         return true;
