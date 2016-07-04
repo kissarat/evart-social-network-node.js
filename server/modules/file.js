@@ -1,6 +1,6 @@
 "use strict";
 
-const code = require('../../client/code.json');
+const code = require('../../client/code');
 const ffprobe = require('node-ffprobe');
 const fs = require('fs');
 const hash_md5 = require('md5-file');
@@ -8,7 +8,7 @@ const mmm = require('mmmagic');
 const mongoose = require('mongoose');
 const path = require('path');
 const static_dir = path.normalize(__dirname + '/../../static');
-const utils = require('../utils.js');
+const utils = require('../utils');
 
 const magic = new mmm.Magic(mmm.MAGIC_MIME);
 const md5_dir = static_dir + '/md5';
@@ -61,6 +61,11 @@ const schema = {
     ext: {
         type: String
     },
+    
+    album: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Album'
+    },
 
     size: Number,
     inode: Number
@@ -70,8 +75,16 @@ module.exports = {
     _meta: {
         schema: schema
     },
+
+    _before: function ($) {
+        if ($.isUpdate && $.has('owner_id')) {
+            return $.canManage($.get('owner_id'))
+        }
+        return true;
+    },
+
     POST: function ($) {
-        var owner_id = $.param('owner_id');
+        var owner_id = $.get('owner_id');
         var name = $.req.headers.name;
         var ext;
         if (name) {
@@ -173,10 +186,10 @@ module.exports = {
         }
         else {
             let where = {
-                owner: $.has('owner_id') ? $.param('owner_id') : $.user._id
+                owner: $.has('owner_id') ? $.get('owner_id') : $.user._id
             };
             if ($.has('type')) {
-                where.type = $.param('type');
+                where.type = $.get('type');
             }
             return {
                 query: where

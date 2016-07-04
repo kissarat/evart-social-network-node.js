@@ -462,6 +462,7 @@ var mimes = [
     "application/x-shockwave-flash,256,swf",
     "application/x-stuffit,8192,sit",
     "application/x-tcl,256,tcl tk",
+    "application/x-www-form-urlencoded,8,data",
     "application/x-x509-ca-cert,64,der pem crt",
     "application/x-xpinstall,512,xpi",
     "application/xhtml+xml,2048,xhtml",

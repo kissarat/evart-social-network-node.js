@@ -198,7 +198,7 @@ module.exports = {
                                     class: r.constructor.name,
                                     message: r.toString()
                                 };
-                                ['code', 'name', 'message'].forEach(function (name) {
+                                ['code', 'name', 'message', 'errors'].forEach(function (name) {
                                     if (r[name]) {
                                         error[name] = r[name];
                                     }
@@ -364,7 +364,12 @@ module.exports = {
                         }
                     })
                         .catch(function (err) {
-                            self.send(code.INTERNAL_SERVER_ERROR, err);
+                            if ('number' === typeof err) {
+                                self.sendStatus(err);
+                            }
+                            else {
+                                self.send(code.INTERNAL_SERVER_ERROR, err);
+                            }
                         })
                 }
             }

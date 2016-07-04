@@ -535,7 +535,11 @@ class Context {
 
     get isUpdate() {
         var m = this.req.method;
-        return 'POST' == m || 'PUT' == m || 'PATCH' == m;
+        return 'POST' === m || 'PUT' === m || 'PATCH' === m;
+    }
+    
+    get isModify() {
+        return this.isUpdate || 'DELETE' === this.req.method;
     }
 
     collection(name) {
