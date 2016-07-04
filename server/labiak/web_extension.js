@@ -190,15 +190,21 @@ module.exports = {
                             }
                         })
                         .catch(function (r) {
-                            if ('number' == typeof r) {
+                            if ('number' === typeof r) {
                                 self.sendStatus(r)
                             }
                             else {
-                                self.send(code.INTERNAL_SERVER_ERROR, {
-                                    error: {
-                                        class: r.constructor.name,
-                                        message: r.toString()
+                                let error = {
+                                    class: r.constructor.name,
+                                    message: r.toString()
+                                };
+                                ['code', 'name', 'message'].forEach(function (name) {
+                                    if (r[name]) {
+                                        error[name] = r[name];
                                     }
+                                });
+                                self.send(code.INTERNAL_SERVER_ERROR, {
+                                    error: error
                                 })
                             }
                         });
@@ -368,7 +374,7 @@ module.exports = {
                 };
             }
             else {
-                console.error('Unknown _before result', promise);
+                this.sendStatus(code.FORBIDDEN);
                 return;
             }
         }

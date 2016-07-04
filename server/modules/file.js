@@ -1,72 +1,74 @@
 "use strict";
 
-var code = require('../../client/code.json');
-var ffprobe = require('node-ffprobe');
-var fs = require('fs');
-var hash_md5 = require('md5-file');
-var mmm = require('mmmagic');
-var mongoose = require('mongoose');
-var path = require('path');
-var static_dir = path.normalize(__dirname + '/../../static');
-var utils = require('../utils.js');
+const code = require('../../client/code.json');
+const ffprobe = require('node-ffprobe');
+const fs = require('fs');
+const hash_md5 = require('md5-file');
+const mmm = require('mmmagic');
+const mongoose = require('mongoose');
+const path = require('path');
+const static_dir = path.normalize(__dirname + '/../../static');
+const utils = require('../utils.js');
 
-var magic = new mmm.Magic(mmm.MAGIC_MIME);
-var md5_dir = static_dir + '/md5';
+const magic = new mmm.Magic(mmm.MAGIC_MIME);
+const md5_dir = static_dir + '/md5';
 
-var ext_regex = /\.(\w+)$/;
+const ext_regex = /\.(\w+)$/;
+
+const schema = {
+    _id: utils.idType('File'),
+
+    time: {
+        type: Date,
+        required: true,
+        "default": Date.now
+    },
+
+    created: {
+        type: Date,
+        required: true,
+        "default": Date.now
+    },
+
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+
+    md5: {
+        type: String
+    },
+
+    mime: {
+        type: String
+    },
+
+    url: {
+        type: String
+    },
+
+    type: {
+        type: String,
+        "default": 'file',
+        required: true
+    },
+
+    name: {
+        type: String
+    },
+
+    ext: {
+        type: String
+    },
+
+    size: Number,
+    inode: Number
+};
 
 module.exports = {
     _meta: {
-        schema: {
-            _id: utils.idType('File'),
-
-            time: {
-                type: Date,
-                required: true,
-                "default": Date.now
-            },
-
-            created: {
-                type: Date,
-                required: true,
-                "default": Date.now
-            },
-
-            owner: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
-                required: true
-            },
-
-            md5: {
-                type: String
-            },
-
-            mime: {
-                type: String
-            },
-
-            url: {
-                type: String
-            },
-
-            type: {
-                type: String,
-                "default": 'file',
-                required: true
-            },
-
-            name: {
-                type: String
-            },
-
-            ext: {
-                type: String
-            },
-
-            size: Number,
-            inode: Number
-        }
+        schema: schema
     },
     POST: function ($) {
         var owner_id = $.param('owner_id');
@@ -109,7 +111,6 @@ module.exports = {
                             ext: ext,
                             mime: mime,
                             md5: md5,
-                            time: Date.now(),
                             type: filetype ? filetype : 'file'
                         };
                         var md5_filename = path.join(md5_dir, md5 + '.' + ext);
@@ -188,7 +189,7 @@ module.exports = {
     }
 };
 
-global.schema.File = new mongoose.Schema(module.exports._meta.schema, utils.merge(config.mongoose.schema.options, {
-    collection: 'user',
+global.schema.File = new mongoose.Schema(schema, utils.merge(config.mongoose.schema.options, {
+    collection: 'file',
     createAt: 'created'
 }));

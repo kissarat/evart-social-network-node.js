@@ -7,8 +7,6 @@ var utils = require('../utils');
 var errors = require('../errors');
 var _ = require('underscore');
 
-var code = utils.code;
-
 var T = mongoose.Schema.Types;
 
 var _schema = {
