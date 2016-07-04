@@ -255,11 +255,8 @@ module.exports = {
 
     walk: function (object, path) {
         var route = path.shift() || this.req.method;
-        if ('_' in object && '_' == route) {
-            return object._(this);
-        }
-        else if ('_' == route[0] || !(route in object)) {
-            return code.METHOD_NOT_ALLOWED;
+        if ('_' === route[0]) {
+            this.sendStatus(code.NOT_FOUND);
         }
         else if (route in object) {
             object = object[route];
@@ -274,6 +271,9 @@ module.exports = {
                 default:
                     return object;
             }
+        }
+        else {
+            this.sendStatus(code.NOT_FOUND);
         }
     },
 
