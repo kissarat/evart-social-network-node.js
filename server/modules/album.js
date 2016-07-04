@@ -57,6 +57,16 @@ module.exports = {
         return new Album(data).save();
     },
 
+    PATCH: function ($) {
+        return {
+            query: {
+                _id: $.id,
+                owner_id: $.get('owner_id', $.user._id)
+            },
+            $set: {name: $.param('name')}
+        }
+    },
+
     DELETE: function ($) {
         var owner_id = $.get('owner_id', $.user._id);
         return Album.remove({_id: $.get('id'), owner: owner_id});

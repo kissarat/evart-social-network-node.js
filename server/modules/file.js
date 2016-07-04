@@ -84,7 +84,7 @@ module.exports = {
     },
 
     POST: function ($) {
-        var owner_id = $.get('owner_id');
+        var owner_id = $.get('owner_id', $.user._id);
         var name = $.req.headers.name;
         var ext;
         if (name) {
@@ -126,6 +126,9 @@ module.exports = {
                             md5: md5,
                             type: filetype ? filetype : 'file'
                         };
+                        if ($.has('album_id')) {
+                            data.album = $.get('album_id');
+                        }
                         var md5_filename = path.join(md5_dir, md5 + '.' + ext);
                         fs.stat(md5_filename, function (err, stat) {
                             var exists = true;
@@ -161,6 +164,19 @@ module.exports = {
         })
     },
 
+    PATCH: function ($) {
+        return {
+            query: {
+                _id: $.param('id'),
+                owner: $.param('owner_id', $.user._id)
+            },
+
+            $set: {
+                album: $.param('album_id')
+            }
+        };
+    },
+
     GET: function ($) {
         if ($.has('id')) {
             let where = {_id: $.id};
@@ -186,8 +202,11 @@ module.exports = {
         }
         else {
             let where = {
-                owner: $.has('owner_id') ? $.get('owner_id') : $.user._id
+                owner: $.get('owner_id', $.user._id)
             };
+            if ($.has('album_id')) {
+                where.album = $.get('album_id');
+            }
             if ($.has('type')) {
                 where.type = $.get('type');
             }

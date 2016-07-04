@@ -9,7 +9,7 @@ var _ = require('underscore');
 module.exports = {
     processTask: function (task, bundle) {
         var collection = this.collection(task.collection);
-        var isUpdate = task.$set || task.$unset;
+        task.isUpdate = task.$set || task.$unset;
         // console.log(JSON.stringify(task, null, '  '));
         if (true === task.select) {
             task.select = this.select(false, false, true);
@@ -20,28 +20,36 @@ module.exports = {
         if ('function' == typeof task.query) {
             task.query = task.query(bundle);
         }
-        if (!isUpdate && !(task.query instanceof Array) && !task.count) {
-            task.query = [{$match: task.query}];
-        }
-        if (task.select) {
-            task.query.push({$project: task.select});
-        }
-        var order = this.order;
-        if (order) {
-            task.query.push({$sort: order});
-        }
-        if (task.limit) {
-            task.query.push({$skip: this.skip});
-            task.query.push({$limit: 'number' == typeof task.limit ? task.limit : this.limit});
-        }
-        else if (isUpdate) {
+        if (task.isUpdate) {
+            if (!task.$set) {
+                task.$set = {}
+            }
+            task.$set.time = new Date();
             return collection.update(task.query, _.pick(task, '$set', '$unset'), task.options);
         }
-        if (task.count) {
-            return collection.count(task.query);
-        }
         else {
-            return collection.aggregate(task.query);
+            if (!(task.query instanceof Array) && !task.count) {
+                task.query = [{$match: task.query}];
+            }
+            if (task.select) {
+                task.query.push({$project: task.select});
+            }
+            var order = this.order;
+            if (order) {
+                task.query.push({$sort: order});
+            }
+
+            if (task.limit) {
+                task.query.push({$skip: this.skip});
+                task.query.push({$limit: 'number' == typeof task.limit ? task.limit : this.limit});
+            }
+
+            if (task.count) {
+                return collection.count(task.query);
+            }
+            else {
+                return collection.aggregate(task.query);
+            }
         }
     },
 
@@ -68,9 +76,20 @@ module.exports = {
                         result.limit = true;
                     }
                     result.collection = result.collection || this.req.url.route[0];
-                    this.processTask(result, true).toArray((err, array) =>
-                        this.answer(err, result.single ? array[0] : array)
-                    );
+                    let r = this.processTask(result, true);
+                    if ('function' === typeof r.then) {
+                        r.then(function (result) {
+                            self.send(result);
+                        },
+                        function (err) {
+                            self.send(code.INTERNAL_SERVER_ERROR, {error: err});
+                        })
+                    }
+                    else {
+                        r.toArray((err, array) =>
+                            this.answer(err, result.single ? array[0] : array)
+                        );
+                    }
                 }
                 else if (result instanceof Array) {
                     let bundle = {};
