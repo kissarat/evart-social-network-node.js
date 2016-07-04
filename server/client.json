@@ -13,13 +13,16 @@
   },
   "socket": {
     "address": "ws://{hostname}/socket",
-    "wait": 800
+    "wait": 800,
+    "error": {
+      "wait": 5000
+    }
   },
   "alert": {
     "duration": 10000
   },
   "online": {
-    "delay": 8000,
+    "delay": 5000,
     "duration": 900000
   },
   "cookie": {

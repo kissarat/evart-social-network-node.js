@@ -205,7 +205,8 @@ function extract(agent, headers) {
             _id: agent.user._id,
             domain: agent.user.domain,
             type: agent.user.type,
-            follow: agent.user.follow
+            follow: agent.user.follow,
+            lang: agent.user.lang
         };
     }
     if (headers) {

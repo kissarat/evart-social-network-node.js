@@ -669,7 +669,10 @@ var browser = {
         },
         socket: {
             address: 'ws://' + location.hostname + '/socket',
-            wait: 800
+            wait: 800,
+            error: {
+                wait: 2000
+            }
         },
         alert: {
             duration: 12000

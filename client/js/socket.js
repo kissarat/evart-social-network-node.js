@@ -14,6 +14,18 @@ Socket.prototype = {
         }
         this.socket = new WebSocket(this.address);
         var self = this;
+
+        function connect(timeout) {
+            return function () {
+                if (App.isAuthenticated() && !this._timeout) {
+                    this._timeout = setTimeout(function () {
+                        self._timeout = 0;
+                        self.pull();
+                    }, timeout);
+                }
+            }
+        }
+        
         register(this.socket, {
             message: function (e) {
                 App.debug.push('socket_pull', e.data);
@@ -28,11 +40,9 @@ Socket.prototype = {
                     console.error('UNKNOWN_MESSAGE', message);
                 }
             },
-            close: function () {
-                if (App.user) {
-                    return setTimeout(self.pull.bind(App), App.config.socket.wait);
-                }
-            }
+
+            error: connect(App.config.socket.error.wait),
+            close: connect(App.config.socket.wait)
         });
     },
 
@@ -62,7 +72,7 @@ App.notify = function (options) {
         Notification.requestPermission(function (permission) {
             if ('granted' === permission) {
                 App.notify = function (options) {
-                    if ('string' == typeof options) {
+                    if ('string' === typeof options) {
                         options = {title: options};
                     }
                     var n = new Notification(options.title, options);
@@ -80,9 +90,6 @@ App.notify = function (options) {
 };
 
 App.socket = new Socket((self.App && App.config ? App.config : self.defaultConfig).socket);
-
-App.pull = deprecated;
-App.push = deprecated;
 
 register(App, {
     login: function () {

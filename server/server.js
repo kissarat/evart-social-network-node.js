@@ -150,33 +150,35 @@ class Server {
     }
 
     getDescription() {
-        var schema = {};
-        _.each(modules, function (module, name) {
-            if (module._meta) {
-                let meta = module._meta;
-                _.each(meta.schema, function (field, key) {
-                    if (field.constructor === Function) {
-                        field = {
-                            type: field
-                        };
-                        meta[key] = field;
-                    }
-                    if (field instanceof Array) {
-                        field = field[0]
-                    }
-                    field.type = field.type.name;
-                    if (field.match) {
-                        field.match = field.match.toString()
-                    }
-                });
-                schema[name] = meta.schema;
-            }
-        });
-        return {
+        var meta = {
             api: 'socex',
-            v: 0.5,
-            schema: schema
+            v: 0.5
         };
+        if (config.meta.schema) {
+            meta.schema = {};
+            _.each(modules, function (module, name) {
+                if (module._meta) {
+                    let meta = module._meta;
+                    _.each(meta.schema, function (field, key) {
+                        if (field.constructor === Function) {
+                            field = {
+                                type: field
+                            };
+                            meta[key] = field;
+                        }
+                        if (field instanceof Array) {
+                            field = field[0]
+                        }
+                        field.type = field.type.name;
+                        if (field.match) {
+                            field.match = field.match.toString()
+                        }
+                    });
+                    meta.schema[name] = meta.schema;
+                }
+            });
+        }
+        return meta;
     }
 }
 

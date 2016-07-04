@@ -262,12 +262,12 @@ class Context {
         if (age) {
             if (true === age) {
                 age = new Date();
-                age.setYear(age.getYear() + 10);
+                age.setFullYear(age.getFullYear() + 10);
             }
-            if (age instanceof Date) {
+            else if (age instanceof Date) {
                 age = age.toUTCString();
             }
-            if (!isNaN(age)) {
+            else if (!isNaN(age)) {
                 age = new Date(Date.now() + age).toUTCString();
             }
             cookie += '; expires=' + age;

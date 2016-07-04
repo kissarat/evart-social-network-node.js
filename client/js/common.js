@@ -161,6 +161,12 @@ function Service() {
     this.jsonpCount = {
         vk: 0
     };
+
+    this.on('login', function () {
+        if (!$.cookie('remixlang')) {
+            App.language = _this.user.lang;
+        }
+    });
 }
 
 if (self.Marionette) {
@@ -169,8 +175,6 @@ if (self.Marionette) {
 
 _.extend(Service.prototype, {
     cidPrefix: 'app',
-
-    constructor: Service,
 
     debug: {
         trace: function () {
@@ -194,36 +198,39 @@ _.extend(Service.prototype, {
     },
 
     cookie: function (name, value) {
-        document.cookie = name + '=' + value + '; path=/; expires=Tue, 01 Jan 2030 00:00:00 GMT';
+        document.cookie = name + '=' + value + '; path=/; expires=' + this.config.cookie.future;
     },
 
     login: function () {
         var self = this;
-        if (this.user) {
-            return this.trigger('login');
-        } else {
-            return $.getJSON('/api/agent', function (agent) {
+        function _login(agent) {
+            if (agent) {
                 self.agent = agent;
-                if (self.user) {
-                    self.navigate('profile');
-                    $('#dock-container').show();
-                    return self.trigger('login');
-                }
-            });
+            }
+            if (self.isAuthenticated()) {
+                $('#dock-container').show();
+                self.trigger('login');
+                self.navigate('profile');
+            }
+        }
+        if (this.isAuthenticated()) {
+            _login();
+        } else {
+            $.getJSON('/api/agent', _login);
         }
     },
 
     logout: function () {
         var self = this;
-        if (this.user) {
-            return $.getJSON('/api/user/logout', function () {
-                $('#dock-container').hide();
-                self.trigger('logout');
-                return self.navigate('login');
-            });
+        function _logout() {
+            $('#dock-container').hide();
+            self.trigger('logout');
+            self.navigate('login');
+        }
+        if (this.isAuthenticated()) {
+            $.getJSON('/api/user/logout', _logout);
         } else {
-            this.trigger('logout');
-            return this.navigate('login');
+            _logout();
         }
     },
 
@@ -232,8 +239,12 @@ _.extend(Service.prototype, {
         return prefix + this.jsonpCount[prefix];
     },
 
-    isAuthorized: function () {
+    isAuthenticated: function () {
         return !!(this.agent && this.agent.user);
+    },
+
+    isOnline: function () {
+        return WebSocket.OPEN === this.socket.readyState;
     },
 
     resolve: resolve,
@@ -245,14 +256,14 @@ _.extend(Service.prototype, {
     },
 
     updateOnline: function (duration) {
-        $.sendJSON('PATCH', '/api/agent/online', {till: -duration}, function (data) {
-            if (data.success) {
-                App.user.online = new Date(data.till).toUTCString();
-            }
-        });
+        if (this.isOnline()) {
+            $.sendJSON('PATCH', '/api/agent/online', {till: -duration}, function (data) {
+                if (data.success) {
+                    App.user.online = new Date(data.till).toUTCString();
+                }
+            });
+        }
     },
-
-    unimplemented: unimplemented,
 
     debounce: function (context, fn) {
         if (context._debounce_timeout) {
@@ -262,7 +273,7 @@ _.extend(Service.prototype, {
         context._debounce_timeout = setTimeout(function () {
             fn.call(context);
             context._debounce_timeout = 0;
-        }, 500);
+        }, this.search.delay);
     },
 
     storage: {
@@ -294,6 +305,13 @@ _.extend(Service.prototype, {
             async: false,
             contentType: 'application/json'
         });
+    },
+
+    clearCookies: function () {
+        var names = ['auth', 'lang', 'remixlang'];
+        for(var i = 0; i < names.length; i++) {
+            document.cookie = names[i] + '=; path=/; expires=' + this.config.cookie.past;
+        }
     }
 });
 

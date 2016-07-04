@@ -210,7 +210,7 @@ App.module('User', function (User, App) {
 
         submit: function (e) {
             e.preventDefault();
-            return this.login();
+            this.login();
         },
 
         login: function () {
@@ -385,8 +385,8 @@ App.module('User', function (User, App) {
         },
 
         submit: function (e) {
-            var model = this.model;
             e.preventDefault();
+            var model = this.model;
             if ('group' != this.model.get('type')) {
                 this.model.set('model', this.model.get('surname') + ' ' + this.model.get('forename'));
             }

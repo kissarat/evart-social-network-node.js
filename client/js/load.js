@@ -88,7 +88,7 @@ function load2_registerAgent() {
 }
 
 function load3_languageLoaded() {
-    if (App.isAuthorized()) {
+    if (App.isAuthenticated()) {
         $('body').removeAttr('class');
         App.trigger('login');
     }
