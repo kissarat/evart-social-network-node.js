@@ -254,7 +254,7 @@ module.exports = {
 
     exec: function (action) {
         var anonymous_route = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
-        
+
         if (this.isAuthenticated || anonymous_route || this.isCache) {
             let size = this.bodySize;
             if (this.isUpdate) {
@@ -276,15 +276,11 @@ module.exports = {
                     }
                     if ('file' !== this.req.url.route[0]) {
                         utils.receive(this.req, data => this.receive(data, action));
+                        return;
                     }
                 }
-                else {
-                    this.runAction(action);
-                }
             }
-            else {
-                this.runAction(action);
-            }
+            this.runAction(action);
         }
         else {
             this.send(code.UNAUTHORIZED, {error: {auth: 'required'}});

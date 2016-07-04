@@ -115,11 +115,14 @@ class Context {
                 error: err.message
             });
         }
-        else {
+        else if (result) {
             this.send(result);
             if (result.close instanceof Function) {
                 result.close();
             }
+        }
+        else {
+            this.sendStatus(code.NOT_FOUND);
         }
     }
 

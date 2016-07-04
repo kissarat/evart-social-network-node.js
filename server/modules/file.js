@@ -16,6 +16,58 @@ var md5_dir = static_dir + '/md5';
 var ext_regex = /\.(\w+)$/;
 
 module.exports = {
+    _meta: {
+        schema: {
+            _id: utils.idType('File'),
+
+            time: {
+                type: Date,
+                required: true,
+                "default": Date.now
+            },
+
+            created: {
+                type: Date,
+                required: true,
+                "default": Date.now
+            },
+
+            owner: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+                required: true
+            },
+
+            md5: {
+                type: String
+            },
+
+            mime: {
+                type: String
+            },
+
+            url: {
+                type: String
+            },
+
+            type: {
+                type: String,
+                "default": 'file',
+                required: true
+            },
+
+            name: {
+                type: String
+            },
+
+            ext: {
+                type: String
+            },
+
+            size: Number,
+            inode: Number
+        }
+    },
     POST: function ($) {
         var owner_id = $.param('owner_id');
         var name = $.req.headers.name;
@@ -69,15 +121,13 @@ module.exports = {
                                     return reject(err);
                                 }
                             }
-                            function save(created) {
+                            function save() {
                                 return function (err) {
                                     if (err) {
                                         reject(err);
                                     }
                                     else {
-                                        data.created = created;
-                                        var file = new File(data);
-                                        file.save().then(resolve, reject);
+                                        new File(data).save().then(resolve, reject);
                                     }
                                 }
                             }
@@ -99,18 +149,24 @@ module.exports = {
 
     GET: function ($) {
         if ($.has('id')) {
-            let where = {_id: $._id};
+            let where = {_id: $.id};
             if ($.req.headers.accept.indexOf('json') > 0) {
                 return {
+                    single: true,
                     query: where
                 };
             }
             else {
                 File.findOne($.id, $.wrap(function (file) {
-                    $.sendStatus(code.MOVED_PERMANENTLY, {
-                        'content-type': file.mime,
-                        location: '/md5/' + file.md5 + '/' + file.name + '.' + file.ext
-                    });
+                    if (file) {
+                        $.sendStatus(code.MOVED_PERMANENTLY, {
+                            'content-type': file.mime,
+                            location: '/md5/' + file.md5 + '/' + file.name + '.' + file.ext
+                        });
+                    }
+                    else {
+                        $.sendStatus(code.NOT_FOUND)
+                    }
                 }));
             }
         }
@@ -132,49 +188,7 @@ module.exports = {
     }
 };
 
-global.schema.File = new mongoose.Schema({
-    _id: utils.idType('File'),
-
-    time: {
-        type: Date,
-        required: true,
-        "default": Date.now
-    },
-
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-
-    md5: {
-        type: String
-    },
-
-    mime: {
-        type: String
-    },
-
-    url: {
-        type: String
-    },
-
-    type: {
-        type: String,
-        "default": 'file',
-        required: true
-    },
-
-    name: {
-        type: String
-    },
-
-    ext: {
-        type: String
-    },
-
-    size: Number,
-    inode: Number
-}, {
-    versionKey: false
-});
+global.schema.File = new mongoose.Schema(module.exports._meta.schema, utils.merge(config.mongoose.schema.options, {
+    collection: 'user',
+    createAt: 'created'
+}));

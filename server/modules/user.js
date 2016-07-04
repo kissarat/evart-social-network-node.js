@@ -58,7 +58,7 @@ var _schema = {
 
     avatar: {
         type: T.ObjectId,
-        ref: 'Photo'
+        ref: 'File'
     },
 
     online: {
@@ -270,39 +270,38 @@ module.exports = {
 
     PATCH: function ($) {
         var id = $.id || $.user._id;
-        if (!id.equals($.user._id) || _.contains($.user.admin))
-            return new Promise(function (resolve, reject) {
-                var where_me = {_id: id};
-                if ($.has('tile') && $.has('file_id')) {
-                    User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
-                        user.tiles[$.param('tile')] = $.param('file_id');
-                        user.time = Date.now();
-                        user.markModified('tiles');
-                        user.save().catch(reject).then(function () {
-                            resolve({
-                                tiles: user.tiles
-                            });
-                        })
-                    });
-                }
-                else {
-                    let changes = {time: Date.now()};
-                    let a = ['avatar', 'background'];
-                    for (let i = 0; i < a.length; i++) {
-                        let p = a[i];
-                        let p_id = p + '_id';
-                        if ($.has(p_id)) {
-                            changes[p] = $.param(p_id);
-                            User.update(where_me, {$set: changes}).then(resolve, reject);
-                            return;
-                        }
+        return new Promise(function (resolve, reject) {
+            var where_me = {_id: id};
+            if ($.has('tile') && $.has('file_id')) {
+                User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
+                    user.tiles[$.param('tile')] = $.param('file_id');
+                    user.time = Date.now();
+                    user.markModified('tiles');
+                    user.save().catch(reject).then(function () {
+                        resolve({
+                            tiles: user.tiles
+                        });
+                    })
+                });
+            }
+            else {
+                let changes = {time: Date.now()};
+                let a = ['avatar', 'background'];
+                for (let i = 0; i < a.length; i++) {
+                    let p = a[i];
+                    let p_id = p + '_id';
+                    if ($.has(p_id)) {
+                        changes[p] = $.param(p_id);
+                        User.update(where_me, {$set: changes}).then(resolve, reject);
+                        return;
                     }
-                    var fields = a.concat(['tile']).join(', ');
-                    reject(code.BAD_REQUEST, {
-                        message: `You can update ${fields} only`
-                    });
                 }
-            });
+                let fields = a.concat(['tile']).join(', ');
+                reject(code.BAD_REQUEST, {
+                    message: `You can update ${fields} only`
+                });
+            }
+        });
     },
 
     informer: function ($) {
@@ -532,6 +531,7 @@ module.exports = {
                     $.sendStatus(code.OK);
                 }));
             }
+
             if (user) {
                 $.send({
                     error: {
