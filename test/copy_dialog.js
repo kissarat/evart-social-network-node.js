@@ -4,9 +4,7 @@ var MongoClient = require('mongodb').MongoClient;
 var config = require('../server/config.json');
 var utils = require('../server/utils');
 var _ = require('underscore');
-var logins = require('./domains');
-logins.push('admin');
-
+var logins = require('./domains').slice(0, 5);
 var db;
 var user_ids;
 

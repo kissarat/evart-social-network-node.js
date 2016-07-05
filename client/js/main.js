@@ -317,7 +317,7 @@ _.extend(Application.prototype, {
             var self = this;
             var query = _.merge(this.query, options.query);
             this.queryModel = new Backbone.Model(query);
-            Object.keys(query).forEach(function (k) {
+            Object.keys(_.omit(query, 'loading')).forEach(function (k) {
                 self.queryParams[k] = function () {
                     var value = self.queryModel.get(k);
                     switch (typeof value) {

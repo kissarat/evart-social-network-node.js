@@ -47,6 +47,7 @@ App.module('Message', function (Message, App) {
         cidPrefix: 'msg',
 
         initialize: function () {
+            var self = this;
             resolveRelative(this, {
                 source: App.User.Model,
                 target: App.User.Model,
@@ -60,6 +61,30 @@ App.module('Message', function (Message, App) {
             if (isNaN(this.get('unread'))) {
                 this.set('unread', 0);
             }
+
+            ['like', 'hate'].forEach(function (name) {
+                if (!self.has(name)) {
+                    self.set(name, []);
+                }
+            });
+        },
+
+        like: function (user_id) {
+            return true === this.get('like') && this.get('like').indexOf(user_id || App.user._id) >= 0;
+        },
+
+        hate: function (user_id) {
+            return true === this.get('hate') && this.get('hate').indexOf(user_id || App.user._id) >= 0;
+        },
+
+        getAttitude: function (user_id) {
+            if (this.like(user_id)) {
+                return 'like';
+            }
+            if (this.hate(user_id)) {
+                return 'hate';
+            }
+            return false
         },
 
         loadRelative: function () {
@@ -109,6 +134,15 @@ App.module('Message', function (Message, App) {
 
         model: function (attrs, options) {
             return new Message.LastMessage(attrs, options);
+        },
+
+        parseRecords: function (records) {
+            records.forEach(function (record) {
+                if (record.text.length > App.config.message.cut) {
+                    record.text = record.text.slice(0, App.config.message.cut) + '…';
+                }
+            });
+            return App.PageableCollection.prototype.parseRecords.call(this, records);
         }
     });
 
@@ -116,11 +150,13 @@ App.module('Message', function (Message, App) {
         template: '#view-last-message',
 
         bindings: {
-            '.text': 'text',
+            '.text': {
+                observe: 'text',
+                updateMethod: 'html'
+            },
             '.time': {
                 observe: 'time',
                 onGet: function (value) {
-                    // return moment(value).format('YY-MM-DD HH:mm');
                     return _.passed(value);
                 }
             }
@@ -157,9 +193,10 @@ App.module('Message', function (Message, App) {
             var peer = this.model.get('peer');
             ui.peer_name.html(peer.getName());
             peer.setupAvatar(ui.peer_avatar);
-            if (App.user._id == peer.get('_id')) {
+            if (App.user._id === this.model.get('source')) {
                 this.$el.addClass('mine');
-                new User.Model(App.user).setupAvatar(ui.source_avatar);
+                new App.User.Model(App.user).setupAvatar(ui.source_avatar);
+                ui.source_avatar.show();
             }
             var unread = this.model.get('unread');
             if (unread > 0) {
@@ -297,40 +334,28 @@ App.module('Message', function (Message, App) {
 
     var listViewMixin = {
         animateLoading: function (model) {
+            var self = this;
             if (!model) {
                 model = new Backbone.Model()
             }
-            var self = this;
-            model.set('loading', false);
-            var animation;
             register(this.collection.pageableCollection, {
                 start: function () {
-                    if (!model.get('loading')) {
-                        animation = $($('#view-bounce').html());
-                        self.$el.append(animation);
-                        model.set('loading', true);
+                    if (!model.loading) {
+                        self.animation = $('<img/>').attr('src', '/svg/process.svg');
+                        self.$el.append(self.loading);
                     }
                 },
 
                 finish: function () {
-                    if (model.get('loading')) {
-                        animation.remove();
-                        model.set('loading', false);
+                    if (self.loading) {
+                        self.animation.remove();
                     }
                 }
             });
+        },
 
-            model.on('change:loading', function (model, value) {
-                if (value) {
-                    self.getEmptyView = function () {
-                        return Message.EmptyView;
-                    }
-                }
-                else {
-                    delete self.getEmptyView;
-                }
-            });
-
+        getEmptyView: function () {
+            return Message.EmptyView;
         }
     };
 
@@ -420,6 +445,7 @@ App.module('Message', function (Message, App) {
     });
 
     Message.View.appearance = [];
+
     function attachHtml(collectionView, itemView, index) {
         if (this._isAttached) {
             var now = new Date(itemView.model.get('time'));
@@ -489,8 +515,23 @@ App.module('Message', function (Message, App) {
     Message.DialogListView = Marionette.CollectionView.extend({
         childView: Message.LastMessageView,
 
+        events: {
+            'scroll': 'scroll'
+        },
+
+        scroll: function (e) {
+            var delta = e.target.scrollHeight - innerHeight - e.target.scrollTop;
+            if (delta < 100) {
+                this.animateLoading(this.queryModel);
+                var collection = this.collection.pageableCollection;
+                if (!collection.queryModel.get('loading')) {
+                    collection.getNextPage();
+                }
+            }
+        },
+
         onRender: function () {
-            this.animateLoading();
+            this.animateLoading(this.queryModel);
         }
     }, {
         widget: function (region, options) {
@@ -500,6 +541,7 @@ App.module('Message', function (Message, App) {
                 }, _.pick(options, 'unread', 'cut', 'since'))
             });
             var listView = new Message.DialogListView({collection: list.fullCollection});
+            listView.$el.addClass('scroll');
             region.show(listView);
             list.getFirstPage();
             return listView;
@@ -614,8 +656,8 @@ App.module('Message', function (Message, App) {
                 sort: '-_id'
             });
             var list = new Message.List([], {query: query});
-            list.comparator = options.sort;
-            var listView = new Message.Dialog({collection: list.fullCollection});
+            // list.comparator = query.sort;
+            var listView = new Message.ListView({collection: list.fullCollection});
             var editor = new Message.Editor({
                 model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
                     target: options.id,
@@ -734,6 +776,16 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.getUnread = function () {
+        return new Promise(function (resolve, reject) {
+            $.getJSON('/api/message/read?type=dialog')
+                .error(reject)
+                .success(function (messages) {
+                    resolve(messages);
+                });
+        });
+    };
+
     return new Message.Router({
         controller: {
             wall: function (id) {
@@ -742,18 +794,27 @@ App.module('Message', function (Message, App) {
             },
 
             dialog: function (id) {
-                function render(id) {
-                    Message.Dialog.widget(App.getPlace('main'), {id: id});
-                }
-
+                var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar'};
                 if (_.isObjectID(id)) {
-                    render(id);
+                    params.id = id;
                 }
                 else {
-                    $.getJSON('/api/user?domain=' + id, function (user) {
-                        render(user._id);
-                    })
+                    params.domain = id;
                 }
+                $.get({
+                    url: '/api-cache/user?' + $.param(params),
+                    complete: function (xhr) {
+                        if (code.NOT_FOUND === xhr.status) {
+                            App.show(App.Views.Error, {
+                                code: 404,
+                                text: 'User not found'
+                            });
+                        }
+                        else {
+                            Message.Dialog.widget(App.getPlace('main'), {id: xhr.responseJSON._id});
+                        }
+                    }
+                });
             },
 
             dialogs: function () {

@@ -10,6 +10,7 @@ var errors = require('../errors');
 
 class Context {
     constructor(options) {
+        var self = this;
         _.extend(this, options);
         var now = process.hrtime();
         var req = options.req;
@@ -64,12 +65,9 @@ class Context {
             }
         }
 
-        for (var i in this) {
-            var f = this[i];
-            if ('function' == typeof f) {
-                this[i] = f.bind(this);
-            }
-        }
+        ['wrap', 'answer'].forEach(function (name) {
+            self[name] = self[name].bind(self);
+        })
     }
 
     invalid(name, value) {
@@ -570,6 +568,14 @@ class Context {
 
     get isStatic() {
         return this.req.headers['user-agent'] && this.req.headers['user-agent'].indexOf('PhantomJS') >= 0;
+    }
+    
+    inArray(name, array) {
+        var value = this.param(name);
+        if (array.indexOf(value) < 0) {
+            this.invalid(name, 'Must be in ' + array.join(', '))
+        }
+        return value;
     }
 }
 

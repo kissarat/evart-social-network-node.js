@@ -124,8 +124,7 @@ global.schema.Message = mongoose.Schema(_schema, utils.merge(config.mongoose.sch
 schema.Message.statics.Type = MessageType;
 schema.Message.statics.fields = {
     select: {
-        user: ['type', 'source', 'target', 'owner', 'like', 'hate',
-            'file', 'files', 'video', 'videos', 'text', 'repost']
+        user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files', 'video', 'videos', 'text', 'repost']
     }
 };
 
@@ -137,17 +136,17 @@ module.exports = {
     read, dialogs,
 
     GET: function ($) {
-        var where = [];
+        var ANDs = [];
         var permission;
         if ($.has('type')) {
-            where.push({type: $.get('type')})
+            ANDs.push({type: $.get('type')})
         }
-        var project = $.select(['time', 'text'], Message.fields.select.user);
+        var project = $.select(['time', 'text'], Message.fields.select.user, true);
         var me = $.user._id;
         switch ($.get('type', true)) {
             case Message.Type.DIALOG:
                 var id = $.get('id');
-                where.push({
+                ANDs.push({
                     $or: [{
                         source: me,
                         target: id
@@ -157,7 +156,7 @@ module.exports = {
                     }]
                 });
                 if ($.has('since')) {
-                    where.push({
+                    ANDs.push({
                         time: {$gte: new Date($.get('since')).toISOString()}
                     });
                 }
@@ -174,11 +173,21 @@ module.exports = {
                         }
                     };
                 }
-                where.push({owner: me});
+                ANDs.push({owner: me});
+                if ($.has('attitude')) {
+                    let attitude = $.get('attitude');
+                    if (attitude) {
+                        ANDs.push(utils.associate(attitude, me));
+                    }
+                    else {
+                        ANDs.push('like', {$ne: me});
+                        ANDs.push('hate', {$ne: me});
+                    }
+                }
                 break;
 
             case 'feed':
-                where.push({
+                ANDs.push({
                     type: Message.Type.WALL,
                     owner: {$in: $.user.follow.map(id => ObjectID(id))}
                 });
@@ -191,15 +200,12 @@ module.exports = {
         var aggregate = [
             {
                 $match: {
-                    $and: where
+                    $and: ANDs
                 }
             }
         ];
-        var _project = {};
 
-        var user_fields = $.get('user', []);
-
-        user_fields.forEach(function (name) {
+        $.get('user', []).forEach(function (name) {
             aggregate.push({
                 $lookup: {
                     'as': name,
@@ -213,15 +219,11 @@ module.exports = {
                     path: '$' + name
                 }
             });
-            _project[name] = User.fields.project
-        });
-
-        project.forEach(function (name) {
-            _project[name] = 1;
+            project[name] = User.fields.project
         });
 
         aggregate.push({
-            $project: _project
+            $project: project
         });
 
         if (_.isEmpty(permission)) {
@@ -229,8 +231,11 @@ module.exports = {
         }
         return [
             permission,
-            {query: aggregate}
-        ]
+            {
+                limit: true,
+                query: aggregate
+            }
+        ];
     },
 
     POST: function ($) {
@@ -303,18 +308,22 @@ function read($) {
     }
     else {
         let id = $.user._id;
+        let ANDs = [
+            {unread: 1},
+            {
+                $or: [
+                    {owner: id},
+                    {target: id}
+                ]
+            }
+        ];
+        if ($.has('type')) {
+            ANDs.push({type: $.get('type')})
+        }
         return {
             select: true,
             query: {
-                $and: [
-                    {unread: 1},
-                    {
-                        $or: [
-                            {owner: id},
-                            {target: id}
-                        ]
-                    }
-                ] 
+                $and: ANDs
             }
         };
     }
@@ -353,6 +362,7 @@ function dialogs($) {
                         else: '$source'
                     }
                 },
+                source: {$last: '$source'},
                 last_id: {$last: '$_id'},
                 unread: {
                     $sum: {
@@ -393,6 +403,7 @@ function dialogs($) {
         count: 1,
         unread: 1,
         text: 1,
+        source: 1,
         peer: User.fields.project
     };
     if ($.has('cut')) {

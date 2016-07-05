@@ -76,19 +76,34 @@ module.exports = {
                         result.limit = true;
                     }
                     result.collection = result.collection || this.req.url.route[0];
-                    let r = this.processTask(result, true);
+                    let r = this.processTask(result, !config.dev);
                     if ('function' === typeof r.then) {
                         r.then(function (result) {
-                            self.send(result);
-                        },
-                        function (err) {
-                            self.send(code.INTERNAL_SERVER_ERROR, {error: err});
-                        })
+                                self.send(result);
+                            },
+                            function (err) {
+                                self.send(code.INTERNAL_SERVER_ERROR, {error: err});
+                            })
                     }
                     else {
-                        r.toArray((err, array) =>
-                            this.answer(err, result.single ? array[0] : array)
-                        );
+                        r.toArray(function (err, array) {
+                            if (err) {
+                                self.send(code.INTERNAL_SERVER_ERROR, {error: err});
+                            }
+                            else {
+                                if (result.single) {
+                                    if (array.length > 0) {
+                                        self.send(array[0]);
+                                    }
+                                    else {
+                                        self.sendStatus(code.NOT_FOUND);
+                                    }
+                                }
+                                else {
+                                    self.send(array);
+                                }
+                            }
+                        });
                     }
                 }
                 else if (result instanceof Array) {
@@ -112,10 +127,10 @@ module.exports = {
                                 }
                                 else {
                                     let process_result = function (result) {
+                                        result = task.single ? result[0] : result;
                                         if (task.name) {
                                             bundle[task.name] = result;
                                         }
-                                        result = task.single ? result[0] : result;
                                         if (task.pick) {
                                             result = result[task.pick];
                                         }
@@ -126,7 +141,12 @@ module.exports = {
                                             run(result);
                                         }
                                         else {
-                                            self.send(result);
+                                            if (result) {
+                                                self.send(result);
+                                            }
+                                            else {
+                                                self.sendStatus(code.NOT_FOUND);
+                                            }
                                         }
                                     };
                                     if (cursor.then) {

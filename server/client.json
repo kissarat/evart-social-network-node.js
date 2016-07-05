@@ -35,7 +35,11 @@
     "read": {
       "empty": true,
       "delay": 2000
-    }
+    },
+    "cut": 100
+  },
+  "attitude": {
+    "entities": ["message", "file", "video"]
   },
   "peer": {
     "enabled": true,
