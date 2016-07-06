@@ -520,13 +520,13 @@ App.module('User', function (User, App) {
             'buttons': '.buttons',
             'message-list': '.message-list',
             'photo-list': '.photo-list',
-            'tile0': '[data-number="0"]',
-            'tile1': '[data-number="1"]',
-            'tile2': '[data-number="2"]',
-            'tile3': '[data-number="3"]',
-            'tile4': '[data-number="4"]',
-            'tile5': '[data-number="5"]',
-            'tile6': '[data-number="6"]'
+            tile0: '[data-number="0"]',
+            tile1: '[data-number="1"]',
+            tile2: '[data-number="2"]',
+            tile3: '[data-number="3"]',
+            tile4: '[data-number="4"]',
+            tile5: '[data-number="5"]',
+            tile6: '[data-number="6"]'
         },
 
         behaviors: {
@@ -558,32 +558,36 @@ App.module('User', function (User, App) {
             status: '.status',
             photoList: '.photo-list',
             follow: '.follow',
-            'tile0': '[data-number="0"]',
-            'tile1': '[data-number="1"]',
-            'tile2': '[data-number="2"]',
-            'tile3': '[data-number="3"]',
-            'tile4': '[data-number="4"]',
-            'tile5': '[data-number="5"]',
-            'tile6': '[data-number="6"]'
+            tile0: '[data-number="0"]',
+            tile1: '[data-number="1"]',
+            tile2: '[data-number="2"]',
+            tile3: '[data-number="3"]',
+            tile4: '[data-number="4"]',
+            tile5: '[data-number="5"]',
+            tile6: '[data-number="6"]'
         },
 
         events: {
-            'change .status': 'changeStatus',
-            'keyup .status': 'keyupStatus',
             'click .follow': 'follow',
             'drop .tile.photo': 'drop',
+            'keyup .status': 'keyupStatus',
+            'change .status': 'changeStatus',
             'dragover .tile.photo': 'dragover',
             'dragenter .tile.photo': 'dragenter',
             'dragleave .tile.photo': 'dragleave',
             'click .big-avatar .fa-camera': 'uploadAvatar',
             'click .profile-relative > .fa-camera': 'uploadBackground',
             'click [data-number]': 'uploadTile',
-            'click .edit': function () {
-                return App.navigate('/edit/' + this.model.get('_id'));
-            },
-            'click .logout': function () {
-                return App.logout();
-            }
+            'click .logout': 'logout',
+            'click .edit': 'edit'
+        },
+
+        logout: function () {
+            return App.logout();
+        },
+
+        edit: function () {
+            return App.navigate('/edit/' + this.model.get('_id'));
         },
 
         uploadAvatar: function () {

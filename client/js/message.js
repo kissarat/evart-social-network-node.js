@@ -102,6 +102,14 @@ App.module('Message', function (Message, App) {
         getPeer: function () {
             return App.user._id === this.get('source').get('_id')
                 ? this.get('target') : this.get('source');
+        },
+
+        isMine: function () {
+            return this.get('owner').get('_id') === App.user._id || this.get('source').get('_id') === App.user._id;
+        },
+
+        passed: function () {
+            return _.passed(this.get('time'));
         }
     });
 
@@ -214,115 +222,56 @@ App.module('Message', function (Message, App) {
     });
 
     Message.PostView = Marionette.View.extend({
-        template: '#layout-post',
+        template: '#view-post',
 
         regions: {
             repost: '> .repost',
-            photos: '> .photos',
-            videos: '> .videos',
-            childrenRegion: '> .children'
+            children: '> .children'
         },
 
-        behaviors: {
-            Bindings: {}
+        attributes: {
+            'class': 'view post'
         },
-
+        
         bindings: {
             '> .content .text': 'text'
         },
 
         ui: {
-            name: '> .content .name',
             content: '> .content',
-            info: '> .content .user-info',
-            avatar: '> .content .avatar',
-            time: '> .content .time',
-            text: '> .content .text',
-            controls: '> .message-controls',
-            likeSlider: '> .message-controls .like-slider-container',
-            like: '> .message-controls .fa-thumbs-up',
-            hate: '> .message-controls .fa-thumbs-down',
-            comment: '> .message-controls .comment'
+            name: '> .content > .message > .name',
+            info: '> .content > .info',
+            avatar: '> .content > .info .avatar',
+            time: '> .content > .info .time',
+            text: '> .content > .message > .text',
+            controls: '> .controls',
+            comment: '> .controls .comment'
         },
 
         events: {
-            'click > .message-controls .fa-thumbs-up': 'like',
-            'click > .message-controls .fa-thumbs-down': 'hate',
-            'click > .message-controls .fa-share-alt': 'share',
-            'click > .message-controls .comment': 'renderComments',
-            'click > .message-controls .like-slider-container': 'sliderClick'
+            'click > .controls .fa-share-alt': 'share',
+            'click > .content > .message > .name': 'view'
         },
 
-        sliderClick: function (e) {
-            var rect, s, x;
-            s = this.ui.likeSlider;
-            rect = s[0].getBoundingClientRect();
-            x = e.clientX - rect.left;
-            s.toggleClass('like', x > 24);
-            return s.toggleClass('hate', x < 12);
-        },
-
-        like: function () {
-            return this._like('like');
-        },
-
-        hate: function () {
-            return this._like('hate');
-        },
-
-        _like: function (field) {
-            return $.ajax({
-                type: _.indexOf(this.model.get(field), App.user._id) >= 0 ? 'DELETE' : 'POST',
-                url: '/api/like?' + $.param({
-                    entity: 'messages',
-                    field: field,
-                    id: this.model.get('_id')
-                }),
-                success: (function (_this) {
-                    return function (data) {
-                        _this.model.set('like', data.like);
-                        _this.model.set('hate', data.hate);
-                        return _this.renderLikes();
-                    };
-                })(this)
-            });
-        },
-
-        renderLikes: function () {
-            this.ui.like.html(_.size(this.model.get('like')));
-            this.ui.hate.html(_.size(this.model.get('hate')));
+        view: function (e) {
+            e.preventDefault();
+            if (location.pathname != this.ui.name.attr('href')) {
+                App.navigate(this.ui.name.attr('href'));
+            }
         },
 
         onRender: function () {
-            var self = this;
-            var owner = this.model.get('owner');
-            this.ui.name.attr('href', '/view/' + owner.get('domain'));
-            this.ui.name.html(owner.getName());
-            owner.setupAvatar(this.ui.avatar[0]);
-            if ('admin' === App.user.type) {
-                this.$el.addClass('me');
-                $('<div class="fa fa-times"></div>')
-                    .appendTo(this.ui.controls)
-                    .show()
-                    .click(function () {
-                        $.ajax({
-                            url: '/api/message?id=' + self.model.get('_id'),
-                            type: 'DELETE',
-                            success: function () {
-                                return self.el.remove();
-                            }
-                        });
-                    });
+            this.ui.name.attr('href', '/view/' + this.model.get('owner').get('domain'));
+            this.ui.name.html(this.model.get('owner').getName());
+            this.model.get('owner').setupAvatar(this.ui.avatar[0]);
+            if (this.model.isMine()) {
+                this.$el.addClass('mime');
             }
             if (this.model.get('unread')) {
                 this.$el.addClass('unread');
             }
-            this.ui.time.html(_.passed(this.model.get('time')));
-            if (this.model.get('isRepost')) {
-                this.ui.controls.remove();
-            } else {
-                this.renderLikes();
-            }
+            this.ui.time.html(this.model.passed());
+            this.stickit();
         }
     });
 

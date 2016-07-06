@@ -41,10 +41,10 @@ $unread: rgba(0, 0, 0, 0.05)
     display: inline-block
     margin-left: 4px
 
-.wall-like
+.attitude
   width: 56px
   height: 22px
-  background: url("/images/wall-like.png") top no-repeat
+  background: url("/images/attitude.png") top no-repeat
   &.like
     background-position-y: 22px
   &.hate
@@ -52,18 +52,42 @@ $unread: rgba(0, 0, 0, 0.05)
   > div:hover
     background-color: black
 
-.message-controls
-  color: #BCBCBC
-  text-align: right
-  > *
-    vertical-align: middle
-    display: inline-block
-  > button
-    background-color: transparent
-    border: none
+.view.post
+  > .content
+    display: flex
+    .info
+      min-width: 64px
+      .time
+        font-size: 0.8em
+        margin-top: 8px
+      .container
+        background-color: #ECEFF4
+        padding-top: 8px
+        padding-bottom: 8px
+        > *
+          margin-left: auto
+          margin-right: auto
+    .message
+      .name
+        display: block
+      > *
+        margin-left: 8px
+        text-align: left
+  > .controls
     color: #BCBCBC
-  .fa-reply
-    transform: scaleX(-1)
+    text-align: right
+    > :not(.hidden)
+      display: inline-block
+      vertical-align: middle
+    > button
+      color: #BCBCBC
+    .comment
+      > *
+        display: inline-block
+      .fa-comment
+        margin-right: 4px
+    .fa-reply
+      transform: scaleX(-1)
 
 .profile-relative
   article .right
@@ -72,8 +96,8 @@ $unread: rgba(0, 0, 0, 0.05)
 .avatar
   background-size: cover
   border-radius: 50%
-  width: 32px
-  height: 32px
+  width: 40px
+  height: 40px
 
 .layout-dialog
   display: flex

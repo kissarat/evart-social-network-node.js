@@ -1,36 +1,32 @@
-<script type="text/template" id="layout-post">
+<script type="text/template" id="view-post">
     <div class="content">
-        <a class="info">
+        <div class="info">
             <div class="container">
-                <div>
-                    <div class="avatar"></div>
-                    <div class="time"></div>
-                    <div class="ip"></div>
-                </div>
+                <div class="avatar"></div>
+                <div class="time"></div>
+                <div class="ip"></div>
             </div>
-        </a>
+            <hr/>
+        </div>
         <div class="message">
             <a class="name"></a>
             <div class="text"></div>
             <div class="repost"></div>
         </div>
     </div>
-    <div class="message-controls">
-        <button type="button" class="comment">
+    <div class="controls">
+        <button type="button" class="comment unemitted">
             <span class="fa fa-comment"></span>
             <span>Comment</span>
         </button>
-        <button type="button" class="share fa fa-reply"></button>
-        <div class="fa fa-thumbs-up" style="display: none"></div>
-        <div class="fa fa-thumbs-down" style="display: none"></div>
-        <div class="wall-like">
+        <button type="button" class="share fa fa-reply unemitted"></button>
+        <div class="attitude">
             <div class="left"></div>
             <div class="center"></div>
             <div class="right"></div>
         </div>
+        <div class="fa fa-times hidden"></div>
     </div>
-    <div class="photos"></div>
-    <div class="videos"></div>
     <div class="repost"></div>
     <div class="children"></div>
 </script>
