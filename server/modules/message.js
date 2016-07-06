@@ -141,7 +141,7 @@ module.exports = {
         if ($.has('type')) {
             ANDs.push({type: $.get('type')})
         }
-        var project = $.select(['time', 'text'], Message.fields.select.user, true);
+        var project = $.select([], Message.fields.select.user, true);
         var me = $.user._id;
         switch ($.get('type', true)) {
             case Message.Type.DIALOG:
@@ -194,16 +194,19 @@ module.exports = {
                 break;
 
             default:
-                return code.BAD_REQUEST;
+                if ('admin' != $.user.type) {
+                    return code.BAD_REQUEST;
+                }
         }
 
-        var aggregate = [
-            {
+        var aggregate = [];
+        if (ANDs.length > 0) {
+            aggregate.push({
                 $match: {
                     $and: ANDs
                 }
-            }
-        ];
+            });
+        }
 
         $.get('user', []).forEach(function (name) {
             aggregate.push({

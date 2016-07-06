@@ -55,7 +55,7 @@ module.exports = {
 
     serve: function () {
         if (!this.req.url.route[0]) {
-            return this.send(this.getDescription());
+            return this.send(this.server.getDescription(this.user));
         }
 
         var path = this.req.url.route.slice(0);

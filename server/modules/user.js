@@ -112,6 +112,7 @@ var _schema = {
     name: utils.StringType(48),
     birthday: Date,
     about: utils.StringType(512),
+    css: utils.StringType(512),
 
     languages: [{
         type: String,
@@ -124,18 +125,21 @@ var _schema = {
             ref: 'User'
         }
     ],
+
     request: [
         {
             type: T.ObjectId,
             ref: 'User'
         }
     ],
+
     deny: [
         {
             type: T.ObjectId,
             ref: 'User'
         }
     ],
+
     admin: [
         {
             type: T.ObjectId,

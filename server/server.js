@@ -154,42 +154,41 @@ class Server {
     }
 
     sendSMS(phone, text, cb) {
-        this.twilio.sms.messages.create({
-            to: '+' + phone,
-            from: '+' + config.sms.phone,
-            body: text
-        }, this.wrap(cb))
+        // this.twilio.sms.messages.create({
+        //     to: '+' + phone,
+        //     from: '+' + config.sms.phone,
+        //     body: text
+        // }, this.wrap(cb))
     }
 
-    getDescription() {
+    getDescription(user) {
         var meta = {
             api: 'socex',
             v: 0.5
         };
-        if (config.meta.schema) {
-            meta.schema = {};
-            _.each(modules, function (module, name) {
-                if (module._meta) {
-                    let meta = module._meta;
-                    _.each(meta.schema, function (field, key) {
-                        if (field.constructor === Function) {
-                            field = {
-                                type: field
-                            };
-                            meta[key] = field;
-                        }
-                        if (field instanceof Array) {
-                            field = field[0]
-                        }
+        meta.schema = {};
+        _.each(modules, function (module, name) {
+            if (module._meta && module._meta.schema && ('admin' === user.type ? true : config.meta.schema)) {
+                _.each(module._meta.schema, function (field, key) {
+                    if (field.constructor === Function) {
+                        field = {
+                            type: field
+                        };
+                        meta[key] = field;
+                    }
+                    if (field instanceof Array) {
+                        field = field[0]
+                    }
+                    if (field.type) {
                         field.type = field.type.name;
-                        if (field.match) {
-                            field.match = field.match.toString()
-                        }
-                    });
-                    meta.schema[name] = meta.schema;
-                }
-            });
-        }
+                    }
+                    if (field.match) {
+                        field.match = field.match.toString()
+                    }
+                });
+                meta.schema[name] = module._meta;
+            }
+        });
         return meta;
     }
 }

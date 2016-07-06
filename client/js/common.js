@@ -74,6 +74,7 @@ function register(target, listeners) {
     for (var name in listeners) {
         _add.call(target, name, listeners[name])
     }
+    return target;
 }
 
 function react(target, getter, listeners) {
