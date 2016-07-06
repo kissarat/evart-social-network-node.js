@@ -145,6 +145,9 @@ module.exports = {
         var me = $.user._id;
         switch ($.get('type', true)) {
             case Message.Type.DIALOG:
+                if (!$.has('id') && $.isAdmin) {
+                    break;
+                }
                 var id = $.get('id');
                 ANDs.push({
                     $or: [{
@@ -163,6 +166,9 @@ module.exports = {
                 break;
 
             case Message.Type.WALL:
+                if (!$.has('owner_id') && $.isAdmin) {
+                    break;
+                }
                 var owner_id = $.get('owner_id', me);
                 if (!owner_id.equals(me)) {
                     permission = {
@@ -180,8 +186,8 @@ module.exports = {
                         ANDs.push(utils.associate(attitude, me));
                     }
                     else {
-                        ANDs.push('like', {$ne: me});
-                        ANDs.push('hate', {$ne: me});
+                        ANDs.push({'like': {$ne: me}});
+                        ANDs.push({'hate': {$ne: me}});
                     }
                 }
                 break;
@@ -206,6 +212,10 @@ module.exports = {
                     $and: ANDs
                 }
             });
+        }
+
+        if ($.isAdmin) {
+            ANDs.push(_.pick($.params, 'type'));
         }
 
         $.get('user', []).forEach(function (name) {

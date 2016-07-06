@@ -577,6 +577,10 @@ class Context {
         }
         return value;
     }
+    
+    get isAdmin() {
+        return 'admin' === this.user.type;
+    }
 }
 
 _.extend(Context.prototype, web_extension);

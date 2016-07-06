@@ -1,6 +1,6 @@
 .sass-cache/
 blacklist.conf
-coffee/*.js*
+jsx/*-compiled*
 sound/
 fonts/
 images/

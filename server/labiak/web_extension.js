@@ -54,6 +54,9 @@ module.exports = {
     },
 
     serve: function () {
+        if (this.has('_') && 'admin' !== this.user.type) {
+            this.sendStatus(code.FORBIDDEN);
+        }
         if (!this.req.url.route[0]) {
             return this.send(this.server.getDescription(this.user));
         }

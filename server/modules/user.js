@@ -181,10 +181,8 @@ schema.User.statics.fields = {
     }
 };
 
-schema.User.statics.search = function search($, where) {
-    if (!where) {
-        where = {};
-    }
+schema.User.statics.search = function search($) {
+    var ANDs = [];
     if ($.has('q')) {
         var ORs = [];
         var q = $.search;
@@ -196,19 +194,15 @@ schema.User.statics.search = function search($, where) {
             ORs.push(d);
         });
         if (ORs.length > 0) {
-            where.push({$or: ORs});
+            ANDs.push({$or: ORs});
         }
     }
-    var ANDs = [];
     ['country', 'city', 'sex', 'forename', 'relationship', 'type'].forEach(function (param) {
         if ($.has(param)) {
             ANDs[param] = $.param(param);
         }
     });
-    if (ANDs.length > 0) {
-        where.push({$and: ANDs})
-    }
-    return where;
+    return ANDs.length > 0 ? {$and: ANDs} : {};
 };
 
 module.exports = {
@@ -241,7 +235,7 @@ module.exports = {
             ];
         }
         else {
-            r.query = User.search($, r.query);
+            r.query = User.search($);
         }
         return r;
     },
