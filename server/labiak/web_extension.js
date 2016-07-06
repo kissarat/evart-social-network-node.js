@@ -302,15 +302,10 @@ module.exports = {
 
         if (this.isAuthenticated || anonymous_route || this.isCache) {
             let size = this.bodySize;
-            if (this.isUpdate) {
-                let mime_name = this.req.headers['content-type'];
-                mime_name = mime_name.split(';')[0];
+            if (this.isUpdate && 'content-type' in this.req.headers && size > 0) {
+                let mime_name = this.req.headers['content-type'].split(';')[0];
                 let mime = constants.mimes[mime_name];
-                if (!mime) {
-                    this.sendStatus(code.UNSUPPORTED_MEDIA_TYPE, {mime: mime_name});
-                    return;
-                }
-                if (size > 0) {
+                if (mime) {
                     if (size > mime.size) {
                         this.sendStatus(code.REQUEST_TOO_LONG, {
                             max: mime.size,
@@ -323,6 +318,10 @@ module.exports = {
                         utils.receive(this.req, data => this.receive(data, action));
                         return;
                     }
+                }
+                else {
+                    this.sendStatus(code.UNSUPPORTED_MEDIA_TYPE, {mime: mime_name});
+                    return;
                 }
             }
             this.runAction(action);

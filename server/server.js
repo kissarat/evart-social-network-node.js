@@ -56,13 +56,17 @@ Object.keys(schema).forEach(function (name) {
 });
 
 class Server {
-    constructor() {
+    constructor(config) {
         this.start = start;
-        var options = 'freebsd' == process.platform ? {} : config.mongo.options;
-        this.mongoose = mongoose.connect(config.mongo.uri, options);
-        this.mongoose.connection.on('error', Server.onMongoError.bind(this));
-        this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
-        this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token);
+        fs.access(config.mongo.file, fs.R_OK, (err) => {
+            var options = 'freebsd' == process.platform ? {} : config.mongo.options || {};
+            this.mongoose = err
+                ? mongoose.connect(config.mongo.uri, options)
+                : mongoose.connect(config.mongo.file, options);
+            this.mongoose.connection.on('error', Server.onMongoError.bind(this));
+            this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
+            this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token);
+        });
     }
 
     static onMongoError(err) {
@@ -75,12 +79,11 @@ class Server {
     }
 
     onMongoOpen() {
-        var self = this;
         this.log('info', 'MongoDB connection opened');
-        this.httpServer = http.createServer(function (req, res) {
+        this.httpServer = http.createServer((req, res) => {
             try {
                 //var methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
-                let $ = self.createContext({req: req, res: res});
+                let $ = this.createContext({req: req, res: res});
                 if (config.request.methods.indexOf(req.method) < 0) {
                     $.send(code.METHOD_NOT_ALLOWED, {
                         success: false,
@@ -191,4 +194,4 @@ class Server {
     }
 }
 
-var server = new Server();
+var server = new Server(config);

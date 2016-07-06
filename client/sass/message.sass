@@ -42,15 +42,17 @@ $unread: rgba(0, 0, 0, 0.05)
     margin-left: 4px
 
 .attitude
+  display: flex
   width: 56px
   height: 22px
   background: url("/images/attitude.png") top no-repeat
-  &.like
-    background-position-y: 22px
-  &.hate
-    background-position-y: 44px
-  > div:hover
-    background-color: black
+  &[data-attitude="like"]
+    background-position: center
+  &[data-attitude="hate"]
+    background-position: bottom
+  > *
+    width: calc(100%/3)
+    cursor: pointer
 
 .view.post
   > .content
@@ -74,11 +76,9 @@ $unread: rgba(0, 0, 0, 0.05)
         margin-left: 8px
         text-align: left
   > .controls
+    display: flex
+    justify-content: flex-end
     color: #BCBCBC
-    text-align: right
-    > :not(.hidden)
-      display: inline-block
-      vertical-align: middle
     > button
       color: #BCBCBC
     .comment
@@ -90,7 +90,7 @@ $unread: rgba(0, 0, 0, 0.05)
       transform: scaleX(-1)
 
 .profile-relative
-  article .right
+  article > .right
     min-height: 30vh
 
 .avatar

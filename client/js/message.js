@@ -70,11 +70,11 @@ App.module('Message', function (Message, App) {
         },
 
         like: function (user_id) {
-            return true === this.get('like') && this.get('like').indexOf(user_id || App.user._id) >= 0;
+            return this.get('like').indexOf(user_id || App.user._id) >= 0;
         },
 
         hate: function (user_id) {
-            return true === this.get('hate') && this.get('hate').indexOf(user_id || App.user._id) >= 0;
+            return this.get('hate').indexOf(user_id || App.user._id) >= 0;
         },
 
         getAttitude: function (user_id) {
@@ -232,13 +232,14 @@ App.module('Message', function (Message, App) {
         attributes: {
             'class': 'view post'
         },
-        
+
         bindings: {
             '> .content .text': 'text'
         },
 
         ui: {
             content: '> .content',
+            attitude: '> .controls > .attitude',
             name: '> .content > .message > .name',
             info: '> .content > .info',
             avatar: '> .content > .info .avatar',
@@ -250,7 +251,8 @@ App.module('Message', function (Message, App) {
 
         events: {
             'click > .controls .fa-share-alt': 'share',
-            'click > .content > .message > .name': 'view'
+            'click > .content > .message > .name': 'view',
+            'click .attitude > *': 'estimate'
         },
 
         view: function (e) {
@@ -260,15 +262,35 @@ App.module('Message', function (Message, App) {
             }
         },
 
+        estimate: function (e) {
+            var self = this;
+            var params = {
+                entity: 'message',
+                id: this.model.get('_id'),
+                name: e.target.getAttribute('data-name')
+            };
+            $.ajax({
+                type: params.name ? 'POST' : 'DELETE',
+                url: '/api/attitude?' + $.param(params),
+                success: function () {
+                    self.ui.attitude.attr('data-attitude', params.name);
+                }
+            })
+        },
+
         onRender: function () {
             this.ui.name.attr('href', '/view/' + this.model.get('owner').get('domain'));
             this.ui.name.html(this.model.get('owner').getName());
             this.model.get('owner').setupAvatar(this.ui.avatar[0]);
             if (this.model.isMine()) {
-                this.$el.addClass('mime');
+                this.$el.addClass('mine');
             }
             if (this.model.get('unread')) {
                 this.$el.addClass('unread');
+            }
+            var attitude = this.model.getAttitude();
+            if (attitude) {
+                this.el.querySelector('.attitude').dataset.attitude = attitude;
             }
             this.ui.time.html(this.model.passed());
             this.stickit();

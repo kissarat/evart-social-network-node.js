@@ -214,7 +214,6 @@ App.module('User', function (User, App) {
         },
 
         login: function () {
-            this.model.set(this.el.serialize());
             if (this.model.isValid(true)) {
                 return this.model.save(null, {
                     success: function () {
@@ -517,7 +516,7 @@ App.module('User', function (User, App) {
         cidPrefix: 'user',
 
         regions: {
-            'buttons': '.buttons',
+            buttons: '.buttons',
             'message-list': '.message-list',
             'photo-list': '.photo-list',
             tile0: '[data-number="0"]',
@@ -947,19 +946,19 @@ App.module('User', function (User, App) {
     return new User.Router({
         controller: {
             login: function () {
-                if (App.user) {
+                if (App.isAuthenticated()) {
                     App.logout();
                 }
                 else {
                     App.getPlace('main').show(new User.LoginForm({
                         model: new User.Login()
                     }));
-                    return $(document.body).addClass('login');
+                    document.body.classList.add('login');
                 }
             },
 
             logout: function () {
-                return App.logout();
+                App.logout();
             },
 
             signup: function () {
