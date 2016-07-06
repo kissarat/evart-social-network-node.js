@@ -290,6 +290,27 @@ App.module('Views', function (Views, App) {
             this.ui.message.html(T('Function unavailable'))
         }
     });
+    
+    Views.createOptionsFragment = function (dictionary, value, title) {
+        var fragment = document.createDocumentFragment();
+        if (value) {
+            dictionary.forEach(function (entry) {
+                var option = document.createElement('option');
+                option.value = entry[value];
+                option.innerHTML = entry[title];
+                fragment.appendChild(option);
+            })
+        }
+        else {
+            _.each(dictionary, function (title, value) {
+                var option = document.createElement('option');
+                option.value = value;
+                option.innerHTML = title;
+                fragment.appendChild(option);
+            })
+        }
+        return fragment;
+    };
 
     new Views.Router({
         controller: {

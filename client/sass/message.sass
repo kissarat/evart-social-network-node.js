@@ -43,8 +43,22 @@ $unread: rgba(0, 0, 0, 0.05)
 
 .attitude
   display: flex
-  width: 56px
   height: 22px
+  > *
+    cursor: pointer
+
+.mine .attitude
+  width: 40px
+  background: url("/images/own-attitude.png") top no-repeat
+  &[data-attitude="like"]
+    background-position: bottom
+  .hate
+    display: none
+  > *
+    width: 50%
+
+.other .attitude
+  width: 56px
   background: url("/images/attitude.png") top no-repeat
   &[data-attitude="like"]
     background-position: center
@@ -52,7 +66,6 @@ $unread: rgba(0, 0, 0, 0.05)
     background-position: bottom
   > *
     width: calc(100%/3)
-    cursor: pointer
 
 .view.post
   > .content
@@ -98,6 +111,12 @@ $unread: rgba(0, 0, 0, 0.05)
   border-radius: 50%
   width: 40px
   height: 40px
+
+.male .avatar
+  background-image: url("/images/male.png")
+
+.female .avatar
+  background-image: url("/images/female.png")
 
 .layout-dialog
   display: flex

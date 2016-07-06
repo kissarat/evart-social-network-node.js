@@ -296,6 +296,18 @@ _.extend(Service.prototype, {
         }
     },
 
+    get language() {
+        return $.cookie('lang');
+    },
+
+    set language(value) {
+        $.cookie('lang', value);
+        var lang = _.find(Languages, {iso: value});
+        if (lang) {
+            this.cookie('remixlang', lang._id);
+        }
+    },
+
     storage: {
         save: function (model, idAttribute) {
             var id = model.get(idAttribute || '_id');

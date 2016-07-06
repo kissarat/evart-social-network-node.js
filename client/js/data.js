@@ -42,7 +42,7 @@ var HumanRelationship = {
     "search": "Actively searching"
 };
 
-var languages = [
+var Languages = [
     {_id: 0, iso: 'ru', name: 'Русский'},
     {_id: 3, iso: 'en', name: 'English'}
 ];
@@ -174,6 +174,11 @@ var t13n = {
 var Scroll = {
     UP: false,
     DOWN: true
+};
+
+var Sex = {
+    male: 'Male',
+    female: 'Female'
 };
 
 var twilio = {
@@ -714,5 +719,9 @@ var browser = {
 
 
 Object.freeze(SocketReadyState);
+Object.freeze(HumanRelationship);
+Object.freeze(Languages);
 Object.freeze(browser);
 Object.freeze(code);
+Object.freeze(Scroll);
+Object.freeze(Sex);

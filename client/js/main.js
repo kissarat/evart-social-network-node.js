@@ -8,9 +8,6 @@ _.extend(Element.prototype, {
         if (id) {
             this.style.backgroundImage = 'url("' + id + '")';
         }
-        else {
-            this.style.backgroundImage = 'url("/images/man.png")';
-        }
     },
 
     findParent: function (predicate) {
@@ -230,16 +227,13 @@ function Application() {
             return [] || this.config.peer.iceServers[0].urls;
         },
 
-        get language() {
-            return $.cookie('lang') || document.documentElement.getAttribute('lang');
-        },
-
         set language(value) {
             $.cookie('lang', value);
-            var lang = _.find(languages, {iso: value});
+            var lang = _.find(Languages, {iso: value});
             if (lang) {
                 this.cookie('remixlang', lang._id);
             }
+            document.documentElement.setAttribute('lang', value);
         },
 
         get user() {

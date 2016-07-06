@@ -21,11 +21,24 @@ App.module('User', function (User, App) {
         idAttribute: '_id',
         cidPrefix: 'usr',
 
-        initialize: function () {
-            var id = this.get('_id');
-            if (id) {
-                this.url = '/api/user?select=domain.surname.forename.name.country.city.city_id.tiles.avatar.birthday&id=' + id;
+        url: function () {
+            if (this.has('_id') || this.has('domain')) {
+                var where = {};
+                if (this.has('_id')) {
+                    where.id = this.get('_id');
+                }
+                else {
+                    where.domain = this.get('domain')
+                }
+                return '/api/user?' + $.param(_.merge(this.query, where));
             }
+        },
+
+        query: {
+            select: [
+                "avatar", "birthday", "city", "city_id", "country", "domain",
+                "forename", "lang", "name", "relationship", "sex", "surname", "tiles"
+            ].join('.')
         },
 
         validation: {
@@ -48,7 +61,12 @@ App.module('User', function (User, App) {
             var avatar = this.get('avatar');
             return avatar
                 ? ('string' == typeof avatar ? '/api/file/' + avatar : avatar.getFileURL())
-                : '/images/man.png';
+                : '/images/' + this.getSex() + '.png';
+        },
+        
+
+        getSex: function () {
+            return this.get('sex') || 'male';
         },
 
         setupAvatar: function (el) {
@@ -351,32 +369,35 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            'h1 .title': 'domain',
-            '[name=type]': 'type',
-            '[name=name]': 'name',
-            '[name=phone]': 'phone',
-            '[name=domain]': 'domain',
-            '[name=email]': 'email',
+            '[name=about]': 'about',
             '[name=birthday]': {
                 observe: 'birthday',
-                onGet: function (value) {
-                    return moment(value).format('YYYY-MM-DD')
-                }
+                onGet: function (value) {return moment(value).format('YYYY-MM-DD')}
             },
-            '[name=about]': 'about',
-            '[name=language]': 'language',
-            '[name=country]': 'country'
+            '[name=country]': 'country',
+            '[name=domain]': 'domain',
+            '[name=email]': 'email',
+            '[name=language]': 'lang',
+            '[name=name]': 'name',
+            '[name=phone]': 'phone',
+            '[name=relationship]': 'relationship',
+            '[name=sex]': 'sex',
+            '[name=type]': 'type',
+            'h1 .title': 'domain'
         },
 
         ui: {
-            title: 'h1 .title',
-            icon: 'h1 .fa',
-            domain: '[name=domain]',
+            avatar: '.field-avatar',
             birthday: '[name=birthday]',
             button: 'button',
-            avatar: '.field-avatar',
+            country: '[name=country]',
+            domain: '[name=domain]',
+            icon: 'h1 .fa',
             origin: '.origin',
-            country: '[name=country]'
+            language: '[name=language]',
+            relationship: '[name=relationship]',
+            sex: '[name=sex]',
+            title: 'h1 .title'
         },
 
         events: {
@@ -415,6 +436,9 @@ App.module('User', function (User, App) {
                 else if ('admin' == this.model.get('type')) {
                     this.ui.icon.attr('class', 'fa fa-beer');
                 }
+                this.ui.language.append(App.Views.createOptionsFragment(Languages, 'iso', 'name'));
+                this.ui.relationship.append(App.Views.createOptionsFragment(HumanRelationship));
+                this.ui.sex.append(App.Views.createOptionsFragment(Sex));
             }
             if (this.model.id) {
                 document.title = this.model.getName() + ' - ' + T('Settings');
@@ -995,7 +1019,11 @@ App.module('User', function (User, App) {
                     buttons = new buttons({model: user});
                     App.Message.WallView.widget(profile.getRegion('message-list'), {owner_id: user.get('_id')});
                     profile.getRegion('buttons').show(buttons);
-                    $.getJSON('/api/user/informer?select=follows.followers.groups.video.audio.friends.photo&id=' + user.get('_id'), function (informer) {
+                    var params = {
+                        id: user.get('_id'),
+                        select: 'follows.followers.groups.video.audio.friends.photo'
+                    };
+                    $.getJSON('/api/user/informer?' + $.param(params), function (informer) {
                         user.set(informer);
                     });
                     App.Photo.ListView.widget(profile.getRegion('photo-list'), {
@@ -1014,7 +1042,11 @@ App.module('User', function (User, App) {
                     }
                     return;
                 }
-                var model = new User.Model({_id: id});
+                var model = new User.Model({_id: id}, {
+                    query: {
+                        select: ''
+                    }
+                });
                 model.fetch({
                     success: function () {
                         App.getPlace('main').show(new User.EditForm({

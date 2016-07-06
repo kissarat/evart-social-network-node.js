@@ -105,7 +105,7 @@ App.module('Message', function (Message, App) {
         },
 
         isMine: function () {
-            return this.get('owner').get('_id') === App.user._id || this.get('source').get('_id') === App.user._id;
+            return this.get('source').get('_id') === App.user._id;
         },
 
         passed: function () {
@@ -279,12 +279,10 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            this.ui.name.attr('href', '/view/' + this.model.get('owner').get('domain'));
-            this.ui.name.html(this.model.get('owner').getName());
-            this.model.get('owner').setupAvatar(this.ui.avatar[0]);
-            if (this.model.isMine()) {
-                this.$el.addClass('mine');
-            }
+            this.ui.name.attr('href', '/view/' + this.model.get('source').get('domain'));
+            this.ui.name.html(this.model.get('source').getName());
+            this.model.get('source').setupAvatar(this.ui.avatar[0]);
+            this.$el.addClass(this.model.isMine() ? 'mine' : 'other');
             if (this.model.get('unread')) {
                 this.$el.addClass('unread');
             }
@@ -292,6 +290,7 @@ App.module('Message', function (Message, App) {
             if (attitude) {
                 this.el.querySelector('.attitude').dataset.attitude = attitude;
             }
+            this.$el.addClass(this.model.get('source').getSex());
             this.ui.time.html(this.model.passed());
             this.stickit();
         }
@@ -342,8 +341,8 @@ App.module('Message', function (Message, App) {
                 query: _.merge({
                     type: MessageType.WALL,
                     owner_id: App.user._id,
-                    user: 'owner',
-                    select: 'like.hate.files.videos'
+                    user: 'source',
+                    select: 'like.hate.files.videos.sex'
                 }, _.pick(options, 'owner_id', 'user', 'select'))
             });
             var wall = new Message.WallView({
@@ -765,7 +764,7 @@ App.module('Message', function (Message, App) {
             },
 
             dialog: function (id) {
-                var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar'};
+                var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar.sex'};
                 if (_.isObjectID(id)) {
                     params.id = id;
                 }

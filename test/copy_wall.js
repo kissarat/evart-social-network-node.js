@@ -41,6 +41,7 @@ function run() {
                 if (quote) {
                     let data = {
                         owner: _.sample(users),
+                        source: _.sample(users),
                         type: 'wall',
                         time: quote.add_date,
                         text: quote.text
