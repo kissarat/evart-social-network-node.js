@@ -300,6 +300,12 @@ module.exports = {
         });
     },
 
+    DELETE: function ($) {
+        if ($.isAdmin) {
+            return User.remove({_id: $.get('id')})
+        }
+    },
+
     informer: function ($) {
         var id = $.id || $.user._id;
         var object = {

@@ -33,7 +33,7 @@ function $import(selector) {
 }
 
 function $create(selector) {
-    var root = $tag('div', {class: selector.replace('#view-', 'view ')})
+    var root = $tag('div', {class: selector.replace('#view-', 'view ')});
     root.appendChild($import(selector));
     return root;
 }
@@ -104,11 +104,37 @@ App.module('Grid', function (Grid) {
     }
 
     class Row extends React.Component {
+        click = (e) => {
+            if (e.target.hasAttribute('title')) {
+                e.target.innerHTML = e.target.getAttribute('title');
+            }
+        };
+
+        trigger(event) {
+            this.props[event](this.props.object);
+        }
+
         render() {
-            var cells = [];
-            this.props.fields.forEach(field => {
-                cells.push(<td key={field}>{this.props.object[field]}</td>);
+            var cells = [<td key="_number" className="number">{this.props.number}</td>];
+            _.each(this.props.fields, (field, name) => {
+                var value = this.props.object[name];
+                switch (field.type) {
+                    case 'ObjectId':
+                        value = <span title={value} onClick={this.click}>{value.slice(-6)}</span>;
+                        break;
+                    case 'Date':
+                        if (value) {
+                            value = new Date(value).toLocaleString();
+                        }
+                        break;
+                }
+                cells.push(<td key={name}>{value}</td>);
             });
+            cells.push(
+                <td key="action" className="action">
+                    <span onClick={this.trigger.bind(this, 'remove')}>x</span>
+                </td>
+            );
             return <tr>{cells}</tr>;
         }
     }
@@ -118,32 +144,39 @@ App.module('Grid', function (Grid) {
             super();
             this.state = {
                 collection: 'user',
+                fields: this.getRequired(schema.user),
                 params: {
                     page: 1,
-                    limit: 96
+                    limit: 96,
+                    sort: '_id',
+                    order: 'desc'
                 },
                 rows: []
             };
-            this.state.fields = this.getRequired();
         }
 
         componentWillMount() {
             this.query(true);
         }
 
-        getEnabledFields() {
-            var fields = [];
-            _.each(this.state.fields, function (enabled, name) {
+        getEnabledFields(details) {
+            var fields = details ? {} : [];
+            _.each(this.state.fields, (enabled, name) => {
                 if (enabled) {
-                    fields.push(name);
+                    if (details) {
+                        fields[name] = schema[this.state.collection].schema[name];
+                    }
+                    else {
+                        fields.push(name);
+                    }
                 }
             });
             return fields;
         }
 
-        getRequired() {
+        getRequired(collection) {
             var fields = {_id: true, time: true};
-            _.each(schema[this.state.collection], function (field, name) {
+            _.each((collection || schema[this.state.collection]).schema, function (field, name) {
                 if (field.required) {
                     fields[name] = true;
                 }
@@ -154,7 +187,8 @@ App.module('Grid', function (Grid) {
         selectCollection = (e) => {
             this.setState({
                 collection: e.target.value,
-                fields: this.getRequired()
+                fields: this.getRequired(schema[e.target.value]),
+                rows: []
             });
             this.query(true);
         };
@@ -218,6 +252,30 @@ App.module('Grid', function (Grid) {
             this.query(true);
         };
 
+        remove = (object) => {
+            $.ajax({
+                type: 'DELETE',
+                url: '/api/' + this.state.collection + '?id=' + object._id,
+                success: () => {
+                    this.setState({
+                        rows: _.without(this.state.rows, _.findWhere(this.state.rows, object))
+                    });
+                }
+            })
+        };
+
+        sort = (e) => {
+            var params = {};
+            if (e.target.classList.contains('current')) {
+                params.order = 'asc' === params.order ? 'desc' : 'asc';
+            }
+            else {
+                params.order = 'desc';
+                params.sort = e.target.innerHTML
+            }
+            this.query(true, params);
+        };
+
         render() {
             var collections = [];
             for (let name in schema) {
@@ -240,7 +298,19 @@ App.module('Grid', function (Grid) {
                 );
             }
             var enabledFields = this.getEnabledFields();
-            var fields = enabledFields.map(field => <th key={field}>{field}</th>);
+            var fields = enabledFields.map(field => {
+                if (this.state.params.sort === field) {
+                    field =
+                        <th key={field} onClick={this.sort} className="sort current">
+                            <span className={'fa fa-sort-' + this.state.params.order}></span>
+                            <span className="name current">{field}</span>
+                        </th>
+                }
+                else {
+                    field = <th key={field} onClick={this.sort} className="sort">{field}</th>;
+                }
+                return field
+            });
             var filters = enabledFields.map(name => {
                 var field = collection[name];
                 var value = '';
@@ -255,6 +325,10 @@ App.module('Grid', function (Grid) {
                 }
                 return <th key={name}>{value}</th>
             });
+            fields.unshift(<th key="_number" className="number">#</th>);
+            fields.push(<th key="action">Action</th>);
+            filters.unshift(<th key="_number"></th>);
+            filters.push(<th key="action"></th>);
             return (
                 <div className="view grid scroll" onScroll={this.scroll}>
                     <select key="collections"
@@ -270,10 +344,12 @@ App.module('Grid', function (Grid) {
                         <tr key="filters">{filters}</tr>
                         </thead>
                         <tbody>
-                        {this.state.rows.map(row => <Row
+                        {this.state.rows.map((row, i) => <Row
                             key={row._id}
-                            fields={enabledFields}
+                            fields={this.getEnabledFields(true)}
                             object={row}
+                            remove={this.remove}
+                            number={i}
                         />)}
                         </tbody>
                     </table>

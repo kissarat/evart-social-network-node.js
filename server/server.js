@@ -170,11 +170,11 @@ class Server {
         _.each(modules, function (module, name) {
             if (module._meta && module._meta.schema && ('admin' === user.type ? true : config.meta.schema)) {
                 _.each(module._meta.schema, function (field, key) {
-                    if (field.constructor === Function) {
+                    if (!(Object === field.constructor)) {
                         field = {
                             type: field
                         };
-                        meta[key] = field;
+                        module._meta.schema[key] = field;
                     }
                     if (field instanceof Array) {
                         field = field[0]

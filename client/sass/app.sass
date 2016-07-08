@@ -292,9 +292,16 @@ button.unemitted
   display: none
 
 .view.grid
+  th.sort
+    cursor: pointer
   ul.fields
     list-style: none
     li
       display: inline-block
   td
     text-align: left
+    &.number
+      font-weight: bold
+      font-style: italic
+    &.action > *
+      cursor: pointer
