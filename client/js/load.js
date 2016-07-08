@@ -90,6 +90,9 @@ function load2_registerAgent() {
 function load3_languageLoaded() {
     if (App.isAuthenticated()) {
         $('body').removeAttr('class');
+        if (App.user.css) {
+            document.head.appendChild($tag('style', null, App.user.css));
+        }
         App.trigger('login');
     }
     else {

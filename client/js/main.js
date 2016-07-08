@@ -45,16 +45,29 @@ _.extend(Backbone.ChildViewContainer.prototype, {
     }
 });
 
-HTMLFormElement.prototype.serialize = function () {
-    var result;
-    result = {};
-    _.each(this.elements, function (input) {
-        if ('file' != input.getAttribute('type')) {
-            result[input.getAttribute('name')] = input.value;
-        }
-    });
-    return result;
-};
+function $tag(name, attributes, children) {
+    var tag = document.createElement(name);
+    if ('string' === typeof attributes) {
+        tag.value = attributes;
+    }
+    else {
+        _.each(attributes, function (value, name) {
+            if ('boolean' == typeof value) {
+                tag[name] = value;
+            }
+            else {
+                tag.setAttribute(name, value);
+            }
+        });
+    }
+    if ('string' === typeof children) {
+        tag.innerHTML = children;
+    }
+    else {
+        tag.append(children);
+    }
+    return tag;
+}
 
 jQuery.sendJSON = function (type, url, data, complete) {
     return this.ajax({

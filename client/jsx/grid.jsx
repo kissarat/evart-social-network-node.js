@@ -1,29 +1,5 @@
 "use strict";
 
-function $tag(name, attributes, children) {
-    var tag = document.createElement(name);
-    if ('string' === typeof attributes) {
-        tag.value = attributes;
-    }
-    else {
-        _.each(attributes, function (value, name) {
-            if ('boolean' == typeof value) {
-                tag[name] = value;
-            }
-            else {
-                tag.setAttribute(name, value);
-            }
-        });
-    }
-    if ('string' === typeof children) {
-        tag.innerHTML = children;
-    }
-    else {
-        tag.append(children);
-    }
-    return tag;
-}
-
 function $$(selector) {
     return document.querySelector(selector);
 }

@@ -208,6 +208,9 @@ function extract(agent, headers) {
             follow: agent.user.follow,
             lang: agent.user.lang
         };
+        if (agent.user.css) {
+            result.user.css = agent.user.css;
+        }
     }
     if (headers) {
         result.headers = headers;
