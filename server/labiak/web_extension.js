@@ -60,7 +60,7 @@ module.exports = {
         if (!this.req.url.route[0]) {
             return this.send(this.server.getDescription(this.user));
         }
-
+        
         var path = this.req.url.route.slice(0);
         var last = path[path.length - 1];
         if (last && /^[a-z0-9]{24}$/.test(last)) {

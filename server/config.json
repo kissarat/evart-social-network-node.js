@@ -39,7 +39,6 @@
     }
   },
   "modules": {
-    "admin": false,
     "test": false,
     "chat": false
   },
