@@ -1,5 +1,17 @@
 "use strict";
 
+function _sendMessages(n) {
+    for(var i = 0; i < n; i++) {
+        setTimeout(function () {
+            $.sendJSON('POST', '/api/message', {
+                type: 'dialog',
+                target: '01145c9ae906148400be8f72',
+                text: 'A' + i
+            });
+        }, i * 1100);
+    }
+}
+
 _.extend(Element.prototype, {
     setBackground: function (id) {
         if (/^[\da-f]{24}$/.test(id)) {
@@ -8,16 +20,6 @@ _.extend(Element.prototype, {
         if (id) {
             this.style.backgroundImage = 'url("' + id + '")';
         }
-    },
-
-    findParent: function (predicate) {
-        var current = this;
-        do {
-            if (predicate(current)) {
-                return current;
-            }
-        } while (current = current.parentNode);
-        return null;
     }
 });
 
@@ -45,42 +47,21 @@ _.extend(Backbone.ChildViewContainer.prototype, {
     }
 });
 
-function $tag(name, attributes, children) {
-    var tag = document.createElement(name);
-    if ('string' === typeof attributes) {
-        tag.value = attributes;
-    }
-    else {
-        _.each(attributes, function (value, name) {
-            if ('boolean' == typeof value) {
-                tag[name] = value;
-            }
-            else {
-                tag.setAttribute(name, value);
-            }
-        });
-    }
-    if ('string' === typeof children) {
-        tag.innerHTML = children;
-    }
-    else {
-        tag.append(children);
-    }
-    return tag;
-}
-
 jQuery.sendJSON = function (type, url, data, complete) {
-    return this.ajax({
+    var options = {
         type: type,
         url: url,
         contentType: 'application/json; charset=UTF-8',
         dataType: 'json',
         data: JSON.stringify(data),
-        complete: function (xhr) {
+    };
+    if (complete) {
+        options.complete = function (xhr) {
             var response = xhr.responseJSON;
             complete(response, xhr);
-        }
-    });
+        };
+    }
+    return this.ajax(options);
 };
 
 _.extend(jQuery.fn, {
@@ -408,17 +389,16 @@ _.extend(Application.prototype, {
             _.debounce(search, App.config.search.delay);
         },
 
-        getPage: function (number) {
+        getPage: function (number, options) {
             var self = this;
             if (!this.loading) {
-                this.trigger('start');
                 this.loading = true;
-                Backbone.PageableCollection.prototype.getPage.call(this, number, {
-                    complete: (function () {
-                        self.trigger('finish');
-                        self.loading = false;
-                    })
+                this.trigger('start');
+                _.before(options, 'complete', function () {
+                    self.loading = false;
+                    self.trigger('finish');
                 });
+                Backbone.PageableCollection.prototype.getPage.call(this, number, options);
             }
         }
     })

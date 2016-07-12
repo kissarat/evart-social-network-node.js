@@ -103,7 +103,7 @@ class WebSocketServer extends EventEmitter {
     }
 
     notifyOne(user_id, message) {
-        _.each(this.getSubscribers(user_id), function (context) {
+        _.each(this.getSubscribers(user_id.toString()), function (context) {
             context.socket.send(message)
         });
     }

@@ -179,7 +179,7 @@ module.exports = {
                         }
                     };
                 }
-                ANDs.push({owner: me});
+                ANDs.push({owner: owner_id});
                 if ($.has('attitude')) {
                     let attitude = $.get('attitude');
                     if (attitude) {
@@ -261,15 +261,34 @@ module.exports = {
                 targets.push(id)
             }
         });
-        $.accessUser(targets, function () {
-            message = new Message(message);
-            message.save($.wrap(function () {
-                if ($.has('parent_id')) {
-                    Message.update({_id: $.param('parent_id')}, {$push: {children: message._id}});
-                }
-                $.send(message);
-                _.uniq(targets).forEach(id => $.notifyOne(id, message));
-            }));
+        targets = _.uniq(targets).map(ObjectID);
+        $.accessUser(targets).then(function (allow) {
+            if (allow) {
+                message = new Message(message);
+                message.save($.wrap(function () {
+                    if ($.has('parent_id')) {
+                        Message.update(
+                            {_id: $.param('parent_id')},
+                            {$push: {children: message._id}}
+                        );
+                    }
+                    message = message.toObject();
+                    if (message.files && !message.files.length) {
+                        delete message.files;
+                    }
+                    if ('dialog' == message.type) {
+                        delete message.children;
+                        delete message.like;
+                        delete message.hate;
+                        delete message.v;
+                    }
+                    $.send(message);
+                    targets.forEach(id => $.notifyOne(id, message));
+                }));
+            }
+            else {
+                $.sendStatus(code.FORBIDDEN);
+            }
         });
     },
 

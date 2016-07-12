@@ -121,13 +121,16 @@ $unread: rgba(0, 0, 0, 0.05)
 .layout-dialog
   display: flex
   flex-direction: column
+  .user-info .avatar
+      margin-bottom: 4px
   .list
-    display: flex
-    overflow-x: hidden
-    flex-direction: column
     flex: 1
-    justify-content: flex-end
-    padding-bottom: 8px
+    //padding-bottom: 8px
+    > div
+      display: flex
+      flex-direction: column-reverse
+      justify-content: flex-end
+      overflow-x: hidden
     .message
       display: flex
       justify-content: flex-end
@@ -155,8 +158,11 @@ $unread: rgba(0, 0, 0, 0.05)
       .time
         margin-top: 12px
         min-width: 20%
-      &.me
+      &.mine
         flex-direction: row
+        .avatar
+          margin-right: 4px
+          margin-left: 6px
         .text
           background-color: $blue
           color: white
@@ -177,6 +183,9 @@ $unread: rgba(0, 0, 0, 0.05)
           margin-right: 4px
       &.other
         flex-direction: row-reverse
+        .avatar
+          margin-right: 6px
+          margin-left: 4px
         .text
           background-color: #ECEFF4
           color: black

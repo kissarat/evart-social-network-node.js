@@ -334,6 +334,10 @@ class Context {
                 'access-control-allow-origin': '*'
             }
                 : {'content-type': 'application/json; charset=utf-8'};
+            // let _order = this.order;
+            // if (_order) {
+            //     headers.order = JSON.stringify(_order);
+            // }
             if (jsonp) {
                 data = [jsonp, '(', data, ')'].join('');
             }

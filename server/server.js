@@ -19,8 +19,8 @@ var socket = require('./labiak/socket');
 var code = require('./code');
 var errors = require('./errors');
 
+process.cwd(__dirname);
 var modules = {};
-
 var socketFileNames = [config.file];
 
 function cleanupSocket() {

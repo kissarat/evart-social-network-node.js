@@ -33,7 +33,7 @@ gulp.task('app', function () {
     doc = jsdom(doc);
     string = [];
     _.each(doc.querySelectorAll('script'), function (script) {
-        if (script.getAttribute('src')) {
+        if (script.getAttribute('src') && !script.classList.contains('admin')) {
             fs.readFileSync('client' + script.getAttribute('src'))
                 .toString('utf8')
                 .split('\n')

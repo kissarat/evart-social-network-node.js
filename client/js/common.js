@@ -45,8 +45,22 @@ _.mixin({
             Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
         }
     },
+    
     passed: function (time) {
         return moment.utc(time).fromNow()
+    },
+    
+    before: function (object, name, method) {
+        if (name in object) {
+            var _old = object[name];
+            object[name] = function () {
+                method.apply(this, arguments);
+                _old.apply(this, arguments);
+            }
+        }
+        else {
+            object[name] = method;
+        }
     }
 });
 

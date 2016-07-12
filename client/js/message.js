@@ -110,6 +110,14 @@ App.module('Message', function (Message, App) {
 
         passed: function () {
             return _.passed(this.get('time'));
+        },
+
+        getTime: function () {
+            return new Date(this.get('time')).getTime();
+        },
+
+        getIndex: function () {
+            return parseInt(this.get('_id').slice(2), 16);
         }
     });
 
@@ -125,13 +133,20 @@ App.module('Message', function (Message, App) {
         url: '/api/message',
 
         query: {
-            type: 0
+            type: 0,
+            limit: 48
         },
 
         model: function (attrs, options) {
             return new Message.Model(attrs, options);
         }
     });
+
+    Message.comparator = function (a, b) {
+        // var order = b.getTime() - a.getTime();
+        // return order || b.getIndex() - a.getIndex();
+        return b.getIndex() - a.getIndex();
+    };
 
     Message.DialogList = App.PageableCollection.extend({
         url: '/api/message/dialogs',
@@ -342,7 +357,7 @@ App.module('Message', function (Message, App) {
                     type: MessageType.WALL,
                     owner_id: App.user._id,
                     user: 'source',
-                    select: 'like.hate.files.videos.sex'
+                    select: 'like.hate.files.videos.sex.text'
                 }, _.pick(options, 'owner_id', 'user', 'select'))
             });
             var wall = new Message.WallView({
@@ -359,8 +374,13 @@ App.module('Message', function (Message, App) {
     Message.View = Marionette.View.extend({
         template: '#view-message',
 
-        behaviors: {
-            Bindings: {}
+        ui: {
+            avatar: '.avatar',
+            name: '.name'
+        },
+
+        attributes: {
+            'class': 'view message'
         },
 
         bindings: {
@@ -383,34 +403,46 @@ App.module('Message', function (Message, App) {
             }
         },
 
-        onRender: function () {
-            var source = this.model.get('source');
-            this.$el.addClass(source == App.user._id ? 'me' : 'other');
-            if (!Message.View.lastAnimationStart) {
-                Message.View.lastAnimationStart = Date.now();
-            }
-            Message.View.appearance.push(this);
-            function appear() {
-                setTimeout(function () {
-                    var current = Message.View.appearance.pop();
-                    if (current) {
-                        current.$el.addClass('visible');
-                        appear();
-                    }
-                }, 120);
-            }
+        appear: function appear() {
+            var self = this;
+            setTimeout(function () {
+                var current = Message.View.appearance.pop();
+                if (current) {
+                    current.$el.addClass('visible');
+                    self.appear();
+                }
+            }, 120);
+        },
 
-            if (Message.View.appearance.length <= 1) {
-                appear();
+        onRender: function () {
+            var self = this;
+            var source = this.model.get('source');
+            this.$el.addClass(this.model.isMine() ? 'mine' : 'other');
+            this.$el.attr('data-id', this.model.get('_id'));
+            this.$el.attr('data-source', source.get('domain'));
+            source.setupAvatar(this.ui.avatar[0]);
+            this.ui.name.html(source.getName());
+            if (App.config.message.appearance) {
+                if (!Message.View.lastAnimationStart) {
+                    Message.View.lastAnimationStart = Date.now();
+                }
+                Message.View.appearance.push(this);
+
+                if (Message.View.appearance.length <= 1) {
+                    this.appear();
+                }
+            }
+            else {
+                this.$el.addClass('visible');
             }
 
             if (this.model.get('unread') > 0) {
                 this.$el.addClass('unread');
-                var self = this;
                 this.model.on('change:unread', function () {
                     self.$el.removeClass('unread');
                 })
             }
+            this.stickit();
         }
     });
 
@@ -420,48 +452,51 @@ App.module('Message', function (Message, App) {
         if (this._isAttached) {
             var now = new Date(itemView.model.get('time'));
             if (index >= 1) {
-                var previousHour = new Date(collectionView.children.findByIndex(index - 1).model.get('time')).getHours();
+                var time = collectionView.children.findByIndex(index - 1).model.get('time');
+                var previousHour = new Date(time).getHours();
             }
             if (index < 1 || now.getHours() < previousHour) {
-                $('<div></div>')
-                    .html(now.toLocaleDateString())
-                    .appendTo(collectionView.$el);
+                var day = $tag('div', null, now.toLocaleDateString());
+                collectionView.el.appendChild(day);
             }
         }
         itemView.$('a').each(function (i, anchor) {
-            var image = new Image();
             anchor.setAttribute('target', '_black');
-            image.addEventListener('load', function () {
-                anchor.classList.remove('busy');
-                anchor.classList.add('image');
-                anchor.appendChild(image);
-            });
-            image.addEventListener('error', function () {
-                anchor.classList.remove('busy');
-                var url = decodeURIComponent(anchor.href);
-                var origin = /\w+:\/\/([^\/]+)\//.exec(url);
-                var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
-                if (youtube) {
-                    App.local.getById('video', youtube[1]).then(function (oembed) {
-                        $(anchor).replaceWith(
-                            $(oembed.html)
-                                .removeAttr('width')
-                                .removeAttr('height')
-                        );
-                    });
-                }
-                else {
-                    if (origin[1].indexOf('wikipedia.org') > 0) {
-                        url = _.last(url.split('/')).replace(/_/g, ' ');
+            var image = new Image();
+            image.register({
+                load: function () {
+                    anchor.classList.remove('busy');
+                    anchor.classList.add('image');
+                    anchor.appendChild(image);
+                },
+
+                error: function () {
+                    anchor.classList.remove('busy');
+                    var url = decodeURIComponent(anchor.href);
+                    var origin = /\w+:\/\/([^\/]+)\//.exec(url);
+                    var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
+                    if (youtube) {
+                        App.local.getById('video', youtube[1]).then(function (oembed) {
+                            $(anchor).replaceWith(
+                                $(oembed.html)
+                                    .removeAttr('width')
+                                    .removeAttr('height')
+                            );
+                        });
                     }
-                    else if (url.length > 64) {
-                        var remain = -64 + origin[1].length;
-                        url = origin[1];
-                        if (remain < 0) {
-                            url += '/...' + anchor.href.slice(remain);
+                    else {
+                        if (origin[1].indexOf('wikipedia.org') > 0) {
+                            url = _.last(url.split('/')).replace(/_/g, ' ');
                         }
+                        else if (url.length > 64) {
+                            var remain = -64 + origin[1].length;
+                            url = origin[1];
+                            if (remain < 0) {
+                                url += '/...' + anchor.href.slice(remain);
+                            }
+                        }
+                        anchor.innerHTML = url;
                     }
-                    anchor.innerHTML = url;
                 }
             });
             image.classList.add('busy');
@@ -473,8 +508,46 @@ App.module('Message', function (Message, App) {
     Message.ListView = Marionette.CollectionView.extend({
         childView: Message.View,
 
+        events: {
+            'scroll': 'scroll'
+        },
+
+        scroll: function (e) {
+            if (e.target.scrollTop < 100) {
+                this.collection.pageableCollection.getNextPage();
+            }
+        },
+
         onRender: function () {
+            var self = this;
+            App._dialog = this.collection;
+            this.collection.pageableCollection.once('finish', function () {
+                setImmediate(function () {
+                    self.scrollLast();
+                });
+            });
             this.animateLoading();
+        },
+
+        destroy: function () {
+            delete App._dialog;
+        },
+
+        scrollLast: function () {
+            if (this.collection.model.length > 2) {
+                var last = this.collection.models
+                    .map(function (a) {
+                        return new Date(a.get('time')).getTime()
+                    })
+                    .reduce(function (a, b) {
+                        return Math.max(a, b)
+                    });
+                last = this.collection.models.find(function (model) {
+                    return model.get('time') === new Date(last).toISOString()
+                });
+                last = this.children.findByModel(last);
+                last.el.scrollIntoView();
+            }
         },
 
         attachHtml: attachHtml
@@ -577,22 +650,25 @@ App.module('Message', function (Message, App) {
         reply: function (model) {
             var self = this;
             var id = model.get('source').get('_id');
-            var isReceiver = this.getQuery().get('target_id') === id;
+            var target_id = this.getQuery().get('target_id');
+            var isMine = App.user._id === target_id;
+            var isReceiver = target_id === id || isMine;
 
             function read() {
-                setTimeout(function () {
+                App.debounce(_.random(800, 1600), function () {
                     self.read(id)
-                }, _.random(800, 1600));
-                document.removeEventListener('visibilitychange', read);
+                });
             }
 
             if (isReceiver) {
                 this.getCollection().add(model);
-                if ('visible' === document.visibilityState) {
-                    read();
-                }
-                else {
-                    document.addEventListener('visibilitychange', read);
+                if (!isMine) {
+                    if ('visible' === document.visibilityState) {
+                        read();
+                    }
+                    else {
+                        document.once('visibilitychange', read);
+                    }
                 }
             }
             return isReceiver;
@@ -622,16 +698,16 @@ App.module('Message', function (Message, App) {
             var query = _.defaults(_.pick(options, 'type', 'id', 'user', 'sort'), {
                 type: MessageType.DIALOG,
                 user: 'source.target',
-                select: 'unread',
+                select: 'unread.text',
                 sort: '-_id'
             });
             var list = new Message.List([], {query: query});
-            // list.comparator = query.sort;
             var listView = new Message.ListView({collection: list.fullCollection});
             var editor = new Message.Editor({
                 model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
                     target: options.id,
-                    unread: 1
+                    unread: 1,
+                    type: 'dialog'
                 }))
             });
             var dialog = new Message.Dialog();
@@ -724,6 +800,15 @@ App.module('Message', function (Message, App) {
         send: function () {
             var self = this;
             var text = this.model.get('text');
+
+            function success(model) {
+                model.loadRelative().then(function () {
+                    Message.channel.request('message', model);
+                    self.model.set('text', '');
+                    self.ui.editor[0].style.removeProperty('min-height');
+                });
+            }
+
             if (text) {
                 text = text.replace(/:[a-z_]+:/g, function (match) {
                     for (var symbol in emoji) {
@@ -733,15 +818,8 @@ App.module('Message', function (Message, App) {
                         }
                     }
                 });
-                this.model.save('text', text, {
-                    success: function (model) {
-                        model.loadRelative().then(function () {
-                            Message.channel.request('message', model);
-                            self.model = new Message.Model();
-                            self.ui.editor[0].style.removeProperty('min-height');
-                        });
-                    }
-                });
+                this.model.set('time', Date.now());
+                this.model.save('text', text, {success: success});
             }
         }
     });

@@ -4,6 +4,7 @@ var qs = require('querystring');
 var utils = require('../utils');
 var errors = require('../errors');
 var mongoose = require('mongoose');
+var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
 
 module.exports = {
@@ -463,15 +464,20 @@ module.exports = {
     },
 
     accessUser: function (user_id) {
-        var self = this;
-        user_id = user_id instanceof Array ? {$in: user_id} : user_id;
-        var where = {_id: user_id, deny: {$not: user_id}};
-        return new Promise(function (resolve, reject) {
-            if (user_id.length = 1 && user_id.equals(self.user._id)) {
+        if (!(user_id instanceof ObjectID || user_id[0] instanceof ObjectID)) {
+            throw new Error();
+        }
+        var where = {deny: {$ne: this.user._id}};
+        if (user_id instanceof Array && 1 === user_id.length) {
+            user_id = user_id[0];
+        }
+        where._id = user_id instanceof Array ? {$in: user_id} : user_id;
+        return new Promise((resolve, reject) => {
+            if (user_id instanceof ObjectID && user_id.equals(this.user._id)) {
                 resolve(1);
             }
             else {
-                self.collection('user').count(where, function (err, count) {
+                this.collection('user').count(where, function (err, count) {
                     if (err) {
                         reject(err)
                     }

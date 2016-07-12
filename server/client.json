@@ -34,7 +34,8 @@
   "message": {
     "read": {
       "empty": true,
-      "delay": 2000
+      "delay": 2000,
+      "appearance": false
     },
     "cut": 100
   },
