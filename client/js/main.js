@@ -1,7 +1,7 @@
 "use strict";
 
 function _sendMessages(n) {
-    for(var i = 0; i < n; i++) {
+    for (var i = 0; i < n; i++) {
         setTimeout(function () {
             $.sendJSON('POST', '/api/message', {
                 type: 'dialog',
@@ -205,13 +205,33 @@ function Application() {
         },
 
         get config() {
+            function iceServer(prefix, value) {
+                var object = {};
+                var url = 'string' == typeof value ? value : value[0];
+                url = prefix + url;
+                if (isFirefox) {
+                    object.urls = url;
+                }
+                else {
+                    object.url = url;
+                }
+                if (value instanceof Array) {
+                    object.username = value[1];
+                    object.credential = value[2];
+                }
+                return object;
+            }
+
             if (!this._config && this.agent && this.agent.config) {
                 var config = this.agent.config;
                 config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
-                var stun = config.peer.iceServers[0].urls.split(' ').map(function (address) {
-                    return 'stun:' + address;
+                config.peer.iceServers = [];
+                config.peer.stun.split(' ').forEach(function (value) {
+                    config.peer.iceServers.push(iceServer('stun:', value));
                 });
-                config.peer.iceServers[0].urls = stun.concat(this.defaultConfig.peer.iceServers[0].urls);
+                config.peer.turn.forEach(function (value) {
+                    config.peer.iceServers.push(iceServer('turn:', value));
+                });
                 this._config = config;
             }
             return this._config ? this._config : this.defaultConfig;
@@ -450,8 +470,8 @@ function findStyleRules(selector, match) {
 
 App.on('login', function () {
     // if (App.user && 'admin' == App.user.type) {
-        // var rule = findStyleRules('.admin')[0];
-        // rule.style.removeProperty('display');
+    // var rule = findStyleRules('.admin')[0];
+    // rule.style.removeProperty('display');
     // }
     setTimeout(function () {
         document.getElementById('left').classList.add('visible');

@@ -966,6 +966,30 @@ App.module('User', function (User, App) {
             })
         }
     });
+    
+    User.findOne = function (id, cb) {
+        var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar.sex'};
+        if (_.isObjectID(id)) {
+            params.id = id;
+        }
+        else {
+            params.domain = id;
+        }
+        $.get({
+            url: '/api-cache/user?' + $.param(params),
+            complete: function (xhr) {
+                if (code.NOT_FOUND === xhr.status) {
+                    App.show(App.Views.Error, {
+                        code: 404,
+                        text: 'User not found'
+                    });
+                }
+                else {
+                    cb(xhr.responseJSON);
+                }
+            }
+        });
+    };
 
     return new User.Router({
         controller: {

@@ -3,9 +3,8 @@
 App.module('Video', function (Video, App) {
     Video.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'video': 'index',
+            'video': 'index'
             // 'video/:id': 'view',
-            'unsupported(/:type)': 'unsupported'
         }
     });
 
@@ -13,7 +12,7 @@ App.module('Video', function (Video, App) {
 
     Video.List = App.PageableCollection.extend({
         url: '/api/video',
-        cidPrefix: 'vdol',
+        cidPrefix: 'vdl',
 
         query: {
             type: 'video',
@@ -25,7 +24,7 @@ App.module('Video', function (Video, App) {
     Video.Thumbnail = Marionette.View.extend({
         template: '#thumbnail-video',
         tagName: 'a',
-        cidPrefix: 'vdot',
+        cidPrefix: 'vdt',
 
         ui: {
             image: 'img',
@@ -58,7 +57,7 @@ App.module('Video', function (Video, App) {
 
     Video.ListView = Marionette.CollectionView.extend({
         childView: Video.Thumbnail,
-        cidPrefix: 'vdolv',
+        cidPrefix: 'vdlv',
 
         behaviors: {
             Pageable: {}
@@ -160,38 +159,10 @@ App.module('Video', function (Video, App) {
         }
     });
 
-    Video.Unsupported = Marionette.View.extend({
-        template: '#view-unsupported',
-        cidPrefix: 'unv',
-
-        attributes: {
-            "class": 'unsupported'
-        },
-
-        ui: {
-            text: '.text'
-        },
-
-        onRender: function () {
-            var text, type;
-            type = App.route[1];
-            if ('peer' === type) {
-                text = "Unfortunately, your browser doesn't support video calling feature. You can use one of the following browsers";
-            } else {
-                text = "Unfortunately, your browser doesn't supported. You can use one of the following browsers";
-            }
-            return this.ui.text.html(T(text));
-        }
-    });
-
     return new Video.Router({
         controller: {
             index: function () {
                 return Video.Layout.widget(App.getPlace('main'));
-            },
-
-            unsupported: function () {
-                return App.mainRegion.show(new Video.Unsupported());
             }
         }
     });

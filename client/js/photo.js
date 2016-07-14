@@ -5,7 +5,6 @@ App.module('Photo', function (Photo, App) {
         appRoutes: {
             'video': 'index',
             // 'video/:id': 'view',
-            'unsupported(/:type)': 'unsupported'
         }
     });
 
@@ -186,10 +185,6 @@ App.module('Photo', function (Photo, App) {
         controller: {
             index: function () {
                 return Photo.Layout.widget(App.getPlace('main'));
-            },
-
-            unsupported: function () {
-                return App.mainRegion.show(new Photo.Unsupported());
             }
         }
     });

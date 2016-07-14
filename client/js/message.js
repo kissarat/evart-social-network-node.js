@@ -837,36 +837,20 @@ App.module('Message', function (Message, App) {
                     resolve(messages);
                 });
         });
-    };
+    };  
 
     return new Message.Router({
         controller: {
             wall: function (id) {
-                var wall = Message.WallView.widget(App.getPlace('main'), {owner_id: id});
-                wall.$el.addClass('scroll');
+                App.User.findOne(id, function (user) {
+                    var wall = Message.WallView.widget(App.getPlace('main'), {owner_id: user._id});
+                    wall.$el.addClass('scroll');
+                });
             },
 
             dialog: function (id) {
-                var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar.sex'};
-                if (_.isObjectID(id)) {
-                    params.id = id;
-                }
-                else {
-                    params.domain = id;
-                }
-                $.get({
-                    url: '/api-cache/user?' + $.param(params),
-                    complete: function (xhr) {
-                        if (code.NOT_FOUND === xhr.status) {
-                            App.show(App.Views.Error, {
-                                code: 404,
-                                text: 'User not found'
-                            });
-                        }
-                        else {
-                            Message.Dialog.widget(App.getPlace('main'), {id: xhr.responseJSON._id});
-                        }
-                    }
+                App.User.findOne(id, function (user) {
+                    Message.Dialog.widget(App.getPlace('main'), {id: user._id});
                 });
             },
 

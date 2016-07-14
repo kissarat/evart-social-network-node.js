@@ -11,7 +11,7 @@ App.module('Peer', function (Peer, App) {
     Peer.Model = Backbone.Model.extend({
         initialize: function (attributes, options) {
             var rtc = new RTCPeerConnection(App.config.peer, {
-                optional: [{DtlsSrtpKeyAgreement: true}, {RtpDataChannels: true}]
+                // optional: [{DtlsSrtpKeyAgreement: true}, {RtpDataChannels: true}]
             });
             this.candidates = [];
             if (DEV) {
@@ -111,7 +111,7 @@ App.module('Peer', function (Peer, App) {
 
         pushMessage: function (o) {
             o.target_id = this.get('target_id');
-            App.push(o);
+            App.socket.push(o);
         },
 
         offer: function (options) {
@@ -343,8 +343,8 @@ App.module('Peer', function (Peer, App) {
     Peer.IncomingCall = Marionette.View.extend({
         template: '#view-incoming-call',
 
-        behaviors: {
-            Bindings: {}
+        attributes: {
+            class: 'incoming-call'
         },
 
         ui: {
@@ -369,9 +369,8 @@ App.module('Peer', function (Peer, App) {
         }
 
     }, {
-        // STATIC
         open: function (peer) {
-            App.modalRegion.show(new Peer.IncomingCall({
+            App.getPlace('modal').show(new Peer.IncomingCall({
                 model: peer
             }));
         }
@@ -410,23 +409,26 @@ App.module('Peer', function (Peer, App) {
     new Peer.Router({
         controller: {
             phone: function (id) {
-                var peer = App.Peer.find(id);
-                if (peer) {
-                    App.modalRegion.show(new Peer.Conference({
-                        model: peer
-                    }));
-                    if (peer.get('offer')) {
-                        peer.answerCall(id);
-                    } else {
-                        peer.offerCall(id);
-                    }
-                } else {
+                if (App.features.peer.available) {
+                    App.User.findOne(id, function (user) {
+                        var peer = App.Peer.find(user._id);
+                        App.getPlace('modal').show(new Peer.Conference({
+                            model: peer
+                        }));
+                        if (peer.get('offer')) {
+                            peer.answerCall(id);
+                        } else {
+                            peer.offerCall(id);
+                        }
+                    });
+                }
+                else {
                     App.navigate('/unsupported/peer');
                 }
             },
 
             stream: function (id) {
-                App.modalRegion.show(new Peer.Conference({
+                App.getPlace('modal').show(new Peer.Conference({
                     url: id
                 }));
             }

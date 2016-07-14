@@ -5,6 +5,7 @@ App.module('Views', function (Views, App) {
         appRoutes: {
             'empty': 'empty',
             'unavailable': 'unavailable',
+            'unsupported/:type': 'unsupported',
             '': 'root',
             '*wtf': 'error'
         }
@@ -312,6 +313,30 @@ App.module('Views', function (Views, App) {
         return fragment;
     };
 
+    Views.Unsupported = Marionette.View.extend({
+        template: '#view-unsupported',
+        cidPrefix: 'unv',
+
+        attributes: {
+            "class": 'unsupported'
+        },
+
+        ui: {
+            text: '.text'
+        },
+
+        onRender: function () {
+            var text, type;
+            type = App.route[1];
+            if ('peer' === type) {
+                text = "Unfortunately, your browser doesn't support video calling feature. You can use one of the following browsers";
+            } else {
+                text = "Unfortunately, your browser doesn't supported. You can use one of the following browsers";
+            }
+            return this.ui.text.html(T(text));
+        }
+    });
+
     new Views.Router({
         controller: {
             empty: function () {
@@ -340,6 +365,10 @@ App.module('Views', function (Views, App) {
                     })
                 });
                 App.getPlace('modal').show(view);
+            },
+
+            unsupported: function () {
+                return App.getPlace('main').show(new Views.Unsupported());
             }
         }
     });

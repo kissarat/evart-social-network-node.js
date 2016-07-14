@@ -291,14 +291,14 @@ _.extend(Service.prototype, {
         }, this.search.delay);
     },
 
-    sendStatistics: function () {
+    sendStatistics: function (async) {
         statistics.end = Date.now() - statistics.start;
         if (this.config.trace.enabled) {
             $.ajax({
                 type: 'PUT',
                 url: '/api/agent/stat',
                 data: JSON.stringify(statistics),
-                async: false,
+                async: !!async,
                 contentType: 'application/json'
             });
         }
