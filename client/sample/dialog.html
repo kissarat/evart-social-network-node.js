@@ -24,8 +24,20 @@
     <script src="/js/domic.js"></script>
     <script src="/js/ui.js"></script>
 </div>
+<div data-children="persons" data-template="#person"></div>
+<template id="person">
+    <div data-name="value"></div>
+    <div data-age="value"></div>
+</template>
 <script>
     var api = new Ajax({base: '/api/'});
+
+    var _dom = {
+        div: [
+            '$name',
+            '$age'
+        ]
+    };
 
     var Collection = Backbone.PageableCollection.extend({
         mode: 'infinite',
