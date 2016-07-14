@@ -179,7 +179,7 @@ module.exports = {
 
     GET: function ($) {
         if ($.has('id')) {
-            let where = {_id: $.id};
+            let where = {_id: $.get('id')};
             if ($.req.headers.accept.indexOf('json') > 0) {
                 return {
                     single: true,
@@ -187,7 +187,7 @@ module.exports = {
                 };
             }
             else {
-                File.findOne($.id, $.wrap(function (file) {
+                File.findOne(where, $.wrap(function (file) {
                     if (file) {
                         $.sendStatus(code.MOVED_PERMANENTLY, {
                             'content-type': file.mime,
@@ -217,7 +217,7 @@ module.exports = {
     },
 
     DELETE: function ($) {
-        return File.removeOne($.id);
+        return File.removeOne({_id: $.get('id')});
     }
 };
 

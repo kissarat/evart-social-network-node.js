@@ -390,6 +390,9 @@ _.extend(Application.prototype, {
         },
 
         getPage: function (number, options) {
+            if (!options) {
+                options = {};
+            }
             var self = this;
             if (!this.loading) {
                 this.loading = true;

@@ -134,7 +134,7 @@ App.module('Message', function (Message, App) {
 
         query: {
             type: 0,
-            limit: 48
+            limit: 25
         },
 
         model: function (attrs, options) {
@@ -145,7 +145,7 @@ App.module('Message', function (Message, App) {
     Message.comparator = function (a, b) {
         // var order = b.getTime() - a.getTime();
         // return order || b.getIndex() - a.getIndex();
-        return b.getIndex() - a.getIndex();
+        return a.getIndex() - b.getIndex();
     };
 
     Message.DialogList = App.PageableCollection.extend({
@@ -508,16 +508,6 @@ App.module('Message', function (Message, App) {
     Message.ListView = Marionette.CollectionView.extend({
         childView: Message.View,
 
-        events: {
-            'scroll': 'scroll'
-        },
-
-        scroll: function (e) {
-            if (e.target.scrollTop < 100) {
-                this.collection.pageableCollection.getNextPage();
-            }
-        },
-
         onRender: function () {
             var self = this;
             App._dialog = this.collection;
@@ -534,7 +524,7 @@ App.module('Message', function (Message, App) {
         },
 
         scrollLast: function () {
-            if (this.collection.model.length > 2) {
+            if (this.collection.models.length > 2) {
                 var last = this.collection.models
                     .map(function (a) {
                         return new Date(a.get('time')).getTime()
@@ -546,6 +536,9 @@ App.module('Message', function (Message, App) {
                     return model.get('time') === new Date(last).toISOString()
                 });
                 last = this.children.findByModel(last);
+                this.collection.comparator = Message.comparator;
+                this.collection.pageableCollection.comparator = Message.comparator;
+                this.collection.sort();
                 last.el.scrollIntoView();
             }
         },
@@ -602,17 +595,24 @@ App.module('Message', function (Message, App) {
         },
 
         regions: {
-            'list': '.list',
-            'editor': '.editor'
+            list: '.list',
+            editor: '.editor'
         },
 
         ui: {
-            'list': '.list',
-            'editor': '.editor'
+            list: '.list',
+            editor: '.editor'
         },
 
         events: {
             'keyup .editor': 'resize'
+            // 'scroll .scroll': 'scroll'
+        },
+
+        scroll: function (e) {
+            if (e.target.scrollTop < 100) {
+                this.getCollection().pageableCollection.getNextPage();
+            }
         },
 
         resize: function () {
@@ -715,14 +715,19 @@ App.module('Message', function (Message, App) {
             dialog.getRegion('list').show(listView);
             dialog.getRegion('editor').show(editor);
             list.getFirstPage();
-            setTimeout(function () {
-                var hasUnread = _.some(list.fullCollection.models, function (model) {
-                    return model.get('unread')
+            list.once('finish', function () {
+                dialog.el.querySelector('.scroll').on('scroll', function (e) {
+                    dialog.scroll.call(dialog, e);
                 });
-                if (hasUnread || App.config.message.read.empty) {
-                    $.getJSON('/api/message/read?target_id=' + options.id, dialog.read);
-                }
-            }, App.config.message.read.delay);
+                setTimeout(function () {
+                    var hasUnread = _.some(list.fullCollection.models, function (model) {
+                        return model.get('unread')
+                    });
+                    if (hasUnread || App.config.message.read.empty) {
+                        $.getJSON('/api/message/read?target_id=' + options.id, dialog.read);
+                    }
+                }, App.config.message.read.delay);
+            });
             return dialog;
         }
     });

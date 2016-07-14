@@ -158,7 +158,7 @@ class Context {
     _param(object, name, defaultValue) {
         if (name in object) {
             var value = object[name];
-            if (name.length >= 2 && (name.indexOf('id') === name.length - 2)) {
+            if (name.length >= 2 && (name.indexOf('id') === name.length - 2) && 'string' === typeof value) {
                 if (!/[\da-f]{24}/i.test(value)) {
                     this.invalid(name, 'ObjectID');
                 }
@@ -223,10 +223,11 @@ class Context {
         return params;
     }
 
-    ids() {
-        return $.param('ids').split('.').map(function (id) {
-            return ObjectID(id)
-        });
+    ids(name) {
+        if (!name) {
+            name = 'ids';
+        }
+        return $.param(name).split('.').map(ObjectID);
     }
 
     merge() {
@@ -334,10 +335,6 @@ class Context {
                 'access-control-allow-origin': '*'
             }
                 : {'content-type': 'application/json; charset=utf-8'};
-            // let _order = this.order;
-            // if (_order) {
-            //     headers.order = JSON.stringify(_order);
-            // }
             if (jsonp) {
                 data = [jsonp, '(', data, ')'].join('');
             }
@@ -352,7 +349,7 @@ class Context {
             this.res.end(data);
         }
 
-        if ('GET' != this.req.method) {
+        if (config.request.log && 'GET' != this.req.method) {
             var record = {
                 client_id: this.req.client_id,
                 route: this.req.url.route.length > 1 ? this.req.url.route : this.req.url.route[0],
@@ -423,7 +420,7 @@ class Context {
     }
 
     get db() {
-        return this.server.mongoose.connection;
+        return this.server.db;
     }
 
     get skip() {

@@ -50,7 +50,7 @@ if (window.indexedDB) {
                 var schema = options.schema;
                 var db = e.target.result;
                 for (var name in schema) {
-                    var store  =db.createObjectStore(name, {keyPath: '_id'});
+                    var store = db.createObjectStore(name, {keyPath: '_id'});
                     var storeSchema = schema[name];
                     _.each(storeSchema.keys, function (key) {
                         store.createIndex(key, key, {unique: true});
@@ -131,7 +131,7 @@ else {
             resolve(object)
         });
     };
-    
+
     App.Database = Marionette.Object.extend({
         initialize: function () {
             this.db = {};

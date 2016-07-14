@@ -7,6 +7,7 @@ var _ = require('underscore');
 var fs = require('fs');
 var http = require('http');
 var mongoose = require('mongoose');
+var mongodb = require('mongodb');
 var utils = require('./utils');
 var twilio = require('twilio');
 
@@ -19,7 +20,7 @@ var socket = require('./labiak/socket');
 var code = require('./code');
 var errors = require('./errors');
 
-process.cwd(__dirname);
+process.chdir(__dirname);
 var modules = {};
 var socketFileNames = [config.file];
 
@@ -59,13 +60,15 @@ class Server {
     constructor(config) {
         this.start = start;
         fs.access(config.mongo.file, fs.R_OK, (err) => {
+            var url = err ? config.mongo.uri : config.mongo.file;
             var options = 'freebsd' == process.platform ? {} : config.mongo.options || {};
-            this.mongoose = err
-                ? mongoose.connect(config.mongo.uri, options)
-                : mongoose.connect(config.mongo.file, options);
-            this.mongoose.connection.on('error', Server.onMongoError.bind(this));
-            this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
-            this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token);
+            mongodb.MongoClient.connect(url, config.mongo.options, (err, db) => {
+                this.db = db;
+                this.mongoose = mongoose.connect(url, options);
+                this.mongoose.connection.on('error', Server.onMongoError.bind(this));
+                this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
+                this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token); 
+            });
         });
     }
 
