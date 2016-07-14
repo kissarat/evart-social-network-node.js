@@ -24,11 +24,12 @@
     <script src="/js/domic.js"></script>
     <script src="/js/ui.js"></script>
 </div>
-<div data-children="persons" data-template="#person"></div>
-<template id="person">
-    <div data-name="value"></div>
-    <div data-age="value"></div>
-</template>
+<table data-children="persons" data-tag="tr">
+    <template>
+        <td data-value="name"></td>
+        <td data-value="age"></td>
+    </template>
+</table>
 <script>
     var api = new Ajax({base: '/api/'});
 

@@ -8,7 +8,10 @@ function domic(name, object) {
     var element = name instanceof Element ? name : document.createElement(name);
 
     function bind(element, property, attribute) {
-        element.dataset[property] = attribute || 'value';
+        if (!attribute) {
+            attribute = 'value';
+        }
+        element.dataset[attribute] = property;
     }
 
     for (var key in object) {
@@ -92,14 +95,35 @@ function domic(name, object) {
                         child.innerHTML = value;
                     }
                 }
-            })
+            });
         }
     }
     return element;
 }
 
-domic.import = function() {
-    return document.importNode(document.querySelector(selector), true).content;
+domic.tag = function (name, attributes, children) {
+    var tag = document.createElement(name);
+    if ('string' === typeof attributes) {
+        tag.value = attributes;
+    }
+    else if (attributes) {
+        for(var key in attributes) {
+            var value = attributes[key];
+            if ('boolean' == typeof value) {
+                tag[key] = value;
+            }
+            else {
+                tag.setAttribute(name, value);
+            }
+        }
+    }
+    if ('string' === typeof children) {
+        tag.innerHTML = children;
+    }
+    else {
+        tag.append(children);
+    }
+    return tag;
 };
 
 domic.update = function (element, changes) {
@@ -111,37 +135,54 @@ domic.update = function (element, changes) {
     function _update(element) {
         var children;
         if (element.dataset.children) {
-            if (element.dataset.children in changes) {
-                var template = document.querySelector(element.dataset.template);
+            var childrenName = element.dataset.children;
+            if (childrenName in changes) {
+                var template = element.dataset.template
+                    ? document.querySelector(element.dataset.template)
+                    : element.querySelector('template');
+                if (!template) {
+                    throw new Error('Template not found');
+                }
                 var fragment = document.createDocumentFragment();
-                children = changes[element.dataset.children];
-                children.forEach(function (object) {
-                    var child;
-                    if (object.id) {
-                        child = element.querySelector('[data-id="' + object.id + '"]')
-                    }
-                    if (!child) {
-                        child = document.createElement('div');
-                        child.appendChild(document.importNode(template, true).content);
+                children = changes[childrenName];
+                if (children) {
+                    children.forEach(function (object) {
+                        var child;
                         if (object.id) {
-                            child.dataset.id = object.id;
+                            child = element.querySelector('[data-id="' + object.id + '"]');
                         }
-                        fragment.appendChild(child);
-                    }
-                    domic.update(child, object);
-                });
+                        if (!child) {
+                            child = document.createElement(element.dataset.tag || 'div');
+                            child.appendChild(document.importNode(template, true).content);
+                            if (object.id) {
+                                child.dataset.id = object.id;
+                            }
+                            fragment.appendChild(child);
+                        }
+                        domic.update(child, object);
+                    });
+                }
+                else {
+                    element.innerHTML = '';
+                }
                 element.appendChild(fragment);
             }
         }
         else {
-            for (var key in changes) {
-                var attribute = element.dataset[key];
-                if (attribute) {
+            for (var attribute in element.dataset) {
+                var key = element.dataset[attribute];
+                var value = changes[key];
+                if (key in changes) {
                     if ('value' == attribute) {
-                        element.innerHTML = changes[key];
+                        if ('value' in element) {
+                            element.value = value;
+                        }
+                        else {
+                            element.innerHTML = value;
+                        }
                     }
                     else {
-                        element.setAttribute(key, changes[key]);
+                        element.setAttribute(attribute, value);
                     }
                 }
             }
@@ -158,20 +199,4 @@ domic.update = function (element, changes) {
     }
 
     _update(element, changes);
-};
-
-domic.trace = function (element, useCapture) {
-    if ('string' == typeof element) {
-        element = document.querySelector(element);
-    }
-    element.addEventListener('update', function () {
-        console.log(this.innerHTML);
-    }, useCapture);
-    var array = element.childNodes;
-    for (var i = 0; i < array.length; i++) {
-        var child = array[i];
-        if (child instanceof Element) {
-            domic.trace(child, useCapture);
-        }
-    }
 };
