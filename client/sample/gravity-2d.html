@@ -19,20 +19,31 @@
     var t = performance.now();
     var play = false;
     var canvas = document.querySelector('canvas');
+    var size = {
+        ratio: 1.5,
+        get x() {
+            return this.width / 2
+        },
+        get y() {
+            return this.height / 2
+        },
+        get width() {
+            return innerWidth * this.ratio
+        },
+        get height() {
+            return innerHeight * this.ratio
+        }
+    };
     canvas.width = innerWidth;
     canvas.height = innerHeight;
-    var center = {
-        x: innerWidth / 2,
-        y: innerHeight / 2
-    };
-    var dc = Math.max(innerHeight, innerWidth);
+    var dc = Math.max(size.height, size.width);
     var g = canvas.getContext('2d');
     var objects = [];
-    for(var i = 0; i < number; i++) {
+    for (var i = 0; i < number; i++) {
         let color = [256 * Math.random(), 256 * Math.random(), 256 * Math.random()];
         objects.push({
-            x: Math.random() * innerWidth,
-            y: Math.random() * innerHeight,
+            x: Math.random() * size.width,
+            y: Math.random() * size.height,
             r: 3 + Math.random() * 50,
             vx: 0,
             vy: 0,
@@ -40,16 +51,17 @@
         })
     }
 
+    g.scale(1/size.ratio, 1/size.ratio);
     g.fillStyle = 'black';
-    g.fillRect(0, 0, innerWidth, innerHeight);
+    g.fillRect(0, 0, size.width, size.height);
 
     function animate() {
         var now = performance.now();
         var dt = now - t;
         t = now;
-        for(let i = 0; i < number; i++) {
+        for (let i = 0; i < number; i++) {
             let a = objects[i];
-            for(let j = 0; j < number; j++) {
+            for (let j = 0; j < number; j++) {
                 if (i !== j) {
                     let b = objects[j];
                     let dx = a.x - b.x;
@@ -73,14 +85,14 @@
 //        g.fillStyle = 'rgba(' + [bg,bg,bg].join(',') + ',0.1)';
         var opacity = 0.002 + Math.abs(Math.pow(Math.sin(t / 1500), 0.5)) * 0.1;
         g.fillStyle = 'rgba(0,0,0,' + opacity + ')';
-        g.fillRect(0, 0, innerWidth, innerHeight);
-        for(let i = 0; i < number; i++) {
+        g.fillRect(0, 0, size.width, size.height);
+        for (let i = 0; i < number; i++) {
             let a = objects[i];
             a.x += a.vx * k * dt / number;
             a.y += a.vy * k * dt / number;
             g.beginPath();
-            let dx = a.x - center.x;
-            let dy = a.y - center.y;
+            let dx = a.x - size.x;
+            let dy = a.y - size.y;
             let d = Math.pow(Math.sqrt(dx * dx + dy * dy) / dc, 0.2);
             if (d > 1) {
                 d = 1;

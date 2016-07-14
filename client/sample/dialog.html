@@ -20,50 +20,12 @@
     <script src="/lib/jquery-ui/jquery-ui.js"></script>
     <script src="/lib/backbone/backbone.js"></script>
     <script src="/lib/backbone.paginator/lib/backbone.paginator.js"></script>
+    <script src="/js/ajax.js"></script>
+    <script src="/js/domic.js"></script>
     <script src="/js/ui.js"></script>
 </div>
 <script>
-    _.mixin({
-        params: function (object) {
-            var array = [];
-            for (var i in object) {
-                array.push(i + '=' + object[i]);
-            }
-            return array.join('&')
-        }
-    });
-
-    function API(prefix) {
-        this.prefix = prefix;
-    }
-
-    API.promise = function (xhr) {
-        return new Promise(function (resolve, reject) {
-            xhr.addEventListener('load', function () {
-                resolve(JSON.parse(xhr.responseText));
-            });
-        });
-    };
-
-    API.prototype = {
-        GET: function (path, params) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', this.createURL(path, params));
-            xhr.send(null);
-            return API.promise(xhr);
-        },
-
-        createURL: function (path, params) {
-            var url = this.prefix + path;
-            if (!_.isEmpty(params)) {
-                if ('object' == typeof params) {
-                    params = _.params(params)
-                }
-                url += '?' + params;
-            }
-            return url;
-        }
-    };
+    var api = new Ajax({base: '/api/'});
 
     var Collection = Backbone.PageableCollection.extend({
         mode: 'infinite',
@@ -107,7 +69,6 @@
         }
     });
 
-    var api = new API('/api/');
     var collection;
 
     api.GET('user', location.hash.slice(1)).then(function (user) {
