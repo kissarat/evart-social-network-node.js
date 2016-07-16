@@ -36,11 +36,11 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/kissarat/socex2.git"
+    "url": "git+ssh://git@gitlab.com/kissarat/socex.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/kissarat/socex2/issues"
+    "url": "https://gitlab.com/kissarat/socex/issues"
   },
-  "homepage": "https://gitlab.com/kissarat/socex2#README",
+  "homepage": "https://gitlab.com/kissarat/socex#README",
   "description": ""
 }

@@ -1,5 +1,6 @@
 {
   "dev": true,
+  "maintenance": true,
   "file": "/tmp/socex-api.sock",
   "socket": {
     "port": 8080

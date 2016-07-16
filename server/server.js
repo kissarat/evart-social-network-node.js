@@ -21,6 +21,7 @@ var code = require('./code');
 var errors = require('./errors');
 
 process.chdir(__dirname);
+
 var modules = {};
 var socketFileNames = [config.file];
 
