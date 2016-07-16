@@ -1,162 +1,283 @@
 "use strict";
-
-App.setupError = function (name, reject) {
-    if (reject) {
-        return function (e) {
-            console.error(name, e);
-            reject(e);
-        }
+function Database(engine, options) {
+    var self = this;
+    _.extend(this, options);
+    this.events = {};
+    if (!engine) {
+        engine = window.indexedDB ? 'IndexedDB' : 'LocalStorage';
     }
-    else {
-        return function (e) {
-            console.error(name, e);
+    this.engine = engine;
+    if (options.error) {
+        this.on('error', options.error);
+    }
+
+    _.each(Database[engine], function (method, name) {
+        self[name] = method;
+    });
+    this.initialize(_.defaults(options || {}, {
+        name: 'db',
+        version: 1
+    }));
+    this.queryFromParams = options.queryFromParams || function (object) {
+            return object;
+        };
+    addEventListener('beforeunload', function () {
+        self.destroy();
+    });
+
+    this.id = 0;
+}
+
+Database.prototype = {
+    on: function (event, handler) {
+        if (!this.events[event]) {
+            this.events[event] = [];
         }
+        this.events[event].push(handler);
+        return this.events[event].indexOf(handler) + 1;
+    },
+
+    trigger: function (event) {
+        if (event in this.events) {
+            var self = this;
+            var args = [].slice.call(arguments, 1);
+            this.events[event].forEach(function (cb) {
+                cb.apply(self, args);
+            });
+        }
+    },
+
+    promise: function (event, request) {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            request.addEventListener('success', function (e) {
+                self.trigger(event, e.target.result, e);
+                resolve.call(self, e.target.result, e);
+            });
+            request.addEventListener('error', function (e) {
+                self.trigger('error', e, event);
+                reject(e);
+            })
+        })
+    },
+
+    find: function (name, where) {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            var result = [];
+            var match = _.matcher(where);
+            self.iterate(name, function (cursor) {
+                if (cursor) {
+                    if (match(cursor.value)) {
+                        result.push(cursor.value);
+                    }
+                    cursor.continue();
+                }
+                else {
+                    resolve(result);
+                }
+            }, reject)
+        });
+    },
+
+    _resolveObject: function (object) {
+        if (object.attributes) {
+            object = object.attributes;
+        }
+        if (!object._id) {
+            object._id = this.createId();
+            object.time = new Date().toISOString();
+        }
+        return object;
+    },
+
+    createId: function () {
+        return ++this.id;
+    },
+
+    api: function (path, params) {
+        var xhr = new XMLHttpRequest();
+        xhr.open()
     }
 };
 
-function requestPromise(request, method) {
-    return new Promise(function (resolve, reject) {
+Database.IndexedDB = {
+    initialize: function (options) {
+        var self = this;
+        var request = indexedDB.open(options.name, options.version);
+        this.promise('open', request).then(function (db) {
+            self.db = db;
+        });
+        request.addEventListener('upgradeneeded', function (e) {
+            self.db = e.target.result;
+            self.upgrade(options.schema || {});
+        })
+    },
+
+    upgrade: function (schema) {
+        for (var name in schema) {
+            var store = this.db.createObjectStore(name, {keyPath: '_id'});
+            var storeSchema = schema[name];
+            _.each(storeSchema.keys, function (key) {
+                store.createIndex(key, key, {unique: true});
+            });
+            _.each(storeSchema.indexes, function (key) {
+                store.createIndex(key, key, {unique: false});
+            });
+        }
+    },
+
+    handleError: function (name, request) {
+        var self = this;
+        request.addEventListener('error', function (e) {
+            self.on('error', e, name);
+        });
+        return request;
+    },
+
+
+    transaction: function (name, isWrite) {
+        return this.handleError('transaction',
+            this.db.transaction(name, isWrite ? 'readwrite' : 'readonly')
+        );
+    },
+
+    storage: function (name, isWrite) {
+        return this
+            .transaction(name, isWrite)
+            .objectStore(name);
+    },
+
+    create: function (name, object) {
+        return this.promise('create', this.storage(name, true).add(
+            this._resolveObject(object)
+        ));
+    },
+
+    update: function (name, object) {
+        return this.promise('update', this.storage(name, true).put(
+            this._resolveObject(object)
+        ));
+    },
+
+    iterate: function (name, resolve, reject) {
+        var request = this.storage(name, false).openCursor();
         request.addEventListener('success', function (e) {
             resolve(e.target.result);
         });
-        request.addEventListener('error', App.setupError(method, reject));
-    });
-}
-
-function _resolveObject(object) {
-    if (object.attributes) {
-        object = object.attributes;
+        request.addEventListener('error', reject);
     }
-    if (!object._id) {
-        object._id = _.hex_time();
-        object.time = new Date(parseInt(object._id, 16)).toISOString();
-    }
-    return object;
-}
+};
 
-if (window.indexedDB) {
-    App.Database = Marionette.Object.extend({
-        initialize: function (options) {
-            var self = this;
-            var request = indexedDB.open(options.name, options.version);
-            request.addEventListener('error', function (e) {
-                console.error(e);
-            });
-            request.addEventListener('success', function (e) {
-                self.db = e.target.result;
-                self.trigger('open', e.target.result);
-            });
-            request.addEventListener('upgradeneeded', function (e) {
-                var schema = options.schema;
-                var db = e.target.result;
-                for (var name in schema) {
-                    var store = db.createObjectStore(name, {keyPath: '_id'});
-                    var storeSchema = schema[name];
-                    _.each(storeSchema.keys, function (key) {
-                        store.createIndex(key, key, {unique: true});
-                    });
-                    _.each(storeSchema.indexes, function (key) {
-                        store.createIndex(key, key, {unique: false});
-                    });
+Database.LocalStorage = {
+    initialize: function () {
+        this.db = {};
+        if (this.store) {
+            for (var name in this.schema) {
+                var _name = this._getStorageName(name);
+                try {
+                    this.db[name] = JSON.parse(localStorage.getItem(_name));
                 }
-            })
-        },
-
-        /**
-         *
-         * @param name
-         * @param mode
-         * @returns IDBTransaction
-         */
-        transaction: function (name, mode) {
-            var t = this.db.transaction(name, mode ? 'readwrite' : 'readonly');
-            t.addEventListener('error', App.setupError('IDBTransaction'));
-            return t;
-        },
-
-        add: function (name, object) {
-            object = _resolveObject(object);
-            var request = this
-                .transaction(name, true)
-                .objectStore(name)
-                .add(object);
-            request.addEventListener('success', function () {
-                localStorage.setItem(name + '_last', object._id);
-            });
-            request.addEventListener('error', App.setupError('add'));
-            return request;
-        },
-
-        put: function (name, object) {
-            object = _resolveObject(object);
-            var request = this
-                .transaction(name, true)
-                .objectStore(name)
-                .put(object);
-            request.addEventListener('error', App.setupError('put'));
-            return request;
-        },
-
-        store: function (name, mode) {
-            return this
-                .transaction(name, mode)
-                .objectStore(name);
-        },
-
-        getById: function (name, id) {
-            return requestPromise(this.store(name).get(id), 'getById');
-        },
-
-        count: function (name) {
-            return requestPromise(this.store(name).count(), 'count');
-        },
-
-        setupResolve: function (resolve) {
-            return function (e) {
-                resolve(e.target.result);
+                catch (ex) {
+                    localStorage.removeItem(_name);
+                }
             }
-        },
-
-        iterate: function (name, mode) {
-            return requestPromise(this.store(name, mode).openCursor());
         }
-    });
-}
-else {
-    var _put = function (name, object) {
-        object = _resolveObject(object);
-        var storage = this.store(name);
+    },
+
+    storage: function (name) {
+        return this.db[name] || (this.db[name] = {});
+    },
+
+    _put: function (name, object) {
+        var storage = this.storage(name);
         return new Promise(function (resolve) {
             storage[object._id] = object;
             resolve(object)
         });
-    };
+    },
 
-    App.Database = Marionette.Object.extend({
-        initialize: function () {
-            this.db = {};
-        },
+    put: function (name, object) {
+        object._retrived = new Date().toISOString();
+        return this._put(name, object);
+    },
 
-        store: function (name) {
-            if (!(name in this.db)) {
-                this.db[name] = {};
+    create: function (name, object) {
+        this._put(name, object);
+    },
+
+    update: function (name, object) {
+        this._put(name, object);
+    },
+
+    _store: function () {
+        var self = this;
+        _.each(this.db, function (value, name) {
+            if (!_.isEmpty(value)) {
+                value = JSON.stringify(value);
+                localStorage.setItem(self._getStorageName(name), value);
             }
-            return this.db[name];
-        },
+        })
+    },
 
-        add: _put,
-        put: _put,
-
-        getById: function (name, id) {
-            var storage = this.store(name);
-            return new Promise(function (resolve) {
-                resolve(storage[id]);
-            });
+    destroy: function () {
+        if (this.store) {
+            try {
+                this._store();
+            }
+            catch (ex) {
+                this.drop();
+            }
         }
-    });
-}
+    },
 
-App.local = new App.Database({
+    _getStorageName: function (name) {
+        return this.name + '.' + name;
+    },
+
+    iterate: function (name, resolve) {
+        var storage = this.db[name];
+        if (_.isEmpty(storage)) {
+            resolve();
+        }
+        else {
+            resolve(new Database.LocalStorage.Cursor(storage, {
+                continue: function () {
+                    this.i++;
+                    resolve(this.i < this.values.length ? this : null);
+                }
+            }));
+        }
+    },
+
+    drop: function (name) {
+        if (name) {
+            if (this.store) {
+                localStorage.removeItem(this._getStorageName(name));
+            }
+            delete this.db[name];
+        }
+        else {
+            for (name in this.db) {
+                this.drop(name);
+            }
+        }
+    }
+};
+
+Database.LocalStorage.Cursor = function Cursor(storage, options) {
+    _.extend(this, options);
+    this.i = 0;
+    this.values = _.values(storage);
+};
+
+Database.LocalStorage.Cursor.prototype = {
+    get value() {
+        return this.values[this.i];
+    }
+};
+
+App.local = new Database('LocalStorage', {
     name: 'socex',
     version: 1,
     schema: {
@@ -174,16 +295,18 @@ App.local = new App.Database({
         video: {},
         photo: {},
         user_informer: {}
+    },
+    store: false,
+    error: function (e) {
+        console.error(e);
     }
 });
 
-
-var _getById = App.local.getById;
 App.local.getById = function (name, id) {
     var self = this;
     var storage_name = name.replace(/\//g, '_');
     return new Promise(function (resolve, reject) {
-        _getById.call(self, storage_name, id).then(function (object) {
+        App.local.find(storage_name, {_id: id}).then(function (object) {
             if (object) {
                 resolve(object);
             }
@@ -194,29 +317,10 @@ App.local.getById = function (name, id) {
                         resolve(object);
                         if (object) {
                             object._retrived = new Date().toISOString();
-                            self.add(storage_name, object);
+                            self.create(storage_name, object);
                         }
                     });
             }
         })
-    });
-};
-
-App.local.find = function (name, where) {
-    var self = this;
-    return new Promise(function (resolve, reject) {
-        var result = [];
-        var match = _.matcher(where);
-        self.iterate(name).catch(reject).then(function (cursor) {
-            if (cursor) {
-                if (match(cursor.value)) {
-                    result.push(cursor.value);
-                }
-                cursor.continue();
-            }
-            else {
-                resolve(result);
-            }
-        });
     });
 };

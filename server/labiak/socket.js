@@ -10,8 +10,8 @@ class WebSocketServer extends EventEmitter {
         super();
         _.extend(this, options);
         this.socketServer = new ws.Server(this.config);
-        utils.subscribe('server', this.socketServer, this);
         this.subscribers = {};
+        this.socketServer.on('connection', this.onConnection.bind(this));
     }
 
     onConnection(socket) {
@@ -52,7 +52,8 @@ class WebSocketServer extends EventEmitter {
         else if (agent_id in subscriber) {
             this.unsubscribe(user_id, agent_id);
         }
-        utils.subscribe('socket', $.socket, subscriber);
+        $.socket.on('message', this.onMessage.bind(subscriber));
+        $.socket.on('close', this.onClose.bind(subscriber));
     }
 
     onMessage(message) {
@@ -110,7 +111,7 @@ class WebSocketServer extends EventEmitter {
 }
 
 class WebSocket {
-    constructor() {
+    constructor(options) {
         _.extend(this, options);
     }
 

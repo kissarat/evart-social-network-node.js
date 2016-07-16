@@ -123,7 +123,8 @@ class Server {
         this.log('info', 'HTTP server connection opened');
         fs.chmodSync(config.file, parseInt('777', 8));
         var server = new socket.WebSocketServer({
-            config: config.socket
+            config: config.socket,
+            server: this
         });
         server.on('connection', this.onWebSocketConnection.bind(this));
         this.onWebSocketConnection(server);

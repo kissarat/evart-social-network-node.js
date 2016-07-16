@@ -35,7 +35,22 @@ Socket.prototype = {
                     console.error('INVALID_JSON', e.data);
                 }
                 if (message.type) {
-                    self.trigger(message.type, message);
+                    switch (message.type) {
+                        case 'echo':
+                            console.log(message);
+                            App.socket.push({
+                                target: message.source
+                            });
+                            break;
+
+                        case 'log':
+                            console.log(message);
+                            break;
+
+                        default:
+                            self.trigger(message.type, message);
+                            break;
+                    }
                 } else {
                     console.error('UNKNOWN_MESSAGE', message);
                 }
