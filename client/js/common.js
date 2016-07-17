@@ -121,6 +121,7 @@ function logPromise(p) {
 }
 
 function Service() {
+    var _this = this;
     if (self.Marionette) {
         Marionette.Application.apply(this, arguments);
     }
@@ -155,8 +156,7 @@ function Service() {
             ]
         }
     };
-
-    var _this = this;
+    
     this.features = {
         peer: {
             available: !!window.RTCPeerConnection,

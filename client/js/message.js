@@ -398,7 +398,8 @@ App.module('Message', function (Message, App) {
             '.time': {
                 observe: 'time',
                 onGet: function (value) {
-                    return new Date(value).toLocaleTimeString();
+                    value = new Date(value);
+                    return App.config.message.date ? value.toLocaleString() : value.toLocaleTimeString();
                 }
             }
         },
@@ -449,8 +450,8 @@ App.module('Message', function (Message, App) {
     Message.View.appearance = [];
 
     function attachHtml(collectionView, itemView, index) {
-        if (App.config.substitute) {
-            if (this._isAttached) {
+        if (App.config.message.substitute) {
+            if (this._isAttached && !App.config.message.date) {
                 var now = new Date(itemView.model.get('time'));
                 if (index >= 1) {
                     var time = collectionView.children.findByIndex(index - 1).model.get('time');
@@ -765,6 +766,7 @@ App.module('Message', function (Message, App) {
         },
 
         ui: {
+            attach: '.attach',
             editor: '.text'
         },
 
@@ -797,6 +799,9 @@ App.module('Message', function (Message, App) {
                 this.ui.editor.one('click', function () {
                     this.innerHTML = '';
                 });
+            }
+            if (App.config.message.attach) {
+                this.ui.attach.removeClass('hidden');
             }
         },
 

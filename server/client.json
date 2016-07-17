@@ -35,10 +35,12 @@
     "read": {
       "empty": true,
       "delay": 2000,
-      "appearance": false,
-      "substitute": false
+      "appearance": false
     },
-    "cut": 100
+    "cut": 100,
+    "substitute": true,
+    "attach": true,
+    "date": true
   },
   "attitude": {
     "entities": ["message", "file", "video"]
