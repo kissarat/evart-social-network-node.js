@@ -35,7 +35,8 @@
     "read": {
       "empty": true,
       "delay": 2000,
-      "appearance": false
+      "appearance": false,
+      "substitute": false
     },
     "cut": 100
   },

@@ -145,7 +145,7 @@ App.module('Message', function (Message, App) {
     Message.comparator = function (a, b) {
         // var order = b.getTime() - a.getTime();
         // return order || b.getIndex() - a.getIndex();
-        return a.getIndex() - b.getIndex();
+        return b.getIndex() - a.getIndex();
     };
 
     Message.DialogList = App.PageableCollection.extend({
@@ -449,59 +449,61 @@ App.module('Message', function (Message, App) {
     Message.View.appearance = [];
 
     function attachHtml(collectionView, itemView, index) {
-        if (this._isAttached) {
-            var now = new Date(itemView.model.get('time'));
-            if (index >= 1) {
-                var time = collectionView.children.findByIndex(index - 1).model.get('time');
-                var previousHour = new Date(time).getHours();
-            }
-            if (index < 1 || now.getHours() < previousHour) {
-                var day = $tag('div', null, now.toLocaleDateString());
-                collectionView.el.appendChild(day);
-            }
-        }
-        itemView.$('a').each(function (i, anchor) {
-            anchor.setAttribute('target', '_black');
-            var image = new Image();
-            image.register({
-                load: function () {
-                    anchor.classList.remove('busy');
-                    anchor.classList.add('image');
-                    anchor.appendChild(image);
-                },
-
-                error: function () {
-                    anchor.classList.remove('busy');
-                    var url = decodeURIComponent(anchor.href);
-                    var origin = /\w+:\/\/([^\/]+)\//.exec(url);
-                    var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
-                    if (youtube) {
-                        App.local.getById('video', youtube[1]).then(function (oembed) {
-                            $(anchor).replaceWith(
-                                $(oembed.html)
-                                    .removeAttr('width')
-                                    .removeAttr('height')
-                            );
-                        });
-                    }
-                    else {
-                        if (origin[1].indexOf('wikipedia.org') > 0) {
-                            url = _.last(url.split('/')).replace(/_/g, ' ');
-                        }
-                        else if (url.length > 64) {
-                            var remain = -64 + origin[1].length;
-                            url = origin[1];
-                            if (remain < 0) {
-                                url += '/...' + anchor.href.slice(remain);
-                            }
-                        }
-                        anchor.innerHTML = url;
-                    }
+        if (App.config.substitute) {
+            if (this._isAttached) {
+                var now = new Date(itemView.model.get('time'));
+                if (index >= 1) {
+                    var time = collectionView.children.findByIndex(index - 1).model.get('time');
+                    var previousHour = new Date(time).getHours();
                 }
+                if (index < 1 || now.getHours() < previousHour) {
+                    var day = $tag('div', null, now.toLocaleDateString());
+                    collectionView.el.appendChild(day);
+                }
+            }
+            itemView.$('a').each(function (i, anchor) {
+                anchor.setAttribute('target', '_black');
+                var image = new Image();
+                image.register({
+                    load: function () {
+                        anchor.classList.remove('busy');
+                        anchor.classList.add('image');
+                        anchor.appendChild(image);
+                    },
+
+                    error: function () {
+                        anchor.classList.remove('busy');
+                        var url = decodeURIComponent(anchor.href);
+                        var origin = /\w+:\/\/([^\/]+)\//.exec(url);
+                        var youtube = /youtube\.com\/.+v=([^&]+)/.exec(url);
+                        if (youtube) {
+                            App.local.getById('video', youtube[1]).then(function (oembed) {
+                                $(anchor).replaceWith(
+                                    $(oembed.html)
+                                        .removeAttr('width')
+                                        .removeAttr('height')
+                                );
+                            });
+                        }
+                        else {
+                            if (origin[1].indexOf('wikipedia.org') > 0) {
+                                url = _.last(url.split('/')).replace(/_/g, ' ');
+                            }
+                            else if (url.length > 64) {
+                                var remain = -64 + origin[1].length;
+                                url = origin[1];
+                                if (remain < 0) {
+                                    url += '/...' + anchor.href.slice(remain);
+                                }
+                            }
+                            anchor.innerHTML = url;
+                        }
+                    }
+                });
+                image.classList.add('busy');
+                image.src = anchor.href;
             });
-            image.classList.add('busy');
-            image.src = anchor.href;
-        });
+        }
         Marionette.CollectionView.prototype.attachHtml.apply(this, arguments);
     }
 
@@ -537,7 +539,7 @@ App.module('Message', function (Message, App) {
                 });
                 last = this.children.findByModel(last);
                 this.collection.comparator = Message.comparator;
-                this.collection.pageableCollection.comparator = Message.comparator;
+                // this.collection.pageableCollection.comparator = Message.comparator;
                 this.collection.sort();
                 last.el.scrollIntoView();
             }
@@ -837,7 +839,7 @@ App.module('Message', function (Message, App) {
                     resolve(messages);
                 });
         });
-    };  
+    };
 
     return new Message.Router({
         controller: {

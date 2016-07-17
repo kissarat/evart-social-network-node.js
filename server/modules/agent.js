@@ -4,6 +4,7 @@ var client = require('../client.json');
 var mongoose = require('mongoose');
 var rs = require('randomstring');
 var utils = require('../utils');
+var _ = require('underscore');
 
 global.schema.Agent = new mongoose.Schema({
     _id: utils.idType('Agent'),
@@ -191,6 +192,30 @@ module.exports = {
             data.data = $.body;
         }
         $.send(status, data);
+    },
+
+    sockets: function ($) {
+        if ($.isAdmin) {
+            let sockets = {};
+            let subscribers = $.server.webSocketServer.subscribers;
+            for(let user_id in subscribers) {
+                let subscriber = subscribers[user_id];
+                if (_.isEmpty(subscriber)) {
+                    console.error('No sockets found', user_id);
+                }
+                else {
+                    let first;
+                    for(let agent_id in subscriber) {
+                        first = subscriber[agent_id];
+                    }
+                    sockets[first.user.domain] = Object.keys(subscriber);
+                }
+            }
+            $.send(sockets);
+        }
+        else {
+            return code.FORBIDDEN;
+        }
     }
 };
 

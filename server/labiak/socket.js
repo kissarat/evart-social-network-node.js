@@ -15,51 +15,52 @@ class WebSocketServer extends EventEmitter {
     }
 
     onConnection(socket) {
-        var self = this;
         var $ = this.server.createContext({
             type: 'websocket',
             socket: new WebSocket({
                 // server: this.server,
                 socket: socket
             }),
-            req: this.socketServer.upgradeReq
+            req: socket.upgradeReq
         });
-        $.authorize(function (agent) {
+        $.authorize((agent) => {
             if (agent.user) {
-                self.subscribe($);
-                $.socket.on('close', function () {
-                    delete subscriber[cid];
-                    if (_.isEmpty(subscriber)) {
-                        delete subscribers[uid];
-                    }
-                });
-                subscriber[cid] = $;
+                this.subscribe($);
+                this.emit('connection', $);
             }
             else {
-                $.socket.close();
+                socket.close();
             }
         });
-        this.trigger('connection', this);
     }
 
     subscribe($) {
         let user_id = $.user._id.toString();
         let agent_id = $.agent._id.toString();
-        let subscriber = $.getSubscribers(user_id);
+        let subscriber = this.getSubscribers(user_id);
         if (!subscriber) {
-            subscribers[user_id] = subscriber = {};
+            this.subscribers[user_id] = subscriber = {};
         }
         else if (agent_id in subscriber) {
-            this.unsubscribe(user_id, agent_id);
+            this.unsubscribe(user_id, agent_id, {
+                type: 'error',
+                code: 409,
+                status: 'CONFLICT'
+            });
         }
-        $.socket.on('message', this.onMessage.bind(subscriber));
-        $.socket.on('close', this.onClose.bind(subscriber));
+        subscriber[agent_id] = $;
+        $.socket.socket.on('close', this.onClose.bind($));
+        $.socket.socket.on('message', this.onMessage.bind($));
+        return subscriber;
     }
 
     onMessage(message) {
         message = JSON.parse(message);
-        console.log('SOCKET', message);
         if (message.target_id) {
+            console.log('SOCKET', message);
+            if (!message.source_id) {
+                message.source_id = this.user._id;
+            }
             this.notifyOne(message.target_id, message);
         }
         else {
@@ -68,7 +69,8 @@ class WebSocketServer extends EventEmitter {
     }
 
     onClose() {
-        this.server.log('warn', 'WebSocket server closed');
+        this.server.webSocketServer.unsubscribe(this.user._id, this.agent._id);
+        this.server.log('warn', 'WebSocket closed ' + this.user.domain + ' ' + this.agent._id);
     }
 
     getSubscribers(user_id) {
@@ -78,13 +80,19 @@ class WebSocketServer extends EventEmitter {
         return this.subscribers[user_id.toString()];
     }
 
-    unsubscribe(user_id, agent_id) {
+    unsubscribe(user_id, agent_id, message) {
+        if ('string' !== user_id) {
+            user_id = user_id.toString();
+        }
+        if ('string' !== agent_id) {
+            agent_id = agent_id.toString();
+        }
         var subscribers = this.getSubscribers(user_id);
-        if (agent_id) {
+        if ('string' === typeof agent_id) {
             if (subscribers) {
                 let subscriber = subscribers[agent_id];
                 if (subscriber) {
-                    subscriber.socket.close();
+                    subscriber.close(message);
                     delete subscribers[agent_id];
                     if (_.isEmpty(subscribers)) {
                         delete this.subscribers[user_id];
@@ -93,9 +101,9 @@ class WebSocketServer extends EventEmitter {
                 }
             }
         }
-        else {
+        else if ('object' === typeof agent_id) {
             _.each(subscribers, function (subscriber) {
-                subscriber.socket.close();
+                subscriber.close(agent_id);
             });
             delete this.subscribers[user_id];
             return _.isEmpty(subscribers) ? false : subscribers;
@@ -122,10 +130,16 @@ class WebSocket {
         this.socket.send(JSON.stringify(message));
     }
 
-    close() {
-        var isOpen = true;
+    close(message) {
+        var isOpen = this.socket.OPEN === this.socket.readyState;
+        if (!message) {
+            message = {
+                code: code.OK,
+                status: 'OK'
+            }
+        }
         if (isOpen) {
-            this.socket.close();
+            this.socket.close(message.code, JSON.stringify(message));
         }
         return isOpen;
     }

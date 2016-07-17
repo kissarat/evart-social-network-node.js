@@ -127,7 +127,7 @@ class Server {
             config: config.socket,
             server: this
         });
-        server.on('connection', this.onWebSocketConnection.bind(this));
+        // server.on('connection', this.onWebSocketConnection.bind(this, server));
         this.onWebSocketConnection(server);
     }
 

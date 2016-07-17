@@ -39,7 +39,8 @@ Socket.prototype = {
                         case 'echo':
                             console.log(message);
                             App.socket.push({
-                                target: message.source
+                                type: 'log',
+                                target_id: message.source_id
                             });
                             break;
 

@@ -286,7 +286,8 @@ class Context {
     allowFields(user_fields, admin_fields) {
         var data = {};
         for (var key in this.body) {
-            if ('admin' == this.user.type || (!admin_fields && admin_fields.indexOf(key) >= 0) || user_fields.indexOf(key) >= 0) {
+            let allow = this.isAdmin || user_fields.indexOf(key) >= 0;
+            if (allow) {
                 data[key] = this.body[key];
             }
         }
@@ -581,6 +582,12 @@ class Context {
     
     get isAdmin() {
         return 'admin' === this.user.type;
+    }
+    
+    close() {
+        if (this.socket) {
+            
+        }
     }
 }
 

@@ -261,7 +261,7 @@ module.exports = {
                 targets.push(id)
             }
         });
-        targets = _.uniq(targets).map(ObjectID);
+        targets = _.uniq(targets);
         $.accessUser(targets).then(function (allow) {
             if (allow) {
                 message = new Message(message);

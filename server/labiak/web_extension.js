@@ -464,9 +464,7 @@ module.exports = {
     },
 
     accessUser: function (user_id) {
-        if (!(user_id instanceof ObjectID || user_id[0] instanceof ObjectID)) {
-            throw new Error();
-        }
+        user_id = user_id instanceof Array ? user_id.map(ObjectID) : ObjectID(user_id); 
         var where = {deny: {$ne: this.user._id}};
         if (user_id instanceof Array && 1 === user_id.length) {
             user_id = user_id[0];
