@@ -68,6 +68,8 @@ class Context {
         ['wrap', 'answer'].forEach(function (name) {
             self[name] = self[name].bind(self);
         })
+
+        this.success = this.success.bind(this);
     }
 
     invalid(name, value) {

@@ -67,6 +67,7 @@ global.schema.Agent = new mongoose.Schema({
 
     ip: utils.StringType()
 }, {
+    collection: 'agent',
     versionKey: false
 });
 

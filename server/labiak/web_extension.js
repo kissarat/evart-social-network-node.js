@@ -307,7 +307,7 @@ module.exports = {
     },
 
     exec: function (action) {
-        var canAnonymous = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
+        var canAnonymous = /^.(agent|user)/.test(this.req.url.original);
 
         if (this.isAuthenticated || canAnonymous || this.isCache) {
             let size = this.bodySize;

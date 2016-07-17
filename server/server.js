@@ -62,7 +62,7 @@ class Server {
         this.start = start;
         fs.access(config.mongo.file, fs.R_OK, (err) => {
             var url = err ? config.mongo.uri : config.mongo.file;
-            var options = 'freebsd' == process.platform ? {} : config.mongo.options || {};
+            var options = 'linux' == process.platform ? {} : config.mongo.options || {};
             mongodb.MongoClient.connect(url, config.mongo.options, (err, db) => {
                 this.db = db;
                 this.mongoose = mongoose.connect(url, options);

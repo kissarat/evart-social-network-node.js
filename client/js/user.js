@@ -173,6 +173,8 @@ App.module('User', function (User, App) {
     });
 
     User.Signup = Backbone.Model.extend({
+        url: '/api/user',
+
         validation: {
             phone: {
                 required: true,
@@ -232,7 +234,14 @@ App.module('User', function (User, App) {
 
         login: function () {
             if (this.model.isValid(true)) {
-                App.login(this.model.attributes);
+                App.login(this.model.attributes, function (agent, xhr) {
+                    if (code.UNAUTHORIZED === xhr.status) {
+                        alert('Wrong login or password');
+                    }
+                    else {
+                        console.error('Something wrong happened when authenticate');
+                    }
+                });
             }
         }
     });
@@ -245,7 +254,7 @@ App.module('User', function (User, App) {
         },
 
         regions: {
-            loginRegion: '.login-region'
+            login: '.login-region'
         },
 
         behaviors: {
@@ -317,23 +326,11 @@ App.module('User', function (User, App) {
 
         personal: function () {
             var self = this;
-            this.model.set(this.el.serialize());
             var fields = ['password', 'domain', 'email', 'forename', 'surname'];
             if (this.model.isValid(fields)) {
-                data = {};
-                for (var j = 0; j < fields.length; j++) {
-                    var key = fields[j];
-                    data[key] = this.model.get(key);
-                }
-                $.sendJSON('POST', '/api/user/personal', data, function (data) {
-                    if (data.success) {
+                this.model.save(null, {
+                    success: function () {
                         App.navigate('/login');
-                    }
-                    else if (data.invalid) {
-                        for (var name in data.invalid) {
-                            var info = data.invalid[name];
-                            self.$el.report(name, info.message, 'error');
-                        }
                     }
                 });
             }
@@ -760,10 +757,13 @@ App.module('User', function (User, App) {
             if (back) {
                 this.ui.background[0].setBackground(back);
             }
-            else {
+            else if (this.model.get('_id')) {
                 back = this.model.get('_id')[23];
                 back = parseInt(back, 16) >> 1;
                 this.ui.background[0].setBackground('/images/bg/' + back + '.jpg');
+            }
+            else {
+                console.log('Something wrong');
             }
             if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();
@@ -1010,7 +1010,7 @@ App.module('User', function (User, App) {
                     model: new User.Signup()
                 });
                 App.getPlace('main').show(signup);
-                signup.loginRegion.show(new User.LoginForm({
+                signup.getRegion('login').show(new User.LoginForm({
                     model: new User.Login()
                 }));
             },

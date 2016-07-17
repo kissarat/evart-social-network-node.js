@@ -217,7 +217,7 @@ module.exports = {
 
     _before: function ($) {
         var last = _.last($.req.url.route);
-        if ($.isUpdate && !_.contains(['exists', 'phone', 'code', 'personal', 'login'], last)) {
+        if ('POST' != $.req.method && $.isUpdate && !_.contains(['exists', 'phone', 'code', 'personal', 'login'], last)) {
             return $.canManage($.id);
         }
         return true;
@@ -246,6 +246,14 @@ module.exports = {
     },
 
     POST: function ($) {
+        var data = _.pick($.body, 'password', 'domain', 'email', 'forename', 'surname');
+        data.phone = $.agent.phone;
+        var user = new User(data);
+        user.hash = utils.hash(user.password);
+        return user.save();
+    },
+/*
+    PUT: function ($) {
         var data = $.allowFields(User.fields.update.group, User.fields.update.admin);
         data.type = 'group';
         var user = new User(data);
@@ -258,17 +266,7 @@ module.exports = {
             });
         }));
     },
-
-    PUT: function ($) {
-        var data = $.allowFields(User.fields.update.user, User.fields.update.admin);
-        // data.time = Date.now();
-        return User.update({_id: $.id}, {
-            $set: data
-        }, {
-            "new": true
-        });
-    },
-
+*/
     PATCH: function ($) {
         var id = $.id || $.user._id;
         return new Promise(function (resolve, reject) {
@@ -538,11 +536,7 @@ module.exports = {
             }
 
             if (user) {
-                $.send({
-                    error: {
-                        message: 'The phone number already registered'
-                    }
-                });
+                $.send({error: {message: 'The phone number already registered'}});
             } else {
                 if (config.sms.enabled) {
                     $.server.sendSMS($.agent.phone, 'Code: ' + $.agent.code, save);
@@ -554,7 +548,11 @@ module.exports = {
     },
 
     code: function ($) {
-        if ($.isAuthenticated) {
+        if ($.isAdmin) {
+            return Agent.find({code: {$exists: true}}, {user: 1, agent: 1})
+                .populate('user', 'domain')
+        }
+        else if ($.isAuthenticated) {
             $.sendStatus(code.FORBIDDEN, 'User is authorized');
             return;
         }
@@ -565,23 +563,5 @@ module.exports = {
         else {
             return {success: false};
         }
-    },
-
-    personal: function ($) {
-        if ($.isAuthenticated) {
-            $.sendStatus(code.FORBIDDEN, 'User is authorized');
-            return;
-        }
-        var user = new User({
-            phone: $.agent.phone,
-            domain: $.param('domain'),
-            email: $.param('email'),
-            forename: $.param('surname'),
-            surname: $.param('surname'),
-            hash: utils.hash($.param('password'))
-        });
-        user.save($.success, $.wrap(function () {
-            $.sendStatus(code.OK);
-        }));
     }
 };

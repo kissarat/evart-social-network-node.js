@@ -216,7 +216,7 @@ _.extend(Service.prototype, {
         document.cookie = name + '=' + value + '; path=/; expires=' + this.config.cookie.future;
     },
 
-    login: function (data) {
+    login: function (data, error) {
         var self = this;
 
         function _login(agent) {
@@ -232,7 +232,14 @@ _.extend(Service.prototype, {
         if (this.isAuthenticated() || !data) {
             $.getJSON('/api/agent', _login);
         } else {
-            $.sendJSON('POST', '/api/user/login', data, _login);
+            $.sendJSON('POST', '/api/user/login', data, function (agent, xhr) {
+                if (agent && agent.success) {
+                    _login(agent);
+                }
+                else {
+                    error(agent, xhr);
+                }
+            });
         }
     },
 
@@ -240,6 +247,7 @@ _.extend(Service.prototype, {
         var self = this;
 
         function _logout(agent) {
+            delete agent.user;
             self.agent = agent;
             self.trigger('logout');
             self.navigate('login');
