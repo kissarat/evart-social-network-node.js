@@ -651,19 +651,20 @@ App.module('Message', function (Message, App) {
 
         reply: function (model) {
             var self = this;
-            var id = model.get('source').get('_id');
-            var target_id = this.getQuery().get('target_id');
-            var isMine = App.user._id === target_id;
-            var isReceiver = target_id === id || isMine;
-
             function read() {
-                App.debounce(_.random(800, 1600), function () {
-                    self.read(id)
+                App.debounce(self, function () {
+                    self.read(source_id)
                 });
             }
 
+            var source_id = model.get('source').get('_id');
+            var id = this.getQuery().get('id');
+            var isMine = App.user._id === source_id;
+            var isReceiver = source_id === id || isMine;
+
             if (isReceiver) {
                 this.getCollection().add(model);
+                this.getCollection().sort();
                 if (!isMine) {
                     if ('visible' === document.visibilityState) {
                         read();
@@ -672,6 +673,7 @@ App.module('Message', function (Message, App) {
                         document.once('visibilitychange', read);
                     }
                 }
+                this.getRegion('list').currentView.scrollLast();
             }
             return isReceiver;
         },
@@ -810,7 +812,7 @@ App.module('Message', function (Message, App) {
 
             function success(model) {
                 model.loadRelative().then(function () {
-                    Message.channel.request('message', model);
+                    Message.channel.request('dialog', model.clone());
                     self.model.set('text', '');
                     self.ui.editor[0].style.removeProperty('min-height');
                 });
@@ -826,6 +828,13 @@ App.module('Message', function (Message, App) {
                     }
                 });
                 this.model.set('time', Date.now());
+                this.model.unset('_id');
+                ['source', 'target'].forEach(function (property) {
+                    if (self.model.get(property) instanceof App.User.Model) {
+                        console.error(property, 'is object');
+                        self.model.set(property, self.model.get(property).get('_id'))
+                    }
+                });
                 this.model.save('text', text, {success: success});
             }
         }

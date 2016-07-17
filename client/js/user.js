@@ -95,7 +95,7 @@ App.module('User', function (User, App) {
         },
 
         toString: function () {
-            return this.getName();
+            return this.get('_id');
         },
 
         getName: function () {

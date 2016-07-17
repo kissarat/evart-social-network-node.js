@@ -97,7 +97,6 @@ App.notify = function (options) {
                             n.close();
                         }, options.timeout);
                     }
-                    App.local.add('notification', options);
                 };
                 App.notify(options);
             }

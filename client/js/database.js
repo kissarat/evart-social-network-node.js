@@ -306,9 +306,9 @@ App.local.getById = function (name, id) {
     var self = this;
     var storage_name = name.replace(/\//g, '_');
     return new Promise(function (resolve, reject) {
-        App.local.find(storage_name, {_id: id}).then(function (object) {
-            if (object) {
-                resolve(object);
+        App.local.find(storage_name, {_id: id}).then(function (objects) {
+            if (objects.length > 0) {
+                resolve(objects[0]);
             }
             else {
                 $.getJSON('/api/' + name + '?id=' + id)

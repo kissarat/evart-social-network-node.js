@@ -288,7 +288,7 @@ _.extend(Service.prototype, {
         context._debounce_timeout = setTimeout(function () {
             fn.call(context);
             context._debounce_timeout = 0;
-        }, this.search.delay);
+        }, this.config.search.delay);
     },
 
     sendStatistics: function (async) {
