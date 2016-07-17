@@ -47,9 +47,17 @@ function load($) {
                         if (err) {
                             reject(err);
                         } else {
-                            video = new Video(JSON.parse(b));
-                            video._id = id;
-                            video.save().then(resolve, reject);
+                            if (r.statusCode >= 400) {
+                                reject(r.statusCode, {
+                                    url: oembed_url,
+                                    message: b
+                                })
+                            }
+                            else {
+                                video = new Video(JSON.parse(b));
+                                video._id = id;
+                                video.save().then(resolve, reject);
+                            }
                         }
                     });
                 }
@@ -61,7 +69,17 @@ function load($) {
 }
 
 module.exports = {
-    GET: load,
+    GET: function ($) {
+        if ($.has('owner_id')) {
+            return Video.find({owner: $.get('owner_id')});
+        }
+        else if ($.has('id')){
+            return load($);
+        }
+        else {
+            return Video.find({});
+        }
+    },
 
     POST: function ($) {
         return load($).then(function (video) {

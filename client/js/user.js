@@ -63,7 +63,7 @@ App.module('User', function (User, App) {
                 ? ('string' == typeof avatar ? '/api/file/' + avatar : avatar.getFileURL())
                 : '/images/' + this.getSex() + '.png';
         },
-        
+
 
         getSex: function () {
             return this.get('sex') || 'male';
@@ -372,7 +372,9 @@ App.module('User', function (User, App) {
             '[name=about]': 'about',
             '[name=birthday]': {
                 observe: 'birthday',
-                onGet: function (value) {return moment(value).format('YYYY-MM-DD')}
+                onGet: function (value) {
+                    return moment(value).format('YYYY-MM-DD')
+                }
             },
             '[name=country]': 'country',
             '[name=domain]': 'domain',
@@ -965,8 +967,24 @@ App.module('User', function (User, App) {
                 self.ui.list.busy(false);
             })
         }
+    }, {
+        widget: function (region, options) {
+            if (!options) {
+                options = {};
+            }
+            var pageable = new App.getClass(options.List || User.List)([], {
+                query: _.merge(_.pick(options, 'type', 'select', 'name'), {
+                    select: 'domain.surname.forename.name.country.city.city_id'
+                })
+            });
+            var listView = new User.ListView({collection: pageable.fullCollection});
+            var layout = new User.SearchView({model: pageable.queryModel});
+            region.show(layout);
+            layout.getRegion('list').show(listView);
+            pageable.getFirstPage();
+        }
     });
-    
+
     User.findOne = function (id, cb) {
         var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar.sex'};
         if (_.isObjectID(id)) {
@@ -1092,27 +1110,14 @@ App.module('User', function (User, App) {
             },
 
             index: function () {
-                var pageable = new User.List([], {
-                    query: {
-                        type: 'user',
-                        select: 'domain.surname.forename.name.country.city.city_id'
-                    }
-                });
-                var listView = new User.ListView({collection: pageable.fullCollection});
-                var layout = new User.SearchView({model: pageable.queryModel});
-                App.getPlace('main').show(layout);
-                layout.getRegion('list').show(listView);
-                pageable.getFirstPage();
+                User.SearchView.widget(App.getPlace('main'));
             },
 
             list: function (name) {
-                var pageable = new User.RelationList();
-                pageable.queryModel.set('name', name);
-                var listView = new User.ListView({collection: pageable.fullCollection});
-                var layout = new User.SearchView({model: pageable.queryModel});
-                App.getPlace('main').show(layout);
-                layout.getRegion('list').show(listView);
-                pageable.getFirstPage();
+                User.SearchView.widget(App.getRegion('main'), {
+                    name: name,
+                    List: User.RelationList
+                })
             },
 
             record: function () {

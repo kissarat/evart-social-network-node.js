@@ -3,7 +3,8 @@
 App.module('Photo', function (Photo, App) {
     Photo.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'video': 'index',
+            'photos': 'index',
+            'photos/:id': 'index'
             // 'video/:id': 'view',
         }
     });
@@ -38,10 +39,6 @@ App.module('Photo', function (Photo, App) {
             'dragend': 'dragend'
         },
 
-        behaviors: {
-            Bindings: {}
-        },
-
         dragstart: function (e) {
             e = e.originalEvent;
             e.stopPropagation();
@@ -67,20 +64,24 @@ App.module('Photo', function (Photo, App) {
         onRender: function () {
             this.el.setBackground(this.model.getFileURL());
             this.$el.attr('data-id', this.model.get('_id'));
+            this.stickit();
         }
     });
 
     Photo.ListView = Marionette.CollectionView.extend({
         childView: Photo.Thumbnail,
 
+        attributes: {
+            'class': 'scroll view photo-list'
+        },
+
         behaviors: {
             Pageable: {}
         }
     }, {
         widget: function (region, options) {
-            var list = new Photo.List();
-            _.each(options, function (value, key) {
-                list.queryModel.set(key, value);
+            var list = new Photo.List([], {
+                query: _.pick(options, 'owner_id')
             });
             var listView = new Photo.ListView({
                 collection: list.fullCollection
@@ -105,14 +106,14 @@ App.module('Photo', function (Photo, App) {
         template: '#view-video',
 
         initialize: function () {
+            var self = this;
             this.model = new Backbone.Model();
-            return Photo.channel.reply('open', (function (_this) {
-                return function (model) {
-                    _this.model = model;
-                    return _this.ui.frame.html(model.get('html'));
-                };
-            })(this));
+            return Photo.channel.reply('open', (function (model) {
+                self.model = model;
+                self.ui.frame.html(model.get('html'));
+            }));
         },
+
         ui: {
             frame: '.frame'
         },
@@ -127,15 +128,15 @@ App.module('Photo', function (Photo, App) {
     });
 
     Photo.Layout = Marionette.View.extend({
-        template: '#layout-video-list',
+        template: '#view-photo-search',
 
         initialize: function () {
             this.model = new Backbone.Model();
             this.getRegion('list').on('show', _.bind(this.setupModel, this));
         },
 
-        behaviors: {
-            Bindings: {}
+        attributes: {
+            'class': 'view photo-search'
         },
 
         bindings: {
@@ -143,7 +144,6 @@ App.module('Photo', function (Photo, App) {
         },
 
         regions: {
-            current: '.current',
             list: '.list'
         },
 
@@ -152,12 +152,29 @@ App.module('Photo', function (Photo, App) {
             current: '.current',
             list: '.list',
             resize: '.resize',
-            search: 'input'
+            search: '[type=search]'
         },
 
         events: {
             'keyup @ui.search': 'search',
-            'change @ui.search': 'search'
+            'change @ui.search': 'search',
+            'click .upload': 'upload'
+        },
+
+        upload: function () {
+            var self = this;
+            var owner_id = this.model.get('_id');
+            var upload = App.Views.uploadDialog({
+                accept: 'image/jpeg',
+                multiple: true,
+                params: {
+                    owner_id: owner_id
+                }
+            });
+            upload.on('response', function (data) {
+                var file = new App.File.Model(data);
+                self.getRegion('list').currentView.collection.add(file);
+            })
         },
 
         getCollection: function () {
@@ -170,21 +187,39 @@ App.module('Photo', function (Photo, App) {
         },
 
         search: function (e) {
-            if (EmptyKeys.indexOf(e.keyCode) < 0) {
+            var self = this;
+            if (EmptyKeys.indexOf(e.key) < 0) {
                 this.ui.list.busy(true);
-                return this.getCollection().delaySearch((function (_this) {
-                    return function () {
-                        return _this.ui.list.busy(false);
-                    };
-                })(this));
+                this.getCollection().delaySearch(function () {
+                    self.ui.list.busy(false);
+                });
             }
+            this.stickit();
+        },
+
+        onRender: function () {
+            if (App.config.search) {
+                this.ui.search.removeClass('hidden');
+            }
+        }
+    }, {
+        widget: function (region, options) {
+            var layout = new Photo.Layout();
+            region.show(layout);
+            Photo.ListView.widget(layout.getRegion('list'), options);
+            return layout;
         }
     });
 
     return new Photo.Router({
         controller: {
-            index: function () {
-                return Photo.Layout.widget(App.getPlace('main'));
+            index: function (owner_id) {
+                if (!owner_id) {
+                    owner_id = App.user._id;
+                }
+                Photo.Layout.widget(App.getPlace('main'), {
+                    owner_id: owner_id
+                });
             }
         }
     });

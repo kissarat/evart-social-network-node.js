@@ -31,16 +31,39 @@ App.module('Menu', function (Menu, App) {
         tagName: 'ul',
 
         ui: {
-            messages: '[data-name=messages]',
+            dialogs: '[data-name=dialogs]',
             video: '[data-name=video]'
         },
 
         events: {
-            'click lia': 'open'
+            'click li': 'open'
         },
 
         open: function (e) {
-            // var
+            var options = e.target.getAttribute('data-options');
+            if (options) {
+                options = JSON.parse(options);
+            }
+            App.widget(this.getSideRegion(), e.target.getAttribute('data-widget'), options);
+            Menu.closeAll();
+        },
+
+        onRender: function () {
+            var self = this;
+            _.each(App.config.menu, function (enable, name) {
+                if (enable) {
+                    self.ui[name].removeClass('hidden');
+                }
+            })
+        },
+
+        getSideRegion: function () {
+            return App.getPlace(this.model.get('place'));
+        },
+
+        getMenuContainer: function () {
+            return App.getPlace('left' === this.model.get('place') ? 'addLeft' : 'addRight')
+                .currentView.getRegion('container');
         }
     });
 

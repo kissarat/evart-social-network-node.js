@@ -232,9 +232,14 @@ module.exports = {
                                 self.sendStatus(code.NOT_FOUND);
                             }
                         })
-                        .catch(function (r) {
+                        .catch(function (r, object) {
                             if ('number' === typeof r) {
-                                self.sendStatus(r)
+                                if (object) {
+                                    self.send(r, object);
+                                }
+                                else {
+                                    self.sendStatus(r);
+                                }
                             }
                             else {
                                 let error = {

@@ -70,8 +70,13 @@ var _schema = {
     },
 
     tiles: {
-        type: T.Mixed,
-        'default': {}
+        0: {type: T.ObjectId, ref: 'File'},
+        1: {type: T.ObjectId, ref: 'File'},
+        2: {type: T.ObjectId, ref: 'File'},
+        3: {type: T.ObjectId, ref: 'File'},
+        4: {type: T.ObjectId, ref: 'File'},
+        5: {type: T.ObjectId, ref: 'File'},
+        6: {type: T.ObjectId, ref: 'File'}
     },
 
     created: {
@@ -256,7 +261,7 @@ module.exports = {
 
     PUT: function ($) {
         var data = $.allowFields(User.fields.update.user, User.fields.update.admin);
-        data.time = Date.now();
+        // data.time = Date.now();
         return User.update({_id: $.id}, {
             $set: data
         }, {
@@ -271,7 +276,7 @@ module.exports = {
             if ($.has('tile') && $.has('file_id')) {
                 User.findOne(where_me, {tiles: 1}).catch(reject).then(function (user) {
                     user.tiles[$.param('tile')] = $.param('file_id');
-                    user.time = Date.now();
+                    // user.time = Date.now();
                     user.markModified('tiles');
                     user.save().catch(reject).then(function () {
                         resolve({

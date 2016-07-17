@@ -314,6 +314,18 @@ _.extend(Application.prototype, {
             modal: new ModalRegion({el: '#modal'})
         }
     }),
+    
+    getClass: function (clazz) {
+        if ('string' === typeof clazz) {
+            clazz = clazz.split('.');
+            clazz = this[clazz[0]][clazz[1]];
+        }
+        return clazz;
+    },
+
+    widget: function (region, path, options) {
+        return this.getClass(path).widget(region, options);
+    },
 
     PageableCollection: Backbone.PageableCollection.extend({
         mode: 'infinite',
@@ -323,8 +335,7 @@ _.extend(Application.prototype, {
                 options = {};
             }
             var self = this;
-            var query = _.merge(this.query, options.query);
-            this.queryModel = new Backbone.Model(query);
+            var query = _.merge(_.clone(this.query), options.query);
             Object.keys(_.omit(query, 'loading')).forEach(function (k) {
                 self.queryParams[k] = function () {
                     var value = self.queryModel.get(k);
@@ -338,6 +349,7 @@ _.extend(Application.prototype, {
                     }
                 };
             });
+            this.queryModel = new Backbone.Model(query);
         },
 
         state: {
@@ -355,16 +367,6 @@ _.extend(Application.prototype, {
             skip: function () {
                 return (this.state.currentPage - 1) * this.state.pageSize;
             }
-            // s: function () {
-            //     var keys = [];
-            //     _.each(this.queryModel.get('sort'), function (order, key) {
-            //         if (order < 0) {
-            //             key = '-key';
-            //         }
-            //         keys.push(key);
-            //     });
-            //     return keys.join('.');
-            // }
         },
 
         parseRecords: function (records) {

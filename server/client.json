@@ -62,5 +62,20 @@
       "minDate": "1930-01-01",
       "maxDate": "2009-12-31"
     }
+  },
+  "menu": {
+    "dialogs": true,
+    "video": true
+  },
+  "dock": {
+    "profile": true,
+    "dialogs": true,
+    "photos": true,
+    "list/friend": true,
+    "video": true,
+    "settings": true
+  },
+  "photo": {
+    "search": false
   }
 }

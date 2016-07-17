@@ -101,11 +101,11 @@
 </script>
 
 <script type="text/template" id="view-vertical-menu">
-    <li>Messages</li>
-    <li data-widget="Video.Layout">Video</li>
-    <li>Audio</li>
-    <li>Friends</li>
-    <li>Groups</li>
+    <li data-name="dialogs" data-widget="Message.DialogListView" class="hidden">Messages</li>
+    <li data-name="video" data-widget="Video.Layout" class="hidden">Video</li>
+    <li data-name="audio" data-widget="Audio.Player" class="hidden">Audio</li>
+    <li data-name="friends" data-widget="User.ListView" class="hidden">Friends</li>
+    <li data-name="groups" data-widget="Video.Layout" class="hidden">Groups</li>
 </script>
 
 <div class="include" data-src="/templates/message.html"></div>
@@ -113,8 +113,9 @@
 <div class="include" data-src="/templates/peer.html"></div>
 <div class="include" data-src="/templates/user.html"></div>
 <div class="include" data-src="/templates/video.html"></div>
+<div class="include" data-src="/templates/photo.html"></div>
 <div class="include" data-src="/templates/geo.html"></div>
-<div class="admin include" data-src="/templates/grid.html"></div>
+<!--<div class="admin include" data-src="/templates/grid.html"></div>-->
 
 <div id="script">
     <script src="/lib/underscore/underscore.js"></script>

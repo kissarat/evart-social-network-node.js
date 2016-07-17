@@ -47,29 +47,30 @@ App.module('Dock', function (Dock, App) {
     });
 
     var items = {
-        "/feed": "News",
-        "/profile": "Profile",
-        "/feedback": "Feedback",
-        "/dialogs": "Messages",
-        "/phone": "Call",
-        "/friends": "Friends",
-        "/groups": "Groups",
-        "/photos": "Photos",
-        "/videos": "Movies",
-        "/conference": "Video",
-        "/audio": "Music",
-        "/settings": "Settings"
+        "feed": "News",
+        "profile": "Profile",
+        "feedback": "Feedback",
+        "dialogs": "Messages",
+        "phone": "Call",
+        "list/friend": "Friends",
+        "groups": "Groups",
+        "photos": "Photos",
+        "video": "Video",
+        "conference": "Video",
+        "audio": "Music",
+        "settings": "Settings"
     };
 
-    var list = new Dock.List();
-    for(var href in items) {
-        list.add(new Dock.Model({
-            href: href,
-            title: items[href]
-        }));
-    }
-
     App.on('login', function () {
+        var list = new Dock.List();
+        for(var href in items) {
+            if (App.config.dock[href]) {
+                list.add(new Dock.Model({
+                    href: '/' + href,
+                    title: items[href]
+                }));
+            }
+        }
         var dock = new Dock.Layout();
         App.getPlace('dock').show(dock);
         dock.getRegion('list').show(new Dock.ListView({collection: list}));

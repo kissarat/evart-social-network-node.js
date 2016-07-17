@@ -3,8 +3,8 @@
 App.module('Video', function (Video, App) {
     Video.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'video': 'index'
-            // 'video/:id': 'view',
+            'video': 'index',
+            'user/video/:id': 'index'
         }
     });
 
@@ -136,7 +136,7 @@ App.module('Video', function (Video, App) {
 
         search: function (e) {
             var self = this;
-            if (EmptyKeys.indexOf(e.keyCode) < 0) {
+            if (EmptyKeys.indexOf(e.key) < 0) {
                 this.ui.list.busy(true);
                 return this.getCollection().delaySearch(function () {
                     return self.ui.list.busy(false);
@@ -146,7 +146,9 @@ App.module('Video', function (Video, App) {
 
     }, {
         widget: function (region, options) {
-            var list = new Video.List();
+            var list = new Video.List([], {
+                query: _.pick(options, 'owner_id')
+            });
             var layout = new Video.Layout();
             region.show(layout);
             var listView = new Video.ListView({
@@ -161,8 +163,10 @@ App.module('Video', function (Video, App) {
 
     return new Video.Router({
         controller: {
-            index: function () {
-                return Video.Layout.widget(App.getPlace('main'));
+            index: function (owner_id) {
+                return Video.Layout.widget(App.getPlace('main'), {
+                    owner_id: owner_id
+                });
             }
         }
     });
