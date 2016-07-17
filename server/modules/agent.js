@@ -70,6 +70,32 @@ global.schema.Agent = new mongoose.Schema({
     versionKey: false
 });
 
+schema.Agent.statics.extract = function extract(agent, headers) {
+    var result = {
+        success: true,
+        _id: agent._id,
+        ip: agent.ip,
+        auth: agent.auth
+    };
+    if (agent.user) {
+        result.user = {
+            _id: agent.user._id,
+            domain: agent.user.domain,
+            type: agent.user.type,
+            follow: agent.user.follow,
+            admin: agent.user.admin,
+            lang: agent.user.lang
+        };
+        if (agent.user.css) {
+            result.user.css = agent.user.css;
+        }
+    }
+    if (headers) {
+        result.headers = headers;
+    }
+    return result;
+};
+
 module.exports = {
     POST: function ($) {
         function update(agent) {
@@ -89,7 +115,7 @@ module.exports = {
                 if (!$.req.auth) {
                     $.setCookie('auth', agent.auth, true);
                 }
-                agent = extract(agent, $.req.headers);
+                agent = Agent.extract(agent, $.req.headers);
                 agent.config = client;
                 agent.success = true;
                 $.send(agent);
@@ -106,19 +132,17 @@ module.exports = {
     },
 
     GET: function ($) {
-        var agent = $.agent;
-        if (agent) {
-            agent = extract(agent);
-            if (agent.user) {
-                $.send(agent);
+        Agent.find({auth: $.req.auth}).populate('user').exec(function (err, agent) {
+            if (err) {
+                $.send(code.INTERNAL_SERVER_ERROR, err);
+            }
+            else if (agent) {
+                $.send(Agent.extract(agent));
             }
             else {
-                $.send(code.UNAUTHORIZED, agent);
+                $.sendStatus(code.NOT_FOUND, agent);
             }
-        }
-        else {
-            $.sendStatus(code.NOT_FOUND, agent);
-        }
+        });
     },
 
     DELETE: function ($) {
@@ -198,14 +222,14 @@ module.exports = {
         if ($.isAdmin) {
             let sockets = {};
             let subscribers = $.server.webSocketServer.subscribers;
-            for(let user_id in subscribers) {
+            for (let user_id in subscribers) {
                 let subscriber = subscribers[user_id];
                 if (_.isEmpty(subscriber)) {
                     console.error('No sockets found', user_id);
                 }
                 else {
                     let first;
-                    for(let agent_id in subscriber) {
+                    for (let agent_id in subscriber) {
                         first = subscriber[agent_id];
                     }
                     sockets[first.user.domain] = Object.keys(subscriber);
@@ -218,27 +242,3 @@ module.exports = {
         }
     }
 };
-
-function extract(agent, headers) {
-    var result = {
-        _id: agent._id,
-        ip: agent.ip,
-        auth: agent.auth
-    };
-    if (agent.user) {
-        result.user = {
-            _id: agent.user._id,
-            domain: agent.user.domain,
-            type: agent.user.type,
-            follow: agent.user.follow,
-            lang: agent.user.lang
-        };
-        if (agent.user.css) {
-            result.user.css = agent.user.css;
-        }
-    }
-    if (headers) {
-        result.headers = headers;
-    }
-    return result;
-}

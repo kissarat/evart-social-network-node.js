@@ -45,11 +45,11 @@ _.mixin({
             Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
         }
     },
-    
+
     passed: function (time) {
         return moment.utc(time).fromNow()
     },
-    
+
     before: function (object, name, method) {
         if (name in object) {
             var _old = object[name];
@@ -156,7 +156,7 @@ function Service() {
             ]
         }
     };
-    
+
     this.features = {
         peer: {
             available: !!window.RTCPeerConnection,
@@ -216,32 +216,35 @@ _.extend(Service.prototype, {
         document.cookie = name + '=' + value + '; path=/; expires=' + this.config.cookie.future;
     },
 
-    login: function () {
+    login: function (data) {
         var self = this;
+
         function _login(agent) {
-            if (agent) {
+            if (agent && agent.success) {
                 self.agent = agent;
             }
             if (self.isAuthenticated()) {
-                $('#dock-container').show();
                 self.trigger('login');
                 self.navigate('profile');
             }
         }
-        if (this.isAuthenticated()) {
-            _login();
-        } else {
+
+        if (this.isAuthenticated() || !data) {
             $.getJSON('/api/agent', _login);
+        } else {
+            $.sendJSON('POST', '/api/user/login', data, _login);
         }
     },
 
     logout: function () {
         var self = this;
+
         function _logout() {
             $('#dock-container').hide();
             self.trigger('logout');
             self.navigate('login');
         }
+
         if (this.isAuthenticated()) {
             $.getJSON('/api/user/logout', _logout);
         } else {
@@ -306,7 +309,7 @@ _.extend(Service.prototype, {
 
     clearCookies: function () {
         var names = ['auth', 'lang', 'remixlang'];
-        for(var i = 0; i < names.length; i++) {
+        for (var i = 0; i < names.length; i++) {
             document.cookie = names[i] + '=; path=/; expires=' + this.config.cookie.past;
         }
     },

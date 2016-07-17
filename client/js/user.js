@@ -233,14 +233,7 @@ App.module('User', function (User, App) {
 
         login: function () {
             if (this.model.isValid(true)) {
-                return this.model.save(null, {
-                    success: function () {
-                        App.once('login', function () {
-                            App.navigate('/profile');
-                        });
-                        App.login();
-                    }
-                });
+                App.login(this.model.attributes);
             }
         }
     });

@@ -581,7 +581,7 @@ class Context {
     }
     
     get isAdmin() {
-        return 'admin' === this.user.type;
+        return this.user && 'admin' === this.user.type;
     }
     
     close() {

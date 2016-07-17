@@ -431,14 +431,18 @@ module.exports = {
                             time: Date.now()
                         }
                     };
-                    Agent.update(conditions, changeset, $.wrap(function (result) {
-                        return result.nModified > 0
-                            ? $.send(extract(result))
-                            : $.send(code.INTERNAL_SERVER_ERROR, {
-                            error: {
-                                message: 'Unregistered agent'
-                            }
-                        });
+                    Agent.findOneAndUpdate(conditions, changeset, $.wrap(function (result) {
+                        if (result) {
+                            result.user = user;
+                            $.send(Agent.extract(result))
+                        }
+                        else {
+                            $.send(code.INTERNAL_SERVER_ERROR, {
+                                error: {
+                                    message: 'Unregistered agent'
+                                }
+                            });
+                        }
                     }));
                 } else {
                     $.sendStatus(code.UNAUTHORIZED);
@@ -587,13 +591,3 @@ module.exports = {
         }));
     }
 };
-
-
-function extract(user) {
-    return {
-        success: true,
-        _id: user._id,
-        domain: user.domain,
-        online: user.online
-    };
-}

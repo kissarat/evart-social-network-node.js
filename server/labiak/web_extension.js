@@ -55,9 +55,9 @@ module.exports = {
     },
 
     serve: function () {
-        if (this.has('_') && 'admin' !== this.user.type) {
-            this.sendStatus(code.FORBIDDEN);
-        }
+        // if (this.has('_') && this.isAdmin) {
+        //     this.sendStatus(code.FORBIDDEN);
+        // }
         if (!this.req.url.route[0]) {
             return this.send(this.server.getDescription(this.user));
         }
@@ -307,9 +307,9 @@ module.exports = {
     },
 
     exec: function (action) {
-        var anonymous_route = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
+        var canAnonymous = /^.(agent|quorum|user.(login|phone|code|personal|exists|avatar))/.test(this.req.url.original);
 
-        if (this.isAuthenticated || anonymous_route || this.isCache) {
+        if (this.isAuthenticated || canAnonymous || this.isCache) {
             let size = this.bodySize;
             if (this.isUpdate && 'content-type' in this.req.headers && size > 0) {
                 let mime_name = this.req.headers['content-type'].split(';')[0];

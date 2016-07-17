@@ -49,7 +49,7 @@ App.module('Message', function (Message, App) {
         url: function () {
             return this.isNew() ? '/api/message' : '/api/message?id=' + this.get('_id');
         },
-        
+
         initialize: function () {
             var self = this;
             resolveRelative(this, {
@@ -678,9 +678,9 @@ App.module('Message', function (Message, App) {
             var self = this;
 
             function read() {
-                App.debounce(self, function () {
-                    self.read(source_id)
-                });
+                setTimeout(function () {
+                    self.read(source_id);
+                }, App.config.message.read.delay);
             }
 
             var source_id = model.get('source').get('_id');
@@ -840,14 +840,6 @@ App.module('Message', function (Message, App) {
             var self = this;
             var text = this.model.get('text');
 
-            function success(model) {
-                model.loadRelative().then(function () {
-                    Message.channel.request('dialog', model.clone());
-                    self.model.set('text', '');
-                    self.ui.editor[0].style.removeProperty('min-height');
-                });
-            }
-
             if (text) {
                 text = text.replace(/:[a-z_]+:/g, function (match) {
                     for (var symbol in emoji) {
@@ -857,15 +849,18 @@ App.module('Message', function (Message, App) {
                         }
                     }
                 });
-                this.model.set('time', Date.now());
-                this.model.unset('_id');
-                ['source', 'target'].forEach(function (property) {
-                    if (self.model.get(property) instanceof App.User.Model) {
-                        console.error(property, 'is object');
-                        self.model.set(property, self.model.get(property).get('_id'))
+                this.model.save('text', text, {
+                    success: function success(model) {
+                        model.loadRelative().then(function () {
+                            Message.channel.request('dialog', model);
+                            self.model = new Message.Model({
+                                target: model.get('target').get('_id')
+                            });
+                            self.stickit();
+                            self.ui.editor[0].style.removeProperty('min-height');
+                        });
                     }
                 });
-                this.model.save('text', text, {success: success});
             }
         }
     });
