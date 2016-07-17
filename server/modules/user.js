@@ -402,7 +402,7 @@ module.exports = {
 
     login: function ($) {
         if ($.user) {
-            return $.sendStatus(code.FORBIDDEN, 'User is authorized');
+            $.send(Agent.extract($.agent));
         } else {
             var conditions = {
                 hash: utils.hash($.post('password'))
@@ -425,23 +425,19 @@ module.exports = {
                     conditions = {
                         auth: $.req.auth
                     };
-                    var changeset = {
+                    var changes = {
                         $set: {
                             user: user._id,
                             time: Date.now()
                         }
                     };
-                    Agent.findOneAndUpdate(conditions, changeset, $.wrap(function (result) {
+                    Agent.findOneAndUpdate(conditions, changes, $.wrap(function (result) {
                         if (result) {
                             result.user = user;
                             $.send(Agent.extract(result))
                         }
                         else {
-                            $.send(code.INTERNAL_SERVER_ERROR, {
-                                error: {
-                                    message: 'Unregistered agent'
-                                }
-                            });
+                            $.sendStatus(code.NOT_FOUND);
                         }
                     }));
                 } else {
@@ -452,18 +448,16 @@ module.exports = {
     },
 
     logout: function ($) {
-        var conditions = {
-            user: {
-                $exists: true
-            },
-            auth: $.req.auth
-        };
-        var change = {
-            $unset: {
-                user: ''
+        var conditions = {auth: $.req.auth};
+        var changes = {$unset: {user: 1}};
+        Agent.findOneAndUpdate(conditions, changes, $.wrap(function (result) {
+            if (result) {
+                $.send(Agent.extract(result))
             }
-        };
-        return Agent.update(conditions, change);
+            else {
+                $.sendStatus(code.NOT_FOUND);
+            }
+        }));
     },
 
     info: function ($) {

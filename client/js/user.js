@@ -4,7 +4,6 @@ App.module('User', function (User, App) {
     User.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'login': 'login',
-            'logout': 'logout',
             'signup/:step': 'signup',
             'profile': 'view',
             'view/:id': 'view',
@@ -595,17 +594,7 @@ App.module('User', function (User, App) {
             'dragleave .tile.photo': 'dragleave',
             'click .big-avatar .fa-camera': 'uploadAvatar',
             'click .profile-relative > .fa-camera': 'uploadBackground',
-            'click [data-number]': 'uploadTile',
-            'click .logout': 'logout',
-            'click .edit': 'edit'
-        },
-
-        logout: function () {
-            return App.logout();
-        },
-
-        edit: function () {
-            return App.navigate('/edit/' + this.model.get('_id'));
+            'click [data-number]': 'uploadTile'
         },
 
         uploadAvatar: function () {
@@ -1006,7 +995,7 @@ App.module('User', function (User, App) {
         controller: {
             login: function () {
                 if (App.isAuthenticated()) {
-                    App.logout();
+                    App.navigate('profile');
                 }
                 else {
                     App.getPlace('main').show(new User.LoginForm({
@@ -1014,10 +1003,6 @@ App.module('User', function (User, App) {
                     }));
                     document.body.classList.add('login');
                 }
-            },
-
-            logout: function () {
-                App.logout();
             },
 
             signup: function () {

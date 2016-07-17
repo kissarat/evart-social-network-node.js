@@ -239,16 +239,16 @@ _.extend(Service.prototype, {
     logout: function () {
         var self = this;
 
-        function _logout() {
-            $('#dock-container').hide();
+        function _logout(agent) {
+            self.agent = agent;
             self.trigger('logout');
             self.navigate('login');
         }
 
         if (this.isAuthenticated()) {
-            $.getJSON('/api/user/logout', _logout);
+            $.sendJSON('POST', '/api/user/logout', {}, _logout);
         } else {
-            _logout();
+            _logout(this.agent);
         }
     },
 
