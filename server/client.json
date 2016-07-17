@@ -40,7 +40,10 @@
     "cut": 100,
     "substitute": true,
     "attach": true,
-    "date": true
+    "date": true,
+    "comment": false,
+    "repost": false,
+    "remove": true
   },
   "attitude": {
     "entities": ["message", "file", "video"]

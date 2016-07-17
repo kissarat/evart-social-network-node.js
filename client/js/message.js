@@ -43,9 +43,13 @@ App.module('Message', function (Message, App) {
     };
 
     Message.Model = Backbone.Model.extend({
-        url: '/api/message',
         cidPrefix: 'msg',
+        idAttribute: '_id',
 
+        url: function () {
+            return this.isNew() ? '/api/message' : '/api/message?id=' + this.get('_id');
+        },
+        
         initialize: function () {
             var self = this;
             resolveRelative(this, {
@@ -261,13 +265,16 @@ App.module('Message', function (Message, App) {
             time: '> .content > .info .time',
             text: '> .content > .message > .text',
             controls: '> .controls',
-            comment: '> .controls .comment'
+            commentButton: '> .controls .comment',
+            repostButton: '> .controls .repost',
+            removeButton: '> .controls .remove'
         },
 
         events: {
             'click > .controls .fa-share-alt': 'share',
             'click > .content > .message > .name': 'view',
-            'click .attitude > *': 'estimate'
+            'click > .controls > .attitude > *': 'estimate',
+            'click > .controls > .remove': 'remove'
         },
 
         view: function (e) {
@@ -275,6 +282,13 @@ App.module('Message', function (Message, App) {
             if (location.pathname != this.ui.name.attr('href')) {
                 App.navigate(this.ui.name.attr('href'));
             }
+        },
+
+        remove: function () {
+            // var collection = this.model.collection;
+            // collection.remove(this.model, {silent: false});
+            // collection.sync({});
+            this.model.destroy({wait: true});
         },
 
         estimate: function (e) {
@@ -307,6 +321,17 @@ App.module('Message', function (Message, App) {
             }
             this.$el.addClass(this.model.get('source').getSex());
             this.ui.time.html(this.model.passed());
+            if (App.config.message.repost) {
+                this.ui.repostButton.removeClass('hidden');
+            }
+            if (App.config.message.comment) {
+                this.ui.commentButton.removeClass('hidden');
+            }
+            var canRemove = App.config.message.remove && (this.model.get('owner').canManage()
+                || this.model.get('source').canManage());
+            if (canRemove) {
+                this.ui.removeButton.removeClass('hidden');
+            }
             this.stickit();
         }
     });
@@ -352,14 +377,13 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            var pageable = new Message.List([], {
-                query: _.merge({
-                    type: MessageType.WALL,
-                    owner_id: App.user._id,
-                    user: 'source',
-                    select: 'like.hate.files.videos.sex.text'
-                }, _.pick(options, 'owner_id', 'user', 'select'))
-            });
+            var query = _.merge({
+                type: MessageType.WALL,
+                owner_id: App.user._id,
+                user: 'source.owner',
+                select: 'like.hate.files.videos.sex.text.admin'
+            }, _.pick(options, 'owner_id', 'user', 'select'));
+            var pageable = new Message.List([], {query: query});
             var wall = new Message.WallView({
                 collection: pageable.fullCollection
             });
@@ -522,7 +546,7 @@ App.module('Message', function (Message, App) {
             this.animateLoading();
         },
 
-        destroy: function () {
+        onDestroy: function () {
             delete App._dialog;
         },
 
@@ -644,7 +668,7 @@ App.module('Message', function (Message, App) {
             this.send = _.bind(this.send, this);
         },
 
-        destroy: function () {
+        onDestroy: function () {
             window.removeEventListener('keyup', this.send);
             Message.channel.stopReplying('read', this.read);
             Message.channel.stopReplying('dialog', this.reply);
@@ -652,6 +676,7 @@ App.module('Message', function (Message, App) {
 
         reply: function (model) {
             var self = this;
+
             function read() {
                 App.debounce(self, function () {
                     self.read(source_id)

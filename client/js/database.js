@@ -302,7 +302,7 @@ App.local = new Database('LocalStorage', {
     }
 });
 
-App.local.getById = function (name, id) {
+App.local.getById = function (name, id, params) {
     var self = this;
     var storage_name = name.replace(/\//g, '_');
     return new Promise(function (resolve, reject) {
@@ -311,7 +311,18 @@ App.local.getById = function (name, id) {
                 resolve(objects[0]);
             }
             else {
-                $.getJSON('/api/' + name + '?id=' + id)
+                if (!params) {
+                    params = {};
+                }
+                params.id = id;
+                switch (name) {
+                    case 'user':
+                        _.defaults(params, {
+                            select: 'like.hate.files.videos.sex.text.admin'
+                        });
+                        break;
+                }
+                $.getJSON('/api/' + name + '?' + $.param(params))
                     .error(reject)
                     .success(function (object) {
                         resolve(object);
