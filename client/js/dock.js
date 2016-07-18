@@ -22,6 +22,9 @@ App.module('Dock', function (Dock, App) {
         },
 
         onRender: function () {
+            if (!this.model.get('enable')) {
+                this.$el.addClass('unavailable');
+            }
             this.ui.anchor
                 .attr('href', this.model.get('href'))
                 .attr('title', T(this.model.get('title')));
