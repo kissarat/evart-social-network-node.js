@@ -99,7 +99,7 @@ function load3_languageLoaded() {
         setTimeout(function () {
             console.warn('User is not authorized');
             var first = App.route[0];
-            if (['login', 'signup', 'users'].indexOf(first) != 0) {
+            if (['login', 'signup', 'users'].indexOf(first) < 0) {
                 App.navigate('/login');
             }
         }, 0);

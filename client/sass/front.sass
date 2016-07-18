@@ -1,3 +1,5 @@
+@import "var.sass"
+
 body.front
   height: 100vh
   #left, #right, #root > .add, #dock
@@ -39,7 +41,7 @@ body [href="/signup/phone"]
 
 body.login [href="/signup/phone"]
   position: absolute
-  top: 60%
+  top: 50%
   display: block
   background-image: -webkit-gradient(linear, 0 0, 0 74.125, color-stop(0.054, #fe7800), to(#fe5800))
   background-image: -webkit-linear-gradient(#fe7800 5.4%, #fe5800)
@@ -61,6 +63,8 @@ body.login [href="/signup/phone"]
 
 .login-region fieldset
   text-align: center
+  button, input
+    padding: 8px 12px
 
 .form-login
   text-align: left
@@ -83,51 +87,64 @@ body.login [href="/signup/phone"]
   padding: 4px 6px
 
 .form-signup
-  margin-top: 20vh
+  font-family: 'PantonLight', $panton
+  font-weight: 100
+  margin-top: 100px
+  width: 600px
+
   display: inline-block
   h1
-    font-size: 18px
+    font-size: 36px
     color: #207FE2
+    margin: 0
   h2
-    font-size: 12px
+    font-size: 20px
     color: #9E9E9E
+    margin: 8px 0
   .step-container
     position: relative
     margin-bottom: 12px
     .line
       position: absolute
       top: 0
-      left: 12px
-      right: 12px
+      left: 18px
+      right: 18px
       margin: auto
       border-bottom: 2px solid #CBD3DF
       width: calc(100% - 48px)
-      height: 14px
-      z-index: -1
+      height: 20px
   .steps
     display: flex
     justify-content: space-between
     > div
       text-align: center
+      z-index: 1
       > div
         margin: auto
     .label
       color: #CBD3DF
       text-transform: uppercase
     .circle
-      font-size: 0.7em
       background-color: #CBD3DF
       color: white
       border: 3px solid #F8F8F8
       border-radius: 50%
-      line-height: 24px
+      width: 36px
+      line-height: 36px
       text-align: center
-      width: 24px
       vertical-align: middle
-      z-index: 1
+  input, button
+    font-size: 20px
+    padding: 12px 16px
+    width: 180px
 
 .layout-signup
-  overflow-y: auto
+  position: relative
+  display: flex
+  flex-direction: column
+  .signup-region
+    overflow-y: auto
+    flex: 1
   > *
     text-align: center
   fieldset
@@ -142,14 +159,12 @@ body.login [href="/signup/phone"]
   .fields fieldset
     display: none
   background-color: #F8F8F8
-  input, button
-    padding: 8px
-    margin-top: 8px
-    border-radius: 4px
-    width: 128px
   .phone, .code
     button
       margin-left: 16px
+      border: none
+  .footer
+    width: 100%
 
 $steps: phone code personal
 @each $i in $steps
@@ -165,7 +180,7 @@ $steps: phone code personal
 footer.front
   display: none
 
-@media (min-height: 900px)
+@media (min-height: 780px)
   body.login
     .evart-social-network
       display: block

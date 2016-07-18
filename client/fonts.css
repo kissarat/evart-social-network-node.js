@@ -4,16 +4,23 @@
 }
 /*
 @font-face {
-    font-family: 'Panton';
+    font-family: 'PantonThin';
     font-style: normal;
     font-weight: 100;
-    src: local('Panton'), url('/fonts/Panton/Panton-Light.otf') format('otf');
+    src: local('Panton'), url('/fonts/Panton/Panton-Thin.otf');
 }
 */
 @font-face {
+    font-family: 'PantonLight';
+    font-style: normal;
+    font-weight: 200;
+    src: local('Panton'), url('/fonts/Panton/Panton-Light.otf');
+}
+
+@font-face {
     font-family: 'Panton';
     font-style: normal;
-    font-weight: 400;
+    font-weight: 300;
     src: local('Panton'), url('/fonts/Panton/Panton-Regular.otf');
 }
 
