@@ -1029,7 +1029,7 @@ App.module('User', function (User, App) {
                 else {
                     params.domain = domain;
                 }
-                params.select = 'domain.surname.forename.name.country.city.city_id.tiles.avatar.background';
+                params.select = 'domain.surname.forename.name.country.city.city_id.tiles.avatar.background.status';
                 var url = '/api/user?' + $.param(params);
                 $.get(url, function (user) {
                     App.local.put('user', user);

@@ -241,5 +241,53 @@ module.exports = {
         else {
             return code.FORBIDDEN;
         }
+    },
+
+    clients: function ($) {
+        if ($.isAdmin) {
+            return {
+                query: [
+                    {
+                        $match: {
+                            user: {
+                                $exists: true
+                            }
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'user',
+                            localField: 'user',
+                            foreignField: '_id',
+                            as: 'user'
+                        }
+                    },
+                    {
+                        $unwind: {
+                            path: '$user'
+                        }
+                    },
+                    {
+                        $project: {
+                            time: 1,
+                            start: 1,
+                            user: {
+                                domain: 1,
+                                forename: 1,
+                                surname: 1
+                            }
+                        }
+                    },
+                    {
+                        $sort: {
+                            time: -1
+                        }
+                    }
+                ]
+            };
+        }
+        else {
+            return code.FORBIDDEN;
+        }
     }
 };
