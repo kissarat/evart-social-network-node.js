@@ -17,25 +17,27 @@ App.module('Dock', function (Dock, App) {
             anchor: 'a'
         },
 
+        events: {
+            'click a': 'navigate'
+        },
+
         onRender: function () {
             this.ui.anchor
                 .attr('href', this.model.get('href'))
                 .attr('title', T(this.model.get('title')));
+        },
+
+        navigate: function (e) {
+            e.preventDefault();
+            App.navigate(this.model.get('enable')
+                ? this.model.get('href')
+                : '/unavailable');
         }
     });
 
     Dock.ListView = Marionette.CollectionView.extend({
         // tagName: 'ul',
-        childView: Dock.View,
-
-        events: {
-            'click a': 'navigate'
-        },
-
-        navigate: function (e) {
-            e.preventDefault();
-            App.navigate(e.target.getAttribute('href'));
-        }
+        childView: Dock.View
     });
 
     Dock.Layout = Marionette.View.extend({
@@ -61,22 +63,25 @@ App.module('Dock', function (Dock, App) {
         "settings": "Settings"
     };
 
-    App.on('login', function () {
+    Dock.show = function () {
         var list = new Dock.List();
         for(var href in items) {
-            if (App.config.dock[href]) {
-                list.add(new Dock.Model({
-                    href: '/' + href,
-                    title: items[href]
-                }));
-            }
+            var show = App.config.dock[href];
+            list.add(new Dock.Model({
+                href: '/' + href,
+                enable: !!show,
+                title: items[href]
+            }));
         }
         var dock = new Dock.Layout();
         App.getPlace('dock').show(dock);
         dock.getRegion('list').show(new Dock.ListView({collection: list}));
-    });
+    };
 
-    App.on('logout', function () {
+    Dock.hide = function () {
         App.getPlace('dock').empty();
-    });
+    };
+
+    App.on('login', Dock.show);
+    App.on('logout', Dock.hide);
 });

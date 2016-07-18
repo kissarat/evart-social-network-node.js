@@ -159,13 +159,13 @@ class Server {
     }
 
     sendSMS(phone, text, cb) {
-        // this.twilio.sms.messages.create({
-        //     to: '+' + phone,
-        //     from: '+' + config.sms.phone,
-        //     body: text
-        // }, this.wrap(cb))
+        this.twilio.sms.messages.create({
+            to: '+' + phone,
+            from: '+' + config.sms.phone,
+            body: text
+        }, cb)
     }
-
+    
     getDescription(user) {
         var meta = {
             api: 'socex',

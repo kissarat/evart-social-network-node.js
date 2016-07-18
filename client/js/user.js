@@ -320,6 +320,9 @@ App.module('User', function (User, App) {
                     if (data.success) {
                         App.navigate('/signup/personal');
                     }
+                    else {
+                        self.$el.report('code', T('Invalid code'), 'error');
+                    }
                 });
             }
         },

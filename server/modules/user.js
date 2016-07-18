@@ -249,7 +249,7 @@ module.exports = {
         var data = _.pick($.body, 'password', 'domain', 'email', 'forename', 'surname');
         data.phone = $.agent.phone;
         var user = new User(data);
-        user.hash = utils.hash(user.password);
+        user.hash = utils.hash(data.password);
         return user.save();
     },
 /*
@@ -402,9 +402,7 @@ module.exports = {
         if ($.user) {
             $.send(Agent.extract($.agent));
         } else {
-            var conditions = {
-                hash: utils.hash($.post('password'))
-            };
+            var conditions = {hash: utils.hash($.post('password'))};
             var login = $.post('login').replace(/[\(\)\s]/, '');
             if (login.indexOf('@') >= 0) {
                 conditions.email = login;
@@ -539,7 +537,7 @@ module.exports = {
                 $.send({error: {message: 'The phone number already registered'}});
             } else {
                 if (config.sms.enabled) {
-                    $.server.sendSMS($.agent.phone, 'Code: ' + $.agent.code, save);
+                    $.server.sendSMS($.agent.phone, 'Code: ' + $.agent.code, $.wrap(save));
                 } else {
                     save();
                 }
