@@ -123,6 +123,8 @@ App.module('User', function (User, App) {
         }
     });
 
+    User.Model.tableName = 'user';
+
     User.List = App.PageableCollection.extend({
         url: '/api/user',
 

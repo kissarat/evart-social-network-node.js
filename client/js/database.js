@@ -303,6 +303,9 @@ App.local = new Database('LocalStorage', {
 });
 
 App.local.getById = function (name, id, params) {
+    if (!id || 'string' !== typeof id) {
+        throw new Error('Invalid id ' + id)
+    }
     var self = this;
     var storage_name = name.replace(/\//g, '_');
     return new Promise(function (resolve, reject) {

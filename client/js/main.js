@@ -314,7 +314,7 @@ _.extend(Application.prototype, {
             modal: new ModalRegion({el: '#modal'})
         }
     }),
-    
+
     getClass: function (clazz) {
         if ('string' === typeof clazz) {
             clazz = clazz.split('.');
@@ -495,26 +495,24 @@ addEventListener('unload', function () {
 });
 
 function loadRelative(model, map) {
-    return Promise.all(_.pairs(map)
-        .filter(function (relation) {
-            return 'string' == typeof model.get(relation[0])
-        })
-        .map(function (relation) {
-            return App.local.getById('user', model.get(relation[0]))
-                .then(function (relative) {
-                    model.set(relation[0], new relation[1](relative));
-                })
-        }));
-}
-
-function resolveRelative(model, map) {
-    // if (!(model instanceof App.Message.Model)) {
-    //     throw 'hello';
-    // }
-    _.each(map, function (modelClass, name) {
-        var relative = model.get(name);
-        if (relative && 'object' == typeof relative && !(relative instanceof modelClass)) {
-            model.set(name, new modelClass(relative));
+    var promises = [];
+    _.each(map, function (clazz, key) {
+        if (model.get(key)) {
+            var value = model.get(key);
+            if (value instanceof clazz) {
+            }
+            else if (value) {
+                if ('object' === typeof value) {
+                    model.set(key, new clazz(value))
+                }
+                else {
+                    promises.push(App.local.getById(clazz.tableName, value).then(function (model) {
+                        model = new clazz(model);
+                        return model;
+                    }))
+                }
+            }
         }
     });
+    return Promise.all(promises);
 }

@@ -93,6 +93,12 @@ $unread: rgba(0, 0, 0, 0.05)
     justify-content: flex-end
     align-items: center
     color: #CAD3DF
+    > .comment
+      color: #CAD3DF
+      &:hover
+        text-decoration: underline
+      .fa-comment
+        margin-right: 4px
     > *
       cursor: pointer
       margin-left: 6px
@@ -204,8 +210,10 @@ $unread: rgba(0, 0, 0, 0.05)
   .bottom
     min-height: 76px
 
-.layout-editor
+.dialog .layout-editor
   border-top: 1px solid black
+
+.layout-editor
   .editor-container
     display: flex
     justify-content: space-between

@@ -18,11 +18,14 @@ App.module('Message', function (Message, App) {
             }
         });
     });
+    App.socket.on(MessageType.WALL, function (message) {
+        Message.channel.request(MessageType.WALL, message);
+    });
+    App.socket.on(MessageType.COMMENT, function (message) {
+        Message.channel.request(MessageType.COMMENT, message);
+    });
     App.socket.on('read', function (message) {
         Message.channel.request('read', message);
-    });
-    App.socket.on('wall', function (message) {
-        Message.channel.request(MessageType.WALL, message);
     });
 
     Message.notify = function (model) {
@@ -55,11 +58,7 @@ App.module('Message', function (Message, App) {
 
         initialize: function () {
             var self = this;
-            resolveRelative(this, {
-                source: App.User.Model,
-                target: App.User.Model,
-                owner: App.User.Model
-            });
+            this.loadRelative();
 
             if (!this.has('time')) {
                 this.set('time', new Date().toISOString())
@@ -98,7 +97,8 @@ App.module('Message', function (Message, App) {
             return loadRelative(this, {
                 source: App.User.Model,
                 target: App.User.Model,
-                owner: App.User.Model
+                owner: App.User.Model,
+                parent: Message.Model
             });
         },
 
@@ -127,10 +127,12 @@ App.module('Message', function (Message, App) {
             return parseInt(this.get('_id').slice(2), 16);
         }
     });
+    
+    Message.Model.tableName = 'message';
 
     Message.LastMessage = Backbone.Model.extend({
         initialize: function () {
-            resolveRelative(this, {
+            loadRelative(this, {
                 peer: App.User.Model
             });
         }
@@ -150,8 +152,6 @@ App.module('Message', function (Message, App) {
     });
 
     Message.comparator = function (a, b) {
-        // var order = b.getTime() - a.getTime();
-        // return order || b.getIndex() - a.getIndex();
         return b.getIndex() - a.getIndex();
     };
 
@@ -270,14 +270,23 @@ App.module('Message', function (Message, App) {
             controls: '> .controls',
             commentButton: '> .controls .comment',
             repostButton: '> .controls .repost',
-            removeButton: '> .controls .remove'
+            removeButton: '> .controls .remove',
+            children: '> .children'
         },
 
         events: {
             'click > .controls .fa-share-alt': 'share',
             'click > .content > .message > .name': 'view',
             'click > .controls > .attitude > *': 'estimate',
-            'click > .controls > .remove': 'remove'
+            'click > .controls > .remove': 'remove',
+            'click > .controls > .comment': 'comment'
+        },
+
+        comment: function () {
+            this.ui.children.toggle('hidden');
+            if (!this.getRegion('children').currentView) {
+                Message.CommentLayout.widget(this.getRegion('children'), {id: this.model.id});
+            }
         },
 
         view: function (e) {
@@ -288,9 +297,6 @@ App.module('Message', function (Message, App) {
         },
 
         remove: function () {
-            // var collection = this.model.collection;
-            // collection.remove(this.model, {silent: false});
-            // collection.sync({});
             this.model.destroy({wait: true});
         },
 
@@ -311,6 +317,7 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
+            var self = this;
             this.ui.name.attr('href', '/view/' + this.model.get('source').get('domain'));
             this.ui.name.html(this.model.get('source').getName());
             this.model.get('source').setupAvatar(this.ui.avatar[0]);
@@ -330,11 +337,16 @@ App.module('Message', function (Message, App) {
             if (App.config.message.comment) {
                 this.ui.commentButton.removeClass('hidden');
             }
-            var canRemove = App.config.message.remove && (this.model.get('owner').canManage()
-                || this.model.get('source').canManage());
-            if (canRemove) {
-                this.ui.removeButton.removeClass('hidden');
-            }
+            /*
+            var model = this.model.has('parent') ? this.model.get('parent') : this.model;
+            model.loadRelative().then(function () {
+                var canRemove = App.config.message.remove &&
+                    (model.get('owner').canManage() || model.get('source').canManage());
+                if (canRemove) {
+                    self.ui.removeButton.removeClass('hidden');
+                }
+            });
+            */
             this.stickit();
         }
     });
@@ -381,15 +393,15 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            Message.channel.reply('wall', this.reply);
+            Message.channel.reply(MessageType.WALL, this.reply);
             this.animateLoading();
         },
 
         onDestroy: function () {
-            Message.channel.stopReplying('wall', this.reply);
+            Message.channel.stopReplying(MessageType.WALL, this.reply);
         },
 
-        reply: function(model) {
+        reply: function (model) {
             if (model instanceof Message.Model) {
                 if (this.collection.pageableCollection.queryModel.get('owner_id') == model.get('owner').id) {
                     this.collection.add(model);
@@ -445,6 +457,91 @@ App.module('Message', function (Message, App) {
             wallView.getRegion('editor').show(editor);
             Message.PostListView.widget(wallView.getRegion('list'), options);
             return wallView;
+        }
+    });
+
+    Message.CommentList = Backbone.Collection.extend({
+        initialize: function (models, options) {
+            _.defaults(this, options);
+        },
+
+        url: function () {
+            return '/api/message?' + $.param(_.merge(this.query, {
+                    type: MessageType.COMMENT,
+                    select: 'like.hate.files.videos.sex.text.owner.parent',
+                    user: 'source',
+                    message: 'parent'
+                }));
+        },
+
+        model: function (attrs, options) {
+            return new Message.Model(attrs, options);
+        }
+    });
+
+    Message.CommentListView = Marionette.CollectionView.extend({
+        childView: Message.PostView,
+
+        initialize: function () {
+            this.reply = this.reply.bind(this);
+            this.collection.comparator = Message.comparator;
+        },
+
+        onRender: function () {
+            Message.channel.reply(Message.COMMENT, this.reply);
+        },
+
+        onDestroy: function () {
+            Message.channel.stopReplying(Message.COMMENT, this.reply);
+        },
+
+        reply: function (model) {
+            if (model instanceof Message.Model) {
+                if (this.collection.pageableCollection.queryModel.get('parent_id') == model.get('parent').id) {
+                    this.collection.add(model);
+                    this.collection.sort();
+                }
+            }
+            else {
+                console.error('Invalid object', model);
+            }
+        }
+    }, {
+        widget: function (region, options) {
+            var list = new Message.CommentList([], {query: _.pick(options, 'id')});
+            var listView = new Message.CommentListView({
+                collection: list
+            });
+            region.show(listView);
+            list.fetch();
+            return listView;
+        }
+    });
+
+    Message.CommentLayout = Marionette.View.extend({
+        template: '#layout-comment',
+
+        attributes: {
+            class: 'layout comment'
+        },
+
+        regions: {
+            editor: '.editor',
+            list: '.list'
+        }
+    }, {
+        widget: function (region, options) {
+            var commentLayout = new Message.CommentLayout();
+            region.show(commentLayout);
+            var editor = new Message.Editor({
+                model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
+                    parent: options.id,
+                    type: MessageType.COMMENT
+                }))
+            });
+            commentLayout.getRegion('editor').show(editor);
+            Message.CommentListView.widget(commentLayout.getRegion('list'), options);
+            return commentLayout;
         }
     });
 
@@ -904,11 +1001,14 @@ App.module('Message', function (Message, App) {
                             if (self.model.has('target')) {
                                 self.model.set('target', self.model.get('target').get('_id'))
                             }
-                            if (self.model.has('source')) {
+                            if (self.model.has('source') && self.model.get('source') instanceof App.User.Model) {
                                 self.model.set('source', self.model.get('source').get('_id'))
                             }
                             if (self.model.has('owner')) {
                                 self.model.set('owner', self.model.get('owner').get('_id'))
+                            }
+                            if (self.model.has('parent') && self.model.get('source') instanceof Message.Model) {
+                                self.model.set('parent', self.model.get('parent').get('_id'))
                             }
                             self.model.set('text', '');
                             self.stickit();

@@ -12,7 +12,8 @@ var MessageType = {
     DIALOG: 'dialog',
     WALL: 'wall',
     PHOTO: 'photo',
-    VIDEO: 'video'
+    VIDEO: 'video',
+    COMMENT: 'comment'
 };
 
 var _schema = {
@@ -108,13 +109,11 @@ var _schema = {
         ref: 'Message'
     },
 
-    children: [
-        {
-            type: T.ObjectId,
-            ref: 'Message',
-            "default": null
-        }
-    ]
+    parent: {
+        type: T.ObjectId,
+        ref: 'Message',
+        "default": null
+    }
 };
 
 global.schema.Message = mongoose.Schema(_schema, utils.merge(config.mongoose.schema.options, {
@@ -124,7 +123,7 @@ global.schema.Message = mongoose.Schema(_schema, utils.merge(config.mongoose.sch
 schema.Message.statics.Type = MessageType;
 schema.Message.statics.fields = {
     select: {
-        user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files', 'video', 'videos', 'text', 'repost']
+        user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files', 'video', 'videos', 'text', 'repost', 'parent']
     }
 };
 
@@ -136,13 +135,12 @@ module.exports = {
     read, dialogs,
 
     GET: function ($) {
-        var ANDs = [];
+        const ANDs = [];
         var permission;
         if ($.has('type')) {
             ANDs.push({type: $.get('type')})
         }
-        var project = $.select([], Message.fields.select.user, true);
-        var me = $.user._id;
+        const me = $.user._id;
         switch ($.get('type', true)) {
             case Message.Type.DIALOG:
                 if (!$.has('id') && $.isAdmin) {
@@ -192,6 +190,12 @@ module.exports = {
                 }
                 break;
 
+            case Message.Type.COMMENT:
+                ANDs.push({
+                    parent: $.get('id')
+                });
+                break;
+
             case 'feed':
                 ANDs.push({
                     type: Message.Type.WALL,
@@ -205,7 +209,7 @@ module.exports = {
                 }
         }
 
-        var aggregate = [];
+        const aggregate = [];
         if (ANDs.length > 0) {
             aggregate.push({
                 $match: {
@@ -214,31 +218,37 @@ module.exports = {
             });
         }
 
-        if ($.isAdmin) {
-            ANDs.push(_.pick($.params, 'type'));
+        const lookups = {
+            user: User.fields.project,
+            message: $.select([], Message.fields.select.user, true)
+        };
+
+        var project = $.select([], Message.fields.select.user, true);
+        _.each(lookups, function (_project, lookup) {
+            $.get(lookup, []).forEach(function (name) {
+                aggregate.push({
+                    $lookup: {
+                        'as': name,
+                        localField: name,
+                        from: lookup,
+                        foreignField: '_id'
+                    }
+                });
+                aggregate.push({
+                    $unwind: {
+                        path: '$' + name
+                    }
+                });
+                project[name] = _project;
+            });
+        });
+        if (!_.isEmpty(project)) {
+            aggregate.push({
+                $project: project
+            });
         }
 
-        $.get('user', []).forEach(function (name) {
-            aggregate.push({
-                $lookup: {
-                    'as': name,
-                    localField: name,
-                    from: 'user',
-                    foreignField: '_id'
-                }
-            });
-            aggregate.push({
-                $unwind: {
-                    path: '$' + name
-                }
-            });
-            project[name] = User.fields.project
-        });
-
-        aggregate.push({
-            $project: project
-        });
-
+        console.log(JSON.stringify(aggregate));
         if (_.isEmpty(permission)) {
             return {query: aggregate};
         }
@@ -262,26 +272,26 @@ module.exports = {
             }
         });
         targets = _.uniq(targets);
-        $.accessUser(targets).then(function (allow) {
+        function post(allow) {
             if (allow) {
                 message = new Message(message);
                 message.save($.wrap(function () {
-                    if ($.has('parent_id')) {
-                        Message.update(
-                            {_id: $.param('parent_id')},
-                            {$push: {children: message._id}}
-                        );
-                    }
                     message = message.toObject();
                     if (message.files && !message.files.length) {
                         delete message.files;
                     }
-                    if ('dialog' == message.type) {
-                        delete message.children;
-                        delete message.like;
-                        delete message.hate;
-                        delete message.v;
+                    switch (message.type) {
+                        case Message.Type.DIALOG:
+                            delete message.like;
+                            delete message.hate;
+                            delete message.parent;
+                            break;
+
+                        case Message.Type.WALL:
+                            delete message.parent;
+                            break;
                     }
+                    delete message.v;
                     $.send(message);
                     targets.forEach(id => $.notifyOne(id, message));
                 }));
@@ -289,7 +299,14 @@ module.exports = {
             else {
                 $.sendStatus(code.FORBIDDEN);
             }
-        });
+        }
+
+        if ($.has('parent')) {
+            post(1);
+        }
+        else {
+            $.accessUser(targets).then(post);
+        }
     },
 
     DELETE: function ($) {

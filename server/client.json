@@ -39,9 +39,9 @@
     },
     "cut": 100,
     "substitute": true,
-    "attach": true,
+    "attach": false,
     "date": true,
-    "comment": false,
+    "comment": true,
     "repost": false,
     "remove": true
   },
