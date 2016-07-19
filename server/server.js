@@ -22,6 +22,14 @@ var errors = require('./errors');
 
 process.chdir(__dirname);
 
+process.argv.forEach(function (arg) {
+    switch (arg) {
+        case '--dev':
+            config.dev = true;
+            break;
+    }
+});
+
 var modules = {};
 var socketFileNames = [config.file];
 

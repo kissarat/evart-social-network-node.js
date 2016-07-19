@@ -25,9 +25,9 @@ _.extend(Element.prototype, {
 
 addEventListener('keyup', function (e) {
     if ('F7' == e.key) {
-        var error_id = localStorage.getItem('errors_last');
+        var error_id = localStorage.getItem('_error_last');
         if (error_id) {
-            App.local.getById('errors', error_id).then(function (error) {
+            App.local.getById('_error', error_id).then(function (error) {
                 var text = JSON.stringify(error, null, '\t');
                 text = text.replace(/([\/\w\-_]+\.js):(\d+)/g, function (match, path, line) {
                     return '<span class="green">' + path + '</span>:<span class="red">' + line + '</span>';
@@ -191,7 +191,7 @@ $(document).ajaxError(function (e, xhr) {
                 App.alert('danger', error.message ? error.message : error);
                 if (error.stack) {
                     error.type = 'server';
-                    App.local.add('errors', error);
+                    App.local.create('_error', error);
                 }
             }
     }

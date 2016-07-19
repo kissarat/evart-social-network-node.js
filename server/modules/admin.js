@@ -2,7 +2,7 @@
 
 module.exports = {
     _before: function ($) {
-        return 'admin' === $.user.type;
+        return $.isAdmin;
     },
 
     POST: function ($) {
@@ -17,5 +17,14 @@ module.exports = {
     DELETE: function ($) {
         $.collection($.get('c'))
             .remove({_id: $.get('id')}, $.answer);
+    },
+
+    exit: function () {
+        console.log('admin/exit');
+        process.exit();
+    },
+
+    throw: function () {
+        throw new Error();
     }
 };

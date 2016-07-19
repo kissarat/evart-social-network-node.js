@@ -219,24 +219,52 @@ module.exports = {
         $.send(status, data);
     },
 
-    sockets: function ($) {
-        if ($.isAdmin) {
-            let sockets = {};
-            let subscribers = $.server.webSocketServer.subscribers;
-            for (let user_id in subscribers) {
-                let subscriber = subscribers[user_id];
-                if (_.isEmpty(subscriber)) {
-                    console.error('No sockets found', user_id);
-                }
-                else {
-                    let first;
-                    for (let agent_id in subscriber) {
-                        first = subscriber[agent_id];
+    sockets: {
+        GET: function ($) {
+            if ($.isAdmin) {
+                let sockets = {};
+                _.each($.server.webSocketServer.subscribers, function(subscriber, user_id) {
+                    if (_.isEmpty(subscriber)) {
+                        console.error('No sockets found', user_id);
                     }
-                    sockets[first.user.domain] = Object.keys(subscriber);
-                }
+                    else {
+                        sockets[_.find(subscriber).user.domain] = Object.keys(subscriber);
+                    }
+                });
+                $.send({
+                    users: _.size(sockets),
+                    count: _.size($.server.webSocketServer.subscribers),
+                    sockets: sockets
+                });
             }
-            $.send(sockets);
+            else {
+                return code.FORBIDDEN;
+            }
+        },
+
+        close: function ($) {
+            if ($.isAdmin) {
+                var sockets = 0;
+                var users = [];
+                _.each($.server.webSocketServer.subscribers, function (subscriber, user_id) {
+                    sockets += _.size(subscriber);
+                    users.push(_.find(subscriber).user.domain);
+                    $.server.webSocketServer.unsubscribe(user_id);
+                });
+                $.send({
+                    sockets: sockets,
+                    users: users
+                })
+            }
+            else {
+                return code.FORBIDDEN;
+            }
+        }
+    },
+
+    clear: function ($) {
+        if ($.isAdmin) {
+            return Agent.remove({});
         }
         else {
             return code.FORBIDDEN;
@@ -271,6 +299,7 @@ module.exports = {
                         $project: {
                             time: 1,
                             start: 1,
+                            ip: 1,
                             user: {
                                 domain: 1,
                                 forename: 1,

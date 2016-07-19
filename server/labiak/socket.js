@@ -4,6 +4,7 @@ var _ = require('underscore');
 var ws = require('ws');
 var utils = require('../utils');
 var EventEmitter = require('events');
+var ObjectID = require('mongodb').ObjectID;
 
 class WebSocketServer extends EventEmitter {
     constructor(options) {
@@ -26,6 +27,7 @@ class WebSocketServer extends EventEmitter {
         $.authorize((agent) => {
             if (agent.user) {
                 this.subscribe($);
+                // console.log('SOCKET_CONNECTION', $.user.domain, $.agent._id);
                 this.emit('connection', $);
             }
             else {
@@ -48,6 +50,7 @@ class WebSocketServer extends EventEmitter {
                 status: 'CONFLICT'
             });
         }
+        // console.log('SUBSCRIPTION', $.user.domain, $.agent._id, Object.keys(subscriber));
         subscriber[agent_id] = $;
         $.socket.socket.on('close', this.onClose.bind($));
         $.socket.socket.on('message', this.onMessage.bind($));
@@ -81,10 +84,10 @@ class WebSocketServer extends EventEmitter {
     }
 
     unsubscribe(user_id, agent_id, message) {
-        if ('string' !== user_id) {
+        if (user_id instanceof ObjectID) {
             user_id = user_id.toString();
         }
-        if ('string' !== agent_id) {
+        if (agent_id instanceof ObjectID) {
             agent_id = agent_id.toString();
         }
         var subscribers = this.getSubscribers(user_id);
