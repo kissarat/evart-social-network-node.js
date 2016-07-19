@@ -21,6 +21,9 @@ App.module('Message', function (Message, App) {
     App.socket.on('read', function (message) {
         Message.channel.request('read', message);
     });
+    App.socket.on('wall', function (message) {
+        Message.channel.request(MessageType.WALL, message);
+    });
 
     Message.notify = function (model) {
         if (!(model instanceof Message.Model)) {
@@ -156,7 +159,7 @@ App.module('Message', function (Message, App) {
         url: '/api/message/dialogs',
 
         query: {
-            type: 'dialog'
+            type: MessageType.DIALOG
         },
 
         model: function (attrs, options) {
@@ -369,31 +372,81 @@ App.module('Message', function (Message, App) {
         }
     };
 
-    Message.WallView = Marionette.CollectionView.extend({
+    Message.PostListView = Marionette.CollectionView.extend({
         childView: Message.PostView,
 
+        initialize: function () {
+            this.reply = this.reply.bind(this);
+            this.collection.comparator = Message.comparator;
+        },
+
         onRender: function () {
+            Message.channel.reply('wall', this.reply);
             this.animateLoading();
+        },
+
+        onDestroy: function () {
+            Message.channel.stopReplying('wall', this.reply);
+        },
+
+        reply: function(model) {
+            if (model instanceof Message.Model) {
+                if (this.collection.pageableCollection.queryModel.get('owner_id') == model.get('owner').id) {
+                    this.collection.add(model);
+                    this.collection.sort();
+                }
+            }
+            else {
+                console.error('Invalid object', model);
+            }
         }
     }, {
         widget: function (region, options) {
             var query = _.merge({
                 type: MessageType.WALL,
-                owner_id: App.user._id,
+                owner_id: options.id || options.owner_id,
                 user: 'source.owner',
-                select: 'like.hate.files.videos.sex.text.admin'
-            }, _.pick(options, 'owner_id', 'user', 'select'));
+                select: 'like.hate.files.videos.sex.text.admin',
+                sort: '-_id'
+            }, _.pick(options, 'user', 'select'));
             var pageable = new Message.List([], {query: query});
-            var wall = new Message.WallView({
+            var postListView = new Message.PostListView({
                 collection: pageable.fullCollection
             });
-            region.show(wall);
+            region.show(postListView);
             pageable.getFirstPage();
-            return wall;
+            return postListView;
         }
     });
 
-    _.extend(Message.WallView.prototype, listViewMixin);
+    _.extend(Message.PostListView.prototype, listViewMixin);
+
+    Message.WallView = Marionette.View.extend({
+        template: '#view-wall',
+
+        attributes: {
+            class: 'view wall'
+        },
+
+        regions: {
+            editor: '.editor',
+            list: '.list'
+        }
+    }, {
+        widget: function (region, options) {
+            var wallView = new Message.WallView();
+            region.show(wallView);
+            var editor = new Message.Editor({
+                model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
+                    owner: options.id || options.owner_id,
+                    type: MessageType.WALL
+                }))
+            });
+            wallView.getRegion('editor').show(editor);
+            Message.PostListView.widget(wallView.getRegion('list'), options);
+            return wallView;
+        }
+    });
 
     Message.View = Marionette.View.extend({
         template: '#view-message',
@@ -564,7 +617,6 @@ App.module('Message', function (Message, App) {
                 });
                 last = this.children.findByModel(last);
                 this.collection.comparator = Message.comparator;
-                // this.collection.pageableCollection.comparator = Message.comparator;
                 this.collection.sort();
                 last.el.scrollIntoView();
             }
@@ -664,12 +716,9 @@ App.module('Message', function (Message, App) {
             this.read = _.bind(this.read, this);
             Message.channel.reply('dialog', this.reply);
             Message.channel.reply('read', this.read);
-            window.addEventListener('keyup', this.send);
-            this.send = _.bind(this.send, this);
         },
 
         onDestroy: function () {
-            window.removeEventListener('keyup', this.send);
             Message.channel.stopReplying('read', this.read);
             Message.channel.stopReplying('dialog', this.reply);
         },
@@ -716,12 +765,6 @@ App.module('Message', function (Message, App) {
                 }
             });
             return count;
-        },
-
-        send: function (e) {
-            if (e.altKey && 'Enter' == e.key) {
-                this.getRegion('editor').currentView.send();
-            }
         }
     }, {
         widget: function (region, options) {
@@ -737,7 +780,7 @@ App.module('Message', function (Message, App) {
                 model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
                     target: options.id,
                     unread: 1,
-                    type: 'dialog'
+                    type: MessageType.DIALOG
                 }))
             });
             var dialog = new Message.Dialog();
@@ -828,16 +871,21 @@ App.module('Message', function (Message, App) {
             if (App.config.message.attach) {
                 this.ui.attach.removeClass('hidden');
             }
+            window.addEventListener('keyup', this.send);
         },
 
         onDestroy: function () {
+            window.removeEventListener('keyup', this.send);
             if (this.model.get('text')) {
                 App.storage.save(this.model, 'target');
             }
         },
 
-        send: function () {
+        send: function (e) {
             var self = this;
+            if (e instanceof KeyboardEvent && 'Enter' !== e.key) {
+                return;
+            }
             var text = this.model.get('text');
 
             if (text) {
@@ -852,12 +900,20 @@ App.module('Message', function (Message, App) {
                 this.model.save('text', text, {
                     success: function success(model) {
                         model.loadRelative().then(function () {
-                            Message.channel.request('dialog', model);
-                            self.model = new Message.Model({
-                                target: model.get('target').get('_id')
-                            });
+                            self.model = model.clone();
+                            if (self.model.has('target')) {
+                                self.model.set('target', self.model.get('target').get('_id'))
+                            }
+                            if (self.model.has('source')) {
+                                self.model.set('source', self.model.get('source').get('_id'))
+                            }
+                            if (self.model.has('owner')) {
+                                self.model.set('owner', self.model.get('owner').get('_id'))
+                            }
+                            self.model.set('text', '');
                             self.stickit();
                             self.ui.editor[0].style.removeProperty('min-height');
+                            Message.channel.request(model.get('type'), model);
                         });
                     }
                 });
@@ -879,7 +935,7 @@ App.module('Message', function (Message, App) {
         controller: {
             wall: function (id) {
                 App.User.findOne(id, function (user) {
-                    var wall = Message.WallView.widget(App.getPlace('main'), {owner_id: user._id});
+                    var wall = Message.WallView.widget(App.getPlace('main'), {id: user._id});
                     wall.$el.addClass('scroll');
                 });
             },

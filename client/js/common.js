@@ -354,7 +354,7 @@ _.extend(Service.prototype, {
         }
     }
 });
-
+/*
 if (self.jQuery && jQuery.ajaxSetup) {
     jQuery.ajaxSetup({
         beforeSend: function (_1, options) {
@@ -365,7 +365,7 @@ if (self.jQuery && jQuery.ajaxSetup) {
         }
     });
 }
-
+*/
 Service.prototype.Upload = function Upload(options) {
     _.extend(this, Backbone.Events);
     this.initialize(options);
