@@ -45,7 +45,7 @@ gulp.task('app', function () {
         .join('\n');
     fs.writeFileSync('app/script.js', string);
     var script = doc.getElementById('script');
-    script.innerHTML = `<script src="script.js"></script>`;
+    script.innerHTML = `<script src="/script.js"></script>`;
     _.each(doc.querySelectorAll('.include[data-src]'), function (script) {
         script.innerHTML = fs.readFileSync('client' + script.getAttribute('data-src'));
         script.removeAttribute('data-src');

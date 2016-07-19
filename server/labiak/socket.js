@@ -127,9 +127,6 @@ class WebSocket {
     }
 
     send(message) {
-        if (!message.time) {
-            message.time = new Date().toISOString();
-        }
         this.socket.send(JSON.stringify(message));
     }
 

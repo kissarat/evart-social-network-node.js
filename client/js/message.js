@@ -998,13 +998,13 @@ App.module('Message', function (Message, App) {
                     success: function success(model) {
                         model.loadRelative().then(function () {
                             self.model = model.clone();
-                            if (self.model.has('target')) {
+                            if (self.model.has('target') && self.model.get('target') instanceof App.User.Model) {
                                 self.model.set('target', self.model.get('target').get('_id'))
                             }
                             if (self.model.has('source') && self.model.get('source') instanceof App.User.Model) {
                                 self.model.set('source', self.model.get('source').get('_id'))
                             }
-                            if (self.model.has('owner')) {
+                            if (self.model.has('owner') && self.model.get('owner') instanceof App.User.Model) {
                                 self.model.set('owner', self.model.get('owner').get('_id'))
                             }
                             if (self.model.has('parent') && self.model.get('source') instanceof Message.Model) {
