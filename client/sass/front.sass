@@ -68,6 +68,8 @@ body.login [href="/signup/phone"]
 
 .form-login
   text-align: left
+  button
+    cursor: pointer
   .title
     font-size: 4em
     color: white
@@ -180,10 +182,17 @@ $steps: phone code personal
 footer.front
   display: none
 
-@media (min-height: 780px)
+@media (min-height: 500px)
   body.login
+    [href="/signup/phone"]
+      top: calc(50% + 80px)
     .evart-social-network
       display: block
+
+@media (min-height: 640px)
+  body.login
+    [href="/signup/phone"]
+      top: calc(50% - 20px)
     footer.front
       display: block
       img
