@@ -5,7 +5,8 @@ App.module('Message', function (Message, App) {
         appRoutes: {
             'wall/:id': 'wall',
             'dialog/:id': 'dialog',
-            'dialogs': 'dialogs'
+            'dialogs': 'dialogs',
+            'emoji': 'emoji'
         }
     });
 
@@ -908,11 +909,11 @@ App.module('Message', function (Message, App) {
         onRender: function () {
             var self = this;
             _.each(emoji, function (info, smile) {
-                smile.char = smile;
+                info.char = smile;
                 smile = isMicrosoftWindows ? $('<img/>') : $('<span/>');
                 smile
                     .attr('title', T(info.title) + ' :' + info.name + ':')
-                    .attr('data-symbol', smile)
+                    .attr('data-symbol', info.char)
                     .click(function () {
                         self.trigger('insert', info);
                     });
@@ -962,7 +963,7 @@ App.module('Message', function (Message, App) {
             emojiView.on('insert', function (smile) {
                 var editor = self.ui.editor[0];
                 editor.value = editor.value.slice(0, editor.selectionStart)
-                    + smile + editor.value.slice(editor.selectionEnd);
+                    + smile.char + editor.value.slice(editor.selectionEnd);
                 self.getRegion('smiles').empty();
             });
             this.getRegion('smiles').show(emojiView);
@@ -1057,6 +1058,13 @@ App.module('Message', function (Message, App) {
 
             dialogs: function () {
                 Message.DialogListView.widget(App.getPlace('main'), {});
+            },
+            
+            emoji: function () {
+                var emoji = new Message.Emoji();
+                emoji.$el.addClass('big');
+                emoji.$el.addClass('scroll');
+                App.getPlace('main').show(emoji);
             }
         }
     });
