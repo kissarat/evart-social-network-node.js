@@ -470,27 +470,34 @@ function findStyleRules(selector, match) {
     return rules;
 }
 
+function is980() {
+    return innerWidth > 980;
+}
+
 function resize() {
     if (App.isAuthenticated()) {
-        var condition = innerWidth > 980;
         App.debounce(resize, function () {
-            $('#left, #right').toggleClass('visible', condition);
+            $('#left, #right').toggleClass('visible', is980());
         });
-        $('#root > .add, #left, #right')
-            .on('mouseenter', function () {
-                var selector = '#' + this.getAttribute('data-name');
-                clearTimeout(resize._timer);
-                resize._timer = setTimeout(function () {
-                    $(selector).addClass('visible');
-                }, 800);
-            })
-            .on('mouseleave', function () {
-                var selector = '#' + this.getAttribute('data-name');
-                clearTimeout(resize._timer);
-                resize._timer = setTimeout(function () {
-                    $(selector).removeClass('visible');
-                }, 800);
-            });
+            $('#root > .add, #left, #right')
+                .on('mouseenter', function () {
+                    var selector = '#' + this.getAttribute('data-name');
+                    clearTimeout(resize._timer);
+                    resize._timer = setTimeout(function () {
+                        if (!is980()) {
+                            $(selector).addClass('visible');
+                        }
+                    }, 800);
+                })
+                .on('mouseleave', function () {
+                    var selector = '#' + this.getAttribute('data-name');
+                    clearTimeout(resize._timer);
+                    resize._timer = setTimeout(function () {
+                        if (!is980()) {
+                            $(selector).removeClass('visible');
+                        }
+                    }, 800);
+                });
     }
 }
 

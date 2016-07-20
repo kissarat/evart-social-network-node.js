@@ -252,21 +252,12 @@ module.exports = {
         user.hash = utils.hash(data.password);
         return user.save();
     },
-/*
+
     PUT: function ($) {
-        var data = $.allowFields(User.fields.update.group, User.fields.update.admin);
-        data.type = 'group';
-        var user = new User(data);
-        user.save($.wrap(function () {
-            $.send(code.CREATED, {
-                success: true,
-                _id: user._id,
-                domain: user.domain,
-                type: user.type
-            });
-        }));
+        var data = $.allowFields(User.fields.update.user, User.fields.update.admin);
+        return User.update({_id: data._id}, {$set: data});
     },
-*/
+
     PATCH: function ($) {
         var id = $.id || $.user._id;
         return new Promise(function (resolve, reject) {
