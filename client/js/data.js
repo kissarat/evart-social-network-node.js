@@ -59,12 +59,11 @@ var emoji = {
     "😜": ["Blink Tongue", ":P", ":-P"],
     "😝": ["Tongue", "XD", "X-D"],
     "😒": ["Sad", ":(", ":-("],
-    "😏": "Tricky",
+    // "😏": "Tricky",
     "😓": "Busy",
     "😞": "Sad",
     "😥": ["Tear", ":'-(", ":'(", ";(", ";-(", ";=("],
     "😭": "Cry",
-    "😂": "Laugh",
     "😡": ["Angry"],
     "😷": "Silent",
     "👿": "Evil",
@@ -87,7 +86,6 @@ var emoji = {
     "🔓": "Unlock",
     "🔑": "Key",
     "💰": "Money",
-    "🔬": "Science",
     "🚬": "Smoke",
     "💣": "Bomb",
     "🔫": "Kill",
@@ -525,13 +523,20 @@ var filetypes = [
 ];
 
 function _generate_data() {
-    _.each(emoji, function (array, symbol) {
-        if ('string' == typeof array) {
-            array = [array];
-            emoji[symbol] = array;
+    _.each(emoji, function (object, chararcter) {
+        if ('string' === typeof object) {
+            object = {
+                title: object
+            }
         }
-        var s = array[0].toLowerCase().replace(/\s+/g, '_');
-        array.unshift(':' + s + ':');
+        else {
+            object = {
+                title: object[0],
+                shortcuts: object.slice(1)
+            }
+        }
+        emoji[chararcter] = object;
+        object.name = object.title.toLowerCase().replace(/\s+/g, '_');
     });
     Object.freeze(emoji);
 
@@ -592,6 +597,7 @@ var browser = {
     os: {}
 };
 
+self.isMicrosoftWindows = true;
 (function () {
     if (isNode) {
         return;
@@ -627,6 +633,7 @@ var browser = {
         browser.os.version = b[1].replace(/_/g, '.');
     }
     else if (navigator.userAgent.indexOf('Windows') >= 0) {
+        self.isMicrosoftWindows = true;
         browser.os.name = 'Windows';
         var versions = {
             'XP': ['Windows NT 5.1', 'Windows XP'],

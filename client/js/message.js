@@ -908,12 +908,21 @@ App.module('Message', function (Message, App) {
         onRender: function () {
             var self = this;
             _.each(emoji, function (info, smile) {
-                smile = $('<span/>')
-                    .attr('title', T(info[1]) + ' ' + info[0])
-                    .html(smile)
+                smile.char = smile;
+                smile = isMicrosoftWindows ? $('<img/>') : $('<span/>');
+                smile
+                    .attr('title', T(info.title) + ' :' + info.name + ':')
+                    .attr('data-symbol', smile)
                     .click(function () {
-                        self.trigger('insert', this.innerHTML);
+                        self.trigger('insert', info);
                     });
+                if (isMicrosoftWindows) {
+                    smile.addClass('emoji');
+                    smile.attr('src', '/images/smiles/' + info.name + '.png')
+                }
+                else {
+                    smile.html(smile)
+                }
                 self.$el.append(smile);
             });
         }

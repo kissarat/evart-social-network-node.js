@@ -70,13 +70,13 @@ var _schema = {
     },
 
     tiles: {
-        0: {type: T.ObjectId, ref: 'File'},
-        1: {type: T.ObjectId, ref: 'File'},
-        2: {type: T.ObjectId, ref: 'File'},
-        3: {type: T.ObjectId, ref: 'File'},
-        4: {type: T.ObjectId, ref: 'File'},
-        5: {type: T.ObjectId, ref: 'File'},
-        6: {type: T.ObjectId, ref: 'File'}
+        0: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000000')},
+        1: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000001')},
+        2: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000002')},
+        3: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000003')},
+        4: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000004')},
+        5: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000005')},
+        6: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000006')}
     },
 
     created: {
@@ -109,6 +109,9 @@ var _schema = {
         type: String,
         "enum": [null, "single", "in", "engaged", "married", "love", "complex", "search"]
     },
+
+    forename: utils.StringType(48),
+    surname: utils.StringType(48),
 
     status: utils.StringType(140),
     city_id: Number,
@@ -170,7 +173,7 @@ schema.User.statics.fields = {
     update: {
         user: ["online", "name", "surname", "forename", "city", "city_id", "country",
             "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship",
-            "lang", "background"],
+            "lang", "background", "tiles"],
         group: ["domain", "name", "about", "avatar"],
         admin: ['domain', 'type']
     },
@@ -298,6 +301,28 @@ module.exports = {
         if ($.isAdmin) {
             return User.remove({_id: $.get('id')})
         }
+    },
+
+    sample: function ($) {
+        var ag = [
+            {
+                $match: {
+                    type: $.get('type', 'user')
+                }
+            },
+            {
+                $sample: {size: $.get('size', 1)}
+            },
+            {
+                $project: {
+                    _id: 1,
+                    domain: 1
+                }
+            }
+        ];
+        User.aggregate(ag).exec($.wrap(function (users) {
+            $.send(users);
+        }))
     },
 
     informer: function ($) {

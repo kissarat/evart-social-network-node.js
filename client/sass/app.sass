@@ -33,6 +33,7 @@ a
         position: relative
         width: 0
         margin-top: 4em
+        z-index: 1
         ul
           position: absolute
           padding: 0
@@ -316,19 +317,16 @@ button.unemitted
       cursor: pointer
 
 @media (min-width: 1201px)
-  #root
-    > .add
-      > div
-        width: 70px
     #left, #right
       &.visible
         max-width: 400px
 
 @media (max-width: 1200px)
-  #root
-    > .add
-      > div
-        width: 40px
-    #left, #right
-      &.visible
-        max-width: 300px
+  #left, #right
+    &.visible
+      max-width: 300px
+
+#root
+  > .add
+    > div
+      width: 40px

@@ -39,7 +39,9 @@ App.module('Menu', function (Menu, App) {
         },
 
         events: {
-            'click li': 'open'
+            'click li': 'open',
+            'mouseenter': 'mouseenter',
+            'mouseleave': 'mouseleave'
         },
 
         open: function (e) {
@@ -48,7 +50,16 @@ App.module('Menu', function (Menu, App) {
                 options = JSON.parse(options);
             }
             App.widget(this.getSideRegion(), e.target.getAttribute('data-widget'), options);
-            Menu.closeAll();
+        },
+
+        mouseenter: function () {
+            clearTimeout(this._timer);
+        },
+
+        mouseleave: function () {
+            this._timer = setTimeout(function () {
+                Menu.closeAll();
+            }, 800);
         },
 
         onRender: function () {

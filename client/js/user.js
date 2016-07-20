@@ -12,7 +12,8 @@ App.module('User', function (User, App) {
             'group/create': 'create',
             'users': 'index',
             'record/:type': 'record',
-            'list/:name': 'list'
+            'list/:name': 'list',
+            'random/user': 'random'
         }
     });
 
@@ -330,7 +331,6 @@ App.module('User', function (User, App) {
         },
 
         personal: function () {
-            var self = this;
             var fields = ['password', 'domain', 'email', 'forename', 'surname'];
             if (this.model.isValid(fields)) {
                 this.model.save(null, {
@@ -363,7 +363,6 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            '[name=about]': 'about',
             '[name=birthday]': {
                 observe: 'birthday',
                 onGet: function (value) {
@@ -375,10 +374,13 @@ App.module('User', function (User, App) {
             '[name=email]': 'email',
             '[name=language]': 'lang',
             '[name=name]': 'name',
+            '[name=surname]': 'surname',
+            '[name=forename]': 'forename',
             '[name=phone]': 'phone',
             '[name=relationship]': 'relationship',
             '[name=sex]': 'sex',
             '[name=type]': 'type',
+            '[name=about]': 'about',
             'h1 .title': 'domain'
         },
 
@@ -553,7 +555,6 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            '.name': 'name',
             '.status': 'status',
             '.audio .value': 'audio',
             '.friends .value': 'friends',
@@ -577,6 +578,7 @@ App.module('User', function (User, App) {
             status: '.status',
             photoList: '.photo-list',
             follow: '.follow',
+            name: '.name',
             tile0: '[data-number="0"]',
             tile1: '[data-number="1"]',
             tile2: '[data-number="2"]',
@@ -757,7 +759,8 @@ App.module('User', function (User, App) {
 
         onRender: function () {
             var self = this;
-            document.title = this.model.getName();
+            document.title = this.model.getName() + T(' in Evart Social Network');
+            this.ui.name.html(this.model.getName());
             var back = this.model.get('background');
             if (back) {
                 this.ui.background[0].setBackground(back);
@@ -770,7 +773,7 @@ App.module('User', function (User, App) {
             else {
                 console.log('Something wrong');
             }
-            if (App.user.follow.indexOf(this.model.get('_id')) < 0) {
+            if (!this.model.canManage() || App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();
             }
             this.model.setupAvatar(this.ui.avatar[0]);
@@ -1040,9 +1043,14 @@ App.module('User', function (User, App) {
                     profile.el.classList.add('scroll');
                     profile.el.classList.add(user.get('type'));
                     App.getPlace('main').show(profile);
-                    var buttons = user.get('_id') == App.user._id ? User.ProfileButtons : User.OtherProfileButtons;
+                    var buttons = user.get('_id') == App.user._id
+                        ? User.ProfileButtons
+                        : User.OtherProfileButtons;
                     buttons = new buttons({model: user});
-                    App.Message.WallView.widget(profile.getRegion('message-list'), {owner_id: user.get('_id')});
+                    App.Message.WallView.widget(
+                        profile.getRegion('message-list'),
+                        {owner_id: user.get('_id')}
+                    );
                     profile.getRegion('buttons').show(buttons);
                     var params = {
                         id: user.get('_id'),
@@ -1052,7 +1060,7 @@ App.module('User', function (User, App) {
                         user.set(informer);
                     });
                     App.Photo.ListView.widget(profile.getRegion('photo-list'), {
-                        owner_id: user._id
+                        owner_id: user.id
                     });
                 });
             },
@@ -1114,6 +1122,12 @@ App.module('User', function (User, App) {
                 App.getView().getRegion('main').show(layout);
                 layout.getRegion('list').show(listView);
                 pageable.getFirstPage();
+            },
+            
+            random: function (type) {
+                $.getJSON('/api/user/sample?size=1&type=' + (type || 'user'), function (users) {
+                    App.navigate('view/' + users[0].domain);
+                })
             }
         }
     });

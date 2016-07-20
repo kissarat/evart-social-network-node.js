@@ -61,7 +61,7 @@ const schema = {
     ext: {
         type: String
     },
-    
+
     album: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Album'
@@ -101,7 +101,7 @@ module.exports = {
             $.invalid('name');
         }
         name = name.replace(/[\\:;\/]/g, '.').replace(/\s+/g, ' ').trim();
-        var id = utils.id12('File');
+        var id = $.isAdmin && $.has('id') ? $.get('id') : utils.id12('File');
         var id_filename = static_dir + '/id/' + id + '.' + ext;
         var stream = fs.createWriteStream(id_filename, {
             flags: 'w',
@@ -119,6 +119,7 @@ module.exports = {
                     }
                     hash_md5(id_filename, $.wrap(function (md5) {
                         var data = {
+                            _id: id,
                             name: name,
                             owner: owner_id,
                             ext: ext,
@@ -133,7 +134,7 @@ module.exports = {
                         fs.stat(md5_filename, function (err, stat) {
                             var exists = true;
                             if (err) {
-                                exists ='ENOENT' !== err.code;
+                                exists = 'ENOENT' !== err.code;
                                 if (exists) {
                                     return reject(err);
                                 }
@@ -187,9 +188,10 @@ module.exports = {
                 };
             }
             else {
+                let id = where._id.toString();
                 File.findOne(where, $.wrap(function (file) {
                     if (file) {
-                        $.sendStatus(code.MOVED_PERMANENTLY, {
+                        $.sendStatus(code.MOVED_TEMPORARILY, {
                             'content-type': file.mime,
                             location: '/md5/' + file.md5 + '/' + file.name + '.' + file.ext
                         });
@@ -201,9 +203,10 @@ module.exports = {
             }
         }
         else {
-            let where = {
-                owner: $.get('owner_id', $.user._id)
-            };
+            let where = {};
+            if ($.has('owner_id')) {
+                where.owner = $.get('owner_id');
+            }
             if ($.has('album_id')) {
                 where.album = $.get('album_id');
             }
