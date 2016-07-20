@@ -440,9 +440,9 @@ _.extend(Backbone.Validation.callbacks, {
 
 window.App = new Application();
 
-// App.alert = function (type, message) {
-//     document.write(message);
-// };
+function backHistory() {
+    history.back();
+}
 
 App.Behaviors = {};
 
@@ -470,23 +470,33 @@ function findStyleRules(selector, match) {
     return rules;
 }
 
-App.on('login', function () {
-    // if (App.user && 'admin' == App.user.type) {
-    // var rule = findStyleRules('.admin')[0];
-    // rule.style.removeProperty('display');
-    // }
-    setTimeout(function () {
-        document.getElementById('left').classList.add('visible');
-        document.getElementById('right').classList.add('visible');
-    }, 300);
-    setTimeout(function () {
-        document.getElementById('dock-container').classList.add('visible');
-    }, 1200);
-});
-
-function backHistory() {
-    history.back();
+function resize() {
+    if (App.isAuthenticated()) {
+        var condition = innerWidth > 980;
+        App.debounce(resize, function () {
+            $('#left, #right').toggleClass('visible', condition);
+        });
+        $('#root > .add, #left, #right')
+            .on('mouseenter', function () {
+                var selector = '#' + this.getAttribute('data-name');
+                clearTimeout(resize._timer);
+                resize._timer = setTimeout(function () {
+                    $(selector).addClass('visible');
+                }, 800);
+            })
+            .on('mouseleave', function () {
+                var selector = '#' + this.getAttribute('data-name');
+                clearTimeout(resize._timer);
+                resize._timer = setTimeout(function () {
+                    $(selector).removeClass('visible');
+                }, 800);
+            });
+    }
 }
+
+App.on('login', resize);
+
+window.addEventListener('resize', resize);
 
 addEventListener('unload', function () {
     _.each(App.getView().getRegions(), function (region) {

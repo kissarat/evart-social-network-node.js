@@ -32,7 +32,10 @@ App.module('Menu', function (Menu, App) {
 
         ui: {
             dialogs: '[data-name=dialogs]',
-            video: '[data-name=video]'
+            video: '[data-name=video]',
+            audio: '[data-name=audio]',
+            friends: '[data-name=friends]',
+            groups: '[data-name=friends]'
         },
 
         events: {
@@ -53,6 +56,9 @@ App.module('Menu', function (Menu, App) {
             _.each(App.config.menu, function (enable, name) {
                 if (enable) {
                     self.ui[name].removeClass('hidden');
+                }
+                else {
+                    self.ui[name].remove();
                 }
             })
         },

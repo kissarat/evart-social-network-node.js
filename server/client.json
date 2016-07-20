@@ -68,7 +68,10 @@
   },
   "menu": {
     "dialogs": true,
-    "video": true
+    "video": true,
+    "audio": false,
+    "friends": false,
+    "groups": false
   },
   "dock": {
     "profile": true,

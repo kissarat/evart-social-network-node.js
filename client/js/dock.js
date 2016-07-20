@@ -79,6 +79,9 @@ App.module('Dock', function (Dock, App) {
         var dock = new Dock.Layout();
         App.getPlace('dock').show(dock);
         dock.getRegion('list').show(new Dock.ListView({collection: list}));
+        setTimeout(function () {
+            document.getElementById('dock-container').classList.add('visible');
+        }, 1200);
     };
 
     Dock.hide = function () {
