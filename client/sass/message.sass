@@ -20,7 +20,6 @@ $unread: rgba(0, 0, 0, 0.05)
     text-align: left
   .source .avatar
     display: none
-    margin-right: 8px
   .peer
     display: flex
     min-width: 160px
@@ -31,8 +30,6 @@ $unread: rgba(0, 0, 0, 0.05)
       align-items: flex-start
   .name, .time
     font-size: 0.8em
-  .avatar
-    margin: 4px
   &.mine.unread .content
     background-color: $unread
   &:not(.mine).unread
@@ -70,27 +67,9 @@ $unread: rgba(0, 0, 0, 0.05)
 .view.post
   > .content
     display: flex
-    .info
-      min-width: 64px
-      .time
-        font-size: 0.8em
-        margin-top: 8px
-      .container
-        background-color: #ECEFF4
-        padding-top: 8px
-        padding-bottom: 8px
-        > *
-          margin-left: auto
-          margin-right: auto
-    .message
-      .name
-        display: block
-      > *
-        margin-left: 8px
-        text-align: left
+    text-align: left
   > .controls
     display: flex
-    justify-content: flex-end
     align-items: center
     color: #CAD3DF
     > .comment
@@ -101,7 +80,6 @@ $unread: rgba(0, 0, 0, 0.05)
         margin-right: 4px
     > *
       cursor: pointer
-      margin-left: 6px
     .remove
       margin-right: 6px
     .comment
@@ -114,12 +92,6 @@ $unread: rgba(0, 0, 0, 0.05)
   article > .right
     min-height: 30vh
 
-.avatar
-  background-size: cover
-  border-radius: 50%
-  width: 40px
-  height: 40px
-
 .male .avatar
   background-image: url("/images/male.png")
 
@@ -129,11 +101,6 @@ $unread: rgba(0, 0, 0, 0.05)
 .layout-dialog
   display: flex
   flex-direction: column
-  .user-info
-    max-width: 80px
-    text-align: center
-    .avatar
-      margin: 0 auto 4px
   .list
     flex: 1
     //padding-bottom: 8px
@@ -217,10 +184,7 @@ $unread: rgba(0, 0, 0, 0.05)
   .editor-container
     display: flex
     justify-content: space-between
-    > div
-      margin-top: 4px
-      height: 36px
-      width: 36px
+    align-items: center
   .button
     background: no-repeat center
     cursor: pointer
@@ -234,11 +198,12 @@ $unread: rgba(0, 0, 0, 0.05)
     height: 40px
     text-align: left
   .smile
-    line-height: 36px
     font-size: 1.2em
   .send
     background-image: url("/images/send.png")
+    background-size: contain
     margin-right: 4px
+    margin-left: 4px
   .smiles span
     display: inline-block
     margin: 0 2px
@@ -255,3 +220,71 @@ $unread: rgba(0, 0, 0, 0.05)
   background-color: #8FC44B
   width: 8px
   height: 8px
+
+.view.post > .content .time
+  opacity: 0.3
+
+@media (min-width: 1201px), (max-width: 980px)
+  .editor-container
+    > div
+      height: 36px
+      width: 36px
+  .view.post
+    .message
+      .name
+        display: block
+      > *
+        margin-left: 8px
+    .info
+      min-width: 64px
+      a.name
+        display: none
+      .time
+        font-size: 0.8em
+        margin-top: 8px
+      .container
+        background-color: #ECEFF4
+        padding-top: 8px
+        padding-bottom: 8px
+        > *
+          margin-left: auto
+          margin-right: auto
+  .avatar
+    background-size: cover
+    border-radius: 50%
+    width: 40px
+    height: 40px
+  .controls
+    justify-content: flex-end
+
+@media (max-width: 1200px) and (min-width: 981px)
+  .editor-container
+    > div
+      height: 20px
+      width: 20px
+  .view.post
+    margin-bottom: 8px
+    .message a.name
+      display: none
+    .content
+      flex-direction: column
+    .comment
+      padding: 0
+    .info
+      background-color: #ECEFF4
+      .time
+        font-size: 0.5em
+      .container
+        > *
+          display: inline-block
+          vertical-align: middle
+        .avatar
+          background-size: cover
+          margin: 2px
+          width: 22px
+          height: 22px
+      hr
+        display: none
+
+  .controls
+    justify-content: space-between

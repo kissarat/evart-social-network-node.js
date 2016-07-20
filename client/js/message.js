@@ -262,7 +262,7 @@ App.module('Message', function (Message, App) {
         ui: {
             content: '> .content',
             attitude: '> .controls > .attitude',
-            name: '> .content > .message > .name',
+            name: '> .content .name',
             info: '> .content > .info',
             avatar: '> .content > .info .avatar',
             time: '> .content > .info .time',
@@ -276,7 +276,7 @@ App.module('Message', function (Message, App) {
 
         events: {
             'click > .controls .fa-share-alt': 'share',
-            'click > .content > .message > .name': 'view',
+            'click > .content .name': 'view',
             'click > .controls > .attitude > *': 'estimate',
             'click > .controls > .remove': 'remove',
             'click > .controls > .comment': 'comment'
