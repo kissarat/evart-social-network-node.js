@@ -479,25 +479,25 @@ function resize() {
         App.debounce(resize, function () {
             $('#left, #right').toggleClass('visible', is980());
         });
-            $('#root > .add, #left, #right')
-                .on('mouseenter', function () {
-                    var selector = '#' + this.getAttribute('data-name');
-                    clearTimeout(resize._timer);
-                    resize._timer = setTimeout(function () {
-                        if (!is980()) {
-                            $(selector).addClass('visible');
-                        }
-                    }, 800);
-                })
-                .on('mouseleave', function () {
-                    var selector = '#' + this.getAttribute('data-name');
-                    clearTimeout(resize._timer);
-                    resize._timer = setTimeout(function () {
-                        if (!is980()) {
-                            $(selector).removeClass('visible');
-                        }
-                    }, 800);
-                });
+        $('#root > .add, #left, #right')
+            .on('mouseenter', function () {
+                var selector = '#' + this.getAttribute('data-name');
+                clearTimeout(resize._timer);
+                resize._timer = setTimeout(function () {
+                    if (!is980()) {
+                        $(selector).addClass('visible');
+                    }
+                }, 800);
+            })
+            .on('mouseleave', function () {
+                var selector = '#' + this.getAttribute('data-name');
+                clearTimeout(resize._timer);
+                resize._timer = setTimeout(function () {
+                    if (!is980()) {
+                        $(selector).removeClass('visible');
+                    }
+                }, 800);
+            });
     }
 }
 
@@ -514,8 +514,8 @@ addEventListener('unload', function () {
 function loadRelative(model, map) {
     var promises = [];
     _.each(map, function (clazz, key) {
-        if (model.get(key)) {
-            var value = model.get(key);
+        var value = model.get(key);
+        if (value) {
             if (value instanceof clazz) {
             }
             else if (value) {
@@ -523,9 +523,12 @@ function loadRelative(model, map) {
                     model.set(key, new clazz(value))
                 }
                 else {
-                    promises.push(App.local.getById(clazz.tableName, value).then(function (model) {
-                        model = new clazz(model);
-                        return model;
+                    promises.push(new Promise(function (resolve, reject) {
+                        App.local.getById(clazz.tableName, value)
+                            .catch(reject)
+                            .then(function (model) {
+                                resolve(new clazz(model));
+                            });
                     }))
                 }
             }

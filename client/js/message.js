@@ -11,19 +11,17 @@ App.module('Message', function (Message, App) {
     });
 
     Message.channel = Backbone.Radio.channel('message');
-    App.socket.on(MessageType.DIALOG, function (message) {
-        var model = new Message.Model(message);
-        model.loadRelative().then(function () {
-            if (!Message.channel.request('dialog', model)) {
-                Message.notify(model);
-            }
+
+    [MessageType.DIALOG, MessageType.WALL, MessageType.COMMENT].forEach(function (type) {
+        App.socket.on(type, function (message) {
+            Message.Model(message)
+                .loadRelative()
+                .then(function () {
+                    if (!Message.channel.request(type, model)) {
+                        Message.notify(model);
+                    }
+                });
         });
-    });
-    App.socket.on(MessageType.WALL, function (message) {
-        Message.channel.request(MessageType.WALL, message);
-    });
-    App.socket.on(MessageType.COMMENT, function (message) {
-        Message.channel.request(MessageType.COMMENT, message);
     });
     App.socket.on('read', function (message) {
         Message.channel.request('read', message);
@@ -95,12 +93,7 @@ App.module('Message', function (Message, App) {
         },
 
         loadRelative: function () {
-            return loadRelative(this, {
-                source: App.User.Model,
-                target: App.User.Model,
-                owner: App.User.Model,
-                parent: Message.Model
-            });
+            return loadRelative(this, Message.Model.relatives);
         },
 
         isPost: function () {
@@ -126,10 +119,32 @@ App.module('Message', function (Message, App) {
 
         getIndex: function () {
             return parseInt(this.get('_id').slice(2), 16);
+        },
+
+        cloneDraft: function () {
+            var self = this;
+            var properties = {
+                type: this.get('type')
+            };
+            _.each(Message.Model.prototype.relatives, function (model, key) {
+                var value = self.get(key);
+                properties[key] = value instanceof model ? value.get('_id') : value;
+            });
+            return new Message.Model(properties);
+        }
+    }, {
+        relatives: {
+            source: App.User.Model,
+            target: App.User.Model,
+            owner: App.User.Model,
+            parent: Message.Model
+        },
+
+        tableName: 'message',
+        draft: function (object) {
+            return new Message.Model(_.pick(object, Object.keys(Message.Model.relatives).concat(['type'])));
         }
     });
-    
-    Message.Model.tableName = 'message';
 
     Message.LastMessage = Backbone.Model.extend({
         initialize: function () {
@@ -318,7 +333,6 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            var self = this;
             this.ui.name.attr('href', '/view/' + this.model.get('source').get('domain'));
             this.ui.name.html(this.model.get('source').getName());
             this.model.get('source').setupAvatar(this.ui.avatar[0]);
@@ -339,15 +353,15 @@ App.module('Message', function (Message, App) {
                 this.ui.commentButton.removeClass('hidden');
             }
             /*
-            var model = this.model.has('parent') ? this.model.get('parent') : this.model;
-            model.loadRelative().then(function () {
-                var canRemove = App.config.message.remove &&
-                    (model.get('owner').canManage() || model.get('source').canManage());
-                if (canRemove) {
-                    self.ui.removeButton.removeClass('hidden');
-                }
-            });
-            */
+             var model = this.model.has('parent') ? this.model.get('parent') : this.model;
+             model.loadRelative().then(function () {
+             var canRemove = App.config.message.remove &&
+             (model.get('owner').canManage() || model.get('source').canManage());
+             if (canRemove) {
+             self.ui.removeButton.removeClass('hidden');
+             }
+             });
+             */
             this.stickit();
         }
     });
@@ -403,11 +417,10 @@ App.module('Message', function (Message, App) {
         },
 
         reply: function (model) {
-            if (model instanceof Message.Model) {
-                if (this.collection.pageableCollection.queryModel.get('owner_id') == model.get('owner').id) {
-                    this.collection.add(model);
-                    this.collection.sort();
-                }
+            console.error('Invalid object', model);
+            if (model instanceof Backbone.Model) {
+                this.collection.add(model);
+                this.collection.sort();
             }
             else {
                 console.error('Invalid object', model);
@@ -1006,23 +1019,10 @@ App.module('Message', function (Message, App) {
                 });
                 this.model.save('text', text, {
                     success: function success(model) {
+                        self.model = model.cloneDraft();
+                        self.stickit();
+                        self.ui.editor[0].style.removeProperty('min-height');
                         model.loadRelative().then(function () {
-                            self.model = model.clone();
-                            if (self.model.has('target') && self.model.get('target') instanceof App.User.Model) {
-                                self.model.set('target', self.model.get('target').get('_id'))
-                            }
-                            if (self.model.has('source') && self.model.get('source') instanceof App.User.Model) {
-                                self.model.set('source', self.model.get('source').get('_id'))
-                            }
-                            if (self.model.has('owner') && self.model.get('owner') instanceof App.User.Model) {
-                                self.model.set('owner', self.model.get('owner').get('_id'))
-                            }
-                            if (self.model.has('parent') && self.model.get('source') instanceof Message.Model) {
-                                self.model.set('parent', self.model.get('parent').get('_id'))
-                            }
-                            self.model.set('text', '');
-                            self.stickit();
-                            self.ui.editor[0].style.removeProperty('min-height');
                             Message.channel.request(model.get('type'), model);
                         });
                     }
@@ -1059,7 +1059,7 @@ App.module('Message', function (Message, App) {
             dialogs: function () {
                 Message.DialogListView.widget(App.getPlace('main'), {});
             },
-            
+
             emoji: function () {
                 var emoji = new Message.Emoji();
                 emoji.$el.addClass('big');

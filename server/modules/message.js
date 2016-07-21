@@ -293,7 +293,11 @@ module.exports = {
                     }
                     delete message.v;
                     $.send(message);
-                    targets.forEach(id => $.notifyOne(id, message));
+                    targets.forEach(function (id) {
+                        if (!$.user._id.equals(id)) {
+                            $.notifyOne(id, message)
+                        }
+                    });
                 }));
             }
             else {
