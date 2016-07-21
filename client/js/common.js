@@ -353,6 +353,10 @@ _.extend(Service.prototype, {
             }
             return !!object;
         }
+    },
+    
+    contentURL: function (url) {
+        return '//' + ('localhost' === location.hostname ? '/' : this.config.cdn) + url;  
     }
 });
 /*

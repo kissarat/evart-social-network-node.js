@@ -13,6 +13,7 @@ App.module('User', function (User, App) {
             'users': 'index',
             'record/:type': 'record',
             'list/:name': 'list',
+            'friends': 'list',
             'random/user': 'random'
         }
     });
@@ -1106,7 +1107,7 @@ App.module('User', function (User, App) {
 
             list: function (name) {
                 User.SearchView.widget(App.getRegion('main'), {
-                    name: name,
+                    name: name ? name : App.route[0].slice(0, -1),
                     List: User.RelationList
                 })
             },

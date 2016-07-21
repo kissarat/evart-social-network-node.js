@@ -52,12 +52,12 @@ App.module('Dock', function (Dock, App) {
     });
 
     var items = {
-        "feed": "News",
+        "news": "News",
         "profile": "Profile",
         "feedback": "Feedback",
         "dialogs": "Messages",
         "phone": "Call",
-        "list/friend": "Friends",
+        "friends": "Friends",
         "groups": "Groups",
         "photos": "Photos",
         "video": "Video",

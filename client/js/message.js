@@ -4,6 +4,7 @@ App.module('Message', function (Message, App) {
     Message.Router = Marionette.AppRouter.extend({
         appRoutes: {
             'wall/:id': 'wall',
+            'news': 'news',
             'dialog/:id': 'dialog',
             'dialogs': 'dialogs',
             'emoji': 'emoji'
@@ -434,7 +435,7 @@ App.module('Message', function (Message, App) {
                 user: 'source.owner',
                 select: 'like.hate.files.videos.sex.text.admin',
                 sort: '-_id'
-            }, _.pick(options, 'user', 'select'));
+            }, _.pick(options, 'user', 'select', 'type'));
             var pageable = new Message.List([], {query: query});
             var postListView = new Message.PostListView({
                 collection: pageable.fullCollection
@@ -932,7 +933,7 @@ App.module('Message', function (Message, App) {
                     });
                 if (isMicrosoftWindows) {
                     smile.addClass('emoji');
-                    smile.attr('src', '/images/smiles/' + info.name + '.png')
+                    smile.attr('src', App.contentURL('images/smiles/' + info.name + '.png'))
                 }
                 else {
                     smile.html(smile)
@@ -1048,6 +1049,14 @@ App.module('Message', function (Message, App) {
                     var wall = Message.WallView.widget(App.getPlace('main'), {id: user._id});
                     wall.$el.addClass('scroll');
                 });
+            },
+
+            news: function () {
+                var news = Message.PostListView.widget(App.getPlace('main'), {
+                    id: App.user._id,
+                    type: 'feed'
+                });
+                news.$el.addClass('scroll');
             },
 
             dialog: function (id) {

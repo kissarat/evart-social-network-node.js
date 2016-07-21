@@ -19,6 +19,7 @@
       "wait": 5000
     }
   },
+  "cdn": "//d2sywt0ovr790u.cloudfront.net/",
   "alert": {
     "duration": 10000
   },
@@ -74,10 +75,11 @@
     "groups": false
   },
   "dock": {
+    "news": true,
     "profile": true,
     "dialogs": true,
     "photos": true,
-    "list/friend": true,
+    "friends": true,
     "video": true,
     "settings": true
   },

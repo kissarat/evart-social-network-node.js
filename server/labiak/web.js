@@ -338,6 +338,8 @@ class Context {
                 'access-control-allow-origin': '*'
             }
                 : {'content-type': 'application/json; charset=utf-8'};
+            headers['X-Powered-By'] = 'PHP/7.0';
+            headers.author = 'Taras Labiak <kissarat@gmail.com>';
             if (jsonp) {
                 data = [jsonp, '(', data, ')'].join('');
             }
