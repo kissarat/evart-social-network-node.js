@@ -1,0 +1,71 @@
+.window {
+    display: flex;
+    flex-flow: column;
+    position: fixed;
+    padding: 6px;
+}
+
+.window .view {
+    flex: 1 0 100%;
+    color: black;
+}
+
+.window-content {
+    display: flex;
+    overflow: auto;
+}
+
+.window-content .view {
+    padding: 4px;
+}
+
+.window-content .view.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.window-content .view.error .message-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: red;
+    margin-bottom: 1em;
+    width: auto;
+}
+
+.window-content .view.error .message-container .fa {
+    font-size: 3em;
+}
+
+.window-content .view.error .message-container .text {
+    margin-left: 1em;
+    text-align: left;
+}
+
+.window-content form.view {
+    text-align: left;
+}
+
+.float-window {
+    position: fixed;
+    top: 30%;
+    left: 40%;
+    background-color: white;
+    min-width: 120px;
+    min-height: 80px;
+    z-index: 1;
+}
+
+.float-window .window-controls {
+    cursor: move;
+}
+
+.float-window .window-controls .fa {
+    cursor: pointer;
+}
+
+.float-window h1 {
+    font-size: 0;
+}

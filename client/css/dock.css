@@ -1,0 +1,186 @@
+#dock-container {
+    position: fixed;
+    text-align: center;
+    width: 100vw;
+}
+
+#dock-container.visible {
+    transition: bottom 600ms ease-in;
+}
+
+@media (min-width: 1361px) {
+    #dock-container {
+        bottom: -100px;
+    }
+
+    #dock-container.visible {
+        bottom: -8px;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1360px) {
+    #dock-container {
+        bottom: -100px;
+        transform: scale(0.75);
+    }
+
+    #dock-container.visible {
+        bottom: -8px;
+    }
+}
+
+@media (max-width: 1024px) {
+    #dock-container {
+        bottom: -100px;
+        transform: scale(0.5);
+    }
+
+    #dock-container.visible {
+        bottom: -16px;
+    }
+}
+
+#dock-container .list > div {
+    display: block;
+    position: relative;
+}
+
+#dock-container .list > div li:hover + li a:hover {
+    margin: 0 1em 10px;
+    -webkit-transform: scale(1.1);
+    -moz-transform: scale(1.1);
+    -o-transform: scale(1.1);
+}
+
+#dock-container .list > div ul {
+    font-size: 14px;
+    padding: 0 30px;
+    margin: 0;
+}
+
+#dock-container .list > div li {
+    display: inline-block;
+    position: relative;
+    list-style-type: none;
+}
+
+#dock-container .list > div li span {
+    display: none;
+    position: absolute;
+    bottom: 140px;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 4px 0;
+    border-radius: 12px;
+    width: 100%;
+    -webkit-border-radius: 12px;
+    -moz-border-radius: 12px;
+}
+
+#dock-container .list > div li:hover span {
+    display: block;
+}
+
+#dock-container .list > div li:hover a {
+    margin: 0 1.1em 10px;
+    -webkit-transform: scale(1.1);
+    -moz-transform: scale(1.1);
+    -o-transform: scale(1.1);
+}
+
+#dock-container .list > div li:hover + li a {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    -o-transform: scale(1);
+}
+
+#dock-container .list > div li a {
+    margin-bottom: 10px;
+    -webkit-box-reflect: below 2px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.7, transparent), to(rgba(255, 255, 255, 0.5)));
+    -webkit-box-reflect: below 2px -webkit-linear-gradient(top, transparent, rgba(255, 255, 255, 0.3));
+    -webkit-transition: all 0.3s;
+    -webkit-transform-origin: 50% 100%;
+    -moz-transition: all 0.4s;
+    -moz-transform-origin: 50% 100%;
+    -o-transition: all 0.3s;
+    -o-transform-origin: 50% 100%;
+}
+
+#dock-container .list > div li a .prev {
+    margin: 0 1.4em 10px;
+    -webkit-transform: scale(1.1);
+    -moz-transform: scale(1.1);
+    -o-transform: scale(1.1);
+}
+
+#dock-container .list > div a {
+    display: inline-block;
+    background: url("/images/icons.png") no-repeat;
+    width: 72px;
+    height: 72px;
+}
+
+#dock-container .list > div a.disabled {
+    display: none;
+    cursor: default;
+    filter: grayscale(100%);
+    opacity: 0.3;
+    -webkit-filter: grayscale(100%);
+    -moz-filter: grayscale(100%);
+}
+
+#dock-container .list > div [href="/feed"] {
+    background-position: 0, 0;
+}
+
+#dock-container .list > div [href="/profile"] {
+    background-position: calc(-78px * 1), 0;
+}
+
+#dock-container .list > div [href="/feedback"] {
+    background-position: calc(-78px * 2), 0;
+}
+
+#dock-container .list > div [href="/dialogs"] {
+    background-position: calc(-78px * 3), 0;
+}
+
+#dock-container .list > div [href="/phone"] {
+    background-position: calc(-78px * 4 + 1px), 0;
+}
+
+#dock-container .list > div [href="/list/friend"] {
+    background-position: calc(-78px * 5 + 1px), 0;
+}
+
+#dock-container .list > div [href="/groups"] {
+    background-position: calc(-78px * 6 + 2px), 0;
+}
+
+#dock-container .list > div [href="/photos"] {
+    background-position: calc(-78px * 7 + 2px), 0;
+}
+
+#dock-container .list > div [href="/video"] {
+    background-position: calc(-78px * 8 + 2px), 0;
+}
+
+#dock-container .list > div [href="/conference"] {
+    background-position: calc(-78px * 9 + 3px), 0;
+}
+
+#dock-container .list > div [href="/audio"] {
+    background-position: calc(-78px * 10 + 4px), 0;
+}
+
+#dock-container .list > div [href="/settings"] {
+    background-position: calc(-78px * 11 + 4px), 0;
+}
+
+#dock-container .list > div .counter {
+    position: absolute;
+    background-color: darkblue;
+    color: white;
+    padding: 2px 4px;
+    border: 2px;
+}

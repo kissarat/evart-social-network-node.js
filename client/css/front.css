@@ -1,0 +1,315 @@
+body.front {
+    height: 100vh;
+}
+
+body.front #left, body.front #right, body.front #root > .add, body.front #dock {
+    display: none;
+}
+
+body.front button {
+    background-color: #207FE2;
+    color: white;
+}
+
+body.front .form-control, body.front button {
+    border: 1px solid #9E9E9E;
+    border-radius: 4px;
+}
+
+body.front.login {
+    font-family: Panton, "Droid Sans", Ubuntu, sans-serif;
+    background: url("/images/front-bg.jpg") top;
+    background-size: cover;
+}
+
+body.front.login .form-login {
+    display: inline-block;
+    position: absolute;
+    left: 50%;
+    width: 50%;
+}
+
+body.front.login .form-login fieldset {
+    display: inline-block;
+    margin: 12px auto;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 8px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+body.front.login .form-login fieldset > * {
+    display: inline-block;
+}
+
+body.front.login .form-login fieldset > * > * {
+    padding: 8px;
+}
+
+body.front.login .form-login fieldset > * input {
+    width: 128px;
+}
+
+body.front.login .form-login fieldset > * button {
+    min-width: 64px;
+}
+
+body [href="/signup/phone"] {
+    display: none;
+}
+
+body.login [href="/signup/phone"] {
+    position: absolute;
+    top: 50%;
+    display: block;
+    background-image: -webkit-gradient(linear, 0 0, 0 74.125, color-stop(0.054, #fe7800), to(#fe5800));
+    background-image: -webkit-linear-gradient(#fe7800 5.4%, #fe5800);
+    background-image: -moz-linear-gradient(#fe7800 5.4%, #fe5800);
+    background-image: -o-linear-gradient(#fe7800 5.4%, #fe5800);
+    background-image: linear-gradient(#fe7800 5.4%, #fe5800);
+    text-align: center;
+    vertical-align: middle;
+    width: 415px;
+    line-height: 95px;
+    color: white;
+    font-size: 2.5em;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+.evart-social-network {
+    display: none;
+    margin-top: 16px;
+}
+
+.login-region fieldset {
+    text-align: center;
+}
+
+.login-region fieldset button, .login-region fieldset input {
+    padding: 8px 12px;
+}
+
+.form-login {
+    text-align: left;
+}
+
+.form-login button {
+    cursor: pointer;
+}
+
+.form-login .title {
+    font-size: 4em;
+    color: white;
+    text-shadow: -2px 1px 2px rgba(128, 128, 128, 0.666);
+    text-transform: uppercase;
+}
+
+.form-login .title .welcome {
+    font-weight: 100;
+}
+
+.form-login .title .evart {
+    font-size: 1.5em;
+    font-weight: 900;
+}
+
+.form-login .title .social-network {
+    display: inline-block;
+    font-weight: 100;
+}
+
+.social-network {
+    background-color: #40A8FC;
+    padding: 4px 6px;
+}
+
+.form-signup {
+    font-family: "PantonLight", Panton, "Droid Sans", Ubuntu, sans-serif;
+    font-weight: 100;
+    margin-top: 100px;
+    width: 600px;
+    display: inline-block;
+}
+
+.form-signup h1 {
+    font-size: 36px;
+    color: #207FE2;
+    margin: 0;
+}
+
+.form-signup h2 {
+    font-size: 20px;
+    color: #9E9E9E;
+    margin: 8px 0;
+}
+
+.form-signup .step-container {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.form-signup .step-container .line {
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    margin: auto;
+    border-bottom: 2px solid #CBD3DF;
+    width: calc(100% - 48px);
+    height: 20px;
+}
+
+.form-signup .steps {
+    display: flex;
+    justify-content: space-between;
+}
+
+.form-signup .steps > div {
+    text-align: center;
+    z-index: 1;
+}
+
+.form-signup .steps > div > div {
+    margin: auto;
+}
+
+.form-signup .steps .label {
+    color: #CBD3DF;
+    text-transform: uppercase;
+}
+
+.form-signup .steps .circle {
+    background-color: #CBD3DF;
+    color: white;
+    border: 3px solid #F8F8F8;
+    border-radius: 50%;
+    width: 36px;
+    line-height: 36px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.form-signup input, .form-signup button {
+    font-size: 20px;
+    padding: 12px 16px;
+    width: 180px;
+}
+
+.layout-signup {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: #F8F8F8;
+}
+
+.layout-signup .signup-region {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.layout-signup > * {
+    text-align: center;
+}
+
+.layout-signup fieldset {
+    border: none;
+}
+
+.layout-signup .form-login .title, .layout-signup .form-login .signup {
+    display: none;
+}
+
+.layout-signup .form-login fieldset > * {
+    display: inline-block;
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.layout-signup .fields fieldset {
+    display: none;
+}
+
+.layout-signup .phone button, .layout-signup .code button {
+    margin-left: 16px;
+    border: none;
+}
+
+.layout-signup .footer {
+    width: 100%;
+}
+
+[data-step="phone"] .fields .phone {
+    display: block;
+}
+
+[data-step="phone"] .steps .phone .circle {
+    background-color: #207FE2;
+}
+
+[data-step="phone"] .steps .phone .label {
+    color: #207FE2;
+}
+
+[data-step="code"] .fields .code {
+    display: block;
+}
+
+[data-step="code"] .steps .code .circle {
+    background-color: #207FE2;
+}
+
+[data-step="code"] .steps .code .label {
+    color: #207FE2;
+}
+
+[data-step="personal"] .fields .personal {
+    display: block;
+}
+
+[data-step="personal"] .steps .personal .circle {
+    background-color: #207FE2;
+}
+
+[data-step="personal"] .steps .personal .label {
+    color: #207FE2;
+}
+
+footer.front {
+    display: none;
+}
+
+@media (min-height: 500px) {
+    body.login [href="/signup/phone"] {
+        top: calc(50% + 80px);
+    }
+
+    body.login .evart-social-network {
+        display: block;
+    }
+}
+
+@media (min-height: 640px) {
+    body.login [href="/signup/phone"] {
+        top: calc(50% - 20px);
+    }
+
+    body.login footer.front {
+        display: block;
+    }
+
+    body.login footer.front img {
+        position: absolute;
+        right: calc(50% + 32px);
+        bottom: 0;
+    }
+
+    body.login footer.front div {
+        position: absolute;
+        height: 250px;
+        background: url("/images/front-bg-footer-right.jpg") no-repeat right #F6F6F6;
+        width: 100%;
+        bottom: 0;
+    }
+}

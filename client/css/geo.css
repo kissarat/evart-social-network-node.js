@@ -1,0 +1,14 @@
+.view-city {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.view-city .container {
+    font-size: 0.8em;
+    font-style: italic;
+}
+
+.view-city.selected {
+    background-color: ghostwhite;
+}

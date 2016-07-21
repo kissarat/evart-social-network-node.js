@@ -1,0 +1,146 @@
+form .error {
+    color: red;
+}
+
+.readonly label {
+    min-width: 5em;
+}
+
+.readonly label:after {
+    content: ":";
+}
+
+.readonly .form-control {
+    display: inline-block;
+    background-color: transparent;
+    box-shadow: none;
+    margin-left: 1em;
+    border: none;
+    line-height: 0.8em;
+    width: auto;
+}
+
+.readonly button {
+    display: none;
+}
+
+.profile-relative .photo-list a {
+    display: inline-block;
+    background: no-repeat center;
+    background-size: cover;
+    margin: 2px;
+    width: 60px;
+    height: 60px;
+}
+
+.audio > .title {
+    display: flex;
+    justify-content: space-between;
+}
+
+.audio > .title .author:after {
+    content: ' - ';
+    text-align: left;
+}
+
+.audio > .title .name {
+    flex-grow: 1;
+    margin-left: 2px;
+    margin-right: 1em;
+}
+
+.audio > .title .duration {
+    margin-right: 1em;
+}
+
+.audio > .title .bit_rate {
+    color: grey;
+}
+
+.conference {
+    background-color: black;
+}
+
+.conference .fa {
+    cursor: pointer;
+}
+
+video {
+    background-color: black;
+}
+
+.unavailable {
+    position: relative;
+}
+
+.unavailable .message-container {
+    margin-top: 10vh;
+}
+
+.unavailable .message-container .back {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 12px;
+    border-radius: 32px;
+    border: 1px solid black;
+    cursor: pointer;
+}
+
+.unavailable .baby {
+    position: absolute;
+    width: 100%;
+    bottom: 20vh;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.error {
+    margin: 0;
+    background-color: #ECEFF4;
+    z-index: 5;
+}
+
+.error .bg {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: url("/images/polyhedron-bg.png") top no-repeat;
+    background-size: cover;
+    margin: 0;
+    height: 100vh;
+}
+
+.error .uppercase {
+    color: white;
+    font-size: 2em;
+    text-shadow: -1px 1px 1px #969696;
+}
+
+.error .uppercase:first-child {
+    font-size: 3.5em;
+}
+
+.error .code {
+    color: #72BFFC;
+}
+
+.error .evart {
+    font-weight: 900;
+}
+
+.error .social-network {
+    font-weight: 100;
+}
+
+.error .text {
+    margin: 16px;
+    max-width: 30vw;
+    text-align: center;
+}
+
+.dragover {
+    background-color: rgba(255, 255, 255, 0.5);
+}

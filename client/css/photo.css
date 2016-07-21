@@ -1,0 +1,45 @@
+.thumbnail {
+    display: inline-block;
+    max-width: 128px;
+    max-height: 128px;
+}
+
+.thumbnail img {
+    max-width: 192px;
+    max-height: 192px;
+}
+
+.photo img {
+    max-width: 80vh;
+    max-height: 80vh;
+}
+
+.photo-thumbnail {
+    background: no-repeat center;
+    background-size: cover;
+    width: 128px;
+    height: 128px;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.photo-search .upload {
+    display: block;
+    border-radius: 0;
+    width: 100%;
+    font-size: 2em;
+    border: none;
+    background-color: #ECEFF4;
+    color: white;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    cursor: pointer;
+}
+
+.photo-search a {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+}

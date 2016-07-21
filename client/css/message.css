@@ -1,0 +1,453 @@
+.last-message {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+    margin: 8px 4px;
+}
+
+.last-message:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.last-message .content {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.last-message .text {
+    flex: 1;
+    text-align: left;
+}
+
+.last-message .source .avatar {
+    display: none;
+}
+
+.last-message .peer {
+    display: flex;
+    min-width: 160px;
+}
+
+.last-message .peer .details {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: flex-start;
+}
+
+.last-message .name, .last-message .time {
+    font-size: 0.8em;
+}
+
+.last-message.mine.unread .content {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.last-message:not(.mine).unread {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.last-message.online .online-indicator {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.attitude {
+    display: flex;
+    height: 22px;
+}
+
+.attitude > * {
+    cursor: pointer;
+}
+
+.mine .attitude {
+    width: 40px;
+    background: url("/images/own-attitude.png") top no-repeat;
+}
+
+.mine .attitude[data-attitude="like"] {
+    background-position: bottom;
+}
+
+.mine .attitude .hate {
+    display: none;
+}
+
+.mine .attitude > * {
+    width: 50%;
+}
+
+.other .attitude {
+    width: 56px;
+    background: url("/images/attitude.png") top no-repeat;
+}
+
+.other .attitude[data-attitude="like"] {
+    background-position: center;
+}
+
+.other .attitude[data-attitude="hate"] {
+    background-position: bottom;
+}
+
+.other .attitude > * {
+    width: calc(100%/3);
+}
+
+.view.post > .content {
+    display: flex;
+    text-align: left;
+}
+
+.view.post > .controls {
+    display: flex;
+    align-items: center;
+    color: #CAD3DF;
+}
+
+.view.post > .controls > .comment {
+    color: #CAD3DF;
+}
+
+.view.post > .controls > .comment:hover {
+    text-decoration: underline;
+}
+
+.view.post > .controls > .comment .fa-comment {
+    margin-right: 4px;
+}
+
+.view.post > .controls > * {
+    cursor: pointer;
+}
+
+.view.post > .controls .remove {
+    margin-right: 6px;
+}
+
+.view.post > .controls .comment > * {
+    display: inline-block;
+}
+
+.view.post > .controls .fa-reply {
+    transform: scaleX(-1);
+}
+
+.profile-relative article > .right {
+    min-height: 30vh;
+}
+
+.male .avatar {
+    background-image: url("/images/male.png");
+}
+
+.female .avatar {
+    background-image: url("/images/female.png");
+}
+
+.layout-dialog {
+    display: flex;
+    flex-direction: column;
+}
+
+.layout-dialog .list {
+    flex: 1;
+}
+
+.layout-dialog .list > div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    overflow-x: hidden;
+}
+
+.layout-dialog .list .message {
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+}
+
+.layout-dialog .list .message.unread {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.layout-dialog .list .message .text {
+    position: relative;
+    margin: 4px;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: justify;
+    min-width: 5em;
+}
+
+.layout-dialog .list .message .text a:hover {
+    text-decoration: underline;
+}
+
+.layout-dialog .list .message .text:after {
+    position: absolute;
+    display: inline-block;
+    content: '';
+    top: 8px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+}
+
+.layout-dialog .list .message .time {
+    margin-top: 12px;
+    min-width: 20%;
+}
+
+.layout-dialog .list .message.mine {
+    flex-direction: row;
+}
+
+.layout-dialog .list .message.mine .text {
+    background-color: #3892CD;
+    color: white;
+}
+
+.layout-dialog .list .message.mine .text a {
+    color: yellow;
+}
+
+.layout-dialog .list .message.mine .text a.image {
+    display: block;
+    margin: 6px 0;
+    border-radius: 4px;
+}
+
+.layout-dialog .list .message.mine .text a.image img {
+    max-width: 384px;
+    max-height: 128px;
+}
+
+.layout-dialog .list .message.mine .text:after {
+    border-left: 8px solid #3892CD;
+    right: -8px;
+}
+
+.layout-dialog .list .message.mine .time {
+    text-align: right;
+    margin-right: 4px;
+}
+
+.layout-dialog .list .message.other {
+    flex-direction: row-reverse;
+}
+
+.layout-dialog .list .message.other .text {
+    background-color: #ECEFF4;
+    color: black;
+}
+
+.layout-dialog .list .message.other .text a {
+    color: #3892CD;
+}
+
+.layout-dialog .list .message.other .text:after {
+    border-right: 8px solid #ECEFF4;
+    left: -8px;
+}
+
+.layout-dialog .list .message.other .time {
+    text-align: left;
+    margin-right: 4px;
+}
+
+.layout-dialog .list .message.visible {
+    opacity: 1;
+    transition: opacity 600ms;
+}
+
+.layout-dialog .bottom {
+    min-height: 76px;
+}
+
+.dialog .layout-editor {
+    border-top: 1px solid black;
+}
+
+.layout-editor .editor-container {
+    align-items: center;
+    border-top: 1px solid #cccccc;
+    display: flex;
+    justify-content: space-between;
+    padding: 25px 20px 25px 35px;
+}
+
+.layout-editor .button {
+    background: no-repeat center;
+    cursor: pointer;
+}
+
+.layout-editor .attach {
+    background-image: url("/images/attach.png");
+}
+
+.layout-editor .text {
+    display: block;
+    flex: 1;
+    border: none;
+    resize: none;
+    height: 40px;
+    text-align: left;
+}
+
+.layout-editor .smile {
+    font-size: 1.2em;
+    margin-right: 15px;
+}
+
+.layout-editor .send {
+    background-image: url("/images/send.png");
+    background-size: contain;
+}
+
+.layout-editor .smiles span {
+    display: inline-block;
+    margin: 0 2px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: font-size 0.2s;
+    vertical-align: top;
+}
+
+.layout-editor .smiles span:hover {
+    font-size: 1.5em;
+    transition: font-size 0.2s;
+}
+
+.online .online-indicator {
+    border-radius: 50%;
+    background-color: #8FC44B;
+    width: 8px;
+    height: 8px;
+}
+
+.view.post > .content .time {
+    opacity: 0.3;
+}
+
+@media (min-width: 1201px), (max-width: 980px) {
+    .editor-container > div {
+        height: 36px;
+        width: 36px;
+    }
+
+    .view.post .message .name {
+        display: block;
+    }
+
+    .view.post .message > * {
+        margin-left: 8px;
+    }
+
+    .view.post .info {
+        min-width: 64px;
+    }
+
+    .view.post .info a.name {
+        display: none;
+    }
+
+    .view.post .info .time {
+        font-size: 0.8em;
+        margin-top: 8px;
+    }
+
+    .view.post .info .container {
+        background-color: #ECEFF4;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .view.post .info .container > * {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .avatar {
+        background-size: cover;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+    }
+
+    .controls {
+        justify-content: flex-end;
+    }
+
+    hr {
+        border: none;
+        border-bottom: 1px solid #d7e7f4;
+    }
+}
+
+@media (max-width: 1200px) and (min-width: 981px) {
+    .editor-container > div {
+        height: 20px;
+        width: 20px;
+    }
+
+    .view.post {
+        margin-bottom: 8px;
+    }
+
+    .view.post .message a.name {
+        display: none;
+    }
+
+    .view.post .content {
+        flex-direction: column;
+    }
+
+    .view.post .comment {
+        padding: 0;
+    }
+
+    .view.post .info {
+        background-color: #ECEFF4;
+    }
+
+    .view.post .info .time {
+        font-size: 0.5em;
+    }
+
+    .view.post .info .container > * {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .view.post .info .container .avatar {
+        background-size: cover;
+        margin: 2px;
+        width: 22px;
+        height: 22px;
+    }
+
+    .view.post .info hr {
+        display: none;
+    }
+
+    .controls {
+        justify-content: space-between;
+    }
+}
+
+.emoji, .smile {
+    width: 20px;
+    height: 20px;
+}
+
+.big .emoji {
+    width: auto;
+    height: auto;
+}

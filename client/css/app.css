@@ -1,0 +1,445 @@
+body {
+    font: 10pt "Roboto", serif;
+    color: #6F7579;
+    margin: 0;
+}
+
+a {
+    color: #9E9E9E;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #4EA1D7;
+}
+
+.fullpage, #boot-loading, #root {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+}
+
+#boot-loading {
+    background: url("/images/loading.svg") no-repeat center;
+}
+
+#root {
+    display: flex;
+}
+
+#root > .add {
+    background-color: #ECEFF4;
+}
+
+#root > .add > div {
+    cursor: pointer;
+    text-align: center;
+}
+
+#root > .add > div .menu-container {
+    position: relative;
+    width: 0;
+    margin-top: 4em;
+    z-index: 1;
+}
+
+#root > .add > div .menu-container ul {
+    position: absolute;
+    padding: 0;
+    background-color: white;
+    border-top: 1px solid #BCBCBC;
+    border-bottom: 1px solid #BCBCBC;
+}
+
+#root > .add > div .menu-container ul li {
+    list-style: none;
+    width: 230px;
+    line-height: 52px;
+    vertical-align: middle;
+    padding-right: 15px;
+    padding-left: 15px;
+    color: #BCBCBC;
+    font-size: 15px;
+    border-bottom: 1px solid #BCBCBC;
+}
+
+#root > .add > div .menu-container ul li:last-child {
+    border-bottom: none;
+}
+
+#root > .add > div .menu-container ul li:hover {
+    background-color: #ECEFF4;
+    color: #4EA1D7;
+}
+
+#root > .add > div .menu-container ul li:last-child {
+    border-bottom: none;
+}
+
+#root > .add > div > .plus {
+    vertical-align: middle;
+    font-size: 44px;
+    color: white;
+    margin: 4em auto auto auto;
+}
+
+#root > .add.left > div ul {
+    right: 0;
+    text-align: right;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+#root > .add.right > div .menu-container {
+    float: right;
+}
+
+#root > .add.right > div .menu-container ul {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+#corner-panel {
+    display: flex;
+    position: fixed;
+    top: 30px;
+    right: 10px;
+    z-index: 1;
+}
+
+#main {
+    flex: 2;
+    text-align: center;
+}
+
+#left, #right {
+    flex: 0;
+    transition: flex 600ms linear;
+}
+
+#left.visible, #right.visible {
+    flex: 1;
+    transition: flex 600ms linear;
+}
+
+#root > :not(.add) > * {
+    height: 100vh;
+}
+
+.loading {
+    background: url("/images/loading.svg") no-repeat center;
+    filter: invert(100%);
+    width: inherit;
+    height: 210px;
+    -webkit-filter: invert(100%);
+}
+
+.threesome {
+    display: flex;
+    flex-direction: column;
+}
+
+.threesome .middle {
+    flex: 1;
+    overflow-y: auto;
+}
+
+[draggable] {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: element;
+}
+
+.vertical-menu {
+    top: 4em;
+}
+
+.help-block {
+    display: none;
+}
+
+.panel .controls {
+    background-color: #E0E0E0;
+    padding: 2px 6px;
+    text-align: right;
+}
+
+.panel .controls > * {
+    vertical-align: top;
+    font-size: 12px;
+    line-height: 16px;
+    margin-left: 2px;
+    cursor: pointer;
+}
+
+.panel .controls > .menu {
+    font-size: 14px;
+}
+
+.panel .controls .region.menu {
+    width: 0;
+    height: 0;
+}
+
+.add.left ul {
+    text-align: right;
+    border-left: 1px solid #BCBCBC;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+.add.right ul {
+    text-align: left;
+    border-right: 1px solid #BCBCBC;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.scroll {
+    overflow-y: auto;
+}
+
+#root > .add > div {
+    height: 100%;
+}
+
+[class*="-only"] {
+    display: none;
+}
+
+.form-control {
+    padding: 4px 6px;
+    margin: 4px 6px;
+}
+
+.buttons {
+    text-align: right;
+}
+
+#alert {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    z-index: 2;
+}
+
+#alert > div {
+    display: inline-block;
+    margin: auto;
+}
+
+#alert .alert {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    padding: 4px 8px;
+    min-width: 200px;
+}
+
+#alert .alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+}
+
+#alert .alert-info {
+    color: #31708f;
+    background-color: #d9edf7;
+}
+
+#alert .alert-warning {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+#alert .alert-danger {
+    background-color: #F2DEDE;
+    color: #a94442;
+}
+
+#alert .close {
+    color: #6F7579;
+    cursor: pointer;
+}
+
+pre {
+    font-family: "Courier New", courier, monospace, serif;
+    background-color: white;
+}
+
+pre .green {
+    color: green;
+}
+
+pre .red {
+    color: darkred;
+}
+
+.unsupported {
+    margin: 1em 2em;
+}
+
+.unsupported .illustration {
+    max-height: 30vh;
+    margin-bottom: 8px;
+}
+
+.unsupported .info {
+    border-top: 1px solid #6F7579;
+    border-bottom: 1px solid #6F7579;
+}
+
+.unsupported .text {
+    padding: 8px;
+    text-align: left;
+}
+
+.unsupported .text:after {
+    content: ':';
+}
+
+.unsupported .browsers a {
+    display: inline-block;
+    margin: 0;
+    vertical-align: top;
+    width: 20%;
+}
+
+.unsupported .browsers a img {
+    width: 64px;
+    height: 64px;
+}
+
+.unsupported .browsers a figure {
+    margin: 1em 1em;
+}
+
+#modal {
+    position: fixed;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.view-placeholder {
+    min-width: 128px;
+    min-height: 128px;
+}
+
+#author {
+    display: none;
+}
+
+.busy {
+    display: block;
+    min-width: 100px;
+    min-height: 20px;
+    background: url("/svg/process.svg") top;
+}
+
+.busy.invert {
+    background: url("/svg/process-white.svg");
+}
+
+.busy3 {
+    display: block;
+    width: 60px;
+    height: 20px;
+    background: url("/svg/process3.svg") top;
+    background-size: cover;
+}
+
+.ui-widget {
+    background-color: #ECEFF4;
+    min-width: 200px;
+    padding: 4px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.ui-widget .ui-datepicker-current-day {
+    background-color: rgba(128, 128, 128, 0.2);
+    padding: 2px 0;
+}
+
+.ui-widget .ui-icon {
+    cursor: pointer;
+}
+
+.ui-widget table {
+    width: 100%;
+}
+
+.ui-widget table tbody {
+    width: inherit;
+}
+
+.ui-widget .ui-datepicker-prev {
+    float: left;
+}
+
+.ui-widget .ui-datepicker-next {
+    float: right;
+}
+
+button.unemitted {
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.hidden {
+    display: none;
+}
+
+.view.grid th.sort {
+    cursor: pointer;
+}
+
+.view.grid ul.fields {
+    list-style: none;
+}
+
+.view.grid ul.fields li {
+    display: inline-block;
+}
+
+.view.grid td {
+    text-align: left;
+}
+
+.view.grid td.number {
+    font-weight: bold;
+    font-style: italic;
+}
+
+.view.grid td.action > * {
+    cursor: pointer;
+}
+
+@media (min-width: 1201px) {
+    #left.visible, #right.visible {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 1200px) {
+    #left.visible, #right.visible {
+        max-width: 300px;
+    }
+}
+
+#root > .add > div {
+    width: 40px;
+}

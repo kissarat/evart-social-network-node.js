@@ -1,0 +1,408 @@
+.layout-profile.group article {
+    flex-direction: row-reverse;
+}
+
+.profile-relative {
+    position: relative;
+    text-align: center;
+}
+
+.profile-relative header {
+    position: relative;
+    padding: 32px 30px;
+    margin: auto;
+    text-align: left;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+}
+
+.profile-relative header .photo {
+    background-size: cover;
+}
+
+.profile-relative header .informer {
+    color: white;
+    display: flex;
+    font-family: Panton, "Droid Sans", Ubuntu, sans-serif;
+    justify-content: flex-end;
+    align-items: center;
+    flex-flow: column;
+}
+
+.profile-relative header .informer .label {
+    text-transform: uppercase;
+}
+
+.profile-relative header .informer.audio {
+    background-color: #EE3063;
+}
+
+.profile-relative header .informer.track {
+    background-color: #4EA6FA;
+}
+
+.profile-relative header .informer.friends {
+    background-color: #31356C;
+}
+
+.profile-relative header .informer.followers {
+    background-color: #31ABE0;
+}
+
+.profile-relative header .informer.groups {
+    background-color: #EE5A34;
+}
+
+.profile-relative header .informer.video {
+    background-color: #8FC449;
+}
+
+.profile-relative header .avatar-block-placeholder {
+    margin: 8px;
+    float: right;
+    width: 104px;
+    height: 144px;
+}
+
+.profile-relative .background {
+    position: absolute;
+    background: url("/images/profile-bg.jpg") no-repeat center;
+    background-size: cover;
+    filter: blur(1px);
+    width: 100%;
+    z-index: -1;
+}
+
+.profile-relative > .fa-camera {
+    left: 6px;
+    top: 6px;
+}
+
+.profile-relative .tile {
+    white-space: nowrap;
+}
+
+.profile-relative .title {
+    vertical-align: top;
+    color: white;
+    display: inline-block;
+}
+
+.profile-relative .title textarea {
+    color: #BCBCBC;
+    overflow: hidden;
+}
+
+.profile-relative .location {
+    font-size: 0.8em;
+    margin-top: 0.2em;
+}
+
+.profile-relative .status {
+    font-size: 0.8em;
+    background-color: transparent;
+    color: #BCBCBC;
+    margin-top: 0.3em;
+    border: none;
+    width: 180px;
+    resize: none;
+}
+
+.profile-relative article {
+    display: flex;
+}
+
+.profile-relative article > .left {
+    flex: 1;
+    text-align: center;
+}
+
+.profile-relative article > .right {
+    flex: 2;
+    background-color: white;
+    padding: 4px;
+}
+
+.profile-relative .avatar-block {
+    display: inline-block;
+    background-color: white;
+    padding: 4px;
+}
+
+.profile-relative .big-avatar {
+    position: relative;
+    background-size: cover;
+}
+
+.profile-relative .big-avatar .fa-camera {
+    right: 6px;
+    bottom: 6px;
+}
+
+.profile-relative .fa-camera {
+    position: absolute;
+    color: gainsboro;
+    cursor: pointer;
+}
+
+.form-edit {
+    display: inline-block;
+    margin: auto;
+    text-align: left;
+}
+
+.form-edit h1 {
+    text-align: center;
+}
+
+.form-edit h1 .title {
+    margin-left: 8px;
+}
+
+.form-edit .field-domain input {
+    font: 10pt "Roboto", serif;
+    background-color: transparent;
+    margin-left: -1px;
+    border: none;
+}
+
+.form-edit .form-control {
+    width: calc(100% - 26px);
+}
+
+.friend .list > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.friend .list > div > a {
+    display: inline-block;
+    width: calc(30% - 8px);
+}
+
+.friend .list > div > a > div {
+    display: flex;
+    border-bottom: 1px solid #6F7579;
+}
+
+.friend .list > div > a > div > div {
+    margin: 4px;
+}
+
+.profile-buttons, .other-profile-buttons {
+    display: flex;
+    height: 30px;
+    width: 90px;
+    background: no-repeat center;
+}
+
+.profile-buttons > div, .other-profile-buttons > div {
+    flex: 1;
+}
+
+.profile-buttons {
+    cursor: pointer;
+}
+
+.other-profile-buttons {
+    background-image: url("/images/communicate.png");
+    background-size: 90%;
+}
+
+.switch {
+    background-image: url("/images/switch.png");
+    width: 114px;
+    height: 30px;
+}
+
+.switch[data-name="follow"] {
+    background-position-y: 30px;
+}
+
+.switch[data-name="friend"] {
+    background-position-y: 60px;
+}
+
+.thumbnail-user {
+    display: inline-block;
+    width: 30%;
+    text-align: left;
+}
+
+.thumbnail-user .user-info {
+    position: relative;
+    width: 100%;
+    margin-top: -1em;
+}
+
+.thumbnail-user .user-info > div {
+    position: absolute;
+}
+
+.thumbnail-user:hover .user-info {
+    padding: 6px 0;
+    z-index: 1;
+}
+
+.thumbnail-user:hover .user-info > div {
+    border: 1px solid 10pt "Roboto", serif;
+    background-color: #F5F5F5;
+}
+
+.thumbnail-user:hover .user-info > div .name {
+    text-align: left;
+    margin-bottom: 6px;
+}
+
+.thumbnail-user:hover .hidden {
+    display: block;
+}
+
+.thumbnail-user .hidden {
+    display: none;
+}
+
+.thumbnail-user .user-info > div {
+    margin-left: 6px;
+    margin-top: -8px;
+    padding: 8px;
+}
+
+.thumbnail-user > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.thumbnail-user > div .avatar {
+    margin: 8px 0;
+}
+
+.layout-user-search .record {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.layout-user-search .record .avatar {
+    margin: 8px;
+    width: 48px;
+    height: 48px;
+}
+
+.layout-user-search .record .message {
+    flex: 1;
+}
+
+.layout-user-search .record .switch {
+    position: relative;
+}
+
+.layout-user-search .record .switch > * {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+}
+
+.layout-user-search .record .switch .friend {
+    right: 0;
+}
+
+.tile.informer .busy3 {
+    margin: auto;
+    width: 45px;
+    height: 15px;
+}
+
+.tile.photo a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+}
+
+.tile.photo .empty {
+    border: 1px solid white;
+    margin: 4px;
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+}
+
+.tile.photo .empty:after {
+    margin: 2px;
+    width: 52px;
+    height: 52px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+.big-avatar {
+    width: 130px;
+    height: 130px;
+}
+
+.profile-buttons {
+    width: 130px;
+    height: 30px;
+    background-size: contain;
+    background: url("/images/own-profile-buttons.png") center;
+}
+
+[name="country"] option > div div:last-child {
+    float: right;
+}
+
+.location > * {
+    margin-right: 4px;
+}
+
+@media (min-width: 1201px) {
+    header .title {
+        width: 402px;
+        height: 134px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .profile-relative header {
+        min-height: 260px;
+    }
+}
+
+.profile-relative .background {
+    height: 380px;
+}
+
+.profile-relative header {
+    width: 500px;
+}
+
+.profile-relative header .title {
+    width: 222px;
+    height: 74px;
+}
+
+.profile-relative header .tile {
+    width: 74px;
+    height: 74px;
+}
+
+.profile-relative header .informer .label {
+    margin-top: 6pt;
+    margin-bottom: 6pt;
+    font-size: 8pt;
+}
+
+.profile-relative header .informer .value {
+    font-size: 16pt;
+}
+
+.profile-relative .avatar-block > * {
+    margin-bottom: 4px;
+}
