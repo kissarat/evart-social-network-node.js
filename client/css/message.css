@@ -108,6 +108,7 @@
     display: flex;
     align-items: center;
     color: #CAD3DF;
+    margin-bottom: 21px;
 }
 
 .view.post > .controls > .comment {
@@ -177,12 +178,10 @@
 }
 
 .layout-dialog .list .message .text {
-    position: relative;
-    margin: 4px;
-    padding: 8px;
     border-radius: 4px;
+    min-width: 60px;
+    position: relative;
     text-align: justify;
-    min-width: 5em;
 }
 
 .layout-dialog .list .message .text a:hover {
@@ -210,8 +209,12 @@
 }
 
 .layout-dialog .list .message.mine .text {
-    background-color: #3892CD;
-    color: white;
+    background-color: #4aa1d9;
+    border-top: 1px solid #6eb4e1;
+    color: #ffffff;
+    margin-right: 10px;
+    min-height: 42px;
+    padding: 10px;
 }
 
 .layout-dialog .list .message.mine .text a {
@@ -229,8 +232,8 @@
     max-height: 128px;
 }
 
-.layout-dialog .list .message.mine .text:after {
-    border-left: 8px solid #3892CD;
+.layout-dialog .list .message.mine .text::after {
+    border-left: 8px solid #4aa1d9;
     right: -8px;
 }
 
@@ -280,7 +283,7 @@
     border-top: 1px solid #cccccc;
     display: flex;
     justify-content: space-between;
-    padding: 25px 20px 25px 35px;
+    padding: 15px 20px 25px 35px;
 }
 
 .layout-editor .button {
@@ -351,7 +354,8 @@
     }
 
     .view.post .info {
-        min-width: 64px;
+        height: 78px;
+        width: 70px;
     }
 
     .view.post .info a.name {

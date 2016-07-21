@@ -24,6 +24,7 @@ App.module('Message', function (Message, App) {
                 });
         });
     });
+
     App.socket.on('read', function (message) {
         Message.channel.request('read', message);
     });
@@ -211,15 +212,13 @@ App.module('Message', function (Message, App) {
 
         ui: {
             unread: '.unread',
-            peer_name: '.peer .name',
-            peer_avatar: '.peer .avatar',
-            time: '.peer .time',
-            source_name: '.source .name',
-            source_avatar: '.source .avatar'
+            peer_name: '.name',
+            peer_avatar: '.avatar',
+            time: '.time'
         },
 
         events: {
-            'click .content': 'openDialog',
+            'click': 'openDialog',
             'click .peer': 'openPeer'
         },
 
@@ -228,7 +227,7 @@ App.module('Message', function (Message, App) {
         },
 
         openDialog: function () {
-            App.navigate('/dialog/' + this.model.get('peer').get('domain'));
+            Message.channel.request('open', this.model.get('peer').get('_id'));
         },
 
         openPeer: function () {
@@ -240,11 +239,6 @@ App.module('Message', function (Message, App) {
             var peer = this.model.get('peer');
             ui.peer_name.html(peer.getName());
             peer.setupAvatar(ui.peer_avatar);
-            if (App.user._id === this.model.get('source')) {
-                this.$el.addClass('mine');
-                new App.User.Model(App.user).setupAvatar(ui.source_avatar);
-                ui.source_avatar.show();
-            }
             var unread = this.model.get('unread');
             if (unread > 0) {
                 this.$el.addClass('unread');
@@ -1042,6 +1036,41 @@ App.module('Message', function (Message, App) {
         });
     };
 
+    Message.Messenger = Marionette.View.extend({
+        template: '#layout-messenger',
+
+        regions: {
+            dialogList: '.dialog-list .list',
+            dialog: '.dialog-region'
+        },
+
+        onRender: function () {
+        },
+
+        open: function (id) {
+            Message.Dialog.widget(this.getRegion('dialog'), {id: id});
+        }
+    }, {
+        widget: function (region, options) {
+            var messenger = new Message.Messenger();
+            region.show(messenger);
+            new Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
+            return messenger;
+        }
+    });
+
+    Message.channel.reply('open', function (id) {
+        var messenger = App.getPlace('main').currentView;
+        if (messenger instanceof Message.Messenger) {
+            if (id) {
+                messenger.open(id);
+            }
+        }
+        else {
+            App.navigate('dialogs');
+        }
+    });
+
     return new Message.Router({
         controller: {
             wall: function (id) {
@@ -1066,7 +1095,8 @@ App.module('Message', function (Message, App) {
             },
 
             dialogs: function () {
-                Message.DialogListView.widget(App.getPlace('main'), {});
+                Message.Messenger.widget(App.getPlace('main'), {});
+                Message.channel.request('open')
             },
 
             emoji: function () {

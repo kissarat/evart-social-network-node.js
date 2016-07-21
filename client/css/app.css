@@ -1,5 +1,5 @@
 body {
-    font: 10pt "Roboto", serif;
+    font: 10pt "Panton", serif;
     color: #6F7579;
     margin: 0;
 }
@@ -442,4 +442,9 @@ button.unemitted {
 
 #root > .add > div {
     width: 40px;
+}
+
+
+.wall {
+    border-bottom: 200px solid rgba(0, 0, 0, 0);
 }
