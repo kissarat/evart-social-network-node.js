@@ -540,8 +540,7 @@ App.module('User', function (User, App) {
 
         regions: {
             buttons: '.buttons',
-            'message-list': '.message-list',
-            'photo-list': '.photo-list',
+            content: '.profile-content-region',
             tile0: '[data-number="0"]',
             tile1: '[data-number="1"]',
             tile2: '[data-number="2"]',
@@ -1049,8 +1048,8 @@ App.module('User', function (User, App) {
                         : User.OtherProfileButtons;
                     buttons = new buttons({model: user});
                     App.Message.WallView.widget(
-                        profile.getRegion('message-list'),
-                        {owner_id: user.get('_id')}
+                        profile.getRegion('content'),
+                        {owner_id: user.id}
                     );
                     profile.getRegion('buttons').show(buttons);
                     var params = {
@@ -1059,9 +1058,6 @@ App.module('User', function (User, App) {
                     };
                     $.getJSON('/api/user/informer?' + $.param(params), function (informer) {
                         user.set(informer);
-                    });
-                    App.Photo.ListView.widget(profile.getRegion('photo-list'), {
-                        owner_id: user.id
                     });
                 });
             },

@@ -762,7 +762,6 @@ App.module('Message', function (Message, App) {
                 }, _.pick(options, 'unread', 'cut', 'since'))
             });
             var listView = new Message.DialogListView({collection: list.fullCollection});
-            listView.$el.addClass('scroll');
             region.show(listView);
             list.getFirstPage();
             return listView;
@@ -1044,6 +1043,15 @@ App.module('Message', function (Message, App) {
             dialog: '.dialog-region'
         },
 
+        ui: {
+            dialogList: '.dialog-list .list',
+            dialog: '.dialog-region'
+        },
+
+        attributes: {
+            class: 'layout messenger'
+        },
+
         onRender: function () {
         },
 
@@ -1055,6 +1063,7 @@ App.module('Message', function (Message, App) {
             var messenger = new Message.Messenger();
             region.show(messenger);
             new Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
+            // messenger.ui.dialogList.addClass('scroll');
             return messenger;
         }
     });

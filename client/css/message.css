@@ -1,10 +1,14 @@
 .last-message {
+    align-items: flex-start;
+    border-bottom: 1px solid #dddee0;
+    border-top: 1px solid #f3f3f3;
+    cursor: pointer;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: flex-start;
-    cursor: pointer;
-    margin: 8px 4px;
+    padding-bottom: 25px;
+    padding-top: 13px;
+    /*margin: 8px 4px;*/
 }
 
 .last-message:hover {
@@ -19,7 +23,12 @@
 }
 
 .last-message .text {
-    flex: 1;
+    color: #999999;
+    flex: 1 1 0;
+    font-size: 12px;
+    height: 35px;
+    line-height: 18px;
+    overflow: hidden;
     text-align: left;
 }
 
@@ -40,8 +49,8 @@
 }
 
 .last-message .name, .last-message .time {
-    font-size: 0.8em;
-}
+    color: #999999;
+    font-size: 10px;}
 
 .last-message.mine.unread .content {
     background-color: rgba(0, 0, 0, 0.05);
@@ -346,7 +355,10 @@
     }
 
     .view.post .message .name {
+        color: #656a6e;
         display: block;
+        font-size: 15px;
+        margin-top: 13px; 
     }
 
     .view.post .message > * {
@@ -355,6 +367,7 @@
 
     .view.post .info {
         height: 78px;
+        text-align: center;
         width: 70px;
     }
 
@@ -379,10 +392,13 @@
     }
 
     .avatar {
+        background-image: url("images/man.png");
         background-size: cover;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
+        height: 46px;
+        margin-left: 7px;
+        margin-right: 10px;
+        min-width: 46px;
     }
 
     .controls {
@@ -454,4 +470,45 @@
 .big .emoji {
     width: auto;
     height: auto;
+}
+
+.comment.unemitted > span:last-child {
+    font-size: 12px;
+    text-decoration: underline;
+}
+
+.messenger {
+    display: flex;
+}
+
+.messenger .dialog-list {
+    display: flex;
+    height: 100%;
+    min-width: 310px;
+    width: 310px;
+    flex-direction: column;
+}
+
+.messenger .dialog-list .list {
+    flex: 1;
+}
+
+.messenger .dialog-list .search {
+    min-height: 120px;
+}
+
+.message .dialog {
+
+}
+
+.last-message .center .name {
+    color: #656a6e !important;
+    font-size: 15px;
+    line-height: 1.4;
+    margin-top: 0;
+    text-align: left;
+}
+
+.last-message > .center {
+    max-width: 170px;
 }
