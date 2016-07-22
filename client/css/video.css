@@ -41,9 +41,9 @@
 
 .thumbnail-video figure {
     display: inline-block;
-    margin: 2px;
-    width: calc(50% - 4px);
+    margin: 2px 3% 2px 0;
     vertical-align: top;
+    width: 47%;
 }
 
 .thumbnail-video figure figcaption {
@@ -51,9 +51,15 @@
 }
 
 .thumbnail-video figure img {
-    margin: -16px auto;
+    margin: 2px auto;
     width: 100%;
     clip-path: inset(16px 0);
     -webkit-clip-path: inset(12% 0);
     -moz-clip-path: inset(12% 0);
+}
+
+.frame, .frame iframe {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
 }

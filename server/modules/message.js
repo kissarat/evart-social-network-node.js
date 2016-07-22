@@ -247,8 +247,6 @@ module.exports = {
                 $project: project
             });
         }
-
-        console.log(JSON.stringify(aggregate));
         if (_.isEmpty(permission)) {
             return {query: aggregate};
         }
@@ -459,6 +457,21 @@ function dialogs($) {
         source: 1,
         peer: User.fields.project
     };
+    
+    if ($.has('q')) {
+        let q = $.get('q');
+        where.push({
+            $match: {
+                $or: [
+                    {surname: {$regex: q}},
+                    {forename: {$regex: q}},
+                    {domain: {$regex: q}},
+                    {name: {$regex: q}}
+                ]
+            }
+        })
+    }
+    
     if ($.has('cut')) {
         var cut = +$.param('cut');
         if (cut > 0) {

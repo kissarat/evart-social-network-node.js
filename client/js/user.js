@@ -165,7 +165,7 @@ App.module('User', function (User, App) {
     });
 
     User.RelationList = User.List.extend({
-        url: '/api/user/list',
+        url: '/api/list',
 
         query: {
             name: '',
@@ -737,7 +737,7 @@ App.module('User', function (User, App) {
                     var url = '/api/record?type=follow&target_id=' + self.model.get('_id');
                     $.sendJSON('PUT', url, {type: 'follow'}, function (data) {
                         if (data.success) {
-                            App.navigate('/list/friend');
+                            App.navigate('friends');
                         }
                     });
                 }
@@ -960,16 +960,12 @@ App.module('User', function (User, App) {
         template: '#layout-user-search',
         cidPrefix: 'usrsv',
 
-        behaviors: {
-            Bindings: {}
-        },
-
         bindings: {
             '[type=search]': 'q'
         },
 
         attributes: {
-            'class': 'scroll'
+            'class': 'layout user-search scroll'
         },
 
         ui: {
@@ -986,7 +982,7 @@ App.module('User', function (User, App) {
         },
 
         onRender: function () {
-
+            this.stickit();
         },
 
         getCollection: function () {
@@ -999,14 +995,15 @@ App.module('User', function (User, App) {
             this.ui.list.busy(true);
             this.getCollection().delaySearch(function () {
                 self.ui.list.busy(false);
-            })
+            });
         }
     }, {
         widget: function (region, options) {
             if (!options) {
                 options = {};
             }
-            var pageable = new App.getClass(options.List || User.List)([], {
+            var List = App.getClass(options.List || User.List);
+            var pageable = new List([], {
                 query: _.merge(_.pick(options, 'type', 'select', 'name'), {
                     select: 'domain.surname.forename.name.country.city.city_id'
                 })
@@ -1115,7 +1112,7 @@ App.module('User', function (User, App) {
             },
 
             list: function (name) {
-                User.SearchView.widget(App.getRegion('main'), {
+                User.SearchView.widget(App.getPlace('main'), {
                     name: name ? name : App.route[0].slice(0, -1),
                     List: User.RelationList
                 })

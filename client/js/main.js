@@ -404,7 +404,7 @@ _.extend(Application.prototype, {
             function search() {
                 self.fullCollection.reset();
                 self.getFirstPage({
-                    success: cb
+                    success: cb instanceof Function ? cb : null
                 });
             }
 

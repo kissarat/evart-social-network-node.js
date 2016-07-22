@@ -258,7 +258,7 @@ module.exports = {
 
     PUT: function ($) {
         var data = $.allowFields(User.fields.update.user, User.fields.update.admin);
-        return User.update({_id: data._id}, {$set: data});
+        return User.update({_id: $.get('id')}, {$set: data});
     },
 
     PATCH: function ($) {

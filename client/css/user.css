@@ -91,13 +91,18 @@
 }
 
 .profile-relative .title textarea {
-    color: #BCBCBC;
+    color: #ffffff;
+    font-family: panton,serif;
+    font-size: 11px;
+    line-height: 14px;
+    margin: 0;
     overflow: hidden;
 }
 
 .profile-relative .location {
-    font-size: 0.8em;
-    margin-top: 0.2em;
+    color: #f3f3f3;
+    font-size: 12px;
+    margin-top: 3px;
 }
 
 .profile-relative .status {

@@ -1049,15 +1049,36 @@ App.module('Message', function (Message, App) {
 
         ui: {
             dialogList: '.dialog-list .list',
-            dialog: '.dialog-region'
+            dialog: '.dialog-region',
+            search: '[type=search]'
+        },
+
+        bindings: {
+            '[type=search]': 'q'
         },
 
         attributes: {
             class: 'layout messenger'
         },
 
+        events: {
+            'keyup [type=search]': 'search'
+        },
+
+        search: function () {
+            this._search();
+        },
+
         onRender: function () {
+            this.listenTo(this.getRegion('dialogList'), 'show', this.onShowDialogList);
             App.Views.perfectScrollbar(this.ui.dialogList);
+        },
+
+        onShowDialogList: function () {
+            var p = this.getRegion('dialogList').currentView.collection.pageableCollection;
+            this.model = p.queryModel;
+            this._search = p.delaySearch.bind(p);
+            this.stickit();
         },
 
         open: function (id) {
@@ -1067,7 +1088,7 @@ App.module('Message', function (Message, App) {
         widget: function (region, options) {
             var messenger = new Message.Messenger();
             region.show(messenger);
-            new Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
+            var dialogList = new Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
             // messenger.ui.dialogList.addClass('scroll');
             return messenger;
         }

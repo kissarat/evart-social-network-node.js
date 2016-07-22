@@ -1,4 +1,5 @@
 'use strict';
+var ObjectID = require('mongodb').ObjectID;
 
 var list_fields = {
     follow: 'deny',
@@ -13,36 +14,25 @@ module.exports = {
         if (!list_fields.hasOwnProperty(name)) {
             $.invalid('name');
         }
-        var fields = {};
-        fields['friend' === name ? 'follow' : name] = 1;
-        var id = $.has('id') ? $.id : $.user._id;
+        var fields = {['friend' === name ? 'follow' : name]: 1};
+        var id = $.has('id') ? $.get('id') : $.user._id;
         User.findOne(id, fields, $.wrap(function (user) {
+            var query = User.search($);
+            if (!query.$and) {
+                query.$and = [];
+            }
             if ('friend' === name) {
-                User.search($, {
+                query.$and.push({
                     _id: {
                         $in: user.follow.map(ObjectID)
                     },
                     follow: user._id
-                }, true);
+                })
             } else {
-                User.search($, user[name], true);
+                console.error('invalid 29');
             }
+            User.find(query, $.select(['domain'], User.fields.select.user, true)).exec($.answer);
         }));
-/*
-        if ($.has('domain') && $.has('list')) {
-            var list_name = $.param('list');
-            if (list_name !== 'follow' && list_name !== 'deny') {
-                $.invalid('list', 'is not follow or deny');
-            }
-            User.findOne({
-                domain: $.param('domain')
-            }).select(list_name).then(function (user) {
-                return User.search($, user[list_name]);
-            });
-        } else {
-            return User.search($);
-        }
-  */
     },
 
     POST: function ($) {

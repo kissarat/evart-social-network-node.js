@@ -50,7 +50,8 @@
 
 .last-message .name, .last-message .time {
     color: #999999;
-    font-size: 10px;}
+    font-size: 10px;
+}
 
 .last-message.mine.unread .content {
     background-color: rgba(0, 0, 0, 0.05);
@@ -114,10 +115,67 @@
 }
 
 .view.post > .controls {
-    display: flex;
     align-items: center;
-    color: #CAD3DF;
+    color: #cad3df;
+    display: flex;
     margin-bottom: 21px;
+    margin-right: 8px;
+}
+
+select.form-control {
+    color: #999999;
+    font-family: panton;
+    font-size: 14px;
+    margin: 4px 6px;
+    max-width: 100% !important;
+    padding: 15px 5%;
+    border-radius: 5px;
+    border: 1px solid #999;
+}
+
+textarea.form-control {
+    box-sizing: border-box;
+    color: #999999;
+    font-family: "panton", serif;
+    font-size: 14px;
+    margin: 4px 6px;
+    max-width: 100% !important;
+    padding: 15px 5%;
+    border-radius: 5px;
+    border: 1px solid #999;
+}
+
+section.buttons button {
+    background: #147ce4 none repeat scroll 0 0;
+    border-radius: 5px;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: "panton", serif;
+    margin-right: 6%;
+    margin-top: 5px;
+    padding: 10px 50px;
+
+}
+
+input.form-control, .city > div > input {
+    box-sizing: border-box;
+    color: #999999;
+    font-family: "panton", serif;
+    font-size: 14px;
+    margin: 4px 6px;
+    max-width: 100%;
+    padding: 15px 5%;
+    width: 92%;
+    border: 1px solid #999;
+    border-radius: 5px;
+}
+
+.form-edit {
+    margin-bottom: 200px;
+}
+
+.form-edit button {
+    margin-bottom: 120px;
 }
 
 .view.post > .controls > .comment {
@@ -138,6 +196,12 @@
 
 .view.post > .controls .remove {
     margin-right: 6px;
+}
+
+.title .name {
+    font-family: panton,serif;
+    font-size: 20px;
+    text-shadow: 1px 1px 0 #808080;
 }
 
 .view.post > .controls .comment > * {
@@ -229,7 +293,7 @@
 
 .layout-dialog .list .message .time {
     color: #aaacad;
-    font-family: "roboto",serif;
+    font-family: "roboto", serif;
     font-size: 9px;
     font-weight: 400;
     min-width: 20%;
@@ -259,7 +323,7 @@
 
 .layout-dialog .list .message.mine {
     flex-direction: row;
-    width: 80%;
+    /*width: 80%;*/
 }
 
 .layout-dialog .list .message.mine .text {
@@ -303,7 +367,7 @@
 
 .layout-dialog .list .message.other {
     flex-direction: row-reverse;
-    width: 80%;
+    /*width: 80%;*/
 }
 
 .layout-dialog .list .message.other .text {
@@ -360,7 +424,7 @@
     color: #aaacad;
     display: block;
     flex: 1 1 0;
-    font-family: "panton",serif;
+    font-family: "panton", serif;
     font-size: 14px;
     height: 40px;
     line-height: 20px;
@@ -414,11 +478,12 @@
         color: #656a6e;
         display: block;
         font-size: 15px;
-        margin-top: 13px; 
+        margin-top: 13px;
     }
 
     .view.post .message > * {
         margin-left: 8px;
+        margin-right: 8px;
     }
 
     .view.post .info {
@@ -569,8 +634,4 @@
 
 .last-message > .center {
     max-width: 170px;
-}
-
-.dialog-region {
-    width: 100%;
 }
