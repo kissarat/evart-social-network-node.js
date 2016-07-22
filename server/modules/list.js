@@ -45,8 +45,17 @@ module.exports = {
   */
     },
 
-    POST: modify_list(true),
-    DELETE: modify_list(false)
+    POST: function ($) {
+        return User.update({_id: $.user._id}, {
+            $addToSet: {[$.param('name')]: $.param('target_id')}
+        });
+    },
+
+    DELETE: function ($) {
+        return User.update({_id: $.user._id}, {
+            $pull: {[$.param('name')]: $.param('target_id')}
+        });
+    }
 };
 
 function modify_list(add) {
@@ -60,9 +69,7 @@ function modify_list(add) {
         var result = {success: true};
         return new Promise(function (resolve, reject) {
             User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {
-                var index = _.findIndex(user.follow, function (current_id) {
-                    return target_id.toString() == current_id.toString();
-                });
+                var index = _.findIndex(user.follow, id => id.equals(target_id));
                 result.found = index >= 0;
                 if (result.found == add) {
                     result.success = result.found && !add;

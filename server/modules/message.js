@@ -102,7 +102,7 @@ var _schema = {
         }
     },
 
-    text: utils.StringType(2048),
+    text: utils.StringType(2048, 1),
 
     repost: {
         type: T.ObjectId,

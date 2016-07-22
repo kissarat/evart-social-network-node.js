@@ -6,7 +6,7 @@ App.module('Message', function (Message, App) {
             'wall/:id': 'wall',
             'news': 'news',
             'dialog/:id': 'dialog',
-            'dialogs': 'dialogs',
+            'dialogs': 'dialog',
             'emoji': 'emoji'
         }
     });
@@ -823,6 +823,10 @@ App.module('Message', function (Message, App) {
             Message.channel.reply('read', this.read);
         },
 
+        onRender: function () {
+            App.Views.perfectScrollbar(this.ui.list);
+        },
+
         onDestroy: function () {
             Message.channel.stopReplying('read', this.read);
             Message.channel.stopReplying('dialog', this.reply);
@@ -929,7 +933,7 @@ App.module('Message', function (Message, App) {
                     smile.attr('src', App.contentURL('images/smiles/' + info.name + '.png'))
                 }
                 else {
-                    smile.html(smile)
+                    smile.html(info.char)
                 }
                 self.$el.append(smile);
             });
@@ -1053,6 +1057,7 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
+            App.Views.perfectScrollbar(this.ui.dialogList);
         },
 
         open: function (id) {
@@ -1076,7 +1081,7 @@ App.module('Message', function (Message, App) {
             }
         }
         else {
-            App.navigate('dialogs');
+            App.navigate('dialog/' + id);
         }
     });
 
@@ -1098,14 +1103,8 @@ App.module('Message', function (Message, App) {
             },
 
             dialog: function (id) {
-                App.User.findOne(id, function (user) {
-                    Message.Dialog.widget(App.getPlace('main'), {id: user._id});
-                });
-            },
-
-            dialogs: function () {
                 Message.Messenger.widget(App.getPlace('main'), {});
-                Message.channel.request('open')
+                Message.channel.request('open', id);
             },
 
             emoji: function () {

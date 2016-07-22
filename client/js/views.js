@@ -63,6 +63,7 @@ App.module('Views', function (Views, App) {
             var el = view.el.findParent(function (current) {
                 return current.classList.contains('scroll');
             });
+            Views.perfectScrollbar(el);
             el.addEventListener('scroll', function (e) {
                 var delta = reverse ? e.target.scrollTop : e.target.scrollHeight - e.target.scrollTop;
                 if (delta < 500) {
@@ -291,7 +292,7 @@ App.module('Views', function (Views, App) {
             this.ui.message.html(T('Function unavailable'))
         }
     });
-    
+
     Views.createOptionsFragment = function (dictionary, value, title) {
         var fragment = document.createDocumentFragment();
         if (value) {
@@ -336,6 +337,14 @@ App.module('Views', function (Views, App) {
             return this.ui.text.html(T(text));
         }
     });
+
+    Views.perfectScrollbar = function (el) {
+        // if (el instanceof jQuery) {
+        //     el = el[0];
+        // }
+        // PerfectScrollbar.initialize(el, App.config.scrollbar);
+        $(el).mCustomScrollbar();
+    };
 
     new Views.Router({
         controller: {

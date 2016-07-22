@@ -18,6 +18,17 @@ App.module('User', function (User, App) {
         }
     });
 
+    User.optionsFromId = function (id) {
+        var options = {};
+        if (_.isObjectID(id)) {
+            options.id = id || App.user._id;
+        }
+        else {
+            options.domain = id || App.user.domain;
+        }
+        return options;
+    };
+
     User.Model = Backbone.Model.extend({
         idAttribute: '_id',
         cidPrefix: 'usr',
@@ -720,7 +731,7 @@ App.module('User', function (User, App) {
 
         follow: function () {
             var self = this;
-            var url = '/api/user/list?name=follow&target_id=' + this.model.get('_id');
+            var url = '/api/list?name=follow&target_id=' + this.model.get('_id');
             $.sendJSON('POST', url, {}, function (data) {
                 if (data.success) {
                     var url = '/api/record?type=follow&target_id=' + self.model.get('_id');
@@ -789,6 +800,39 @@ App.module('User', function (User, App) {
             if (!this.model.canManage()) {
                 this.$('.fa-camera').remove();
             }
+        }
+    }, {
+        widget: function (region, options) {
+            var url = '/api/user?' + $.param(_.merge(_.pick(options, 'id', 'domain', 'select'), {
+                    select: 'domain.surname.forename.name.country.city.city_id.tiles.avatar.background.status'
+                }));
+            return new Promise(function (resolve, reject) {
+                $.get(url, function (user) {
+                    App.local.put('user', user);
+                    user = new User.Model(user);
+                    var profile = new User.View({model: user});
+                    profile.el.classList.add('scroll');
+                    profile.el.classList.add(user.get('type'));
+                    region.show(profile);
+                    var buttons = user.get('_id') == App.user._id
+                        ? User.ProfileButtons
+                        : User.OtherProfileButtons;
+                    buttons = new buttons({model: user});
+                    App.Message.WallView.widget(
+                        profile.getRegion('content'),
+                        {owner_id: user.id}
+                    );
+                    profile.getRegion('buttons').show(buttons);
+                    var params = {
+                        id: user.get('_id'),
+                        select: 'follows.followers.groups.video.audio.friends.photo'
+                    };
+                    $.getJSON('/api/user/informer?' + $.param(params), function (informer) {
+                        user.set(informer);
+                        resolve(profile);
+                    });
+                });
+            });
         }
     });
 
@@ -1024,42 +1068,11 @@ App.module('User', function (User, App) {
             },
 
             view: function (domain) {
-                if (!domain) {
-                    domain = App.user.domain;
-                }
-                var params = {};
-                if (_.isObjectID(domain)) {
-                    params.id = domain
-                }
-                else {
-                    params.domain = domain;
-                }
-                params.select = 'domain.surname.forename.name.country.city.city_id.tiles.avatar.background.status';
-                var url = '/api/user?' + $.param(params);
-                $.get(url, function (user) {
-                    App.local.put('user', user);
-                    user = new User.Model(user);
-                    var profile = new User.View({model: user});
-                    profile.el.classList.add('scroll');
-                    profile.el.classList.add(user.get('type'));
-                    App.getPlace('main').show(profile);
-                    var buttons = user.get('_id') == App.user._id
-                        ? User.ProfileButtons
-                        : User.OtherProfileButtons;
-                    buttons = new buttons({model: user});
-                    App.Message.WallView.widget(
-                        profile.getRegion('content'),
-                        {owner_id: user.id}
-                    );
-                    profile.getRegion('buttons').show(buttons);
-                    var params = {
-                        id: user.get('_id'),
-                        select: 'follows.followers.groups.video.audio.friends.photo'
-                    };
-                    $.getJSON('/api/user/informer?' + $.param(params), function (informer) {
-                        user.set(informer);
-                    });
-                });
+                User.View.widget(App.getPlace('main'), User.optionsFromId(domain))
+                    .then(function (profile) {
+                        var id = profile.model.id;
+                        App.Message.WallView.widget(profile.getRegion('content'), {id: id});
+                    })
             },
 
             edit: function (id) {
@@ -1120,7 +1133,7 @@ App.module('User', function (User, App) {
                 layout.getRegion('list').show(listView);
                 pageable.getFirstPage();
             },
-            
+
             random: function (type) {
                 $.getJSON('/api/user/sample?size=1&type=' + (type || 'user'), function (users) {
                     App.navigate('view/' + users[0].domain);

@@ -54,5 +54,10 @@
   "request": {
     "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],
     "log": false
+  },
+  "scrollbar": {
+    "wheelSpeed": 2,
+    "wheelPropagation": true,
+    "minScrollbarLength": 20
   }
 }

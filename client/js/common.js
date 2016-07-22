@@ -356,7 +356,7 @@ _.extend(Service.prototype, {
     },
     
     contentURL: function (url) {
-        return '//' + ('localhost' === location.hostname ? '/' : this.config.cdn) + url;  
+        return '//' + ('localhost' === location.hostname ? 'localhost/' : this.config.cdn) + url;
     }
 });
 /*

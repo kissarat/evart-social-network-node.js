@@ -72,7 +72,7 @@ App.module('Photo', function (Photo, App) {
         childView: Photo.Thumbnail,
 
         attributes: {
-            'class': 'scroll view photo-list'
+            'class': 'view photo-list'
         },
 
         behaviors: {
@@ -213,13 +213,13 @@ App.module('Photo', function (Photo, App) {
 
     return new Photo.Router({
         controller: {
-            index: function (owner_id) {
-                if (!owner_id) {
-                    owner_id = App.user._id;
-                }
-                Photo.Layout.widget(App.getPlace('main'), {
-                    owner_id: owner_id
-                });
+            index: function (domain) {
+                App.User.View.widget(App.getPlace('main'), App.User.optionsFromId(domain))
+                    .then(function (profile) {
+                        Photo.Layout.widget(profile.getRegion('content'), {
+                            owner_id: profile.model.id
+                        });
+                    });
             }
         }
     });
