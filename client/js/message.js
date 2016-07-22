@@ -59,7 +59,7 @@ App.module('Message', function (Message, App) {
 
         initialize: function () {
             var self = this;
-            this.loadRelative();
+            resolveRelative(this, Message.Model.relatives);
 
             if (!this.has('time')) {
                 this.set('time', new Date().toISOString())
@@ -135,18 +135,18 @@ App.module('Message', function (Message, App) {
             return new Message.Model(properties);
         }
     }, {
-        relatives: {
-            source: App.User.Model,
-            target: App.User.Model,
-            owner: App.User.Model,
-            parent: Message.Model
-        },
-
         tableName: 'message',
         draft: function (object) {
             return new Message.Model(_.pick(object, Object.keys(Message.Model.relatives).concat(['type'])));
         }
     });
+
+    Message.Model.relatives = {
+        source: App.User.Model,
+        target: App.User.Model,
+        owner: App.User.Model,
+        parent: Message.Model
+    };
 
     Message.LastMessage = Backbone.Model.extend({
         initialize: function () {

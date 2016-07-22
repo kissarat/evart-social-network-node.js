@@ -155,7 +155,14 @@ section.buttons button {
     margin-right: 6%;
     margin-top: 5px;
     padding: 10px 50px;
+    border: 0 solid;
 
+}
+
+#right .last-message {
+    max-width: 100%;
+    padding: 3%;
+    width: 94%;
 }
 
 input.form-control, .city > div > input {
@@ -505,9 +512,9 @@ input.form-control, .city > div > input {
     }
 
     .view.post .info .container {
-        background-color: #ECEFF4;
-        padding-top: 8px;
-        padding-bottom: 8px;
+        background-color: #eceff4;
+        min-width: 64px;
+        padding: 8px 3px;
     }
 
     .view.post .info .container > * {
@@ -662,4 +669,12 @@ input.form-control, .city > div > input {
     padding: 12px 0 11px;
     width: 15%;
     cursor: pointer ;
+}
+
+#right .search .icon.fa.fa-search {
+    background: #e0e0e0 none repeat scroll 0 0;
+    cursor: pointer;
+    float: left;
+    padding: 8px 0;
+    width: 15%;
 }

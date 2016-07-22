@@ -18,7 +18,14 @@
 }
 
 .layout-video-list .search {
-    background-color: #E0E0E0;
+    background-color: #e0e0e0;
+    float: left;
+    margin-bottom: 6px;
+    width: 100%;
+}
+
+.frame {
+    max-height: 150px;
 }
 
 .layout-video-list .search > * {
@@ -39,9 +46,16 @@
     width: 85%;
 }
 
-.thumbnail-video figure {
+#right .thumbnail-video figure {
     display: inline-block;
     margin: 2px 3% 2px 0;
+    vertical-align: top;
+    width: 47%;
+}
+
+#left .thumbnail-video figure {
+    display: inline-block;
+    margin: 2px 0 2px 3%;
     vertical-align: top;
     width: 47%;
 }
@@ -51,11 +65,10 @@
 }
 
 .thumbnail-video figure img {
+    border: 1px solid #e0e0e0;
+    box-sizing: border-box;
     margin: 2px auto;
     width: 100%;
-    clip-path: inset(16px 0);
-    -webkit-clip-path: inset(12% 0);
-    -moz-clip-path: inset(12% 0);
 }
 
 .frame, .frame iframe {

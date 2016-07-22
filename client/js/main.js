@@ -511,6 +511,15 @@ addEventListener('unload', function () {
     })
 });
 
+function resolveRelative(model, map) {
+    _.each(map, function (clazz, key) {
+        var value = model.get(key); 
+        if (value && 'object' == typeof value && !(value instanceof clazz)) {
+            model.set(key, new clazz(value));
+        }
+    })
+}
+
 function loadRelative(model, map) {
     var promises = [];
     _.each(map, function (clazz, key) {
@@ -526,8 +535,10 @@ function loadRelative(model, map) {
                     promises.push(new Promise(function (resolve, reject) {
                         App.local.getById(clazz.tableName, value)
                             .catch(reject)
-                            .then(function (model) {
-                                resolve(new clazz(model));
+                            .then(function (relative) {
+                                relative = new clazz(relative);
+                                model.set(key, relative);
+                                resolve(relative);
                             });
                     }))
                 }

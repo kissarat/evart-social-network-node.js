@@ -11,6 +11,7 @@ App.module('User', function (User, App) {
             'settings': 'edit',
             'group/create': 'create',
             'users': 'index',
+            'feedback': 'record',
             'record/:type': 'record',
             'list/:name': 'list',
             'friends': 'list',
@@ -797,7 +798,7 @@ App.module('User', function (User, App) {
             else {
                 console.log('Something wrong');
             }
-            if (!this.model.canManage() || App.user.follow.indexOf(this.model.get('_id')) < 0) {
+            if (!this.model.canManage() && App.user.follow.indexOf(this.model.get('_id')) < 0) {
                 this.ui.follow.show();
             }
             this.model.setupAvatar(this.ui.avatar[0]);

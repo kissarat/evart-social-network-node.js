@@ -454,3 +454,7 @@ button.unemitted {
 .wall {
     border-bottom: 200px solid rgba(0, 0, 0, 0);
 }
+
+a:hover {
+    color: #147CE4 !important;
+}

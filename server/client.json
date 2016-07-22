@@ -77,6 +77,7 @@
   "dock": {
     "news": true,
     "profile": true,
+    "feedback": true,
     "dialogs": true,
     "photos": true,
     "friends": true,
