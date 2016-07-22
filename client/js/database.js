@@ -321,7 +321,7 @@ App.local.getById = function (name, id, params) {
                 switch (name) {
                     case 'user':
                         _.defaults(params, {
-                            select: 'like.hate.files.videos.sex.text.admin'
+                            select: 'admin.domain.forename.surname.avatar'
                         });
                         break;
                 }

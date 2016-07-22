@@ -152,15 +152,28 @@ App.module('User', function (User, App) {
         }
     });
 
-    // template: '#view-record',
+    User.Record = Backbone.Model.extend({
+        initialize: function () {
+            this.loadRelative();
+        },
 
-    User.RecordList = User.List.extend({
+        loadRelative: function () {
+            return loadRelative(this, App.Message.Model.relatives);
+        }
+    });
+
+    User.RecordList = App.PageableCollection.extend({
         url: '/api/record',
 
         query: {
             type: 'follow',
+            select: 'surname.forename.avatar.online.country.city.birthday',
             target_id: '',
             q: ''
+        },
+
+        model: function (attributes, options) {
+            return new User.Record(attributes, options);
         }
     });
 
@@ -869,12 +882,10 @@ App.module('User', function (User, App) {
             var action = e.target.getAttribute('class');
             var id = this.model.get('_id');
             var source_id = this.model.get('source').get('_id');
-            $.sendJSON('POST', '/api/user/list?name=follow&target_id=' + source_id, {status: action}, function (data) {
+            $.sendJSON('POST', '/api/list?name=follow&target_id=' + source_id, {status: action}, function (data) {
                 if (data.success) {
                     $.sendJSON('POST', '/api/record?type=follow&id=' + id, {status: action}, function (data) {
-                        if (data.success) {
-                            e.target.parentNode.setAttribute('data-name', action);
-                        }
+                        e.target.parentNode.setAttribute('data-name', action);
                     });
                 }
             });
@@ -965,7 +976,7 @@ App.module('User', function (User, App) {
         },
 
         attributes: {
-            'class': 'layout user-search scroll'
+            'class': 'layout-user-search layout user-search scroll'
         },
 
         ui: {
@@ -1126,7 +1137,7 @@ App.module('User', function (User, App) {
                     collection: pageable.fullCollection
                 });
                 var layout = new User.SearchView({model: pageable.queryModel});
-                App.getView().getRegion('main').show(layout);
+                App.getPlace('main').show(layout);
                 layout.getRegion('list').show(listView);
                 pageable.getFirstPage();
             },

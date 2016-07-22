@@ -124,13 +124,14 @@
 
 select.form-control {
     color: #999999;
-    font-family: panton;
+    font-family: "panton", serif;
     font-size: 14px;
     margin: 4px 6px;
     max-width: 100% !important;
     padding: 15px 5%;
     border-radius: 5px;
     border: 1px solid #999;
+    cursor: pointer;
 }
 
 textarea.form-control {
@@ -168,6 +169,7 @@ input.form-control, .city > div > input {
     width: 92%;
     border: 1px solid #999;
     border-radius: 5px;
+    max-width: 100%;
 }
 
 .form-edit {
@@ -417,6 +419,7 @@ input.form-control, .city > div > input {
 
 .layout-editor .attach {
     background-image: url("/images/attach.png");
+    display: none;
 }
 
 .layout-editor .text {
@@ -617,7 +620,14 @@ input.form-control, .city > div > input {
 }
 
 .messenger .dialog-list .search {
-    min-height: 120px;
+    border-bottom: 1px solid #cccccc;
+    border-top: 1px solid #cccccc;
+    margin-bottom: 121px;
+}
+
+.dialog-region {
+    border-left: 1px solid #d3d3d3;
+    box-sizing: border-box;
 }
 
 .message .dialog {
@@ -634,4 +644,22 @@ input.form-control, .city > div > input {
 
 .last-message > .center {
     max-width: 170px;
+}
+
+.search input {
+    background: #eceff4 none repeat scroll 0 0;
+    border: 0 none;
+    float: left;
+    padding: 10px;
+    width: 85%;
+}
+
+
+
+.search .icon.fa.fa-search {
+    background: #e0e0e0 none repeat scroll 0 0;
+    float: left;
+    padding: 12px 0 11px;
+    width: 15%;
+    cursor: pointer ;
 }
