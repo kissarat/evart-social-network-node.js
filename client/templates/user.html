@@ -12,7 +12,7 @@
             <button type="submit">Enter</button>
         </section>
     </fieldset>
-    <img class="evart-social-network" src="/images/evart-social-network.png" />
+    <img class="evart-social-network" src="/images/evart-social-network.png"/>
     <a href="/signup/phone">Signup</a>
 </script>
 
@@ -81,7 +81,7 @@
             </div>
         </form>
     </div>
-    <img class="footer" src="/images/signup-footer.jpg" />
+    <img class="footer" src="/images/signup-footer.jpg"/>
 </script>
 
 <script type="text/template" id="layout-user">
@@ -180,13 +180,13 @@
         <span class="fa fa-users"></span>
         <span class="title"></span>
     </h1>
-    <div class="form-group admin admin-field">
+    <!--div class="form-group admin admin-field">
         <select class="form-control" name="type">
             <option value="user">User</option>
             <option value="group">Group</option>
             <option value="admin">Admin</option>
         </select>
-    </div>
+    </div-->
     <div class="form-group create-only field-domain">
         <div class="form-control">
             <span class="url"><span class="origin"></span>/view/</span>
@@ -253,7 +253,16 @@
 </script>
 
 <script type="text/template" id="layout-user-search">
-    <input type="search"/>
+    <h1 class="t">Friends</h1>
+    <nav>
+        <div class="requests t">Requests</div>
+        <div class="important t">Important</div>
+        <div class="all t">All</div>
+    </nav>
+    <div>
+        <div class="icon fa fa-search"></div>
+        <input type="search"/>
+    </div>
     <div class="list"></div>
 </script>
 

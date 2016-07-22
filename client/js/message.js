@@ -141,6 +141,29 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.createDraft = function (type, attrs) {
+        var object = {type: type};
+        var name;
+        switch (type) {
+            case MessageType.DIALOG:
+                name = 'target';
+                break;
+            case MessageType.WALL:
+                name = 'owner';
+                break;
+            case MessageType.COMMENT:
+                name = 'parent';
+                break;
+        }
+        if ('string' == typeof attrs) {
+            object.owner = attrs;
+        }
+        else {
+            object.owner = 'string' == attrs[name] ? attrs[name] : attrs[name]._id;
+        }
+        return new Message.Model(object);
+    };
+
     Message.Model.relatives = {
         source: App.User.Model,
         target: App.User.Model,
@@ -458,10 +481,7 @@ App.module('Message', function (Message, App) {
             var wallView = new Message.WallView();
             region.show(wallView);
             var editor = new Message.Editor({
-                model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
-                    owner: options.id || options.owner_id,
-                    type: MessageType.WALL
-                }))
+                model: Message.createDraft(MessageType.WALL, options.id || options.owner_id)
             });
             wallView.getRegion('editor').show(editor);
             Message.PostListView.widget(wallView.getRegion('list'), options);
@@ -477,7 +497,7 @@ App.module('Message', function (Message, App) {
         url: function () {
             return '/api/message?' + $.param(_.merge(this.query, {
                     type: MessageType.COMMENT,
-                    select: 'like.hate.files.videos.sex.text.owner.parent',
+                    select: 'like.hate.files.videos.sex.text.parent.source',
                     user: 'source',
                     message: 'parent'
                 }));
@@ -543,10 +563,7 @@ App.module('Message', function (Message, App) {
             var commentLayout = new Message.CommentLayout();
             region.show(commentLayout);
             var editor = new Message.Editor({
-                model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
-                    parent: options.id,
-                    type: MessageType.COMMENT
-                }))
+                model: Message.createDraft(MessageType.COMMENT, options.id)
             });
             commentLayout.getRegion('editor').show(editor);
             Message.CommentListView.widget(commentLayout.getRegion('list'), options);
@@ -968,6 +985,10 @@ App.module('Message', function (Message, App) {
             'click .send': 'send'
         },
 
+        initialize: function () {
+            this.send = this.send.bind(this);
+        },
+
         showSmiles: function () {
             var self = this;
             var emojiView = new Message.Emoji();
@@ -1001,7 +1022,7 @@ App.module('Message', function (Message, App) {
 
         send: function (e) {
             var self = this;
-            if (e instanceof KeyboardEvent && 'Enter' !== e.key) {
+            if (e instanceof KeyboardEvent && !('Enter' == e.key || e.target == this.ui.editor[0])) {
                 return;
             }
             var text = this.model.get('text');
@@ -1017,11 +1038,11 @@ App.module('Message', function (Message, App) {
                 });
                 this.model.save('text', text, {
                     success: function success(model) {
-                        self.model = model.cloneDraft();
-                        self.stickit();
                         self.ui.editor[0].style.removeProperty('min-height');
                         model.loadRelative().then(function () {
                             Message.channel.request(model.get('type'), model);
+                            self.model = Message.createDraft(model.get('type'), model.attributes);
+                            self.render();
                         });
                     }
                 });
@@ -1098,7 +1119,14 @@ App.module('Message', function (Message, App) {
         var messenger = App.getPlace('main').currentView;
         if (messenger instanceof Message.Messenger) {
             if (id) {
-                messenger.open(id);
+                if (_.isObjectID(id)) {
+                    messenger.open(id);
+                }
+                else {
+                    $.getJSON('/api/user?domain=' + id, function (user) {
+                        messenger.open(user._id);
+                    })
+                }
             }
         }
         else {

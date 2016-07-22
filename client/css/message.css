@@ -165,6 +165,16 @@ section.buttons button {
     width: 94%;
 }
 
+#left .view.last-message {
+    padding: 3%;
+    width: 94%;
+    max-width: 100%;
+}
+
+.list.scroll.mCustomScrollbar._mCS_2 > div > div {
+    margin-bottom: 20px;
+}
+
 input.form-control, .city > div > input {
     box-sizing: border-box;
     color: #999999;
@@ -635,6 +645,7 @@ input.form-control, .city > div > input {
 .dialog-region {
     border-left: 1px solid #d3d3d3;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .message .dialog {
@@ -677,4 +688,16 @@ input.form-control, .city > div > input {
     float: left;
     padding: 8px 0;
     width: 15%;
+}
+
+.layout-dialog .editor {
+    margin-top: 10px;
+}
+
+.layout.comment {
+    border-left: 1px solid #cccccc;
+    margin-bottom: 20px;
+    margin-left: 3%;
+    margin-top: -10px;
+    padding-left: 2%;
 }

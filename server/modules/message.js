@@ -135,6 +135,14 @@ module.exports = {
     read, dialogs,
 
     GET: function ($) {
+        if ($.has('id') && !$.has('type')) {
+            return {
+                single: true,
+                query: {
+                    _id: $.get('id')
+                }
+            }
+        }
         const ANDs = [];
         var permission;
         if ($.has('type')) {

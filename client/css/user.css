@@ -120,7 +120,8 @@
 }
 
 .profile-relative article > .left {
-    flex: 1;
+    flex: 1 1 0;
+    max-width: 170px;
     text-align: center;
 }
 
@@ -131,9 +132,10 @@
 }
 
 .profile-relative .avatar-block {
+    background-color: #ffffff;
     display: inline-block;
-    background-color: white;
-    padding: 4px;
+    padding: 5px;
+    width: 120px;
 }
 
 .profile-relative .big-avatar {
@@ -233,8 +235,10 @@
 
 .thumbnail-user {
     display: inline-block;
-    width: 30%;
+    float: left;
+    padding: 1%;
     text-align: left;
+    width: 33.3%;
 }
 
 .thumbnail-user .user-info {
@@ -348,8 +352,8 @@
 }
 
 .big-avatar {
-    width: 130px;
-    height: 130px;
+    height: 120px;
+    width: 120px;
 }
 
 .profile-buttons {

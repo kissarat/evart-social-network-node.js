@@ -1,7 +1,10 @@
 #dock-container {
+    left: 17vw;
     position: fixed;
     text-align: center;
-    width: 100vw;
+    transform: scale(0.8);
+    width: 66vw;
+    /*width: 100vw;*/
 }
 
 #dock-container.visible {
@@ -44,7 +47,7 @@
     display: block;
     margin-left: auto;
     margin-right: auto;
-    max-width: 67%;
+    /*max-width: 67%;*/
     position: relative;
 }
 
@@ -187,3 +190,5 @@
     padding: 2px 4px;
     border: 2px;
 }
+
+
