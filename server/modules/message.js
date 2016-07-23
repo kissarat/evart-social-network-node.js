@@ -300,9 +300,9 @@ module.exports = {
                     delete message.v;
                     $.send(message);
                     targets.forEach(function (id) {
-                        if (!$.user._id.equals(id)) {
-                            $.notifyOne(id, message)
-                        }
+                        // if ($.user._id.toString() != id) {
+                            $.notifyOne(id, message);
+                        // }
                     });
                 }));
             }

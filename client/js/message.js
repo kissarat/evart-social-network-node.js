@@ -121,24 +121,9 @@ App.module('Message', function (Message, App) {
 
         getIndex: function () {
             return parseInt(this.get('_id').slice(2), 16);
-        },
-
-        cloneDraft: function () {
-            var self = this;
-            var properties = {
-                type: this.get('type')
-            };
-            _.each(Message.Model.prototype.relatives, function (model, key) {
-                var value = self.get(key);
-                properties[key] = value instanceof model ? value.get('_id') : value;
-            });
-            return new Message.Model(properties);
         }
     }, {
-        tableName: 'message',
-        draft: function (object) {
-            return new Message.Model(_.pick(object, Object.keys(Message.Model.relatives).concat(['type'])));
-        }
+        tableName: 'message'
     });
 
     Message.createDraft = function (type, attrs) {
@@ -156,10 +141,10 @@ App.module('Message', function (Message, App) {
                 break;
         }
         if ('string' == typeof attrs) {
-            object.owner = attrs;
+            object[name] = attrs;
         }
         else {
-            object.owner = 'string' == attrs[name] ? attrs[name] : attrs[name]._id;
+            object[name] = 'string' == attrs[name] ? attrs[name] : attrs[name]._id || attrs[name].id;
         }
         return new Message.Model(object);
     };
@@ -513,11 +498,8 @@ App.module('Message', function (Message, App) {
 
         initialize: function () {
             this.reply = this.reply.bind(this);
-            this.collection.comparator = Message.comparator;
-        },
-
-        onRender: function () {
             Message.channel.reply(Message.COMMENT, this.reply);
+            this.collection.comparator = Message.comparator;
         },
 
         onDestroy: function () {
@@ -526,10 +508,10 @@ App.module('Message', function (Message, App) {
 
         reply: function (model) {
             if (model instanceof Message.Model) {
-                if (this.collection.pageableCollection.queryModel.get('parent_id') == model.get('parent').id) {
+                // if (this.collection.pageableCollection.queryModel.get('parent_id') == model.get('parent').id) {
                     this.collection.add(model);
                     this.collection.sort();
-                }
+                // }
             }
             else {
                 console.error('Invalid object', model);
@@ -714,6 +696,8 @@ App.module('Message', function (Message, App) {
         onRender: function () {
             var self = this;
             App._dialog = this.collection;
+            this.collection.comparator = Message.comparator;
+            this.collection.pageableCollection.comparator = Message.comparator;
             this.collection.pageableCollection.once('finish', function () {
                 setImmediate(function () {
                     self.scrollLast();
@@ -739,7 +723,6 @@ App.module('Message', function (Message, App) {
                     return model.get('time') === new Date(last).toISOString()
                 });
                 last = this.children.findByModel(last);
-                this.collection.comparator = Message.comparator;
                 this.collection.sort();
                 last.el.scrollIntoView();
             }
@@ -903,11 +886,7 @@ App.module('Message', function (Message, App) {
             var list = new Message.List([], {query: query});
             var listView = new Message.ListView({collection: list.fullCollection});
             var editor = new Message.Editor({
-                model: new Message.Model(_.merge(_.pick(options, 'type', 'source'), {
-                    target: options.id,
-                    unread: 1,
-                    type: MessageType.DIALOG
-                }))
+                model: Message.createDraft(MessageType.DIALOG, options.id)
             });
             var dialog = new Message.Dialog();
             region.show(dialog);
@@ -1022,7 +1001,7 @@ App.module('Message', function (Message, App) {
 
         send: function (e) {
             var self = this;
-            if (e instanceof KeyboardEvent && !('Enter' == e.key || e.target == this.ui.editor[0])) {
+            if (e instanceof KeyboardEvent && 'Enter' != e.key) {
                 return;
             }
             var text = this.model.get('text');

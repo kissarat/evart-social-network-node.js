@@ -22,7 +22,8 @@ function version(v) {
     '*/'].join('\n') + '\n\n';
 }
 
-var cdn = '//d2sywt0ovr790u.cloudfront.net/';
+// var origin = '//d2sywt0ovr790u.cloudfront.net/';
+var origin = '//evart.com/';
 
 gulp.task('translate', function () {
     gulp.src('client/sass/*.sass').pipe(sass()).pipe(gulp.dest('client/sass/'));
@@ -47,7 +48,7 @@ gulp.task('app', function () {
         .join('\n');
     fs.writeFileSync('app/script.js', string);
     var script = doc.getElementById('script');
-    script.innerHTML = `<script src="${cdn}script.js"></script>`;
+    script.innerHTML = `<script src="${origin}script.js"></script>`;
     _.each(doc.querySelectorAll('.include[data-src]'), function (script) {
         script.innerHTML = fs.readFileSync('client' + script.getAttribute('data-src'));
         script.removeAttribute('data-src');
@@ -65,7 +66,7 @@ gulp.task('app', function () {
     var link = doc.createElement('link');
     link.setAttribute('rel', 'stylesheet');
     link.setAttribute('type', 'text/css');
-    link.setAttribute('href', cdn + 'style.css');
+    link.setAttribute('href', origin + 'style.css');
     doc.head.appendChild(link);
     var iter = doc.createNodeIterator(doc.documentElement, 128, null, false);
     while (true) {
@@ -81,7 +82,8 @@ gulp.task('app', function () {
         .replace(/\s+/g, ' ')
         .replace('</body>',
             newlines +
-            '<a id="author" href="http://kissarat.github.io/">\n\tDeveloped by Taras Labiak\n</a>' +
+            // '<a id="author" href="http://kissarat.github.io/">\n\tDeveloped by Taras Labiak\n</a>' +
+                '' +
             newlines + '</body>')
         .replace('<meta name="robots" content="index,nofollow">',
             newlines +

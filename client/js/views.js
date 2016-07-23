@@ -343,7 +343,9 @@ App.module('Views', function (Views, App) {
         //     el = el[0];
         // }
         // PerfectScrollbar.initialize(el, App.config.scrollbar);
-        $(el).mCustomScrollbar();
+        if ($(el).mCustomScrollbar instanceof Function) {
+            $(el).mCustomScrollbar();
+        }
     };
 
     new Views.Router({

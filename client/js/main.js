@@ -537,7 +537,7 @@ function loadRelative(model, map) {
                             .catch(reject)
                             .then(function (relative) {
                                 relative = new clazz(relative);
-                                model.set(key, relative);
+                                model.set(key, rel);
                                 resolve(relative);
                             });
                     }))

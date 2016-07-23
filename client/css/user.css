@@ -8,14 +8,14 @@
 }
 
 .profile-relative header {
-    position: relative;
-    padding: 32px 30px;
-    margin: auto;
-    text-align: left;
+    align-content: center;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-content: center;
+    margin: auto;
+    padding: 18px 30px;
+    position: relative;
+    text-align: left;
 }
 
 .profile-relative header .photo {
@@ -139,9 +139,24 @@
 }
 
 .profile-relative .big-avatar {
-    position: relative;
+    background-position: center center;
     background-size: cover;
+    position: relative;
 }
+
+.whom {
+    text-align: left;
+}
+
+
+.layout-user-search input {
+    background: #eceff4 none repeat scroll 0 0;
+    border: 0 none;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    padding: 15px;
+}
+
 
 .profile-relative .big-avatar .fa-camera {
     right: 6px;
@@ -291,10 +306,32 @@
 }
 
 .layout-user-search .record {
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
     display: flex;
     flex-direction: row;
-    align-items: center;
     justify-content: space-between;
+    margin-left: 3%;
+    margin-right: 3%;
+}
+
+.layout-user-search .icon.fa.fa-search {
+    background: #e0e0e0 none repeat scroll 0 0;
+    padding: 17px 17px 16px;
+}
+
+.layout-user-search nav {
+    float: none !important;
+    margin: 0 auto;
+    width: auto;
+}
+.layout-user-search nav div {
+    background: #eceff4 none repeat scroll 0 0;
+    border-right: 1px solid #ffffff;
+    cursor: pointer;
+    display: inline;
+    margin: 10px auto;
+    padding: 10px;
 }
 
 .layout-user-search .record .avatar {
@@ -357,10 +394,10 @@
 }
 
 .profile-buttons {
-    width: 130px;
-    height: 30px;
-    background-size: contain;
-    background: url("/images/own-profile-buttons.png") center;
+    background: rgba(0, 0, 0, 0) url("/images/own-profile-buttons.png") repeat scroll center center / 100% auto;
+    border-radius: 3px;
+    height: 28px;
+    width: 122px;
 }
 
 [name="country"] option > div div:last-child {

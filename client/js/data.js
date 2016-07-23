@@ -633,7 +633,7 @@ self.isMicrosoftWindows = false;
         browser.os.version = b[1].replace(/_/g, '.');
     }
     else if (navigator.userAgent.indexOf('Windows') >= 0) {
-        // self.isMicrosoftWindows = true;
+        self.isMicrosoftWindows = true;
         browser.os.name = 'Windows';
         var versions = {
             'XP': ['Windows NT 5.1', 'Windows XP'],
