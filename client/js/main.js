@@ -74,7 +74,7 @@ _.extend(jQuery.fn, {
     },
 
     report: function (name, message, cssClass) {
-        var parent = this.find("[name=" + name + "]").parent();
+        var parent = this.find('[name="' + name + '"]').parent();
         var helpBlock = parent.find(".help-block");
         if (helpBlock.length == 0) {
             helpBlock = parent.parent().find(".help-block");
@@ -434,7 +434,7 @@ _.extend(Backbone.Validation.callbacks, {
         return view.$el.report(attr, '', false);
     },
     invalid: function (view, attr, error) {
-        return view.$el.report(attr, error, false);
+        return view.$el.report(attr, error, 'error');
     }
 });
 
@@ -537,7 +537,7 @@ function loadRelative(model, map) {
                             .catch(reject)
                             .then(function (relative) {
                                 relative = new clazz(relative);
-                                model.set(key, rel);
+                                model.set(key, relative);
                                 resolve(relative);
                             });
                     }))

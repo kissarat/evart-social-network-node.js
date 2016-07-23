@@ -110,6 +110,10 @@ var _schema = {
         "enum": [null, "single", "in", "engaged", "married", "love", "complex", "search"]
     },
 
+    code: {
+        type: Number
+    },
+
     forename: utils.StringType(48),
     surname: utils.StringType(48),
 
@@ -220,8 +224,8 @@ module.exports = {
 
     _before: function ($) {
         var last = _.last($.req.url.route);
-        if ('POST' != $.req.method && $.isUpdate && !_.contains(['exists', 'phone', 'code', 'personal', 'login'], last)) {
-            return $.canManage($.id);
+        if ('POST' != $.req.method && $.isUpdate && !_.contains(['exists', 'phone', 'code', 'personal', 'login', 'password'], last)) {
+            return $.has('id') ? $.canManage($.get('id')) : true;
         }
         return true;
     },
@@ -301,6 +305,48 @@ module.exports = {
         if ($.isAdmin) {
             return User.remove({_id: $.get('id')})
         }
+    },
+
+    password: function ($) {
+        var id = $.get('id');
+        if ($.user._id != id.toString()) {
+            return code.FORBIDDEN;
+        }
+        function invalid(name) {
+            $.send(code.BAD_REQUEST, {
+                invalid: {
+                    [name]: 'invalid'
+                }
+            })
+        }
+        User.findOne({_id: id}, {hash: 1, code: 1}).exec($.wrap(function (user) {
+            if (user) {
+                if ($.has('old_password')) {
+                    if (utils.hash($.param('old_password')) == user.hash) {
+                        user.hash = utils.hash($.param('password'));
+                        user.save($.success);
+                    }
+                    else {
+                        invalid('old_password');
+                    }
+                }
+                else if ($.has('code')) {
+                    if (user.code && 6 === user.code.length && $.param('code') == user.code) {
+                        user.code = null;
+                        user.save($.success);
+                    }
+                    else {
+                        invalid('code');
+                    }
+                }
+                else {
+                    $.sendStatus(code.BAD_REQUEST);
+                }
+            }
+            else {
+                $.sendStatus(code.NOT_FOUND);
+            }
+        }))
     },
 
     sample: function ($) {

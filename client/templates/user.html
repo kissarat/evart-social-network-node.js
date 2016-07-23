@@ -187,6 +187,11 @@
             <option value="admin">Admin</option>
         </select>
     </div-->
+    <nav>
+        <button type="button" class="change-password">Change Password</button>
+        <!--<button type="button" class="t"></button>-->
+    </nav>
+
     <div class="form-group create-only field-domain">
         <div class="form-control">
             <span class="url"><span class="origin"></span>/view/</span>
@@ -280,5 +285,32 @@
             <div class="follow"></div>
             <div class="friend"></div>
         </div>
+    </div>
+</script>
+
+<script type="text/template" id="view-password">
+    <fieldset>
+    <legend></legend>
+    <div class="fields">
+        <div class="form-group" id="field-code">
+            <input type="password" name="code" placeholder="Code" style="display: none"/>
+            <span class="help-block"></span>
+        </div>
+        <div class="form-group" id="field-old_password">
+            <input type="password" name="old_password" placeholder="Old Password" style="display: none"/>
+            <span class="help-block"></span>
+        </div>
+        <div class="form-group" id="field-password">
+            <input type="password" name="password" placeholder="New Password"/>
+            <span class="help-block"></span>
+        </div>
+        <div class="form-group" id="field-repeat_password">
+            <input type="password" name="repeat_password" placeholder="Repeat Password" style="display: none"/>
+            <span class="help-block"></span>
+        </div>
+    </div>
+    </fieldset>
+    <div class="buttons">
+        <button type="button">Change</button>
     </div>
 </script>

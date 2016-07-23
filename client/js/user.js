@@ -15,7 +15,9 @@ App.module('User', function (User, App) {
             'record/:type': 'record',
             'list/:name': 'list',
             'friends': 'list',
-            'random/user': 'random'
+            'random/user': 'random',
+            'password': 'password',
+            'recovery': 'password'
         }
     });
 
@@ -138,6 +140,39 @@ App.module('User', function (User, App) {
     });
 
     User.Model.tableName = 'user';
+
+    var passwordValidation = {
+        required: true
+    };
+
+    var Password = Backbone.Model.extend({
+        idAttribute: '_id',
+        url: function () {
+            return '/api/user/password?id=' + this.id
+        }
+    });
+
+    User.Recovery = Password.extend({
+        validation: {
+            code: {
+                pattern: /\w{6}/,
+                require: true
+            },
+            password: passwordValidation
+        }
+    });
+
+    User.ChangePassword = Password.extend({
+        validation: {
+            old_password: passwordValidation,
+            password: passwordValidation,
+            repeat_password: function (value, attr, computedState) {
+                if (value != computedState.password) {
+                    return T('Passwords does not match');
+                }
+            }
+        }
+    });
 
     User.List = App.PageableCollection.extend({
         url: '/api/user',
@@ -425,7 +460,12 @@ App.module('User', function (User, App) {
         },
 
         events: {
-            'submit': 'submit'
+            'submit': 'submit',
+            'click .change-password': 'changePassword'
+        },
+
+        changePassword: function () {
+            App.navigate('password');
         },
 
         submit: function (e) {
@@ -1028,6 +1068,71 @@ App.module('User', function (User, App) {
         }
     });
 
+    User.ChangePasswordView = Marionette.View.extend({
+        template: '#view-password',
+        tagName: 'form',
+
+        events: {
+            'click [type="button"]': 'save'
+        },
+
+        bindings: {
+            '[name="password"]': 'password',
+            '[name="code"]': 'code',
+            '[name="old_password"]': 'old_password',
+            '[name="repeat_password"]': 'repeat_password'
+        },
+
+        ui: {
+            title: 'legend',
+            password: '[name="password"]',
+            code: '[name="code"]',
+            oldPassword: '[name="old_password"]',
+            repeatPassword: '[name="repeat_password"]',
+            button: '[type="button"]'
+        },
+
+        initialize: function () {
+            Backbone.Validation.bind(this);
+        },
+
+        save: function () {
+            var self = this;
+            if (this.model.isValid(true)) {
+                this.model.save(null, {
+                    complete: function (xhr) {
+                        var data = xhr.responseJSON;
+                        if (data.success) {
+                            App.navigate('edit/' + App.user._id);
+                        }
+                        else if (data.invalid) {
+                            if (data.invalid.code) {
+                                self.$el.report('code', 'Invalid code', 'error');
+                            }
+                            else if (data.invalid['old_password']) {
+                                self.$el.report('old_password', 'Invalid password', 'error');
+                            }
+                        }
+                    }
+                });
+            }
+        },
+
+        onRender: function () {
+            this.$el.attr('data-scenario', this.scenario);
+            if ('recovery' === this.scenario) {
+                this.ui.title.html(T('Password Recovery'));
+                this.ui.code.show();
+            }
+            else {
+                this.ui.title.html(T('Change Password'));
+                this.ui.oldPassword.show();
+                this.ui.repeatPassword.show();
+            }
+            this.stickit();
+        }
+    });
+
     User.findOne = function (id, cb) {
         var params = {select: 'domain.surname.forename.online.country.city_id.city.avatar.sex'};
         if (_.isObjectID(id)) {
@@ -1147,6 +1252,17 @@ App.module('User', function (User, App) {
                 $.getJSON('/api/user/sample?size=1&type=' + (type || 'user'), function (users) {
                     App.navigate('view/' + users[0].domain);
                 })
+            },
+
+            password: function () {
+                var scenario = App.route[0];
+                var view = new User.ChangePasswordView({
+                    model: new ('recovery' == scenario ? User.Recovery : User.ChangePassword)({
+                        _id: App.user._id
+                    })
+                });
+                view.scenario = scenario;
+                App.getPlace('main').show(view);
             }
         }
     });
