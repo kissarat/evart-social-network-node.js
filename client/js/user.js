@@ -3,21 +3,22 @@
 App.module('User', function (User, App) {
     User.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            'login': 'login',
-            'signup/:step': 'signup',
-            'profile': 'view',
-            'view/:id': 'view',
             'edit/:id': 'edit',
-            'settings': 'edit',
-            'group/create': 'create',
-            'users': 'index',
             'feedback': 'record',
-            'record/:type': 'record',
-            'list/:name': 'list',
             'friends': 'list',
-            'random/user': 'random',
+            'group/create': 'create',
+            'list/:name': 'list',
+            'login': 'login',
             'password': 'password',
-            'recovery': 'password'
+            'profile': 'view',
+            'random/user': 'random',
+            'record/:type': 'record',
+            'recovery/:type': 'password',
+            'recovery/:type/:id': 'password',
+            'settings': 'edit',
+            'signup/:step': 'signup',
+            'users': 'index',
+            'view/:id': 'view'
         }
     });
 
@@ -142,6 +143,8 @@ App.module('User', function (User, App) {
     User.Model.tableName = 'user';
 
     var passwordValidation = {
+        message: 'Password must be at least 6 characters, no more than 32 characters, and must include at least one upper case letter, one lower case letter, and one numeric digit',
+        pattern: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$/,
         required: true
     };
 
@@ -152,26 +155,27 @@ App.module('User', function (User, App) {
         }
     });
 
-    User.Recovery = Password.extend({
-        validation: {
+    var _validation = {
+        password: passwordValidation,
+        repeat_password: {
+            equalTo: 'password',
+            required: true
+        }
+    };
+
+    User.CodePassword = Password.extend({
+        validation: _.merge(_validation, {
             code: {
                 pattern: /\w{6}/,
                 require: true
-            },
-            password: passwordValidation
-        }
+            }
+        })
     });
 
     User.ChangePassword = Password.extend({
-        validation: {
-            old_password: passwordValidation,
-            password: passwordValidation,
-            repeat_password: function (value, attr, computedState) {
-                if (value != computedState.password) {
-                    return T('Passwords does not match');
-                }
-            }
-        }
+        validation: _.merge(_validation, {
+            old_password: passwordValidation
+        })
     });
 
     User.List = App.PageableCollection.extend({
@@ -240,33 +244,25 @@ App.module('User', function (User, App) {
         url: '/api/user',
 
         validation: {
-            phone: {
-                required: true,
-                pattern: /^\w{9,16}$/
-            },
             code: {
                 required: true,
                 pattern: /^\d{6}$/
             },
-            domain: {
-                required: true
+            domain: {required: true},
+            email: {required: true},
+            forename: {required: true},
+            password: passwordValidation,
+            passwordRepeat: {equalTo: 'password'},
+            phone: {
+                required: true,
+                pattern: /^\w{9,16}$/
             },
-            email: {
-                required: true
-            },
-            password: {
-                required: true
-            },
-            passwordRepeat: {
-                equalTo: 'password'
-            },
-            forename: {
-                required: true
-            },
-            surname: {
-                required: true
-            }
+            surname: {required: true}
         }
+    });
+
+    User.Recovery = Backbone.Model.extend({
+        validation: User.Signup.prototype.validation
     });
 
     User.LoginForm = Marionette.View.extend({
@@ -288,15 +284,12 @@ App.module('User', function (User, App) {
         },
 
         events: {
-            'click [type=submit]': 'submit'
+            'click .recovery': 'recovery',
+            'click [type=submit]': 'login'
         },
 
-        submit: function (e) {
+        login: function (e) {
             e.preventDefault();
-            this.login();
-        },
-
-        login: function () {
             if (this.model.isValid(true)) {
                 App.login(this.model.attributes, function (agent, xhr) {
                     if (code.UNAUTHORIZED === xhr.status) {
@@ -307,6 +300,10 @@ App.module('User', function (User, App) {
                     }
                 });
             }
+        },
+
+        recovery: function () {
+            App.navigate('recovery/phone');
         }
     });
 
@@ -330,20 +327,20 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            '.form-signup [name=phone]': 'phone',
             '.form-signup [name=code]': 'code',
             '.form-signup [name=domain]': 'domain',
             '.form-signup [name=email]': 'email',
-            '.form-signup [name=password]': 'password',
-            '.form-signup [name=repeat]': 'repeat',
             '.form-signup [name=forename]': 'forename',
+            '.form-signup [name=password]': 'password',
+            '.form-signup [name=phone]': 'phone',
+            '.form-signup [name=repeat]': 'repeat',
             '.form-signup [name=surname]': 'surname'
         },
 
         events: {
-            'click fieldset.phone button': 'phone',
             'click fieldset.code button': 'code',
             'click fieldset.personal button': 'personal',
+            'click fieldset.phone button': 'phone',
             'invalid': 'invalid'
         },
 
@@ -424,6 +421,7 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
+            '[name=about]': 'about',
             '[name=birthday]': {
                 observe: 'birthday',
                 onGet: function (value) {
@@ -433,15 +431,14 @@ App.module('User', function (User, App) {
             '[name=country]': 'country',
             '[name=domain]': 'domain',
             '[name=email]': 'email',
+            '[name=forename]': 'forename',
             '[name=language]': 'lang',
             '[name=name]': 'name',
-            '[name=surname]': 'surname',
-            '[name=forename]': 'forename',
             '[name=phone]': 'phone',
             '[name=relationship]': 'relationship',
             '[name=sex]': 'sex',
+            '[name=surname]': 'surname',
             '[name=type]': 'type',
-            '[name=about]': 'about',
             'h1 .title': 'domain'
         },
 
@@ -452,8 +449,8 @@ App.module('User', function (User, App) {
             country: '[name=country]',
             domain: '[name=domain]',
             icon: 'h1 .fa',
-            origin: '.origin',
             language: '[name=language]',
+            origin: '.origin',
             relationship: '[name=relationship]',
             sex: '[name=sex]',
             title: 'h1 .title'
@@ -620,30 +617,30 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            '.status': 'status',
             '.audio .value': 'audio',
-            '.friends .value': 'friends',
-            '.followers .value': 'followers',
-            '.groups .value': 'groups',
-            '.video .value': 'video',
-            '.country': 'country',
             '.city': {
                 observe: 'city',
                 onGet: function (value) {
                     return value ? value + ',' : value;
                 }
-            }
+            },
+            '.country': 'country',
+            '.followers .value': 'followers',
+            '.friends .value': 'friends',
+            '.groups .value': 'groups',
+            '.status': 'status',
+            '.video .value': 'video'
         },
 
         ui: {
-            background: '.background',
-            header: 'header',
             avatar: '.big-avatar',
+            background: '.background',
             edit: '.edit',
-            status: '.status',
-            photoList: '.photo-list',
             follow: '.follow',
+            header: 'header',
             name: '.name',
+            photoList: '.photo-list',
+            status: '.status',
             tile0: '[data-number="0"]',
             tile1: '[data-number="1"]',
             tile2: '[data-number="2"]',
@@ -654,16 +651,16 @@ App.module('User', function (User, App) {
         },
 
         events: {
-            'click .follow': 'follow',
-            'drop .tile.photo': 'drop',
-            'keyup .status': 'keyupStatus',
             'change .status': 'changeStatus',
-            'dragover .tile.photo': 'dragover',
+            'click .big-avatar .fa-camera': 'uploadAvatar',
+            'click .follow': 'follow',
+            'click .profile-relative > .fa-camera': 'uploadBackground',
+            'click [data-number]': 'uploadTile',
             'dragenter .tile.photo': 'dragenter',
             'dragleave .tile.photo': 'dragleave',
-            'click .big-avatar .fa-camera': 'uploadAvatar',
-            'click .profile-relative > .fa-camera': 'uploadBackground',
-            'click [data-number]': 'uploadTile'
+            'dragover .tile.photo': 'dragover',
+            'drop .tile.photo': 'drop',
+            'keyup .status': 'keyupStatus'
         },
 
         uploadAvatar: function () {
@@ -1032,6 +1029,24 @@ App.module('User', function (User, App) {
         modelEvents: {
             'change q': 'search'
         },
+        
+        events: {
+            'click .requests': 'openRequests',
+            'click .important': 'openImportant',
+            'click .all': 'openAll'
+        },
+        
+        openRequests: function () {
+            App.navigate('feedback');
+        },
+
+        openImportant: function () {
+            App.navigate('unavailable');
+        },
+
+        openAll: function () {
+            App.navigate('friends');
+        },
 
         onRender: function () {
             this.stickit();
@@ -1043,7 +1058,6 @@ App.module('User', function (User, App) {
 
         search: function () {
             var self = this;
-            this.getCollection().delaySearch();
             this.ui.list.busy(true);
             this.getCollection().delaySearch(function () {
                 self.ui.list.busy(false);
@@ -1077,59 +1091,116 @@ App.module('User', function (User, App) {
         },
 
         bindings: {
-            '[name="password"]': 'password',
             '[name="code"]': 'code',
             '[name="old_password"]': 'old_password',
+            '[name="password"]': 'password',
             '[name="repeat_password"]': 'repeat_password'
         },
 
         ui: {
-            title: 'legend',
-            password: '[name="password"]',
+            button: '[type="button"]',
             code: '[name="code"]',
-            oldPassword: '[name="old_password"]',
-            repeatPassword: '[name="repeat_password"]',
-            button: '[type="button"]'
+            old_password: '[name="old_password"]',
+            password: '[name="password"]',
+            repeat_password: '[name="repeat_password"]',
+            title: 'legend'
         },
 
         initialize: function () {
             Backbone.Validation.bind(this);
         },
 
+        getKeys: function () {
+            return Object.keys(this.model.validation);
+        },
+
         save: function () {
-            var self = this;
-            if (this.model.isValid(true)) {
+            if (this.model.isValid(this.getKeys())) {
                 this.model.save(null, {
-                    complete: function (xhr) {
-                        var data = xhr.responseJSON;
-                        if (data.success) {
-                            App.navigate('edit/' + App.user._id);
-                        }
-                        else if (data.invalid) {
-                            if (data.invalid.code) {
-                                self.$el.report('code', 'Invalid code', 'error');
-                            }
-                            else if (data.invalid['old_password']) {
-                                self.$el.report('old_password', 'Invalid password', 'error');
-                            }
-                        }
+                    complete: _.bind(this.complete, this)
+                });
+            }
+        },
+
+        complete: function (xhr) {
+            var self = this;
+            var data = xhr.responseJSON;
+            if (data.success) {
+                App.navigate(App.isAuthenticated() ? 'edit/' + App.user._id : 'login');
+            }
+            else if (data.invalid) {
+                var errors = {
+                    code: 'Invalid code',
+                    old_password: 'Invalid password'
+                };
+                _.each(errors, function (message, key) {
+                    if (data.invalid[key]) {
+                        self.$el.report(key, message, 'error');
                     }
                 });
             }
         },
 
         onRender: function () {
+            var self = this;
             this.$el.attr('data-scenario', this.scenario);
-            if ('recovery' === this.scenario) {
-                this.ui.title.html(T('Password Recovery'));
-                this.ui.code.show();
-            }
-            else {
-                this.ui.title.html(T('Change Password'));
-                this.ui.oldPassword.show();
-                this.ui.repeatPassword.show();
-            }
+            this.ui.title.html(T('recovery' === this.scenario ? 'Password Recovery' : 'Change Password'));
+            this.getKeys().forEach(function (key) {
+                self.ui[key].show();
+            });
             this.stickit();
+        }
+    });
+
+    User.RecoveryView = Marionette.View.extend({
+        template: '#view-recovery',
+
+        behaviors: {
+            Bindings: {}
+        },
+
+        bindings: {
+            '[name="phone"]': 'phone'
+        },
+
+        events: {
+            'click button': 'send'
+        },
+
+        initialize: function () {
+            Backbone.Validation.bind(this);
+        },
+
+        send: function () {
+            var self = this;
+            var phone = this.model.get('phone');
+
+            if (phone) {
+                phone = phone.replace(/[^\d]/g, '');
+                this.model.set('phone', phone);
+            }
+            if (this.model.isValid('phone')) {
+                $.sendJSON('POST', '/api/user/recover', this.model.attributes, function (data, xhr) {
+                    if (code.OK === xhr.status) {
+                        if (data.success) {
+                            App.navigate('recovery/code/' + data.user_id);
+                        }
+                        else if (data.invalid) {
+                            if (data.invalid.phone) {
+                                self.$el.report('phone', 'Invalid phone', 'error');
+                            }
+                        }
+                    }
+                    else if (code.NOT_FOUND === xhr.status) {
+                        self.$el.report('phone', 'User not found', 'error');
+                    }
+                    else {
+                        if (twilio.INVALID_NUMBER == data.code) {
+                            self.$el.report('phone', 'Invalid phone', 'error');
+                        }
+                    }
+                });
+            }
         }
     });
 
@@ -1254,14 +1325,18 @@ App.module('User', function (User, App) {
                 })
             },
 
-            password: function () {
-                var scenario = App.route[0];
-                var view = new User.ChangePasswordView({
-                    model: new ('recovery' == scenario ? User.Recovery : User.ChangePassword)({
-                        _id: App.user._id
-                    })
-                });
-                view.scenario = scenario;
+            password: function (type, id) {
+                var view;
+                if ('phone' == type) {
+                    view = new User.RecoveryView({model: new User.Recovery()});
+                }
+                else {
+                    var clazz = type ? User.CodePassword : User.ChangePassword;
+                    id = 'code' == type && id ? id : App.user._id;
+                    var model = new clazz({_id: id});
+                    view = new User.ChangePasswordView({model: model});
+                    view.scenario = type ? 'recovery' : 'password';
+                }
                 App.getPlace('main').show(view);
             }
         }

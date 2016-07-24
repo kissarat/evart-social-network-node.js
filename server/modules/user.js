@@ -193,6 +193,13 @@ schema.User.statics.fields = {
     }
 };
 
+schema.User.statics.generateCode = function () {
+    return rs.generate({
+        length: 6,
+        charset: 'numeric'
+    });
+};
+
 schema.User.statics.search = function search($) {
     var ANDs = [];
     if ($.has('q')) {
@@ -216,6 +223,23 @@ schema.User.statics.search = function search($) {
     });
     return ANDs.length > 0 ? {$and: ANDs} : {};
 };
+
+function responseSMS(cb) {
+    return function (response) {
+        var result = {
+            success: !!response.sid,
+            status: response.status
+        };
+        if (result.success) {
+            result.sid = response.sid;
+            result.time = response.dateUpdated;
+            cb(result);
+        }
+        else {
+            cb(result);
+        }
+    }
+}
 
 module.exports = {
     _meta: {
@@ -305,48 +329,6 @@ module.exports = {
         if ($.isAdmin) {
             return User.remove({_id: $.get('id')})
         }
-    },
-
-    password: function ($) {
-        var id = $.get('id');
-        if ($.user._id != id.toString()) {
-            return code.FORBIDDEN;
-        }
-        function invalid(name) {
-            $.send(code.BAD_REQUEST, {
-                invalid: {
-                    [name]: 'invalid'
-                }
-            })
-        }
-        User.findOne({_id: id}, {hash: 1, code: 1}).exec($.wrap(function (user) {
-            if (user) {
-                if ($.has('old_password')) {
-                    if (utils.hash($.param('old_password')) == user.hash) {
-                        user.hash = utils.hash($.param('password'));
-                        user.save($.success);
-                    }
-                    else {
-                        invalid('old_password');
-                    }
-                }
-                else if ($.has('code')) {
-                    if (user.code && 6 === user.code.length && $.param('code') == user.code) {
-                        user.code = null;
-                        user.save($.success);
-                    }
-                    else {
-                        invalid('code');
-                    }
-                }
-                else {
-                    $.sendStatus(code.BAD_REQUEST);
-                }
-            }
-            else {
-                $.sendStatus(code.NOT_FOUND);
-            }
-        }))
     },
 
     sample: function ($) {
@@ -583,15 +565,12 @@ module.exports = {
         }
         $.agent.phone = $.param('phone');
         if (config.sms.enabled) {
-            $.agent.code = rs.generate({
-                length: 6,
-                charset: 'numeric'
-            });
+            $.agent.code = User.generateCode();
         }
         User.findOne({phone: $.agent.phone}, $.wrap(function (user) {
-            function save() {
+            function save(response) {
                 $.agent.save($.success, $.wrap(function () {
-                    $.sendStatus(code.OK);
+                    $.send(code.OK, response);
                 }));
             }
 
@@ -599,7 +578,7 @@ module.exports = {
                 $.send({error: {message: 'The phone number already registered'}});
             } else {
                 if (config.sms.enabled) {
-                    $.server.sendSMS($.agent.phone, 'Code: ' + $.agent.code, $.wrap(save));
+                    $.server.sendSMS($.agent.phone, 'Code: ' + $.agent.code, $.wrap(responseSMS(save)));
                 } else {
                     save();
                 }
@@ -623,5 +602,90 @@ module.exports = {
         else {
             return {success: false};
         }
+    },
+
+    recover: function ($) {
+        if ('GET' === $.req.method) {
+            return code.METHOD_NOT_ALLOWED;
+        }
+        else if ($.isAuthenticated()) {
+            $.send(code.FORBIDDEN, {
+                error: {
+                    message: 'User is authenticated'
+                }
+            });
+            return;
+        }
+        var phone = $.param('phone');
+        User.findOne({phone: phone.replace(/[^\d]/g, '')}).exec($.wrap(function (user) {
+            var result = {
+              auth: $.agent.auth
+            };
+            if (user) {
+                if (Date.now() > user.time.getTime() + config.sms.interval * 1000) {
+                    user.code = User.generateCode();
+                    $.server.sendSMS(phone, 'Code: ' + user.code, $.wrap(responseSMS(function (response) {
+                        _.defaults(result, response);
+                        user.time = new Date(result.time);
+                        result.expires = new Date(user.time.getTime() + config.sms.interval * 1000).toISOString();
+                        user.save($.wrap(function () {
+                            $.send(result);
+                        }))
+                    })))
+                }
+                else {
+                    result.status = 'SENDING';
+                    $.send(code.FORBIDDEN, {
+                        expires: new Date(user.time.getTime() + config.sms.interval * 1000).toISOString()
+                    });
+                }
+            }
+            else {
+                $.sendStatus(code.NOT_FOUND);
+            }
+        }))
+    },
+
+    password: function ($) {
+        var id = $.get('id');
+        if ($.user._id != id.toString()) {
+            return code.FORBIDDEN;
+        }
+        function invalid(name) {
+            $.send(code.BAD_REQUEST, {
+                invalid: {
+                    [name]: 'invalid'
+                }
+            })
+        }
+
+        User.findOne({_id: id}, {hash: 1, code: 1}).exec($.wrap(function (user) {
+            if (user) {
+                if ($.has('old_password')) {
+                    if (utils.hash($.param('old_password')) == user.hash) {
+                        user.hash = utils.hash($.param('password'));
+                        user.save($.success);
+                    }
+                    else {
+                        invalid('old_password');
+                    }
+                }
+                else if ($.has('code')) {
+                    if (user.code && 6 === user.code.length && $.param('code') == user.code) {
+                        user.code = null;
+                        user.save($.success);
+                    }
+                    else {
+                        invalid('code');
+                    }
+                }
+                else {
+                    $.sendStatus(code.BAD_REQUEST);
+                }
+            }
+            else {
+                $.sendStatus(code.NOT_FOUND);
+            }
+        }))
     }
 };

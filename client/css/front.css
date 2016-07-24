@@ -29,7 +29,7 @@ body.front.login .form-login {
     width: 50%;
 }
 
-body.front.login .form-login fieldset {
+body.front.login .form-login .login {
     display: inline-block;
     margin: 12px auto;
     background-color: rgba(255, 255, 255, 0.2);
@@ -37,6 +37,10 @@ body.front.login .form-login fieldset {
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
+}
+
+body.front.login .form-login fieldset {
+    border: none;
 }
 
 body.front.login .form-login fieldset > * {

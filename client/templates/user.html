@@ -1,17 +1,20 @@
 <script type="text/template" id="form-login" data-class="front">
-    <fieldset>
-        <div class="form-group">
-            <input class="form-control" name="login" placeholder="Login"/>
-            <span class="help-block">Your login, phone or user id</span>
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="password" type="password" placeholder="Password"/>
-            <span class="help-block"></span>
-        </div>
-        <section class="buttons">
+    <div class="login">
+        <fieldset>
+            <div class="form-group">
+                <input class="form-control" name="login" placeholder="Login"/>
+                <span class="help-block">Your login, phone or user id</span>
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="password" type="password" placeholder="Password"/>
+                <span class="help-block"></span>
+            </div>
             <button type="submit">Enter</button>
-        </section>
-    </fieldset>
+        </fieldset>
+        <div class="buttons">
+            <button type="button" class="recovery">Forgot your password?</button>
+        </div>
+    </div>
     <img class="evart-social-network" src="/images/evart-social-network.png"/>
     <a href="/signup/phone">Signup</a>
 </script>
@@ -290,27 +293,42 @@
 
 <script type="text/template" id="view-password">
     <fieldset>
-    <legend></legend>
-    <div class="fields">
-        <div class="form-group" id="field-code">
-            <input type="password" name="code" placeholder="Code" style="display: none"/>
-            <span class="help-block"></span>
+        <legend></legend>
+        <div class="fields">
+            <div class="form-group" id="field-code">
+                <input name="code" placeholder="Code" style="display: none"/>
+                <span class="help-block"></span>
+            </div>
+            <div class="form-group" id="field-old_password">
+                <input type="password" name="old_password" placeholder="Old Password" style="display: none"/>
+                <span class="help-block"></span>
+            </div>
+            <div class="form-group" id="field-password">
+                <input type="password" name="password" placeholder="New Password"/>
+                <span class="help-block"></span>
+            </div>
+            <div class="form-group" id="field-repeat_password">
+                <input type="password" name="repeat_password" placeholder="Repeat Password" style="display: none"/>
+                <span class="help-block"></span>
+            </div>
         </div>
-        <div class="form-group" id="field-old_password">
-            <input type="password" name="old_password" placeholder="Old Password" style="display: none"/>
-            <span class="help-block"></span>
-        </div>
-        <div class="form-group" id="field-password">
-            <input type="password" name="password" placeholder="New Password"/>
-            <span class="help-block"></span>
-        </div>
-        <div class="form-group" id="field-repeat_password">
-            <input type="password" name="repeat_password" placeholder="Repeat Password" style="display: none"/>
-            <span class="help-block"></span>
-        </div>
-    </div>
     </fieldset>
     <div class="buttons">
         <button type="button">Change</button>
+    </div>
+</script>
+
+<script type="text/template" id="view-recovery">
+    <fieldset>
+        <legend>Password Recovery</legend>
+        <div class="fields">
+            <div class="form-group" id="field-phone">
+                <input name="phone" placeholder="Phone"/>
+                <span class="help-block"></span>
+            </div>
+        </div>
+    </fieldset>
+    <div class="buttons">
+        <button type="button">Send Code</button>
     </div>
 </script>
