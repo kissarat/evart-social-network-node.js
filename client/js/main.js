@@ -517,6 +517,9 @@ function resolveRelative(model, map) {
         if (value && 'object' == typeof value && !(value instanceof clazz)) {
             model.set(key, new clazz(value));
         }
+        else if (_.is(clazz, Backbone.Collection)) {
+            model.set(key, new clazz())
+        }
     })
 }
 
@@ -543,6 +546,9 @@ function loadRelative(model, map) {
                     }))
                 }
             }
+        }
+        else if (_.is(clazz, Backbone.Collection)) {
+            model.set(key, new clazz())
         }
     });
     return Promise.all(promises);

@@ -240,6 +240,7 @@ input.form-control, .city > div > input {
     border-image: none;
     border-style: solid;
     border-width: 1px 0 1px 1px;
+    margin-bottom: 200px;
     min-height: 30vh;
 }
 
@@ -444,7 +445,6 @@ input.form-control, .city > div > input {
 
 .layout-editor .attach {
     background-image: url("/images/attach.png");
-    display: none;
 }
 
 .layout-editor .text {
@@ -710,3 +710,8 @@ input.form-control, .city > div > input {
     padding-left: 2%;
 }
 
+.attachments .photo-thumbnail {
+    display: inline-block;
+    width: 96px;
+    height: 96px;
+}

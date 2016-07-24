@@ -9,10 +9,6 @@ a {
     text-decoration: none;
 }
 
-a:hover {
-    color: #4EA1D7;
-}
-
 .fullpage, #boot-loading, #root {
     position: fixed;
     width: 100vw;
@@ -452,9 +448,25 @@ button.unemitted {
 
 
 .wall {
-    border-bottom: 200px solid rgba(0, 0, 0, 0);
+    padding-left: 1.5%;
+    padding-right: 1%;
 }
 
 a:hover {
     color: #147CE4 !important;
+}
+
+.layout-user-search .list .thumbnail-user .avatar {
+    height: 52px;
+    margin: 15px 10px 15px 0 !important;
+    width: 52px;
+}
+
+.layout-user-search .user-info {
+    height: 40px;
+    margin: 15px 0 !important;
+}
+
+.layout-user-search:hover a{
+    color: inherit;
 }

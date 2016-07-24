@@ -148,12 +148,13 @@ App.module('Message', function (Message, App) {
         }
         return new Message.Model(object);
     };
-
+    
     Message.Model.relatives = {
         source: App.User.Model,
         target: App.User.Model,
         owner: App.User.Model,
-        parent: Message.Model
+        parent: Message.Model,
+        files: App.File.List
     };
 
     Message.LastMessage = Backbone.Model.extend({
@@ -435,6 +436,7 @@ App.module('Message', function (Message, App) {
                 type: MessageType.WALL,
                 owner_id: options.id || options.owner_id,
                 user: 'source.owner',
+                file: 'files',
                 select: 'like.hate.files.videos.sex.text.admin',
                 sort: '-_id'
             }, _.pick(options, 'user', 'select', 'type'));
@@ -961,11 +963,50 @@ App.module('Message', function (Message, App) {
 
         events: {
             'click .smile': 'showSmiles',
-            'click .send': 'send'
+            'click .send': 'send',
+            'click .attach': 'attach'
         },
 
         initialize: function () {
             this.send = this.send.bind(this);
+        },
+        
+        onRender: function () {
+            if (!App.storage.load(this.model, 'target')) {
+                this.ui.editor.one('click', function () {
+                    this.innerHTML = '';
+                });
+            }
+            if (App.config.message.attach) {
+                this.ui.attach.removeClass('hidden');
+            }
+            this.getRegion('attachments').show(new App.File.AttachmentListView({
+                collection: this.model.get('files')
+            }));
+            window.addEventListener('keyup', this.send);
+        },
+
+        onDestroy: function () {
+            window.removeEventListener('keyup', this.send);
+            if (this.model.get('text')) {
+                App.storage.save(this.model, 'target');
+            }
+        },
+
+        attach: function () {
+            var self = this;
+            var owner_id = this.model.get('_id');
+            var upload = App.Views.uploadDialog({
+                accept: 'image/jpeg',
+                multiple: true,
+                params: {
+                    owner_id: owner_id
+                }
+            });
+            upload.on('response', function (data) {
+                var file = new App.File.Model(data);
+                self.model.get('files').add(file);
+            })
         },
 
         showSmiles: function () {
@@ -978,25 +1019,6 @@ App.module('Message', function (Message, App) {
                 self.getRegion('smiles').empty();
             });
             this.getRegion('smiles').show(emojiView);
-        },
-
-        onRender: function () {
-            if (!App.storage.load(this.model, 'target')) {
-                this.ui.editor.one('click', function () {
-                    this.innerHTML = '';
-                });
-            }
-            if (App.config.message.attach) {
-                this.ui.attach.removeClass('hidden');
-            }
-            window.addEventListener('keyup', this.send);
-        },
-
-        onDestroy: function () {
-            window.removeEventListener('keyup', this.send);
-            if (this.model.get('text')) {
-                App.storage.save(this.model, 'target');
-            }
         },
 
         send: function (e) {

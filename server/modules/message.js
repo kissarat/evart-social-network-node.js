@@ -123,7 +123,8 @@ global.schema.Message = mongoose.Schema(_schema, utils.merge(config.mongoose.sch
 schema.Message.statics.Type = MessageType;
 schema.Message.statics.fields = {
     select: {
-        user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files', 'video', 'videos', 'text', 'repost', 'parent']
+        user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files',
+             'video', 'videos', 'text', 'repost', 'parent']
     }
 };
 
@@ -229,6 +230,7 @@ module.exports = {
         const lookups = {
             user: User.fields.project,
             message: $.select([], Message.fields.select.user, true)
+            // file: $.select([], File.fields.select.user, true)
         };
 
         var project = $.select([], Message.fields.select.user, true);
@@ -242,11 +244,14 @@ module.exports = {
                         foreignField: '_id'
                     }
                 });
-                aggregate.push({
-                    $unwind: {
-                        path: '$' + name
-                    }
-                });
+                
+                if ('file' !== name) {
+                    aggregate.push({
+                        $unwind: {
+                            path: '$' + name
+                        }
+                    });
+                }
                 project[name] = _project;
             });
         });
@@ -255,6 +260,7 @@ module.exports = {
                 $project: project
             });
         }
+        console.log(aggregate);
         if (_.isEmpty(permission)) {
             return {query: aggregate};
         }

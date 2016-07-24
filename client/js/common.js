@@ -14,6 +14,20 @@ self.MessageType = {
     COMMENT: 'comment'
 };
 
+function assert(truth, message) {
+    if (!truth) {
+        throw new Error(message);
+    }
+}
+
+_.functions(_).forEach(function (name) {
+   if (name.indexOf('is') === 0) {
+       assert[name] = function (target, message) {
+           assert(_[name](target), message);
+       }
+   }
+});
+
 _.mixin({
     merge: function () {
         if (arguments.length <= 1) {
@@ -62,6 +76,12 @@ _.mixin({
         else {
             object[name] = method;
         }
+    },
+
+    is: function (child, parent) {
+        assert.isObject(child.prototype);
+        assert.isObject(parent.prototype);
+        return parent.prototype.isPrototypeOf(child.prototype);
     }
 });
 

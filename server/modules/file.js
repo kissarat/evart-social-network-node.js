@@ -71,6 +71,17 @@ const schema = {
     inode: Number
 };
 
+global.schema.File = new mongoose.Schema(schema, utils.merge(config.mongoose.schema.options, {
+    collection: 'file',
+    createAt: 'created'
+}));
+
+global.schema.File.statics.fields = {
+    select: {
+        user: ['md5', 'type', 'name', 'ext', 'size']
+    }
+};
+
 module.exports = {
     _meta: {
         schema: schema
@@ -223,8 +234,3 @@ module.exports = {
         return File.removeOne({_id: $.get('id')});
     }
 };
-
-global.schema.File = new mongoose.Schema(schema, utils.merge(config.mongoose.schema.options, {
-    collection: 'file',
-    createAt: 'created'
-}));

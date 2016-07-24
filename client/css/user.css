@@ -92,7 +92,7 @@
 
 .profile-relative .title textarea {
     color: #ffffff;
-    font-family: panton,serif;
+    font-family: panton, serif;
     font-size: 11px;
     line-height: 14px;
     margin: 0;
@@ -148,7 +148,6 @@
     text-align: left;
 }
 
-
 .layout-user-search input {
     background: #eceff4 none repeat scroll 0 0;
     border: 0 none;
@@ -156,7 +155,6 @@
     margin-top: 20px;
     padding: 15px;
 }
-
 
 .profile-relative .big-avatar .fa-camera {
     right: 6px;
@@ -191,7 +189,7 @@
 }
 
 .form-edit .form-control {
-    width: calc(100% - 26px);
+    width: calc(100% -26px);
 }
 
 .friend .list > div {
@@ -202,7 +200,7 @@
 
 .friend .list > div > a {
     display: inline-block;
-    width: calc(30% - 8px);
+    width: calc(30% -8px);
 }
 
 .friend .list > div > a > div {
@@ -215,10 +213,14 @@
 }
 
 .profile-buttons, .other-profile-buttons {
+    border: 1px solid #dcdcdc;
+    border-radius: 5px;
     display: flex;
-    height: 30px;
-    width: 90px;
-    background: no-repeat center;
+    height: 39px;
+}
+
+.layout-user-search .other-profile-buttons .message, .layout-user-search .other-profile-buttons .phone {
+    border-right: 1px solid #dcdcdc;
 }
 
 .profile-buttons > div, .other-profile-buttons > div {
@@ -230,8 +232,11 @@
 }
 
 .other-profile-buttons {
+    background-color: #eceff4;
     background-image: url("/images/communicate.png");
-    background-size: 90%;
+    background-position: -2px 3px;
+    background-repeat: no-repeat;
+    background-size: 100% auto;
 }
 
 .switch {
@@ -249,36 +254,66 @@
 }
 
 .thumbnail-user {
+    border-bottom: 1px solid;
+    box-sizing: border-box;
     display: inline-block;
     float: left;
-    padding: 1%;
+    margin-left: 4%;
+    margin-right: 4%;
+    max-height: 83px;
     text-align: left;
-    width: 33.3%;
+    width: 42%;
 }
 
 .thumbnail-user .user-info {
     position: relative;
     width: 100%;
     margin-top: -1em;
+    box-sizing: border-box;
 }
 
 .thumbnail-user .user-info > div {
     position: absolute;
+    width: 86%;
 }
 
 .thumbnail-user:hover .user-info {
-    padding: 6px 0;
     z-index: 1;
 }
 
-.thumbnail-user:hover .user-info > div {
-    border: 1px solid 10pt "Roboto", serif;
-    background-color: #F5F5F5;
+.thumbnail-user:hover .user-info {
+    background-color: #f5f5f5;
+    border: 1px solid #e2e2e2 !important;
+    min-height: 120px;
 }
 
 .thumbnail-user:hover .user-info > div .name {
     text-align: left;
-    margin-bottom: 6px;
+}
+
+.view.thumbnail-user > div > div:last-child {
+    border: 1px solid #ffffff;
+    padding: 5px 5%;
+    width: 90%;
+}
+
+.view.thumbnail-user > div > div:last-child {
+    border: 1px solid #ffffff;
+}
+
+.layout-user-search .name {
+    color: #656a6e;
+    font-family: "panton", serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.layout-user-search .country {
+    color: #b8b8b8;
+    display: inline-block;
+    margin-bottom: 5px;
+    margin-left: 20px;
 }
 
 .thumbnail-user:hover .hidden {
@@ -290,15 +325,12 @@
 }
 
 .thumbnail-user .user-info > div {
-    margin-left: 6px;
-    margin-top: -8px;
-    padding: 8px;
 }
 
 .thumbnail-user > div {
+    align-items: unset;
     display: flex;
     flex-direction: row;
-    align-items: center;
 }
 
 .thumbnail-user > div .avatar {
@@ -325,6 +357,7 @@
     margin: 0 auto;
     width: auto;
 }
+
 .layout-user-search nav div {
     background: #eceff4 none repeat scroll 0 0;
     border-right: 1px solid #ffffff;
@@ -389,7 +422,7 @@
 }
 
 .big-avatar {
-    height: 120px;
+    height: 180px;
     width: 120px;
 }
 

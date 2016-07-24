@@ -13,6 +13,19 @@ App.module('File', function (File, App) {
         }
     });
 
+    File.List = App.PageableCollection.extend({
+        url: '/api/file',
+
+        query: {
+            type: 'photo',
+            owner_id: null
+        },
+
+        model: function (attrs, options) {
+            return new App.File.Model(attrs, options);
+        }
+    });
+
     File.View = Marionette.View.extend({
         template: '#view-upload',
         tagName: 'form',
@@ -32,6 +45,29 @@ App.module('File', function (File, App) {
                     id: this.ui.id.val()
                 }
             });
+        }
+    });
+
+    File.ListView = Marionette.CollectionView.extend({
+        childView: function (model) {
+            if ('photo' == model.get('type')) {
+                return App.Photo.Thumbnail;
+            }
+            else {
+                throw new Error(JSON.stringify(model.attributes));
+            }
+        }
+    });
+
+    File.AttachmentList = Backbone.Collection.extend({
+        model: function (attrs, options) {
+            return new File.Model(attrs, options);
+        }
+    });
+
+    File.AttachmentListView = Marionette.CollectionView.extend({
+        childView: function () {
+            return App.Photo.Thumbnail;
         }
     });
 

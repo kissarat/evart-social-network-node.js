@@ -3,7 +3,7 @@ var utils = require('../utils');
 var mongoose = require('mongoose');
 var qs = require('querystring');
 
-global.schema.Video = new mongoose.Schema({
+var _schema = {
     _id: {
         type: String,
         required: true
@@ -30,7 +30,11 @@ global.schema.Video = new mongoose.Schema({
     thumbnail_width: Number,
     thumbnail_height: Number,
     html: String
-});
+};
+
+global.schema.Video = new mongoose.Schema(_schema, utils.merge(config.mongoose.schema.options, {
+    collectionName: 'video'
+}));
 
 function load($) {
     var id = $.id;
@@ -69,6 +73,10 @@ function load($) {
 }
 
 module.exports = {
+    _meta: {
+        schema: _schema
+    },
+    
     GET: function ($) {
         if ($.has('owner_id')) {
             return Video.find({owner: $.get('owner_id')});

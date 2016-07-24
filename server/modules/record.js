@@ -6,9 +6,9 @@ var utils = require('../utils');
 var errors = require('../errors');
 var _ = require('underscore');
 
-global.schema.Record = new mongoose.Schema({
+var _schema = {
     _id: utils.idType('User'),
-    
+
     type: {
         type: String,
         enum: ['follow'],
@@ -17,17 +17,17 @@ global.schema.Record = new mongoose.Schema({
             unique: false
         }
     },
-    
+
     status: {
         type: String
     },
-    
+
     source: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    
+
     target: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -39,11 +39,17 @@ global.schema.Record = new mongoose.Schema({
         required: true,
         "default": Date.now
     }
-}, {
-    versionKey: false
-});
+};
+
+global.schema.Record = new mongoose.Schema(_schema, utils.merge(config.mongoose.schema.options, {
+    collectionName: 'record'
+}));
 
 module.exports = {
+    _meta: {
+      schema: _schema
+    },
+    
     GET: function ($) {
         var where = buildGet($);
         if ($.has('type')) {
