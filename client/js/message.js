@@ -15,8 +15,8 @@ App.module('Message', function (Message, App) {
 
     [MessageType.DIALOG, MessageType.WALL, MessageType.COMMENT].forEach(function (type) {
         App.socket.on(type, function (message) {
-            Message.Model(message)
-                .loadRelative()
+            var model = new Message.Model(message);
+            model.loadRelative()
                 .then(function () {
                     if (!Message.channel.request(type, model)) {
                         Message.notify(model);
@@ -76,6 +76,10 @@ App.module('Message', function (Message, App) {
             });
         },
 
+        toString: function () {
+            return JSON.stringify(this.attributes);
+        },
+
         like: function (user_id) {
             return this.get('like').indexOf(user_id || App.user._id) >= 0;
         },
@@ -121,34 +125,20 @@ App.module('Message', function (Message, App) {
 
         getIndex: function () {
             return parseInt(this.get('_id').slice(2), 16);
+        },
+
+        cloneDraft: function () {
+            var model = this.clone();
+            ['_id', 'text', 'time', 'like', 'hate', 'unread'].forEach(function (name) {
+                model.unset(name);
+            });
+            model.set('files', new App.File.List());
+            return model;
         }
     }, {
         tableName: 'message'
     });
 
-    Message.createDraft = function (type, attrs) {
-        var object = {type: type};
-        var name;
-        switch (type) {
-            case MessageType.DIALOG:
-                name = 'target';
-                break;
-            case MessageType.WALL:
-                name = 'owner';
-                break;
-            case MessageType.COMMENT:
-                name = 'parent';
-                break;
-        }
-        if ('string' == typeof attrs) {
-            object[name] = attrs;
-        }
-        else {
-            object[name] = 'string' == attrs[name] ? attrs[name] : attrs[name]._id || attrs[name].id;
-        }
-        return new Message.Model(object);
-    };
-    
     Message.Model.relatives = {
         source: App.User.Model,
         target: App.User.Model,
@@ -434,7 +424,6 @@ App.module('Message', function (Message, App) {
         },
 
         reply: function (model) {
-            console.error('Invalid object', model);
             if (model instanceof Backbone.Model) {
                 this.collection.add(model);
                 this.collection.sort();
@@ -447,7 +436,7 @@ App.module('Message', function (Message, App) {
         widget: function (region, options) {
             var query = _.merge({
                 type: MessageType.WALL,
-                owner_id: options.id || options.owner_id,
+                owner_id: options.id,
                 user: 'source.owner',
                 file: 'files',
                 select: 'like.hate.files.videos.sex.text.admin',
@@ -481,7 +470,10 @@ App.module('Message', function (Message, App) {
             var wallView = new Message.WallView();
             region.show(wallView);
             var editor = new Message.Editor({
-                model: Message.createDraft(MessageType.WALL, options.id || options.owner_id)
+                model: new Message.Model({
+                    type: MessageType.WALL,
+                    owner: options.owner
+                })
             });
             wallView.getRegion('editor').show(editor);
             Message.PostListView.widget(wallView.getRegion('list'), options);
@@ -524,8 +516,8 @@ App.module('Message', function (Message, App) {
         reply: function (model) {
             if (model instanceof Message.Model) {
                 // if (this.collection.pageableCollection.queryModel.get('parent_id') == model.get('parent').id) {
-                    this.collection.add(model);
-                    this.collection.sort();
+                this.collection.add(model);
+                this.collection.sort();
                 // }
             }
             else {
@@ -560,7 +552,10 @@ App.module('Message', function (Message, App) {
             var commentLayout = new Message.CommentLayout();
             region.show(commentLayout);
             var editor = new Message.Editor({
-                model: Message.createDraft(MessageType.COMMENT, options.id)
+                model: new Message.Model({
+                    type: MessageType.COMMENT,
+                    parent: options.id
+                })
             });
             commentLayout.getRegion('editor').show(editor);
             Message.CommentListView.widget(commentLayout.getRegion('list'), options);
@@ -892,22 +887,26 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            var query = _.defaults(_.pick(options, 'type', 'id', 'user', 'sort'), {
-                type: MessageType.DIALOG,
-                user: 'source.target',
-                select: 'unread.text',
-                sort: '-_id'
+            var list = new Message.List([], {
+                query: {
+                    id: options.target.id,
+                    type: MessageType.DIALOG,
+                    user: 'source.target',
+                    select: 'unread.text',
+                    sort: '-_id'
+                }
             });
-            var list = new Message.List([], {query: query});
             var listView = new Message.ListView({collection: list.fullCollection});
             var editor = new Message.Editor({
-                model: Message.createDraft(MessageType.DIALOG, options.id)
+                model: new Message.Model({
+                    type: MessageType.DIALOG,
+                    target: options.target
+                })
             });
             var dialog = new Message.Dialog();
             region.show(dialog);
             dialog.getRegion('list').show(listView);
             dialog.getRegion('editor').show(editor);
-            list.getFirstPage();
             list.once('finish', function () {
                 dialog.el.querySelector('.scroll').on('scroll', function (e) {
                     dialog.scroll.call(dialog, e);
@@ -917,10 +916,11 @@ App.module('Message', function (Message, App) {
                         return model.get('unread')
                     });
                     if (hasUnread || App.config.message.read.empty) {
-                        $.getJSON('/api/message/read?target_id=' + options.id, dialog.read);
+                        $.getJSON('/api/message/read?target_id=' + options.target.id, dialog.read);
                     }
                 }, App.config.message.read.delay);
             });
+            list.getFirstPage();
             return dialog;
         }
     });
@@ -983,14 +983,9 @@ App.module('Message', function (Message, App) {
         initialize: function () {
             this.send = this.send.bind(this);
         },
-        
+
         onRender: function () {
-            if (!App.storage.load(this.model, 'target')) {
-                this.ui.editor.one('click', function () {
-                    this.innerHTML = '';
-                });
-            }
-            if (App.config.message.attach) {
+            if (App.config.message.attach[this.model.get('type')]) {
                 this.ui.attach.removeClass('hidden');
             }
             assert.isInstance(this.model.get('files'), App.File.List);
@@ -1051,12 +1046,12 @@ App.module('Message', function (Message, App) {
                         }
                     }
                 });
-                this.model.save('text', text, {
+                this.model.save('text', text.trim(), {
                     success: function success(model) {
                         self.ui.editor[0].style.removeProperty('min-height');
                         model.loadRelative().then(function () {
                             Message.channel.request(model.get('type'), model);
-                            self.model = Message.createDraft(model.get('type'), model.attributes);
+                            self.model = model.cloneDraft();
                             self.render();
                         });
                     }
@@ -1111,21 +1106,29 @@ App.module('Message', function (Message, App) {
         },
 
         onShowDialogList: function () {
-            var p = this.getRegion('dialogList').currentView.collection.pageableCollection;
+            var c = this.getRegion('dialogList').currentView.collection;
+            c.on('add', function (model) {
+                App.local.put('user', model.get('peer'));
+            });
+            var p = c.pageableCollection;
             this.model = p.queryModel;
             this._search = p.delaySearch.bind(p);
             this.stickit();
         },
 
         open: function (id) {
-            Message.Dialog.widget(this.getRegion('dialog'), {id: id});
+            var self = this;
+            App.local.getById('user', id).then(function (user) {
+                Message.Dialog.widget(self.getRegion('dialog'), {
+                    target: new Message.Model(user)
+                });
+            });
         }
     }, {
         widget: function (region, options) {
             var messenger = new Message.Messenger();
             region.show(messenger);
             var dialogList = new Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
-            // messenger.ui.dialogList.addClass('scroll');
             return messenger;
         }
     });

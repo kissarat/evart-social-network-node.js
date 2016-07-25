@@ -35,7 +35,7 @@ App.module('User', function (User, App) {
 
     User.Model = Backbone.Model.extend({
         idAttribute: '_id',
-        cidPrefix: 'usr',
+        cid: 'usr',
 
         url: function () {
             if (this.has('_id') || this.has('domain')) {
@@ -48,6 +48,10 @@ App.module('User', function (User, App) {
                 }
                 return '/api/user?' + $.param(_.merge(this.query, where));
             }
+        },
+
+        toString: function () {
+            return JSON.stringify(this.attributes);
         },
 
         query: {
@@ -108,10 +112,6 @@ App.module('User', function (User, App) {
                 degree = 'hue-rotate(' + degree + 'deg)';
                 s.setProperty('webkitFilter' in s ? '-webkit-filter' : 'filter', degree + saturate, '');
             }
-        },
-
-        toString: function () {
-            return this.get('_id');
         },
 
         getName: function () {
@@ -869,10 +869,6 @@ App.module('User', function (User, App) {
                         ? User.ProfileButtons
                         : User.OtherProfileButtons;
                     buttons = new buttons({model: user});
-                    App.Message.WallView.widget(
-                        profile.getRegion('content'),
-                        {owner_id: user.id}
-                    );
                     profile.getRegion('buttons').show(buttons);
                     var params = {
                         id: user.get('_id'),
@@ -1251,8 +1247,9 @@ App.module('User', function (User, App) {
             view: function (domain) {
                 User.View.widget(App.getPlace('main'), User.optionsFromId(domain))
                     .then(function (profile) {
-                        var id = profile.model.id;
-                        App.Message.WallView.widget(profile.getRegion('content'), {id: id});
+                        App.Message.WallView.widget(profile.getRegion('content'), {
+                            owner: profile.model
+                        });
                     })
             },
 

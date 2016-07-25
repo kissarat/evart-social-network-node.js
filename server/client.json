@@ -40,7 +40,9 @@
     },
     "cut": 100,
     "substitute": true,
-    "attach": true,
+    "attach": {
+      "wall": true
+    },
     "date": true,
     "comment": true,
     "repost": false,

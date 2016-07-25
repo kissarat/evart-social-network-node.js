@@ -358,6 +358,18 @@ _.extend(Service.prototype, {
             this.cookie('remixlang', lang._id);
         }
     },
+    
+    getUser: function () {
+        if (this.user) {
+            if (!this.user._model) {
+                this.user._model = new App.User.Model(this.user);
+            }
+        }
+        else {
+            return null;
+        }
+        return this.user._model;
+    },
 
     storage: {
         save: function (model, idAttribute) {

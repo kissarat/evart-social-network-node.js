@@ -276,6 +276,18 @@ module.exports = {
         var message = $.allowFields(Message.fields.select.user);
         message.source = $.user._id;
         var targets = [];
+        ['target', 'owner', 'source', 'parent'].forEach(function (name) {
+            var value = message[name];
+            if (value) {
+                if (_.isEmpty(value)) {
+                    $.invalid(name);
+                }
+                if (value.attributes) {
+                    value = value.attributes;
+                }
+                message[name] = value._id ? value._id : value;
+            }
+        });
         ['target', 'owner'].forEach(function (name) {
             var id = message[name];
             if (id) {
@@ -308,9 +320,9 @@ module.exports = {
                     delete message.v;
                     $.send(message);
                     targets.forEach(function (id) {
-                        // if ($.user._id.toString() != id) {
+                        if (!$.user._id.equals(id)) {
                             $.notifyOne(id, message);
-                        // }
+                        }
                     });
                 }));
             }

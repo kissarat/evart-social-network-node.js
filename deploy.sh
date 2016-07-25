@@ -6,10 +6,8 @@ mkdir static/md5
 mkdir -p server/nginx/logs
 chmod 777 server/nginx/logs
 
-for i in babel-cli node-sass gulp bower node-gyp
-do
-    if [ 'Darwin' == `uname` ]
-    then
+for i in babel-cli node-sass gulp bower node-gyp; do
+    if [ 'Darwin' == `uname` ]; then
         npm install -g ${i}
     else
         sudo npm install -g ${i}
