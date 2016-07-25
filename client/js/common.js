@@ -14,24 +14,6 @@ self.MessageType = {
     COMMENT: 'comment'
 };
 
-function assert(truth, message) {
-    if (!truth) {
-        throw new Error(message);
-    }
-}
-
-_.functions(_).forEach(function (name) {
-   if (name.indexOf('is') === 0) {
-       assert[name] = function (target, message) {
-           assert(_[name](target), message);
-       }
-   }
-});
-
-assert.isInstance = function (instance, clazz, message) {
-    assert(instance instanceof clazz, message || instance);
-};
-
 _.mixin({
     merge: function () {
         if (arguments.length <= 1) {
@@ -56,7 +38,7 @@ _.mixin({
     },
 
     isObjectID: function (string) {
-        return /^[0-9a-f]{24}$/.exec(string);
+        return 'string' == typeof string && /^[0-9a-f]{24}$/.exec(string);
     },
 
     defineProperties: function (target, source) {
@@ -88,6 +70,24 @@ _.mixin({
         return parent.prototype.isPrototypeOf(child.prototype);
     }
 });
+
+function assert(truth, message) {
+    if (!truth) {
+        throw new Error(message);
+    }
+}
+
+_.functions(_).forEach(function (name) {
+    if (name.indexOf('is') === 0) {
+        assert[name] = function (target, message) {
+            assert(_[name](target), message);
+        }
+    }
+});
+
+assert.isInstance = function (instance, clazz, message) {
+    assert(instance instanceof clazz, message || instance);
+};
 
 if (!Array.from) {
     Array.from = _.toArray;

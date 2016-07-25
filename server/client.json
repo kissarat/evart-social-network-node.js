@@ -82,7 +82,7 @@
     "feedback": true,
     "dialogs": true,
     "photos": true,
-    "friends": true,
+    "users": true,
     "video": true,
     "settings": true
   },

@@ -1,39 +1,50 @@
 'use strict';
 var ObjectID = require('mongodb').ObjectID;
+var _ = require('underscore');
 
-var list_fields = {
-    follow: 'deny',
-    deny: 'follow',
-    friend: null,
-    request: null
-};
+function valid(name) {
+    return _.contains(['friend', 'follower', 'follow'], name);
+}
 
 module.exports = {
     GET: function ($) {
         var name = $.param('name');
-        if (!list_fields.hasOwnProperty(name)) {
-            $.invalid('name');
+        if (!valid(name)) {
+            $.invalid(name);
         }
-        var fields = {['friend' === name ? 'follow' : name]: 1};
         var id = $.has('id') ? $.get('id') : $.user._id;
-        User.findOne(id, fields, $.wrap(function (user) {
-            var query = User.search($);
-            if (!query.$and) {
-                query.$and = [];
-            }
-            if ('friend' === name) {
-                query.$and.push({
-                    _id: {
-                        $in: user.follow.map(ObjectID)
-                    },
-                    follow: user._id
-                })
-            } else {
-                console.error('invalid 29');
-            }
-            console.log(JSON.stringify(query));
-            User.find(query, $.select(['domain'], User.fields.select.user, true)).exec($.answer);
-        }));
+        var aggregate = [{
+            $match: _.contains(['friend', 'follower']) ? {follow: id} : {_id: id}
+        }];
+        if ('friend' == name) {
+            aggregate.push({
+                $unwind: '$follow'
+            });
+            aggregate.push({
+                $lookup: {
+                    'as': 'follow',
+                    localField: 'follow',
+                    from: 'user',
+                    foreignField: '_id'
+                }
+            });
+            aggregate.push({
+                $unwind: '$follow'
+            });
+            aggregate.push({
+                $match: {
+                    'follow.follow': id
+                }
+            });
+        }
+        User.filter($, aggregate);
+        aggregate.push({
+            $project: $.select(['domain'], User.fields.select.user, true)
+        });
+        return {
+            collection: 'user',
+            query: aggregate
+        }
     },
 
     POST: function ($) {
@@ -54,9 +65,6 @@ function modify_list(add) {
         var name = $.param('name');
         var source_id = $.has('source_id') ? $.get('source_id') : $.user._id;
         var target_id = $.param('target_id');
-        if (!list_fields.hasOwnProperty(name)) {
-            $.invalid('name');
-        }
         var result = {success: true};
         return new Promise(function (resolve, reject) {
             User.findOne(source_id, {follow: 1}).catch(reject).then(function (user) {

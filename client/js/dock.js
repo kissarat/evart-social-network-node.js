@@ -57,7 +57,7 @@ App.module('Dock', function (Dock, App) {
         "feedback": "Feedback",
         "dialogs": "Messages",
         "phone": "Call",
-        "friends": "Friends",
+        "users": "Friend Search",
         "groups": "Groups",
         "photos": "Photos",
         "video": "Video",

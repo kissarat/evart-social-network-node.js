@@ -98,6 +98,96 @@ Database.prototype = {
     api: function (path, params) {
         var xhr = new XMLHttpRequest();
         xhr.open()
+    },
+
+    getById: function (name, id, params) {
+        if (!id || 'string' !== typeof id) {
+            throw new Error('Invalid id ' + id)
+        }
+        var self = this;
+        var storage_name = name.replace(/\//g, '_');
+        return new Promise(function (resolve, reject) {
+            App.local.find(storage_name, {_id: id}).then(function (objects) {
+                if (objects.length > 0) {
+                    resolve(objects[0]);
+                }
+                else {
+                    if (!params) {
+                        params = {};
+                    }
+                    params.id = id;
+                    switch (name) {
+                        case 'user':
+                            _.defaults(params, {
+                                select: 'admin.domain.forename.surname.avatar'
+                            });
+                            break;
+                    }
+                    $.getJSON('/api/' + name + '?' + $.param(params))
+                        .error(reject)
+                        .success(function (object) {
+                            resolve(object);
+                            if (object) {
+                                object._retrived = new Date().toISOString();
+                                self.create(storage_name, object);
+                            }
+                        });
+                }
+            })
+        });
+    },
+
+    fetch: function (name, where, params) {
+        var self = this;
+        assert.isString(name);
+        assert.isObject(where);
+        if (3 == arguments.length) {
+            assert.isObject(params);
+        }
+        return new Promise(function (resolve, reject) {
+            self.find(name, where).catch(reject).then(function (objects) {
+                if (_.isEmpty(objects)) {
+                    var url = '/api/' + name + '?' + $.param(_.merge(params, where));
+                    $.getJSON(url, function (objects) {
+                        assert.isArray(objects);
+                        objects.forEach(function (object) {
+                            self.put(name, object);
+                        });
+                        resolve(objects);
+                    })
+                }
+                else {
+                    resolve(objects);
+                }
+            })
+        })
+    },
+
+    fetchOne: function (name, where, params) {
+        var self = this;
+        assert.isString(name);
+        assert.isObject(where);
+        if (3 == arguments.length) {
+            assert.isObject(params);
+        }
+        return new Promise(function (resolve, reject) {
+            self.find(name, where).catch(reject).then(function (objects) {
+                if (0 == objects.length) {
+                    if (!params) {
+                        params = {select: Object.keys(where).join('.')};
+                    }
+                    var url = '/api/' + name + '?' + $.param(_.merge(params, where));
+                    $.getJSON(url, function (object) {
+                        assert.isObjectID(object._id);
+                        self.put(name, object);
+                        resolve(object);
+                    })
+                }
+                else {
+                    resolve(objects[0]);
+                }
+            })
+        })
     }
 };
 
@@ -301,40 +391,3 @@ App.local = new Database('LocalStorage', {
         console.error(e);
     }
 });
-
-App.local.getById = function (name, id, params) {
-    if (!id || 'string' !== typeof id) {
-        throw new Error('Invalid id ' + id)
-    }
-    var self = this;
-    var storage_name = name.replace(/\//g, '_');
-    return new Promise(function (resolve, reject) {
-        App.local.find(storage_name, {_id: id}).then(function (objects) {
-            if (objects.length > 0) {
-                resolve(objects[0]);
-            }
-            else {
-                if (!params) {
-                    params = {};
-                }
-                params.id = id;
-                switch (name) {
-                    case 'user':
-                        _.defaults(params, {
-                            select: 'admin.domain.forename.surname.avatar'
-                        });
-                        break;
-                }
-                $.getJSON('/api/' + name + '?' + $.param(params))
-                    .error(reject)
-                    .success(function (object) {
-                        resolve(object);
-                        if (object) {
-                            object._retrived = new Date().toISOString();
-                            self.create(storage_name, object);
-                        }
-                    });
-            }
-        })
-    });
-};

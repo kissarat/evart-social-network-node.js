@@ -6,6 +6,8 @@ App.module('User', function (User, App) {
             'edit/:id': 'edit',
             'feedback': 'record',
             'friends': 'list',
+            'user/:id/friends': 'list',
+            'user/:id/followers': 'list',
             'group/create': 'create',
             'list/:name': 'list',
             'login': 'login',
@@ -851,6 +853,9 @@ App.module('User', function (User, App) {
             if (!this.model.canManage()) {
                 this.$('.fa-camera').remove();
             }
+            this.$('a.tile').each(function (i, a) {
+                a.setAttribute('href', '/user/' + self.model.get('domain') + '/' + a.querySelector('.label').innerHTML.toLowerCase())
+            })
         }
     }, {
         widget: function (region, options) {
@@ -1061,16 +1066,31 @@ App.module('User', function (User, App) {
                 options = {};
             }
             var List = App.getClass(options.List || User.List);
+            var user_select = 'domain.online.surname.forename.name.country.city.city_id';
             var pageable = new List([], {
                 query: _.merge(_.pick(options, 'type', 'select', 'name'), {
-                    select: 'domain.surname.forename.name.country.city.city_id'
+                    select: user_select
                 })
             });
             var listView = new User.ListView({collection: pageable.fullCollection});
             var layout = new User.SearchView({model: pageable.queryModel});
             region.show(layout);
             layout.getRegion('list').show(listView);
-            pageable.getFirstPage();
+            if (options.id) {
+                if (_.isObjectID(options.id)) {
+                    pageable.queryModel.set('_id', options.id);
+                    pageable.getFirstPage();
+                }
+                else {
+                    App.local.fetchOne('user', {domain: options.id}, {select: user_select}).then(function (user) {
+                        pageable.queryModel.set('_id', user._id);
+                        pageable.getFirstPage();
+                    });
+                }
+            }
+            else {
+                pageable.getFirstPage();
+            }
         }
     });
 
@@ -1292,9 +1312,9 @@ App.module('User', function (User, App) {
                 User.SearchView.widget(App.getPlace('main'));
             },
 
-            list: function (name) {
+            list: function (id) {
                 User.SearchView.widget(App.getPlace('main'), {
-                    name: name ? name : App.route[0].slice(0, -1),
+                    name: App.route[2].slice(0, -1),
                     List: User.RelationList
                 })
             },

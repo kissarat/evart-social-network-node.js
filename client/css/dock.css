@@ -155,7 +155,7 @@
     background-position: calc(-78px * 4 + 1px), 0;
 }
 
-#dock-container .list > div [href="/friends"] {
+#dock-container .list > div [href="/users"] {
     background-position: calc(-78px * 5 + 1px), 0;
 }
 

@@ -224,6 +224,27 @@ schema.User.statics.search = function search($) {
     return ANDs.length > 0 ? {$and: ANDs} : {};
 };
 
+schema.User.statics.filter = function ($, aggregate) {
+    if ($.has('q')) {
+        var ORs = [];
+        var q = $.search;
+        ['domain', 'surname', 'forename'].forEach(function (param) {
+            var d = {};
+            d[param] = {
+                $regex: q
+            };
+            ORs.push(d);
+        });
+        if (ORs.length > 0) {
+            aggregate.push({
+                $match: {
+                    $or: ORs
+                }
+            });
+        }
+    }
+};
+
 function responseSMS(cb) {
     return function (response) {
         var result = {
