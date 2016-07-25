@@ -437,6 +437,9 @@ module.exports = {
                 }
                 bundle.follows = bundle.follows.length;
             }
+            if (_.contains(select, 'friends') && !select.friends) {
+                select.friends = 0;
+            }
             $.send(bundle);
         });
         return queries;

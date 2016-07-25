@@ -436,7 +436,7 @@ App.module('Message', function (Message, App) {
         widget: function (region, options) {
             var query = _.merge({
                 type: MessageType.WALL,
-                owner_id: options.id,
+                owner_id: options.owner.id,
                 user: 'source.owner',
                 file: 'files',
                 select: 'like.hate.files.videos.sex.text.admin',
