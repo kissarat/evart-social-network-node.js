@@ -205,7 +205,7 @@ schema.User.statics.search = function search($) {
     if ($.has('q')) {
         var ORs = [];
         var q = $.search;
-        ['domain', 'surname'].forEach(function (param) {
+        ['domain', 'surname', 'forename'].forEach(function (param) {
             var d = {};
             d[param] = {
                 $regex: q

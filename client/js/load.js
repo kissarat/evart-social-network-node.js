@@ -58,7 +58,7 @@ function load1_windowLoad() {
 
 function load2_registerAgent() {
     var self = this;
-    addEventListener('beforeunload', App.sendStatistics);
+    addEventListener('beforeunload', _.bind(App.sendStatistics, App));
     $.sendJSON('POST', '/api/agent', statistics, function (data) {
         $('#boot-loading').hide();
         $('#root').show();

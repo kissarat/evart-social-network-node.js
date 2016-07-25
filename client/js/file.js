@@ -8,8 +8,23 @@ App.module('File', function (File, App) {
     });
 
     File.Model = Backbone.Model.extend({
+        idAttribute: '_id',
+
         getFileURL: function () {
-            return (this.get('md5') ? '/md5/' + this.get('md5') : '/id/' + this.get('_id')) + '.' + this.get('ext');
+            var url;
+            if (this.get('ext')) {
+                if (this.has('md5')) {
+                    url = '/md5/' + this.get('md5');
+                }
+                else {
+                    url = '/id/' + this.get('_id');
+                }
+                url += '.' + this.get('ext');
+            }
+            else {
+                url = '/api/file?id=' + this.id;
+            }
+            return url;
         }
     });
 
@@ -22,6 +37,9 @@ App.module('File', function (File, App) {
         },
 
         model: function (attrs, options) {
+            if ('string' == typeof attrs) {
+                attrs = {_id: attrs};
+            }
             return new App.File.Model(attrs, options);
         }
     });

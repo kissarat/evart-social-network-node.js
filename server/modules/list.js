@@ -31,6 +31,7 @@ module.exports = {
             } else {
                 console.error('invalid 29');
             }
+            console.log(JSON.stringify(query));
             User.find(query, $.select(['domain'], User.fields.select.user, true)).exec($.answer);
         }));
     },

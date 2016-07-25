@@ -28,6 +28,10 @@ _.functions(_).forEach(function (name) {
    }
 });
 
+assert.isInstance = function (instance, clazz, message) {
+    assert(instance instanceof clazz, message || instance);
+};
+
 _.mixin({
     merge: function () {
         if (arguments.length <= 1) {

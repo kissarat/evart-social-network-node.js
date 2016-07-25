@@ -710,7 +710,7 @@ input.form-control, .city > div > input {
     padding-left: 2%;
 }
 
-.attachments .photo-thumbnail {
+.files .photo-thumbnail {
     display: inline-block;
     width: 96px;
     height: 96px;

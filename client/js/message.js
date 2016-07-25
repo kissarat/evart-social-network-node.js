@@ -267,6 +267,7 @@ App.module('Message', function (Message, App) {
         template: '#view-post',
 
         regions: {
+            files: '> .content .files',
             repost: '> .repost',
             children: '> .children'
         },
@@ -336,6 +337,17 @@ App.module('Message', function (Message, App) {
             })
         },
 
+        initialize: function () {
+            assert.isInstance(this.model.get('files'), App.File.List);
+            assert.isInstance(this.model.get('source'), App.User.Model);
+        },
+
+        renderFiles: function () {
+            this.getRegion('files').show(new App.File.AttachmentListView({
+                collection: this.model.get('files')
+            }))
+        },
+
         onRender: function () {
             this.ui.name.attr('href', '/view/' + this.model.get('source').get('domain'));
             this.ui.name.html(this.model.get('source').getName());
@@ -367,6 +379,7 @@ App.module('Message', function (Message, App) {
              });
              */
             this.stickit();
+            this.renderFiles();
         }
     });
 
@@ -957,7 +970,7 @@ App.module('Message', function (Message, App) {
         regions: {
             editor: '.text',
             smiles: '.smiles',
-            attachments: '.attachments',
+            files: '.files',
             selection: '.selection'
         },
 
@@ -980,7 +993,8 @@ App.module('Message', function (Message, App) {
             if (App.config.message.attach) {
                 this.ui.attach.removeClass('hidden');
             }
-            this.getRegion('attachments').show(new App.File.AttachmentListView({
+            assert.isInstance(this.model.get('files'), App.File.List);
+            this.getRegion('files').show(new App.File.AttachmentListView({
                 collection: this.model.get('files')
             }));
             window.addEventListener('keyup', this.send);

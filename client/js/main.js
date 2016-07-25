@@ -400,15 +400,14 @@ _.extend(Application.prototype, {
 
         delaySearch: function (cb) {
             var self = this;
-
-            function search() {
+            App.debounce(this, function search() {
                 self.fullCollection.reset();
-                self.getFirstPage({
-                    success: cb instanceof Function ? cb : null
-                });
-            }
-
-            _.debounce(search, App.config.search.delay);
+                var options = {};
+                if (cb instanceof Function) {
+                    options.success = cb;
+                }
+                self.getFirstPage(options);
+            });
         },
 
         getPage: function (number, options) {
@@ -513,9 +512,14 @@ addEventListener('unload', function () {
 
 function resolveRelative(model, map) {
     _.each(map, function (clazz, key) {
-        var value = model.get(key); 
-        if (value && 'object' == typeof value && !(value instanceof clazz)) {
-            model.set(key, new clazz(value));
+        var value = model.get(key);
+        if (value) {
+            if (!(value instanceof clazz)) {
+                if (_.is(clazz, Backbone.Collection)) {
+                    assert.isArray(value);
+                }
+                model.set(key, new clazz(value));
+            }
         }
         else if (_.is(clazz, Backbone.Collection)) {
             model.set(key, new clazz())

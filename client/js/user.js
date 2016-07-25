@@ -1010,7 +1010,7 @@ App.module('User', function (User, App) {
         cidPrefix: 'usrsv',
 
         bindings: {
-            '[type=search]': 'q'
+            '[type="search"]': 'q'
         },
 
         attributes: {
@@ -1018,7 +1018,7 @@ App.module('User', function (User, App) {
         },
 
         ui: {
-            search: '[type=search]',
+            search: '[type="search"]',
             list: '.list'
         },
 
@@ -1026,42 +1026,38 @@ App.module('User', function (User, App) {
             list: '.list'
         },
 
-        modelEvents: {
-            'change q': 'search'
-        },
-        
         events: {
-            'click .requests': 'openRequests',
+            'click .all': 'openAll',
             'click .important': 'openImportant',
-            'click .all': 'openAll'
-        },
-        
-        openRequests: function () {
-            App.navigate('feedback');
+            'click .requests': 'openRequests'
         },
 
-        openImportant: function () {
-            App.navigate('unavailable');
-        },
-
-        openAll: function () {
-            App.navigate('friends');
-        },
-
-        onRender: function () {
-            this.stickit();
+        modelEvents: {
+            'change:q': 'search'
         },
 
         getCollection: function () {
             return this.getRegion('list').currentView.collection.pageableCollection;
         },
 
+        onRender: function () {
+            this.stickit();
+        },
+
+        openAll: function () {
+            App.navigate('friends');
+        },
+
+        openImportant: function () {
+            App.navigate('unavailable');
+        },
+
+        openRequests: function () {
+            App.navigate('feedback');
+        },
+
         search: function () {
-            var self = this;
-            this.ui.list.busy(true);
-            this.getCollection().delaySearch(function () {
-                self.ui.list.busy(false);
-            });
+            this.getCollection().delaySearch();
         }
     }, {
         widget: function (region, options) {

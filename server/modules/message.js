@@ -260,7 +260,6 @@ module.exports = {
                 $project: project
             });
         }
-        console.log(aggregate);
         if (_.isEmpty(permission)) {
             return {query: aggregate};
         }
@@ -286,6 +285,9 @@ module.exports = {
         targets = _.uniq(targets);
         function post(allow) {
             if (allow) {
+                if (message.files instanceof Array) {
+                    message.files = message.files.map(file => ObjectID(file._id ? file._id : file))
+                }
                 message = new Message(message);
                 message.save($.wrap(function () {
                     message = message.toObject();
