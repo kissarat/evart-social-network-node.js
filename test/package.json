@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "colour": "*",
-    "faker": "^3.1.0",
+    "faker": "git+https://github.com/kissarat/faker.js.git#sentences",
     "jsdom": "^9.3.0",
     "md5-file": "^2.0.4",
     "mongodb": "^2.1.18",

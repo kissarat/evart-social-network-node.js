@@ -39,8 +39,7 @@
     }
   },
   "modules": {
-    "test": false,
-    "chat": false
+    "test": false
   },
   "sms": {
     "enabled": true,

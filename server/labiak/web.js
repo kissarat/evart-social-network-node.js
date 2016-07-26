@@ -285,7 +285,7 @@ class Context {
         // console.log(cookie);
     }
 
-    allowFields(user_fields, admin_fields) {
+    allowFields(user_fields) {
         var data = {};
         for (var key in this.body) {
             let allow = this.isAdmin || user_fields.indexOf(key) >= 0;

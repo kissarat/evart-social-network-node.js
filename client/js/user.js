@@ -880,6 +880,9 @@ App.module('User', function (User, App) {
                         select: 'follows.followers.groups.video.audio.friends.photo'
                     };
                     $.getJSON('/api/user/informer?' + $.param(params), function (informer) {
+                        if (!informer.friends) {
+                            informer.friends = 0;
+                        }
                         user.set(informer);
                         resolve(profile);
                     });

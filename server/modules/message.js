@@ -13,7 +13,8 @@ var MessageType = {
     WALL: 'wall',
     PHOTO: 'photo',
     VIDEO: 'video',
-    COMMENT: 'comment'
+    COMMENT: 'comment',
+    CHAT: 'chat'
 };
 
 var _schema = {
@@ -49,6 +50,15 @@ var _schema = {
     owner: {
         type: T.ObjectId,
         ref: 'User',
+        index: {
+            sparse: true,
+            unique: false
+        }
+    },
+
+    chat: {
+        type: T.ObjectId,
+        ref: 'Chat',
         index: {
             sparse: true,
             unique: false
@@ -124,7 +134,7 @@ schema.Message.statics.Type = MessageType;
 schema.Message.statics.fields = {
     select: {
         user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files',
-             'video', 'videos', 'text', 'repost', 'parent']
+            'video', 'videos', 'text', 'repost', 'parent']
     }
 };
 
@@ -133,7 +143,7 @@ module.exports = {
         schema: _schema
     },
 
-    read, dialogs,
+    read, dialogs, chats,
 
     GET: function ($) {
         if ($.has('id') && !$.has('type')) {
@@ -205,6 +215,12 @@ module.exports = {
                 });
                 break;
 
+            case Message.Type.CHAT:
+                ANDs.push({
+                    chat: $.get('id')
+                });
+                break;
+
             case 'feed':
                 ANDs.push({
                     type: Message.Type.WALL,
@@ -244,7 +260,7 @@ module.exports = {
                         foreignField: '_id'
                     }
                 });
-                
+
                 if ('file' !== name) {
                     aggregate.push({
                         $unwind: {
@@ -276,7 +292,7 @@ module.exports = {
         var message = $.allowFields(Message.fields.select.user);
         message.source = $.user._id;
         var targets = [];
-        ['target', 'owner', 'source', 'parent'].forEach(function (name) {
+        ['target', 'owner', 'source', 'parent', 'chat'].forEach(function (name) {
             var value = message[name];
             if (value) {
                 if (_.isEmpty(value)) {
@@ -331,7 +347,7 @@ module.exports = {
             }
         }
 
-        if ($.has('parent')) {
+        if (0 === targets.length && ($.has('chat') || $.has('parent'))) {
             post(1);
         }
         else {
@@ -408,11 +424,38 @@ function read($) {
     }
 }
 
-function dialogs($) {
-    var id = $.user._id;
-    if ('admin' === $.user.type) {
-        id = $.get('id', id);
+function chats($) {
+    // var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
+    return {
+        query: [{
+            $match: {
+                chat: {$exists: true}
+            }
+        }, {
+            $lookup: {
+                localField: 'chat',
+                as: 'chat',
+                from: 'chat',
+                foreignField: '_id'
+            }
+        }, {
+            $unwind: {
+                path: '$chat',
+                preserveNullAndEmptyArrays: true
+            }
+        // }, {
+        //     $match: {
+        //         $or: [
+        //             {'chat.follow': '$source'},
+        //             {'chat.admin': '$source'}
+        //         ]
+        //     }
+        }]
     }
+}
+
+function dialogs($) {
+    var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
     var match = [
         {type: Message.Type.DIALOG},
         {
@@ -428,54 +471,48 @@ function dialogs($) {
     if ($.has('since')) {
         match.push({time: {$gt: $.param('since')}});
     }
-    var where = [
-        {
-            $match: {$and: match}
-        },
-        {
-            $group: {
-                _id: {
+    var aggregate = [{
+        $match: {$and: match}
+    }, {
+        $group: {
+            _id: {
+                $cond: {
+                    if: {$eq: ['$source', $.user._id]},
+                    then: '$target',
+                    else: '$source'
+                }
+            },
+            source: {$last: '$source'},
+            last_id: {$last: '$_id'},
+            unread: {
+                $sum: {
                     $cond: {
-                        if: {$eq: ['$source', $.user._id]},
-                        then: '$target',
-                        else: '$source'
+                        if: {$eq: ['$target', $.user._id]},
+                        then: '$unread',
+                        else: 0
                     }
-                },
-                source: {$last: '$source'},
-                last_id: {$last: '$_id'},
-                unread: {
-                    $sum: {
-                        $cond: {
-                            if: {$eq: ['$target', $.user._id]},
-                            then: '$unread',
-                            else: 0
-                        }
-                    }
-                },
-                count: {$sum: 1},
-                time: {$last: '$time'},
-                text: {$last: '$text'}
-            }
-        },
-        {
-            $sort: {
-                time: -1
-            }
-        },
-        {
-            $lookup: {
-                'as': 'peer',
-                localField: '_id',
-                from: 'user',
-                foreignField: '_id'
-            }
-        },
-        {
-            $unwind: {
-                path: '$peer'
-            }
+                }
+            },
+            count: {$sum: 1},
+            time: {$last: '$time'},
+            text: {$last: '$text'}
         }
-    ];
+    }, {
+        $sort: {
+            time: -1
+        }
+    }, {
+        $lookup: {
+            'as': 'peer',
+            localField: '_id',
+            from: 'user',
+            foreignField: '_id'
+        }
+    }, {
+        $unwind: {
+            path: '$peer'
+        }
+    }];
     var project = {
         _id: 1,
         time: 1,
@@ -485,10 +522,10 @@ function dialogs($) {
         source: 1,
         peer: User.fields.project
     };
-    
+
     if ($.has('q')) {
         let q = $.get('q');
-        where.push({
+        aggregate.push({
             $match: {
                 $or: [
                     {surname: {$regex: q}},
@@ -499,7 +536,7 @@ function dialogs($) {
             }
         })
     }
-    
+
     if ($.has('cut')) {
         var cut = +$.param('cut');
         if (cut > 0) {
@@ -509,8 +546,8 @@ function dialogs($) {
             $.invalid('cut', 'Must be positive');
         }
     }
-    where.push({$project: project});
+    aggregate.push({$project: project});
     return {
-        query: where
+        query: aggregate
     };
 }
