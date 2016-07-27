@@ -443,13 +443,34 @@ function chats($) {
                 path: '$chat',
                 preserveNullAndEmptyArrays: true
             }
-        // }, {
-        //     $match: {
-        //         $or: [
-        //             {'chat.follow': '$source'},
-        //             {'chat.admin': '$source'}
-        //         ]
-        //     }
+        }, {
+            $lookup: {
+                localField: 'source',
+                as: 'source',
+                from: 'user',
+                foreignField: '_id'
+            }
+        }, {
+            $unwind: '$source'
+        }, {
+            $group: {
+                _id: '$chat._id',
+                message_id: {$last: '$_id'},
+                peer: {$last: '$source'},
+                last_id: {$last: '$source._id'},
+                unread: {
+                    $sum: {
+                        $cond: {
+                            if: {$eq: ['$target', $.user._id]},
+                            then: '$unread',
+                            else: 0
+                        }
+                    }
+                },
+                count: {$sum: 1},
+                time: {$last: '$time'},
+                text: {$last: '$text'}
+            }
         }]
     }
 }

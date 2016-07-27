@@ -26,7 +26,7 @@ function generate_chats(db, users) {
         var chat = {
             _id: utils.id12('Chat'),
             admin: [_.sample(users)],
-            name: faker.name.title(),
+            name: faker.name.title(_.random(1, 4)),
             create: time,
             time: time
         };

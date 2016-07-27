@@ -6,6 +6,7 @@ var crc = require('crc');
 var crypto = require('crypto');
 var config = require('./config.json');
 var code = require('../client/code.json');
+var bandom = require('bandom');
 var _ = require('underscore');
 
 class Iterator {
@@ -70,26 +71,20 @@ function nano100time() {
     return (start + (now[0] * 1000000000 + now[1])) / 100;
 }
 
-var entities = ['User', 'Agent', 'Record', 'Message', 'File', 'Video', 'Chat', 'Stream', 'Stat', 'Album'];
+var entities = ['User', 'Message', 'Agent', 'File', 'Record', 'Video', 'Chat', 'Stream', 'Stat', 'Album'];
 
 function id12(name) {
-    var now = process.hrtime();
     var number = entities.indexOf(name);
     if (number < 0) {
-        number = crc.crc8(name).toString(16);
+        throw new Error();
     }
-    else {
-        number += 1;
-    }
-    var first = ('00' + number).slice(-2);
-    var time = (start_second + now[0]) * 1000000000 + now[1];
-    var third = time.toString(16);
-    var forth = Math.round(Math.random() * 0xFFFFFF).toString(16);
-    third = ('00000000' + third).slice(-16);
-    forth = ('000000' + forth).slice(-6);
-    var object_id = ObjectID(first + third + forth);
-    object_id.time = time;
-    return object_id;
+    var now = process.hrtime();
+    var buffer = new Buffer(12);
+    buffer.writeUInt8(number + 1, 0);
+    buffer.writeUInt32BE(now[0] + start_second, 1);
+    buffer.writeUInt32BE(now[1], 5);
+    bandom.copy(buffer, 9, 3);
+    return new ObjectID(buffer);
 }
 
 function idType(name) {
