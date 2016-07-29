@@ -394,10 +394,16 @@ App.local = new Database('LocalStorage', {
 
 function struct(schema) {
     var offset = 0;
-    var prototype = {
-        allocate: function () {
-            return new ArrayBuffer(this.size);
+    class Struct extends DataView {
+        constructor(buffer) {
+            if (!buffer) {
+                buffer = Struct.prototype.allocate();
+            }
+            super(buffer);
         }
+    }
+    Struct.prototype.allocate = function () {
+        return new ArrayBuffer(this.size);
     };
     for (var key in schema) {
         void function (key, type, _offset) {
@@ -407,28 +413,17 @@ function struct(schema) {
             offset = _offset + struct.schema[type];
             var getter = 'get' + type;
             var setter = 'set' + type;
-            Object.defineProperty(prototype, key, {
+            Object.defineProperty(Struct.prototype, key, {
                 get: function () {
-                    return this.view[getter](_offset);
+                    return this[getter](_offset);
                 },
                 set: function (value) {
-                    this.view[setter](_offset, value);
+                    this[setter](_offset, value);
                 }
             });
-            prototype.size = offset;
+            Struct.prototype.size = offset;
         }(key, schema[key], offset);
     }
-    function Struct(buffer) {
-        if (!buffer) {
-            buffer = this.allocate();
-        }
-        Object.defineProperty(this, 'view', {
-            value: new DataView(buffer),
-            enumerable: false,
-            writable: false
-        });
-    }
-    Struct.prototype = prototype;
     return Struct;
 }
 
