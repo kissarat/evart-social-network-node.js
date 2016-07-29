@@ -38,7 +38,7 @@ class Context {
         }
 
         if (req.cookies.last) {
-            var last = parseInt(req.cookies.last);
+            let last = parseInt(req.cookies.last);
             if (!isNaN(last)) {
                 req.last = new Date(last);
             }
@@ -67,7 +67,7 @@ class Context {
 
         ['wrap', 'answer'].forEach(function (name) {
             self[name] = self[name].bind(self);
-        })
+        });
 
         this.success = this.success.bind(this);
     }

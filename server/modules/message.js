@@ -431,7 +431,7 @@ function chats($) {
             $match: {
                 chat: {$exists: true}
             }
-        },{
+        }, {
             $lookup: {
                 localField: 'chat',
                 as: 'chat',
@@ -443,115 +443,124 @@ function chats($) {
                 path: '$chat',
                 preserveNullAndEmptyArrays: true
             }
-        }, {
-            message: '$$ROOT'
-        },
-            // {
-            // $group: {
-            //     _id: '$chat._id',
-            //     chat: {
-            //         $last: '$chat'
-            //     }
-            // }
-        // }
-]
+        }]
     }
 }
 
 function dialogs($) {
-    var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
-    var match = [
-        {type: Message.Type.DIALOG},
-        {
-            $or: [
-                {source: id},
-                {target: id}
-            ]
-        }
+    var OR = [
+        {admin: $.user._id},
+        {follow: $.user._id}
     ];
-    if ($.has('unread') && $.param('unread')) {
-        match.push({unread: 1});
-    }
-    if ($.has('since')) {
-        match.push({time: {$gt: $.param('since')}});
-    }
-    var aggregate = [{
-        $match: {$and: match}
-    }, {
-        $group: {
-            _id: {
-                $cond: {
-                    if: {$eq: ['$source', $.user._id]},
-                    then: '$target',
-                    else: '$source'
+    return new Promise(function (resolve, reject) {
+        Chat.find({$or: OR}).catch(reject).then(function (chats) {
+            var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
+            var match = [
+                {
+                    $or: [
+                        {type: Message.Type.DIALOG},
+                        {type: Message.Type.CHAT}
+                    ]
+                },
+                {
+                    $or: [
+                        {source: id},
+                        {target: id},
+                        {chat: {$in: chats.map(chat => chat._id)}}
+                    ]
                 }
-            },
-            source: {$last: '$source'},
-            last_id: {$last: '$_id'},
-            unread: {
-                $sum: {
-                    $cond: {
-                        if: {$eq: ['$target', $.user._id]},
-                        then: '$unread',
-                        else: 0
-                    }
-                }
-            },
-            count: {$sum: 1},
-            time: {$last: '$time'},
-            text: {$last: '$text'}
-        }
-    }, {
-        $sort: {
-            time: -1
-        }
-    }, {
-        $lookup: {
-            'as': 'peer',
-            localField: '_id',
-            from: 'user',
-            foreignField: '_id'
-        }
-    }, {
-        $unwind: {
-            path: '$peer'
-        }
-    }];
-    var project = {
-        _id: 1,
-        time: 1,
-        count: 1,
-        unread: 1,
-        text: 1,
-        source: 1,
-        peer: User.fields.project
-    };
-
-    if ($.has('q')) {
-        let q = $.get('q');
-        aggregate.push({
-            $match: {
-                $or: [
-                    {surname: {$regex: q}},
-                    {forename: {$regex: q}},
-                    {domain: {$regex: q}},
-                    {name: {$regex: q}}
-                ]
+            ];
+            if ($.has('unread') && $.param('unread')) {
+                match.push({unread: 1});
             }
-        })
-    }
+            if ($.has('since')) {
+                match.push({time: {$gt: $.param('since')}});
+            }
+            var aggregate = [{
+                $match: {$and: match}
+            }, {
+                $group: {
+                    _id: {
+                        $ifNull: [
+                            '$chat',
+                            {
+                                $cond: {
+                                    if: {$eq: ['$source', $.user._id]},
+                                    then: '$target',
+                                    else: '$source'
+                                }
+                            }
+                        ]
+                    },
+                    source: {$last: '$source'},
+                    last_id: {$last: '$_id'},
+                    unread: {
+                        $sum: {
+                            $cond: {
+                                if: {$eq: ['$target', $.user._id]},
+                                then: '$unread',
+                                else: 0
+                            }
+                        }
+                    },
+                    count: {$sum: 1},
+                    time: {$last: '$time'},
+                    text: {$last: '$text'}
+                }
+            }, {
+                $sort: {
+                    time: -1
+                }
+            }, {
+                $lookup: {
+                    'as': 'peer',
+                    localField: '_id',
+                    from: 'user',
+                    foreignField: '_id'
+                }
+            }, {
+                $unwind: {
+                    path: '$peer'
+                }
+            }];
+            var project = {
+                _id: 1,
+                time: 1,
+                count: 1,
+                unread: 1,
+                text: 1,
+                source: 1,
+                peer: User.fields.project
+            };
 
-    if ($.has('cut')) {
-        var cut = +$.param('cut');
-        if (cut > 0) {
-            project.text = {$substr: ['$text', 0, $.param('cut')]};
-        }
-        else {
-            $.invalid('cut', 'Must be positive');
-        }
-    }
-    aggregate.push({$project: project});
-    return {
-        query: aggregate
-    };
+            if ($.has('q')) {
+                let q = $.get('q');
+                aggregate.push({
+                    $match: {
+                        $or: [
+                            {surname: {$regex: q}},
+                            {forename: {$regex: q}},
+                            {domain: {$regex: q}},
+                            {name: {$regex: q}}
+                        ]
+                    }
+                })
+            }
+
+            if ($.has('cut')) {
+                var cut = +$.param('cut');
+                if (cut > 0) {
+                    project.text = {$substr: ['$text', 0, $.param('cut')]};
+                }
+                else {
+                    $.invalid('cut', 'Must be positive');
+                }
+            }
+            aggregate.push({$project: project});
+            Message
+                .aggregate(aggregate)
+                .then(resolve)
+                .catch(reject);
+        });
+    });
 }

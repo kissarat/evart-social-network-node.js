@@ -20,6 +20,35 @@ var socket = require('./labiak/socket');
 var code = require('./code');
 var errors = require('./errors');
 
+function dumpQueryPrimitive(value) {
+    if (value instanceof Object) {
+        if (value instanceof Array) {
+            return value.map(e => dumpQueryPrimitive(e));
+        }
+        else {
+            return value instanceof mongodb.ObjectID
+                ? `ObjectId("${value}")`
+                : dumpQueryObject(value).map(line => '\t' + line).join(',\n');
+        }
+    }
+    else {
+        return 'string' == typeof value ? `"${value}"` : value.toString();
+    }
+}
+
+function dumpQueryObject(query) {
+    var object = [];
+    for (let key in query) {
+        let value = dumpQueryPrimitive(query[key]);
+        object.push(key + `: {\n${value}\n}`);
+    }
+    return object.join('\n');
+}
+
+global.dumpQuery = function (q) {
+    console.log(q instanceof Array ? dumpQueryPrimitive(q) : dumpQueryObject(q));
+};
+
 process.chdir(__dirname);
 
 process.argv.forEach(function (arg) {
@@ -76,7 +105,7 @@ class Server {
                 this.mongoose = mongoose.connect(url, options);
                 this.mongoose.connection.on('error', Server.onMongoError.bind(this));
                 this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
-                this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token); 
+                this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token);
             });
         });
     }
@@ -173,7 +202,7 @@ class Server {
             body: text
         }, cb)
     }
-    
+
     getDescription(user) {
         var meta = {
             api: 'socex',
