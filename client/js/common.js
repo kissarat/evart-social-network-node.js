@@ -358,7 +358,7 @@ _.extend(Service.prototype, {
             this.cookie('remixlang', lang._id);
         }
     },
-    
+
     getUser: function () {
         if (this.user) {
             if (!this.user._model) {
@@ -390,23 +390,35 @@ _.extend(Service.prototype, {
             return !!object;
         }
     },
-    
+
     contentURL: function (url) {
         return '//' + ('localhost' === location.hostname ? 'localhost/' : this.config.cdn) + url;
     }
 });
-/*
+
 if (self.jQuery && jQuery.ajaxSetup) {
     jQuery.ajaxSetup({
         beforeSend: function (_1, options) {
-            if (self.App && App.user && 'admin' === App.user.type) {
-                options.url = options.url.replace(/^\/api-cache\//, '/api/');
-                options.url += (options.url.indexOf('?') > 0 ? '&' : '?') + '_=' + Date.now().toString(36);
-            }
+            // if (self.App && App.user && 'admin' === App.user.type) {
+            //     if (!App.config.admin.cache) {
+            //         options.url = options.url.replace(/^\/cache\//, '/api/');
+            //     }
+            //     if (App.config.admin.prefix) {
+            //         options.url += (options.url.indexOf('?') > 0 ? '&' : '?')
+            //             + App.config.admin.prefix + '=' + Date.now().toString(36);
+            //     }
+            // }
+            // else {
+                console.log(options.url, options.type, /^\/api\/(user|message)/.test(options.url));
+                if ('GET' === options.type && /^\/api\/(user|message)/.test(options.url) && App.config.jsonp) {
+                    options.url = options.url.repeat('/api/', App.config.cdn + '/cache/');
+                    options.jsonp = App.config.jsonp.prefix;
+                }
+            // }
         }
     });
 }
-*/
+
 Service.prototype.Upload = function Upload(options) {
     _.extend(this, Backbone.Events);
     this.initialize(options);

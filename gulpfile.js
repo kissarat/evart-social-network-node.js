@@ -22,12 +22,9 @@ function version(v) {
     '*/'].join('\n') + '\n\n';
 }
 
+// const cloudfront = '//d2sywt0ovr790u.cloudfront.net/';
 // var origin = '//d2sywt0ovr790u.cloudfront.net/';
-var origin = '//evart.com/';
-
-gulp.task('translate', function () {
-    gulp.src('client/sass/*.sass').pipe(sass()).pipe(gulp.dest('client/sass/'));
-});
+const own_cdn = 'http://static.evart.com/';
 
 gulp.task('app', function () {
     fse.mkdirp('app');
@@ -48,7 +45,7 @@ gulp.task('app', function () {
         .join('\n');
     fs.writeFileSync('app/script.js', string);
     var script = doc.getElementById('script');
-    script.innerHTML = `<script src="${origin}script.js"></script>`;
+    script.innerHTML = `<script src="${own_cdn}script.js"></script>`;
     _.each(doc.querySelectorAll('.include[data-src]'), function (script) {
         script.innerHTML = fs.readFileSync('client' + script.getAttribute('data-src'));
         script.removeAttribute('data-src');
@@ -57,7 +54,8 @@ gulp.task('app', function () {
     _.each(doc.querySelectorAll('[rel=stylesheet]'), function (style) {
         var src = style.getAttribute('href');
         if (src && src.indexOf('http') < 0) {
-            string.push(fs.readFileSync('client' + src));
+            let style = fs.readFileSync('client' + src);
+            string.push(style.toString('utf8').replace(/\.\.\/fonts\//, '/fonts/'));
         }
         doc.head.removeChild(style);
     });
@@ -66,7 +64,7 @@ gulp.task('app', function () {
     var link = doc.createElement('link');
     link.setAttribute('rel', 'stylesheet');
     link.setAttribute('type', 'text/css');
-    link.setAttribute('href', origin + 'style.css');
+    link.setAttribute('href', own_cdn + 'style.css');
     doc.head.appendChild(link);
     var iter = doc.createNodeIterator(doc.documentElement, 128, null, false);
     while (true) {
@@ -111,20 +109,23 @@ gulp.task('app', function () {
 });
 
 gulp.task('minify', function () {
-    minifier.minify('app/style.css');
-    var string = fs.readFileSync('app/style.min.css');
-    fs.unlinkSync('app/style.min.css');
-    string = string.toString('utf8').replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '');
-    fs.writeFileSync('app/style.css', version(cssVersion) + string);
+    {
+        minifier.minify('app/style.css');
+        let string = fs.readFileSync('app/style.min.css');
+        fs.unlinkSync('app/style.min.css');
+        string = string.toString('utf8').replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '');
+        fs.writeFileSync('app/style.css', version(cssVersion) + string);
+    }
 
-    minifier.minify('app/script.js');
-    string = fs.readFileSync('app/script.min.js');
-    fs.writeFileSync('app/script.js',  version(jsVersion) + string);
-    fs.unlinkSync('app/script.min.js');
+    {
+        minifier.minify('app/script.js');
+        let string = fs.readFileSync('app/script.min.js');
+        fs.writeFileSync('app/script.js', version(jsVersion) + string);
+        fs.unlinkSync('app/script.min.js');
+    }
 });
 
 gulp.task('default', [
-    'translate',
     'app',
     'minify'
 ]);
