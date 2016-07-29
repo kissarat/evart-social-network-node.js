@@ -391,3 +391,54 @@ App.local = new Database('LocalStorage', {
         console.error(e);
     }
 });
+
+function struct(schema) {
+    var offset = 0;
+    var prototype = {
+        allocate: function () {
+            return new ArrayBuffer(this.size);
+        }
+    };
+    for (var key in schema) {
+        void function (key, type, _offset) {
+            if (!(type in struct.schema)) {
+                throw new Error(key, type);
+            }
+            offset = _offset + struct.schema[type];
+            var getter = 'get' + type;
+            var setter = 'set' + type;
+            Object.defineProperty(prototype, key, {
+                get: function () {
+                    return this.view[getter](_offset);
+                },
+                set: function (value) {
+                    this.view[setter](_offset, value);
+                }
+            });
+            prototype.size = offset;
+        }(key, schema[key], offset);
+    }
+    function Struct(buffer) {
+        if (!buffer) {
+            buffer = this.allocate();
+        }
+        Object.defineProperty(this, 'view', {
+            value: new DataView(buffer),
+            enumerable: false,
+            writable: false
+        });
+    }
+    Struct.prototype = prototype;
+    return Struct;
+}
+
+struct.schema = {
+    Float32: 4,
+    Float64: 8,
+    Int8: 1,
+    Int16: 2,
+    Int32: 4,
+    Uint8: 1,
+    Uint16: 2,
+    Uint32: 4
+};
