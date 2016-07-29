@@ -280,7 +280,10 @@ class Context {
             console.error(`Setting cookie when headers sent ${name}=${value}`);
         }
         else {
-            this.res.setHeader('set-cookie', cookie);
+            if (!this.res.cookies) {
+                this.res.cookies = [];
+            }
+            this.res.cookies.push(cookie);
         }
         // console.log(cookie);
     }
@@ -340,6 +343,9 @@ class Context {
                 : {'content-type': 'application/json; charset=utf-8'};
             headers['X-Powered-By'] = 'PHP/7.0';
             headers.author = 'Taras Labiak <kissarat@gmail.com>';
+            if (this.res.cookies instanceof Array) {
+                headers['set-cookie'] = this.res.cookies;
+            }
             if (jsonp) {
                 data = [jsonp, '(', data, ')'].join('');
             }
@@ -403,9 +409,13 @@ class Context {
                 }
             }));
         }
+        else if (/\/agent/.test(this.req.url.original) && 'POST' === this.req.method) {
+            cb.call(this);
+        }
         else {
             agent_not_found();
         }
+        console.log(this.req.url);
     }
 
     get id() {
@@ -509,6 +519,7 @@ class Context {
         if (objectify) {
             let object = {};
             array.forEach(function (name) {
+                name = 'boolean' === typeof objectify ? name : objectify + '.' + name;
                 object[name] = 1;
             });
             return object;

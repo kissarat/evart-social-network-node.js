@@ -1,4 +1,8 @@
 {
+  "api": {
+    "name": "socex",
+    "version": "16.07.29"
+  },
   "jsonp": {
     "enabled": true,
     "prefix": "evart"

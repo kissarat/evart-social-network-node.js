@@ -594,6 +594,7 @@ else {
 }
 
 var browser = {
+    client: {},
     os: {}
 };
 
@@ -605,22 +606,22 @@ self.isMicrosoftWindows = false;
     var b;
 
     if (b = /(MSIE |Edge\/)([0-9\.]+)/.exec(navigator.userAgent)) {
-        browser.name = 'IE';
-        browser.version = b[2];
+        browser.client.name = 'IE';
+        browser.client.version = b[2];
     }
     else if (b = /(Chrome|Firefox)\/([0-9\.]+)/.exec(navigator.userAgent)) {
-        browser.name = b[1];
-        browser.version = b[2];
+        browser.client.name = b[1];
+        browser.client.version = b[2];
         if (navigator.userAgent.indexOf('YaBrowser') >= 0) {
-            browser.vendor = 'Yandex';
+            browser.client.vendor = 'Yandex';
         }
         if (navigator.userAgent.indexOf('OPR') >= 0) {
-            browser.vendor = 'Opera';
+            browser.client.vendor = 'Opera';
         }
     }
     else if (b = /Version\/([0-9\.]+).*Safari\//.exec(navigator.userAgent)) {
-        browser.name = 'Safari';
-        browser.version = b[1];
+        browser.client.name = 'Safari';
+        browser.client.version = b[1];
     }
 
     if (b = /(iPod|iPhone|iPad).*OS ([0-9_\.]+)/i.exec(navigator.userAgent)) {
@@ -660,15 +661,15 @@ self.isMicrosoftWindows = false;
     else if (navigator.userAgent.indexOf('Linux') >= 0) {
         browser.os.name = 'Linux';
         if (b = /(Ubuntu|Debian|Fedora|CentOS)/.exec(navigator.userAgent)) {
-            browser.os.distribution = b[1];
+            browser.os.name = b[1];
         }
         else if (navigator.userAgent.indexOf('Android') >= 0) {
             browser.os.name = 'Android';
         }
     }
 
-    if (browser.version) {
-        browser.version = parseInt(browser.version)
+    if (browser.client.version && !isNaN(browser.version)) {
+        browser.client.version = +browser.version;
     }
 
     statistics.agent = browser;

@@ -55,13 +55,10 @@ module.exports = {
     },
 
     serve: function () {
-        // if (this.has('_') && this.isAdmin) {
-        //     this.sendStatus(code.FORBIDDEN);
-        // }
         if (!this.req.url.route[0]) {
             return this.send(this.server.getDescription(this.user));
         }
-        
+
         var path = this.req.url.route.slice(0);
         var last = path[path.length - 1];
         if (last && /^[a-z0-9]{24}$/.test(last)) {
@@ -251,6 +248,11 @@ module.exports = {
                                         error[name] = r[name];
                                     }
                                 });
+                                if (config.error.stack) {
+                                    error.stack = r.stack
+                                        .split('\n')
+                                        .map(s => s.trim().replace('/usr/local/site/socex/server/', ''));
+                                }
                                 self.send(code.INTERNAL_SERVER_ERROR, {
                                     error: error
                                 })
@@ -395,7 +397,7 @@ module.exports = {
         var _action;
         if (module._before) {
             var promise = module._before(this);
-            if (promise.constructor.name === 'Promise') {
+            if ('Promise' === promise.constructor.name) {
                 _action = function () {
                     promise.then(function (allow) {
                         if (allow) {
@@ -469,7 +471,7 @@ module.exports = {
     },
 
     accessUser: function (user_id) {
-        user_id = user_id instanceof Array ? user_id.map(ObjectID) : ObjectID(user_id); 
+        user_id = user_id instanceof Array ? user_id.map(ObjectID) : ObjectID(user_id);
         var where = {deny: {$ne: this.user._id}};
         if (user_id instanceof Array && 1 === user_id.length) {
             user_id = user_id[0];

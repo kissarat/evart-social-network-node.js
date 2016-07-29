@@ -425,36 +425,56 @@ function read($) {
 }
 
 function chats($) {
-    // var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
+    var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
+    var aggregate = [{
+        $match: {
+            chat: {$exists: true}
+        }
+    }, {
+        $lookup: {
+            localField: 'chat',
+            as: 'chat',
+            from: 'chat',
+            foreignField: '_id'
+        }
+    }, {
+        $unwind: {
+            path: '$chat',
+            preserveNullAndEmptyArrays: true
+        }
+    }, {
+        $match: {
+            $or: [
+                {'chat.admin': id},
+                {'chat.follow': id}
+            ]
+        }
+    }, {
+        $group: {
+            _id: '$chat._id',
+            chat: {
+                $last: '$chat'
+            }
+        }
+    }];
+
     return {
-        query: [{
-            $match: {
-                chat: {$exists: true}
-            }
-        }, {
-            $lookup: {
-                localField: 'chat',
-                as: 'chat',
-                from: 'chat',
-                foreignField: '_id'
-            }
-        }, {
-            $unwind: {
-                path: '$chat',
-                preserveNullAndEmptyArrays: true
-            }
-        }]
+        query: aggregate
     }
 }
 
 function dialogs($) {
+    var id = $.get('id');
+    if (!$.isAdmin && id != $.user._id) {
+        $.invalid('id', 'You can view your dialogs only');
+    }
     var OR = [
-        {admin: $.user._id},
-        {follow: $.user._id}
+        {admin: id},
+        {follow: id}
     ];
     return new Promise(function (resolve, reject) {
         Chat.find({$or: OR}).catch(reject).then(function (chats) {
-            var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
+            chats = chats.map(chat => chat._id);
             var match = [
                 {
                     $or: [
@@ -466,7 +486,7 @@ function dialogs($) {
                     $or: [
                         {source: id},
                         {target: id},
-                        {chat: {$in: chats.map(chat => chat._id)}}
+                        {chat: {$in: chats}}
                     ]
                 }
             ];
@@ -476,39 +496,45 @@ function dialogs($) {
             if ($.has('since')) {
                 match.push({time: {$gt: $.param('since')}});
             }
+            if ($.has('type')) {
+                match.push({type: $.param('type')});
+            }
             var aggregate = [{
                 $match: {$and: match}
             }, {
                 $group: {
                     _id: {
-                        $ifNull: [
-                            '$chat',
-                            {
+                        $cond: {
+                            if: {$eq: ['$type', 'chat']},
+                            then: '$chat',
+                            else: {
                                 $cond: {
                                     if: {$eq: ['$source', $.user._id]},
                                     then: '$target',
                                     else: '$source'
                                 }
                             }
-                        ]
+                        }
                     },
                     source: {$last: '$source'},
                     last_id: {$last: '$_id'},
                     unread: {
                         $sum: {
                             $cond: {
-                                if: {$eq: ['$target', $.user._id]},
-                                then: '$unread',
-                                else: 0
+                                if: {$eq: ['$source', $.user._id]},
+                                then: 0,
+                                else: '$unread'
                             }
                         }
                     },
                     count: {$sum: 1},
                     time: {$last: '$time'},
-                    text: {$last: '$text'}
+                    text: {$last: '$text'},
+                    chat: {$last: '$chat'},
+                    type: {$last: '$type'}
                 }
             }, {
-                $sort: {
+                $sort: $.order || {
                     time: -1
                 }
             }, {
@@ -520,7 +546,20 @@ function dialogs($) {
                 }
             }, {
                 $unwind: {
-                    path: '$peer'
+                    path: '$peer',
+                    preserveNullAndEmptyArrays: true
+                }
+            }, {
+                $lookup: {
+                    'as': 'chat',
+                    localField: '_id',
+                    from: 'chat',
+                    foreignField: '_id'
+                }
+            }, {
+                $unwind: {
+                    path: '$chat',
+                    preserveNullAndEmptyArrays: true
                 }
             }];
             var project = {
@@ -530,7 +569,13 @@ function dialogs($) {
                 unread: 1,
                 text: 1,
                 source: 1,
-                peer: User.fields.project
+                peer: User.fields.project,
+                chat: {
+                    _id: 1,
+                    name: 1,
+                    time: 1
+                },
+                type: 1
             };
 
             if ($.has('q')) {
@@ -556,11 +601,12 @@ function dialogs($) {
                     $.invalid('cut', 'Must be positive');
                 }
             }
-            aggregate.push({$project: project});
+            // aggregate.push({$project: project});
+            // aggregate.push({$limit: $.limit});
+            utils.dumpQuery(aggregate);
             Message
                 .aggregate(aggregate)
-                .then(resolve)
-                .catch(reject);
+                .then(resolve, reject);
         });
     });
 }

@@ -46,19 +46,23 @@ function generate_chats(db, users) {
     })
 }
 
-var message_number = 300000;
+var message_number = 300001;
 
 function generate_message(db, users) {
     message_number--;
     if (message_number > 0) {
-        var time = new Date().toISOString();
-        var message = {
+        let time = Date.now();
+        time = time - Math.round(Math.random() * 3600 * 1000 * 12);
+        time = new Date(time);
+        let message = {
             _id: utils.id12('Message'),
             source: _.sample(users),
             chat: _.sample(chats),
             text: faker.lorem.sentence(),
             create: time,
-            time: time
+            time: time,
+            type: 'chat',
+            n: message_number
         };
         db.collection('message').insert(message, function (err) {
             if (err) {

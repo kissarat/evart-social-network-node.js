@@ -156,6 +156,9 @@ function Service() {
     }
 
     this.defaultConfig = {
+        api: {
+            version: '16.07.29'
+        },
         search: {
             delay: 250
         },
@@ -417,6 +420,7 @@ if (self.jQuery && jQuery.ajaxSetup) {
             if ('localhost' != location.hostname) {
                 options.url = options.url.replace('/api/', '//evart.com/api/');
             }
+            options.url += (options.url.indexOf('?') > 0 ? '&v=' : '?v=') + App.config.api.version;
         }
     });
 }

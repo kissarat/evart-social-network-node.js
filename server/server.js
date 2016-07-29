@@ -20,35 +20,6 @@ var socket = require('./labiak/socket');
 var code = require('./code');
 var errors = require('./errors');
 
-function dumpQueryPrimitive(value) {
-    if (value instanceof Object) {
-        if (value instanceof Array) {
-            return value.map(e => dumpQueryPrimitive(e));
-        }
-        else {
-            return value instanceof mongodb.ObjectID
-                ? `ObjectId("${value}")`
-                : dumpQueryObject(value).map(line => '\t' + line).join(',\n');
-        }
-    }
-    else {
-        return 'string' == typeof value ? `"${value}"` : value.toString();
-    }
-}
-
-function dumpQueryObject(query) {
-    var object = [];
-    for (let key in query) {
-        let value = dumpQueryPrimitive(query[key]);
-        object.push(key + `: {\n${value}\n}`);
-    }
-    return object.join('\n');
-}
-
-global.dumpQuery = function (q) {
-    console.log(q instanceof Array ? dumpQueryPrimitive(q) : dumpQueryObject(q));
-};
-
 process.chdir(__dirname);
 
 process.argv.forEach(function (arg) {
@@ -205,8 +176,8 @@ class Server {
 
     getDescription(user) {
         var meta = {
-            api: 'socex',
-            v: 0.5
+            api: config.client.api.name,
+            v: config.client.api.version
         };
         meta.schema = {};
         _.each(modules, function (module, name) {

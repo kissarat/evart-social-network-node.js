@@ -64,6 +64,17 @@ global.schema.Agent = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    
+    os: {
+        name: utils.StringType(3, 32),
+        device: utils.StringType(3, 64),
+        version: utils.StringType(1, 16)
+    },
+    
+    client: {
+        name: utils.StringType(3, 32),
+        version: utils.StringType(1, 16)
+    },
 
     ip: utils.StringType()
 }, {
@@ -101,26 +112,30 @@ module.exports = {
     POST: function ($) {
         function update(agent) {
             if (!agent) {
-                agent = new Agent({
-                    about: $.body
-                });
+                agent = new Agent();
                 if ($.req.auth) {
                     agent.auth = $.req.auth;
                 }
             }
 
-            agent.time = Date.now();
-            agent.ip = $.req.headers.ip;
-            agent.save($.wrap(function () {
-                // if ((Math.random() > (1 - config.auth_generation))) {}
-                if (!$.req.auth) {
-                    $.setCookie('auth', agent.auth, true);
-                }
-                agent = Agent.extract(agent, $.req.headers);
-                agent.config = client;
-                agent.success = true;
-                $.send(agent);
-            }));
+            if ($.body.agent instanceof Object) {
+                agent.client = $.body.agent.client;
+                agent.os = $.body.agent.os;
+                agent.ip = $.req.headers.ip;
+                agent.save($.wrap(function () {
+                    if (!$.req.auth) {
+                        $.setCookie('auth', agent.auth, true);
+                        $.setCookie('cid', agent._id, true);
+                    }
+                    agent = Agent.extract(agent, $.req.headers);
+                    agent.config = client;
+                    agent.success = true;
+                    $.send(agent);
+                }));
+            }
+            else {
+                $.invalid('agent');
+            }
         }
 
         if ($.req.auth) {

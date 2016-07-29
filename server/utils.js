@@ -188,5 +188,11 @@ function associate(key, value) {
     return object
 }
 
-module.exports = {Iterator, fields, merge, nano100time, id12, idType, hash, s, StringType, subscribe, receive, equals,
-associate};
+function dumpQuery(q, tab) {
+    console.log(JSON.stringify(q, null, tab)
+        .replace(/("[0-9a-f]{24}")/g, 'ObjectId($1)')
+        .replace(/"([\$\w]+)":/g, '$1:'));
+}
+
+module.exports = {Iterator, fields, merge, nano100time, id12, idType, hash, s,
+    StringType, subscribe, receive, equals, associate, dumpQuery};

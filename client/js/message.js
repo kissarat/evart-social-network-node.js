@@ -175,9 +175,7 @@ App.module('Message', function (Message, App) {
     Message.DialogList = App.PageableCollection.extend({
         url: '/api/message/dialogs',
 
-        query: {
-            type: MessageType.DIALOG
-        },
+        query: {},
 
         model: function (attrs, options) {
             return new Message.LastMessage(attrs, options);
