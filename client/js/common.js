@@ -409,12 +409,14 @@ if (self.jQuery && jQuery.ajaxSetup) {
             //     }
             // }
             // else {
-                console.log(options.url, options.type, /^\/api\/(user|message)/.test(options.url));
-                if ('GET' === options.type && /^\/api\/(user|message)/.test(options.url) && App.config.jsonp) {
-                    options.url = options.url.repeat('/api/', App.config.cdn + '/cache/');
-                    options.jsonp = App.config.jsonp.prefix;
-                }
+            //     console.log(options.url, options.type, /^\/api\/(user|message)/.test(options.url));
+            //     if ('GET' === options.type && /^\/api\/(file|user|message)/.test(options.url)) {
+            //         options.url = options.url.replace('/api/', '/cache/');
+            //     }
             // }
+            if ('localhost' != location.hostname) {
+                options.url = options.url.replace('/api/', '//evart.com/api/');
+            }
         }
     });
 }

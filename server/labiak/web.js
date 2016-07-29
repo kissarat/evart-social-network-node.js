@@ -16,7 +16,7 @@ class Context {
         var req = options.req;
         this.start = now[0] * 1000000000 + now[1];
         this.isCache = req.url.indexOf('/api-cache') == 0;
-        var raw_url = req.url.replace(/^\/api(\-cache)?\//, '/');
+        var raw_url = req.url.replace(/^\/(api|cache)?\//, '/');
         // console.log('URL', raw_url);
         req.url = this.parseURL(raw_url);
         this.params = req.url.query;
