@@ -304,6 +304,7 @@ module.exports = {
                 message[name] = value._id ? value._id : value;
             }
         });
+        
         ['target', 'owner'].forEach(function (name) {
             var id = message[name];
             if (id) {

@@ -822,7 +822,7 @@ App.module('Message', function (Message, App) {
         },
 
         scroll: function (e) {
-            if (e.target.scrollTop < App.scroll.next) {
+            if (e.target.scrollTop < App.config.scroll.next) {
                 this.getCollection().pageableCollection.getNextPage();
             }
         },
@@ -891,6 +891,10 @@ App.module('Message', function (Message, App) {
         },
 
         read: function (ids) {
+            if (!this.getRegion('list')) {
+                console.warn('list region not found');
+                return;
+            }
             if (ids.ids && ids.success) {
                 ids = ids.ids;
             }
@@ -905,38 +909,45 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            var list = new Message.List([], {
-                query: {
-                    id: options.target.id,
-                    type: MessageType.DIALOG,
-                    user: 'source.target',
-                    select: 'unread.text',
-                    sort: '-_id'
-                }
-            });
+            var isChat = options.chat;
+            var query = isChat ? {
+                id: options.chat.id,
+                type: MessageType.CHAT,
+                user: 'source',
+                select: 'text'
+            } : {
+                id: options.target.id,
+                type: MessageType.DIALOG,
+                user: 'source.target',
+                select: 'text.unread'
+            };
+            query.sort = '-_id';
+            var list = new Message.List([], {query: query});
             var listView = new Message.ListView({collection: list.fullCollection});
-            var editor = new Message.Editor({
-                model: new Message.Model({
-                    type: MessageType.DIALOG,
-                    target: options.target
-                })
-            });
+            var draft = isChat
+                ? {type: MessageType.CHAT, chat: options.chat}
+                : {type: MessageType.DIALOG, target: options.target};
+            var editor = new Message.Editor({model: new Message.Model(draft)});
             var dialog = new Message.Dialog();
             region.show(dialog);
             dialog.getRegion('list').show(listView);
             dialog.getRegion('editor').show(editor);
+            function read() {
+                var hasUnread = _.some(list.fullCollection.models, function (model) {
+                    return model.get('unread')
+                });
+                if (hasUnread || App.config.message.read.empty) {
+                    $.getJSON('/api/message/read?target_id=' + options.target.id, dialog.read);
+                }
+            }
+
             list.once('finish', function () {
                 dialog.el.querySelector('.scroll').on('scroll', function (e) {
                     dialog.scroll.call(dialog, e);
                 });
-                setTimeout(function () {
-                    var hasUnread = _.some(list.fullCollection.models, function (model) {
-                        return model.get('unread')
-                    });
-                    if (hasUnread || App.config.message.read.empty) {
-                        $.getJSON('/api/message/read?target_id=' + options.target.id, dialog.read);
-                    }
-                }, App.config.message.read.delay);
+                if (!isChat) {
+                    setTimeout(read, App.config.message.read.delay);
+                }
             });
             list.getFirstPage();
             return dialog;
@@ -1015,9 +1026,6 @@ App.module('Message', function (Message, App) {
 
         onDestroy: function () {
             window.removeEventListener('keyup', this.send);
-            if (this.model.get('text')) {
-                App.storage.save(this.model, 'target');
-            }
         },
 
         attach: function () {
@@ -1138,11 +1146,26 @@ App.module('Message', function (Message, App) {
 
         open: function (id) {
             var self = this;
-            App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (user) {
-                Message.Dialog.widget(self.getRegion('dialog'), {
-                    target: new Message.Model(user)
+
+            function widget(model) {
+                var options = {};
+                if (0 === model.id.indexOf('07')) {
+                    options.chat = model;
+                }
+                else {
+                    options.target = model;
+                }
+                Message.Dialog.widget(self.getRegion('dialog'), options);
+            }
+
+            if (id instanceof Backbone.Model) {
+                widget(id);
+            }
+            else {
+                App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (user) {
+                    widget(new Message.Model(user))
                 });
-            });
+            }
         }
     }, {
         widget: function (region, options) {
@@ -1157,7 +1180,7 @@ App.module('Message', function (Message, App) {
         var messenger = App.getPlace('main').currentView;
         if (messenger instanceof Message.Messenger) {
             if (id) {
-                if (_.isObjectID(id)) {
+                if (_.isObjectID(id) || id instanceof Backbone.Model) {
                     messenger.open(id);
                 }
                 else {

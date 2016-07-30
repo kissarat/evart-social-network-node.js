@@ -11,7 +11,8 @@ self.MessageType = {
     WALL: 'wall',
     PHOTO: 'photo',
     VIDEO: 'video',
-    COMMENT: 'comment'
+    COMMENT: 'comment',
+    CHAT: 'chat'
 };
 
 _.mixin({
