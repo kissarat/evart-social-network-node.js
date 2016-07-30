@@ -147,11 +147,23 @@ App.module('Message', function (Message, App) {
         files: App.File.List
     };
 
+    Message.Chat = Backbone.Model.extend({
+        idAttribute: '_id',
+        getName: function () {
+            return this.get('name') || this.id;
+        }
+    });
+
     Message.LastMessage = Backbone.Model.extend({
         initialize: function () {
             loadRelative(this, {
-                peer: App.User.Model
+                peer: App.User.Model,
+                chat: Message.Chat
             });
+        },
+
+        getPeer: function () {
+            return 'chat' === this.get('type') ? this.get('chat') : this.get('peer')
         }
     });
 
@@ -224,28 +236,36 @@ App.module('Message', function (Message, App) {
         },
 
         openDialog: function () {
-            Message.channel.request('open', this.model.get('peer').get('_id'));
+            Message.channel.request('open', this.model.getPeer());
         },
 
         openPeer: function () {
-            App.navigate('/view/' + this.model.get('peer').get('domain'));
+            if (this.model.has('peer')) {
+                App.navigate('/view/' + this.model.get('peer').get('domain'));
+            }
         },
 
         onRender: function () {
             var ui = this.ui;
-            var peer = this.model.get('peer');
+            var peer = this.model.getPeer();
             ui.peer_name.html(peer.getName());
-            peer.setupAvatar(ui.peer_avatar);
-            var unread = this.model.get('unread');
-            if (unread > 0) {
-                this.$el.addClass('unread');
-                if (unread > 1) {
-                    this.ui.unread.html(unread);
+            if (peer.setupAvatar instanceof Function) {
+                peer.setupAvatar(ui.peer_avatar);
+            }
+            if (this.model.has('unread')) {
+                var unread = this.model.get('unread');
+                if (unread > 0) {
+                    this.$el.addClass('unread');
+                    if (unread > 1) {
+                        this.ui.unread.html(unread);
+                    }
                 }
             }
-            var online = new Date(peer.get('online')).getTime();
-            if (online >= Date.now()) {
-                this.$el.addClass('online');
+            if (peer.has('online')) {
+                var online = new Date(peer.get('online')).getTime();
+                if (online >= Date.now()) {
+                    this.$el.addClass('online');
+                }
             }
             this.stickit();
         }
@@ -680,8 +700,8 @@ App.module('Message', function (Message, App) {
                             if (origin[1].indexOf('wikipedia.org') > 0) {
                                 url = _.last(url.split('/')).replace(/_/g, ' ');
                             }
-                            else if (url.length > 64) {
-                                var remain = -64 + origin[1].length;
+                            else if (url.length > App.config.message.url.max) {
+                                var remain = -App.config.message.url.max + origin[1].length;
                                 url = origin[1];
                                 if (remain < 0) {
                                     url += '/...' + anchor.href.slice(remain);
@@ -719,7 +739,7 @@ App.module('Message', function (Message, App) {
         },
 
         scrollLast: function () {
-            if (this.collection.models.length > 2) {
+            if (this.collection.models.length > App.config.message.scrollLast) {
                 var last = this.collection.models
                     .map(function (a) {
                         return new Date(a.get('time')).getTime()
@@ -750,7 +770,7 @@ App.module('Message', function (Message, App) {
 
         scroll: function (e) {
             var delta = e.target.scrollHeight - innerHeight - e.target.scrollTop;
-            if (delta < 100) {
+            if (delta < App.config.scroll.next) {
                 this.animateLoading(this.queryModel);
                 var collection = this.collection.pageableCollection;
                 if (!collection.queryModel.get('loading')) {
@@ -802,7 +822,7 @@ App.module('Message', function (Message, App) {
         },
 
         scroll: function (e) {
-            if (e.target.scrollTop < 100) {
+            if (e.target.scrollTop < App.scroll.next) {
                 this.getCollection().pageableCollection.getNextPage();
             }
         },
@@ -811,8 +831,8 @@ App.module('Message', function (Message, App) {
             var text = this.getRegion('editor').currentView.ui.editor;
             var height = text.height();
             var scrollHeight = text[0].scrollHeight;
-            if (height * 1.3 < scrollHeight) {
-                text.css('min-height', '40vh');
+            if (height * App.config.editor.resize.scroll < scrollHeight) {
+                text.css('min-height', App.config.editor.resize.height);
             }
         },
 
@@ -1106,7 +1126,9 @@ App.module('Message', function (Message, App) {
         onShowDialogList: function () {
             var c = this.getRegion('dialogList').currentView.collection;
             c.on('add', function (model) {
-                App.local.put('user', model.get('peer'));
+                if (model.has('peer')) {
+                    App.local.put('user', model.get('peer'));
+                }
             });
             var p = c.pageableCollection;
             this.model = p.queryModel;
@@ -1116,7 +1138,7 @@ App.module('Message', function (Message, App) {
 
         open: function (id) {
             var self = this;
-            App.local.getById('user', id).then(function (user) {
+            App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (user) {
                 Message.Dialog.widget(self.getRegion('dialog'), {
                     target: new Message.Model(user)
                 });

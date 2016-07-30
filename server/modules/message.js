@@ -464,10 +464,11 @@ function chats($) {
 }
 
 function dialogs($) {
-    var id = $.get('id');
-    if (!$.isAdmin && id != $.user._id) {
-        $.invalid('id', 'You can view your dialogs only');
-    }
+    // var id = $.get('id');
+    // if (!$.isAdmin && !id.equals($.user._id)) {
+    //     $.invalid('id', 'You can view your dialogs only');
+    // }
+    var id = $.user._id;
     var OR = [
         {admin: id},
         {follow: id}
@@ -509,7 +510,7 @@ function dialogs($) {
                             then: '$chat',
                             else: {
                                 $cond: {
-                                    if: {$eq: ['$source', $.user._id]},
+                                    if: {$eq: ['$source', id]},
                                     then: '$target',
                                     else: '$source'
                                 }
@@ -521,7 +522,7 @@ function dialogs($) {
                     unread: {
                         $sum: {
                             $cond: {
-                                if: {$eq: ['$source', $.user._id]},
+                                if: {$eq: ['$source', id]},
                                 then: 0,
                                 else: '$unread'
                             }
@@ -580,16 +581,18 @@ function dialogs($) {
 
             if ($.has('q')) {
                 let q = $.get('q');
-                aggregate.push({
-                    $match: {
-                        $or: [
-                            {surname: {$regex: q}},
-                            {forename: {$regex: q}},
-                            {domain: {$regex: q}},
-                            {name: {$regex: q}}
-                        ]
-                    }
-                })
+                if (q = q.trim()) {
+                    aggregate.push({
+                        $match: {
+                            $or: [
+                                {surname: {$regex: q}},
+                                {forename: {$regex: q}},
+                                {domain: {$regex: q}},
+                                {name: {$regex: q}}
+                            ]
+                        }
+                    });
+                }
             }
 
             if ($.has('cut')) {
@@ -601,12 +604,12 @@ function dialogs($) {
                     $.invalid('cut', 'Must be positive');
                 }
             }
-            // aggregate.push({$project: project});
-            // aggregate.push({$limit: $.limit});
-            utils.dumpQuery(aggregate);
+            aggregate.push({$project: project});
+            aggregate.push({$limit: $.limit});
             Message
                 .aggregate(aggregate)
-                .then(resolve, reject);
+                .then(resolve)
+                .catch(reject);
         });
     });
 }

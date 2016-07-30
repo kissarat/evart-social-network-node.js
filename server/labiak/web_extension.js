@@ -11,7 +11,6 @@ module.exports = {
     processTask: function (task, bundle) {
         var collection = this.collection(task.collection);
         task.isUpdate = task.$set || task.$unset;
-        // console.log(JSON.stringify(task, null, '  '));
         if (true === task.select) {
             task.select = this.select(false, false, true);
         }

@@ -415,7 +415,6 @@ class Context {
         else {
             agent_not_found();
         }
-        console.log(this.req.url);
     }
 
     get id() {
