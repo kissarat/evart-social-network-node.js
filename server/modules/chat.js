@@ -3,6 +3,7 @@
 const ObjectID = require('mongodb').ObjectID;
 const mongoose = require('mongoose');
 const utils = require('../utils');
+const _ = require('underscore');
 
 const schema = {
     _id: utils.idType('Chat'),
@@ -114,8 +115,17 @@ module.exports = {
         return chat.save();
     },
 
-    PATCH: function ($) {
-        return code.METHOD_NOT_ALLOWED;
+    PUT: function ($) {
+        var name = $.param('name');
+        Chat.findOne({_id: $.param('id')}, $.wrap(function (chat) {
+            if (_.find(chat.admin, $.user._id, (a, b) => a.equals(b))) {
+                chat.name = name;
+                chat.save($.answer);
+            }
+            else {
+                $.sendStatus(code.FORBIDDEN);
+            }
+        }));
     },
 
     DELETE: function ($) {

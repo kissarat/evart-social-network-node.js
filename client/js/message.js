@@ -149,6 +149,11 @@ App.module('Message', function (Message, App) {
 
     Message.Chat = Backbone.Model.extend({
         idAttribute: '_id',
+
+        url: function () {
+            return '/api/chat?id=' + this.id;
+        },
+
         getName: function () {
             return this.get('name') || this.id;
         }
@@ -812,6 +817,7 @@ App.module('Message', function (Message, App) {
         },
 
         ui: {
+            name: '.name input',
             list: '.list',
             editor: '.editor'
         },
@@ -819,6 +825,22 @@ App.module('Message', function (Message, App) {
         events: {
             'keyup .editor': 'resize'
             // 'scroll .scroll': 'scroll'
+        },
+
+        bindings: {
+            '.name input': 'name'
+        },
+
+        modelEvents: {
+            'change:name': 'changeModel'
+        },
+
+        changeModel: function () {
+            this.model.save(null, {
+                success: function () {
+                    console.log('Saved');
+                }
+            })
         },
 
         scroll: function (e) {
@@ -853,6 +875,13 @@ App.module('Message', function (Message, App) {
 
         onRender: function () {
             App.Views.perfectScrollbar(this.ui.list);
+            if ('chat' == this.model.get('type')) {
+                    this.ui.name.parent().removeClass('hidden');
+                if (this.model.get('admin').indexOf(App.user._id) >= 0) {
+                    this.ui.name.prop('disabled', false);
+                }
+                this.stickit();
+            }
         },
 
         onDestroy: function () {
@@ -910,25 +939,25 @@ App.module('Message', function (Message, App) {
     }, {
         widget: function (region, options) {
             var isChat = options.chat;
+            var model = isChat ? options.chat : options.target;
+            model.set('type', isChat ? 'chat' : 'dialog');
             var query = isChat ? {
-                id: options.chat.id,
-                type: MessageType.CHAT,
                 user: 'source',
                 select: 'text'
             } : {
-                id: options.target.id,
-                type: MessageType.DIALOG,
                 user: 'source.target',
                 select: 'text.unread'
             };
             query.sort = '-_id';
+            query.id = model.id;
+            query.type = model.get('type');
             var list = new Message.List([], {query: query});
             var listView = new Message.ListView({collection: list.fullCollection});
             var draft = isChat
                 ? {type: MessageType.CHAT, chat: options.chat}
                 : {type: MessageType.DIALOG, target: options.target};
             var editor = new Message.Editor({model: new Message.Model(draft)});
-            var dialog = new Message.Dialog();
+            var dialog = new Message.Dialog({model: model});
             region.show(dialog);
             dialog.getRegion('list').show(listView);
             dialog.getRegion('editor').show(editor);
@@ -1163,7 +1192,7 @@ App.module('Message', function (Message, App) {
             }
             else {
                 App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (user) {
-                    widget(new Message.Model(user))
+                    widget(new Message.Model(user));
                 });
             }
         }

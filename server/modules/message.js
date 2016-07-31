@@ -291,7 +291,7 @@ module.exports = {
     POST: function ($) {
         var message = $.allowFields(Message.fields.select.user);
         message.source = $.user._id;
-        var targets = [];
+        var targets;
         ['target', 'owner', 'source', 'parent', 'chat'].forEach(function (name) {
             var value = message[name];
             if (value) {
@@ -304,15 +304,18 @@ module.exports = {
                 message[name] = value._id ? value._id : value;
             }
         });
-        
-        ['target', 'owner'].forEach(function (name) {
-            var id = message[name];
-            if (id) {
-                targets.push(id)
-            }
-        });
+
+        if (!message.chat) {
+            targets = [];
+            ['target', 'owner'].forEach(function (name) {
+                var id = message[name];
+                if (id) {
+                    targets.push(id)
+                }
+            });
+        }
         targets = _.uniq(targets);
-        function post(allow) {
+        function post(allow, targets) {
             if (allow) {
                 if (message.files instanceof Array) {
                     message.files = message.files.map(file => ObjectID(file._id ? file._id : file))
@@ -336,11 +339,13 @@ module.exports = {
                     }
                     delete message.v;
                     $.send(message);
-                    targets.forEach(function (id) {
-                        if (!$.user._id.equals(id)) {
-                            $.notifyOne(id, message);
-                        }
-                    });
+                    if (!$.param('silent', false)) {
+                        targets.forEach(function (id) {
+                            if (!$.user._id.equals(id)) {
+                                $.notifyOne(id, message);
+                            }
+                        });
+                    }
                 }));
             }
             else {
@@ -349,7 +354,20 @@ module.exports = {
         }
 
         if (0 === targets.length && ($.has('chat') || $.has('parent'))) {
-            post(1);
+            if (message.chat) {
+                Chat.findOne({_id: message.chat}, $.wrap(function (chat) {
+                    if (chat) {
+                        targets = chat.follow.concat(chat.admin);
+                        post(_.find(targets, (a, b) => a.equals(b)));
+                    }
+                    else {
+                        $.sendStatus(code.NOT_FOUND);
+                    }
+                }))
+            }
+            else {
+                post(1);
+            }
         }
         else {
             $.accessUser(targets).then(post);
@@ -575,7 +593,9 @@ function dialogs($) {
                 chat: {
                     _id: 1,
                     name: 1,
-                    time: 1
+                    time: 1,
+                    admin: 1,
+                    follow: 1
                 },
                 type: 1
             };
