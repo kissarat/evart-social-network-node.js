@@ -96,6 +96,11 @@ function idType(name) {
     };
 }
 
+function idTime() {
+    var now = process.hrtime();
+    return Math.round((start_second + now[0]) * 1000000 + now[1] / 1000);
+}
+
 function StringType(max, min) {
     return {
         type: String,
@@ -138,7 +143,7 @@ function subscribe(prefix, source, target, proto) {
         proto = target;
     }
     prefix = 'on' + prefix;
-    for(var name in proto) {
+    for (var name in proto) {
         let handler = proto[name];
         name = name.toLowerCase();
         if (0 === name.indexOf(prefix)) {
@@ -194,5 +199,7 @@ function dumpQuery(q, tab) {
         .replace(/"([\$\w]+)":/g, '$1:'));
 }
 
-module.exports = {Iterator, fields, merge, nano100time, id12, idType, hash, s,
-    StringType, subscribe, receive, equals, associate, dumpQuery};
+module.exports = {
+    Iterator, fields, merge, nano100time, id12, idType, hash, s,
+    StringType, subscribe, receive, equals, associate, dumpQuery
+};

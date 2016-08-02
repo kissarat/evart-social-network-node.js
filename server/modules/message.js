@@ -358,7 +358,7 @@ module.exports = {
                 Chat.findOne({_id: message.chat}, $.wrap(function (chat) {
                     if (chat) {
                         targets = chat.follow.concat(chat.admin);
-                        post(_.find(targets, (a, b) => a.equals(b)));
+                        post(targets.find(target => $.user._id.equals(target)));
                     }
                     else {
                         $.sendStatus(code.NOT_FOUND);

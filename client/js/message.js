@@ -840,7 +840,7 @@ App.module('Message', function (Message, App) {
                 success: function () {
                     console.log('Saved');
                 }
-            })
+            });
         },
 
         scroll: function (e) {

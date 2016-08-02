@@ -56,6 +56,10 @@ App.module('Views', function (Views, App) {
         }
     });
 
+    Views.bindAndTranslate = function () {
+
+    }
+
     App.Behaviors.Pageable = Marionette.Behavior.extend({
         onAttach: function () {
             var reverse = this.options.reverse;
