@@ -375,7 +375,7 @@ module.exports = {
     },
 
     informer: function ($) {
-        var id = $.id || $.user._id;
+        var id = $.get('id', $.user._id);
         var object = {
             follows: {
                 pick: 'follow',
