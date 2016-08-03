@@ -206,4 +206,4 @@ class Server {
     }
 }
 
-var server = new Server(config);
+module.exports = new Server(config);
