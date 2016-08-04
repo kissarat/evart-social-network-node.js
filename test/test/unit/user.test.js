@@ -23,7 +23,7 @@ function cookies(user) {
 
 function registration() {
     return new Promise(function (resolve, reject) {
-        const domain = 'user_' + bandom.inc();
+        const domain = 'user_' + bandom.inc(2);
         var user = {
             domain: domain,
             password: bandom.letters(8),
@@ -116,8 +116,9 @@ function registration() {
 
 function follow(user, targets) {
     var promise = [];
+    targets.sort((a, b) => a.domain.localeCompare(b.domain));
     targets.forEach(function (target) {
-        it('add ' + target._id, function (done) {
+        it('add ' + user.domain + ' ' + target.domain, function (done) {
             promise.push(new Promise(function (resolve, reject) {
                 post('list').send({
                     name: 'follow',
@@ -140,7 +141,21 @@ function follow(user, targets) {
         });
     });
 
-    Promise.all(promise).then(function () {
+    Promise.all(promise).then(function (targets) {
+        it('follow informer ' + user.domain, function (done) {
+            const url = '/api/list?' + qs.stringify({
+                    target_id: target
+                });
+            supertest(server)
+                .get(url)
+                .set('Cookie', cookies(user))
+                .end(function (err, res) {
+                    const data = JSON.parse(res.text);
+                    assert(data.follows === target.length);
+                    done(err);
+                })
+        });
+
         const target = bandom.choice(targets)._id;
         it('remove ' + target, function (done) {
             const url = '/api/list?' + qs.stringify({
