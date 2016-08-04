@@ -65,15 +65,14 @@ Object.keys(schema).forEach(function (name) {
     global[name] = mongoose.model(name, current);
 });
 
-class Server {
-    constructor(config) {
+class Server extends require('events') {
+    start() {
         this.start = start;
         fs.access(config.mongo.file, fs.R_OK, (err) => {
             var url = err ? config.mongo.uri : config.mongo.file;
-            var options = 'linux' == process.platform ? {} : config.mongo.options || {};
             mongodb.MongoClient.connect(url, config.mongo.options, (err, db) => {
                 this.db = db;
-                this.mongoose = mongoose.connect(url, options);
+                this.mongoose = mongoose.connect(url, config.mongo.options);
                 this.mongoose.connection.on('error', Server.onMongoError.bind(this));
                 this.mongoose.connection.on('open', this.onMongoOpen.bind(this));
                 this.twilio = new twilio.RestClient(config.sms.sid, config.sms.token);
@@ -83,6 +82,12 @@ class Server {
 
     static onMongoError(err) {
         console.log(err);
+    }
+
+    address() {
+        return {
+            port: 45536
+        }
     }
 
     log(type, message) {
@@ -159,6 +164,7 @@ class Server {
     onModulesLoaded() {
         this.log('info', 'Modules loaded');
         this.start = new Date();
+        this.emit('start');
     }
 
     createContext(options) {
@@ -206,4 +212,8 @@ class Server {
     }
 }
 
-module.exports = new Server(config);
+global.server = new Server(config);
+
+if (module === require.main) {
+    server.start();
+}

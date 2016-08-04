@@ -4,17 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Taras Labiak <kissarat@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "bandom": "^1.1.0",
+    "chai": "^3.5.0",
     "colour": "*",
     "faker": "git+https://github.com/kissarat/faker.js.git#sentences",
     "jsdom": "^9.3.0",
+    "lodash": "*",
     "md5-file": "^2.0.4",
+    "mocha": "^3.0.0",
     "mongodb": "^2.1.18",
     "request": "^2.69.0",
-    "underscore": "^1.8.3"
+    "supertest": "^2.0.0"
   }
 }

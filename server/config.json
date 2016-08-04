@@ -7,10 +7,7 @@
   "mongo": {
     "uri": "mongodb://localhost:27017/socex",
     "file": "mongodb://tmp/mongodb-27017.sock/socex",
-    "options": {
-      "user": "socex",
-      "pass": "eequ2eizain8Etohxei0yoGaixeeviey3rei"
-    }
+    "options": {}
   },
   "mongoose": {
     "schema": {
