@@ -19,6 +19,7 @@
     "mocha": "^3.0.0",
     "mongodb": "^2.1.18",
     "request": "^2.69.0",
-    "supertest": "^2.0.0"
+    "supertest": "^2.0.0",
+    "underscore": "^1.8.3"
   }
 }
