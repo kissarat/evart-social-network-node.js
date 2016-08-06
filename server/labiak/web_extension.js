@@ -128,17 +128,20 @@ module.exports = {
                                 else {
                                     let process_result = function (result) {
                                         result = task.single ? result[0] : result;
-                                        if (task.name) {
-                                            bundle[task.name] = result;
-                                        }
                                         if (task.pick) {
-                                            result = result[task.pick];
+                                            result = _.pick(result, task.pick);
                                         }
                                         else if (task.pluck) {
                                             result = _.pluck(result, task.pluck);
                                         }
+                                        else if (task.get) {
+                                            result = result[task.get];
+                                        }
                                         if (tasks.length > 0) {
                                             run(result);
+                                        }
+                                        if (task.name) {
+                                            bundle[task.name] = result;
                                         }
                                         else {
                                             if (result) {

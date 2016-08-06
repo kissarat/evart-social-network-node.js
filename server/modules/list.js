@@ -102,6 +102,10 @@ function modify(method) {
     return function ($) {
         return User.update({_id: $.user._id}, {
             [method]: {[$.param('name')]: $.param('target_id')}
+        }).then(function (result) {
+            return {
+                success: !!result.nModified
+            }
         });
     }
 }

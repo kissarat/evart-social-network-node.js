@@ -378,12 +378,13 @@ module.exports = {
         var id = $.get('id', $.user._id);
         var object = {
             follows: {
-                pick: 'follow',
+                single: true,
+                get: 'follow',
                 select: {follow: 1},
                 query: {_id: id}
             },
             groups: {
-                pick: '_id',
+                pluck: '_id',
                 select: {follow: 1},
                 query: function (bundle) {
                     bundle.follows = _.isEmpty(bundle.follows) ? [] : bundle.follows;
@@ -394,8 +395,7 @@ module.exports = {
                 }
             },
             followers: {
-                pick: '_id',
-                count: true,
+                pluck: '_id',
                 query: {follow: id}
             },
             video: {
@@ -431,8 +431,7 @@ module.exports = {
 
         var queries = [];
         var select = $.select();
-        var showFriends = _.contains(select, 'friends');
-        if (showFriends) {
+        if (_.contains(select, 'friends')) {
             select.push('followers')
         }
         if (_.intersection(select, ['groups', 'followers']).length > 0) {
@@ -447,20 +446,24 @@ module.exports = {
 
         queries.push(function (result, bundle) {
             bundle._id = id;
-            if (bundle.follows) {
+            ['follows', 'followers', 'friends', 'groups'].forEach(function (name) {
+                if (bundle[name] instanceof Array) {
+                    bundle[name] = bundle[name].map(id => id.toString());
+                }
+            });
+            if (bundle.follows instanceof Array) {
                 if (bundle.groups) {
-                    bundle.follows = _.difference(bundle.follows, bundle.groups, utils.equals);
-                    bundle.groups = bundle.groups.length;
+                    bundle.follows = _.difference(bundle.follows, bundle.groups);
                 }
-                if (showFriends && bundle.followers) {
-                    bundle.friends = _.intersection(bundle.follows, bundle.followers, utils.equals);
-                    bundle.friends = bundle.friends.length;
+                if (bundle.followers) {
+                    bundle.friends = _.intersection(bundle.follows, bundle.followers);
                 }
-                bundle.follows = bundle.follows.length;
             }
-            if (_.contains(select, 'friends') && !select.friends) {
-                select.friends = 0;
-            }
+            ['follows', 'followers', 'friends', 'groups'].forEach(function (name) {
+               if (bundle[name] instanceof Array) {
+                   bundle[name] = bundle[name].length;
+               }
+            });
             $.send(bundle);
         });
         return queries;
@@ -505,7 +508,10 @@ module.exports = {
                         }
                     }));
                 } else {
-                    $.sendStatus(code.UNAUTHORIZED);
+                    $.send(code.UNAUTHORIZED, {
+                        success: false,
+                        condition: conditions
+                    });
                 }
             }));
         }

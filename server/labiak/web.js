@@ -404,6 +404,9 @@ class Context {
                     self.agent = agent;
                     cb.call(self, agent);
                 }
+                else if ('agent' == self.req.url.route[0]) {
+                    cb.call(self);
+                }
                 else {
                     agent_not_found();
                 }
@@ -551,7 +554,7 @@ class Context {
         var m = this.req.method;
         return 'POST' === m || 'PUT' === m || 'PATCH' === m;
     }
-    
+
     get isModify() {
         return this.isUpdate || 'DELETE' === this.req.method;
     }
@@ -585,7 +588,7 @@ class Context {
     get isStatic() {
         return this.req.headers['user-agent'] && this.req.headers['user-agent'].indexOf('PhantomJS') >= 0;
     }
-    
+
     inArray(name, array) {
         var value = this.param(name);
         if (array.indexOf(value) < 0) {
@@ -593,14 +596,14 @@ class Context {
         }
         return value;
     }
-    
+
     get isAdmin() {
         return this.user && 'admin' === this.user.type;
     }
-    
+
     close() {
         if (this.socket) {
-            
+
         }
     }
 }
