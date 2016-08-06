@@ -392,9 +392,10 @@ class Context {
                 success: false,
                 ip: self.req.headers.ip,
                 error: {
-                    code: 'AGENT_NOT_FOUND',
+                    status: 'AGENT_NOT_FOUND',
                     message: 'User agent is not registered'
-                }
+                },
+                cookies: self.req.cookies
             });
         }
 

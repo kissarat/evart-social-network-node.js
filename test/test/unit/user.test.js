@@ -17,10 +17,6 @@ function post(uri) {
         .set('Accept', 'application/json')
 }
 
-function cookies(user) {
-    return qs.stringify(user.cookies, '; ');
-}
-
 function sortUsers(users) {
     return users.sort((a, b) => a.domain.localeCompare(b.domain));
 }
@@ -176,7 +172,7 @@ function follow(user, targets) {
     });
 }
 
-var users = [];
+global.users = [];
 describe('registration', function () {
     for (var i = 0; i < 20; i++) {
         users.push(registration());
