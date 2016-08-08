@@ -207,7 +207,7 @@ function Service() {
     };
 
     this.on('login', function () {
-        if (!$.cookie('remixlang')) {
+        if (!this.getCookie('remixlang')) {
             App.language = _this.user.lang;
         }
     });
@@ -219,6 +219,11 @@ if (self.Marionette) {
 
 _.extend(Service.prototype, {
     cidPrefix: 'app',
+
+    getCookie: function (name) {
+        name = name + '=([^;]+)';
+        return new RegExp(name).exec(document.cookie)[1];
+    },
 
     debug: {
         trace: function () {
@@ -241,7 +246,7 @@ _.extend(Service.prototype, {
         }
     },
 
-    cookie: function (name, value) {
+    setCookie: function (name, value) {
         document.cookie = name + '=' + value + '; path=/; expires=' + this.config.cookie.future;
     },
 
@@ -352,14 +357,14 @@ _.extend(Service.prototype, {
     },
 
     get language() {
-        return $.cookie('lang');
+        return this.getCookie('lang');
     },
 
     set language(value) {
-        $.cookie('lang', value);
+        this.getCookie('lang', value);
         var lang = _.find(Languages, {iso: value});
         if (lang) {
-            this.cookie('remixlang', lang._id);
+            this.setCookie('remixlang', lang._id);
         }
     },
 

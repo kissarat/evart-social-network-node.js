@@ -1,8 +1,9 @@
 'use strict';
+
 const dbname = 'socex-test';
 const dropDatabase = true;
 
-require('../../server/server');
+require('../server/server');
 const qs = require('querystring');
 
 function test(name) {
@@ -13,6 +14,8 @@ global.cookies = function cookies(user) {
     return qs.stringify(user.cookies, '; ');
 };
 
+global.ObjectIDRegex = /[0-9a-f]{24}/;
+
 before(function (done) {
     config.mongo.uri = "mongodb:///tmp/mongodb-27017.sock/" + dbname;
     server.test = true;
@@ -21,7 +24,8 @@ before(function (done) {
 });
 
 test('user');
-test('message');
+// test('list');
+// test('message');
 
 after(function (done) {
     if (dropDatabase) {

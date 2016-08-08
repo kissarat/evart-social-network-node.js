@@ -1,8 +1,5 @@
-.sass-cache/
 blacklist.conf
-jsx/*-compiled*
 sound/
 fonts/
 images/
-easter-*
 lib/

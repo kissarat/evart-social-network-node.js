@@ -1,7 +1,6 @@
 "use strict";
 
 const code = require('../../client/code');
-const ffprobe = require('node-ffprobe');
 const fs = require('fs');
 const hash_md5 = require('md5-file');
 const mmm = require('mmmagic');

@@ -2,7 +2,6 @@
 
 var ObjectID = require('mongodb').ObjectID;
 var ObjectIdSchema = require('mongoose').Schema.Types.ObjectId;
-var crc = require('crc');
 var crypto = require('crypto');
 var config = require('./config.json');
 var code = require('../client/code.json');

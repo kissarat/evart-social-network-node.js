@@ -1,6 +1,6 @@
 'use strict';
 
-var rs = require('randomstring');
+var bandom = require('bandom');
 var mongoose = require('mongoose');
 var ObjectID = require('mongodb').ObjectID;
 var utils = require('../utils');
@@ -157,6 +157,13 @@ var _schema = {
             type: T.ObjectId,
             ref: 'User'
         }
+    ],
+    
+    agents: [
+        {
+            type: T.ObjectId,
+            ref: 'Agent'
+        }
     ]
 };
 
@@ -194,10 +201,7 @@ schema.User.statics.fields = {
 };
 
 schema.User.statics.generateCode = function () {
-    return rs.generate({
-        length: 6,
-        charset: 'numeric'
-    });
+    return bandom.digits(6);
 };
 
 schema.User.statics.search = function search($) {

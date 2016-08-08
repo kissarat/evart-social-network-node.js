@@ -2,7 +2,7 @@
 
 var client = require('../client.json');
 var mongoose = require('mongoose');
-var rs = require('randomstring');
+var bandom = require('bandom');
 var utils = require('../utils');
 var _ = require('underscore');
 
@@ -17,7 +17,7 @@ global.schema.Agent = new mongoose.Schema({
         },
         trim: true,
         "default": function () {
-            return rs.generate(40);
+            return bandom.lettersDigits(40);
         }
     },
 

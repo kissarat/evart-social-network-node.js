@@ -3,29 +3,51 @@
   "version": "1.0.0",
   "description": "",
   "main": "gulp.js",
+  "scripts": {
+    "start": "forever start server/server.js",
+    "stop": "forever stop server/server.js",
+    "dev": "nodemon server/server.js",
+    "test": "mocha"
+  },
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "fs.extra": "*",
-    "gulp": "*",
-    "gulp-coffee": "*",
-    "gulp-sass": "*",
-    "jsdom": "*",
-    "minifier": "*",
-    "underscore": "*",
-    "lodash": "*",
-    "syntax-error": "*"
+    "backbone.marionette": "git+https://github.com/marionettejs/backbone.marionette.git#v3.0.0-pre.4",
+    "backbone.paginator": "^2.*",
+    "backbone.stickit": "^0.*",
+    "backbone.validation": "^0.*",
+    "bandom": "^1.*",
+    "colors": "^1.*",
+    "easyimage": "^2.*",
+    "faker": "^3.*",
+    "font-awesome": "^4.6.3",
+    "forever": "^0.*",
+    "fs.extra": "^1.*",
+    "gulp": "^3.*",
+    "jquery": "^3.*",
+    "jquery-ui-bundle": "^1.*",
+    "jsdom": "^9.*",
+    "lodash": "^4.*",
+    "md5-file": "^2.*",
+    "mime": "^1.*",
+    "minifier": "^0.*",
+    "mmmagic": "^0.*",
+    "moment": "^2.*",
+    "mongodb": "^2.*",
+    "mongoose": "^4.*",
+    "mongoose-unique-validator": "^1.*",
+    "request": "^2.*",
+    "twilio": "^2.*",
+    "underscore": "^1.*",
+    "ws": "^1.*"
   },
   "devDependencies": {
-    "babel-plugin-transform-class-properties": "*",
-    "babel-plugin-transform-object-assign": "*",
-    "babel-plugin-transform-object-rest-spread": "*",
-    "babel-preset-es2015": "*",
-    "babel-preset-react": "*"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "chai": "^3.*",
+    "faker": "git+https://github.com/kissarat/faker.js.git#sentences",
+    "mocha": "^3.*",
+    "nodemon": "^1.*",
+    "syntax-error": "^1.*"
   },
   "repository": {
     "type": "git",
