@@ -1,8 +1,6 @@
 "use strict";
 
 var gulp = require('gulp');
-var sass = require('gulp-sass');
-var coffee = require('gulp-coffee');
 var jsdom = (require('jsdom')).jsdom;
 var fs = require('fs');
 var _ = require('underscore');
@@ -105,7 +103,7 @@ gulp.task('app', function () {
     fse.copyRecursive('client/sound', 'app/sound', Function());
     fse.copyRecursive('client/pages', 'app/pages', Function());
     fse.copyRecursive('client/svg', 'app/svg', Function());
-    fse.copyRecursive('client/lib/components-font-awesome/fonts', 'app/fonts', Function());
+    fse.copyRecursive('client/lib/font-awesome/fonts', 'app/fonts', Function());
 });
 
 gulp.task('minify', function () {
