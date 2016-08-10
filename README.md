@@ -1,7 +1,11 @@
 # Evart Social Network
 ## Требования
+Выделенный сервер
+* Linux или FreeBSD (используеться /dev/random и libmagic)
+* Nginx
 * Node.js 4
-* MongoDB 3.2 (используеться повсюду $lookup)
+* MongoDB 3.2 (используеться $lookup)
+
 ## Установка
 Работает на Mac OS X (рабочая ОС), Debian, FreeBSD. Весь процесс установки можно прочитать в vagrant.sh .
 В Vagrant не запускаеться из-за проблем с vboxsf .
@@ -14,6 +18,7 @@ bash build.sh
 ```
 
 gulpfile.js - собирает клиент на основании client/index.html и сохраняет в папку app
+
 ## Структура
 ### client - Клиенский код
 
