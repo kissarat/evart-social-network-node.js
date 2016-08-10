@@ -52,7 +52,7 @@ function cleanupSocket() {
 cleanupSocket();
 
 global.schema = {};
-
+// Creating models from schemas
 fs.readdirSync(__dirname + '/modules').forEach(function (file) {
     const match = /^(\w+)\.js$/.exec(file);
     if (match) {

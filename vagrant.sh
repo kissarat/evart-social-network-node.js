@@ -43,7 +43,7 @@ sudo mount /usr/local/site/socex
 mkdir -p /usr/local/site/socex-dep
 sudo mount /usr/local/site/socex/node_modules
 sudo rm /etc/nginx/nginx.conf
-sudo ln /vagrant/server/nginx/config/darwin.conf /etc/nginx/nginx.conf
+sudo ln /vagrant/server/nginx/config/debian.conf /etc/nginx/nginx.conf
 sudo service nginx restart
 cd /usr/local/site/socex
 ./build.sh

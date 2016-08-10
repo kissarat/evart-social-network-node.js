@@ -4,8 +4,8 @@
 
 var http = require('http');
 var fs = require('fs');
-var blacklist_filename = __dirname + '/../client/blacklist.conf';
-var socket_filename = '/tmp/socex-ban.sock';
+var blacklist_filename = __dirname + '/nginx/config/blacklist.conf';
+var socket_filename = '/var/run/socex-ban.sock';
 // var blacklist = [];
 var blacklist_file = fs.openSync(blacklist_filename, 'w');
 var not_found = fs.readFileSync(__dirname + '/../client/pages/404.html');
