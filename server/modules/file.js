@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 const code = require('../../client/code');
 const fs = require('fs');
@@ -20,13 +20,13 @@ const schema = {
     time: {
         type: Date,
         required: true,
-        "default": Date.now
+        'default': Date.now
     },
 
     created: {
         type: Date,
         required: true,
-        "default": Date.now
+        'default': Date.now
     },
 
     owner: {
@@ -49,7 +49,7 @@ const schema = {
 
     type: {
         type: String,
-        "default": 'file',
+        'default': 'file',
         required: true
     },
 
@@ -88,15 +88,15 @@ module.exports = {
 
     _before: function ($) {
         if ($.isUpdate && $.has('owner_id')) {
-            return $.canManage($.get('owner_id'))
+            return $.canManage($.get('owner_id'));
         }
         return true;
     },
 
     POST: function ($) {
-        var owner_id = $.get('owner_id', $.user._id);
-        var name = $.req.headers.name;
-        var ext;
+        const owner_id = $.get('owner_id', $.user._id);
+        let name = $.req.headers.name;
+        let ext;
         if (name) {
             ext = ext_regex.exec(name);
             if (ext) {
@@ -111,9 +111,9 @@ module.exports = {
             $.invalid('name');
         }
         name = name.replace(/[\\:;\/]/g, '.').replace(/\s+/g, ' ').trim();
-        var id = $.isAdmin && $.has('id') ? $.get('id') : utils.id12('File');
-        var id_filename = static_dir + '/id/' + id + '.' + ext;
-        var stream = fs.createWriteStream(id_filename, {
+        const id = $.isAdmin && $.has('id') ? $.get('id') : utils.id12('File');
+        const id_filename = static_dir + '/id/' + id + '.' + ext;
+        const stream = fs.createWriteStream(id_filename, {
             flags: 'w',
             mode: parseInt('644', 8),
             autoClose: true
@@ -122,13 +122,13 @@ module.exports = {
             $.req.on('end', function () {
                 magic.detectFile(id_filename, $.wrap(function (mime) {
                     mime = mime.replace('; charset=binary', '');
-                    var filetype = constants.filetypes[mime];
-                    var type = constants.mimes[mime];
+                    const filetype = constants.filetypes[mime];
+                    const type = constants.mimes[mime];
                     if (type && type.ext && type.ext.indexOf(ext) < 0) {
                         ext = type.ext[0];
                     }
                     hash_md5(id_filename, $.wrap(function (md5) {
-                        var data = {
+                        const data = {
                             _id: id,
                             name: name,
                             owner: owner_id,
@@ -140,9 +140,9 @@ module.exports = {
                         if ($.has('album_id')) {
                             data.album = $.get('album_id');
                         }
-                        var md5_filename = path.join(md5_dir, md5 + '.' + ext);
+                        const md5_filename = path.join(md5_dir, md5 + '.' + ext);
                         fs.stat(md5_filename, function (err, stat) {
-                            var exists = true;
+                            let exists = true;
                             if (err) {
                                 exists = 'ENOENT' !== err.code;
                                 if (exists) {
@@ -157,7 +157,7 @@ module.exports = {
                                     else {
                                         new File(data).save().then(resolve, reject);
                                     }
-                                }
+                                };
                             }
 
                             if (exists) {
@@ -172,7 +172,7 @@ module.exports = {
                 }));
             });
             $.req.pipe(stream, {end: true});
-        })
+        });
     },
 
     PATCH: function ($) {
@@ -190,7 +190,7 @@ module.exports = {
 
     GET: function ($) {
         if ($.has('id')) {
-            let where = {_id: $.get('id')};
+            const where = {_id: $.get('id')};
             if ($.req.headers.accept.indexOf('json') > 0) {
                 return {
                     single: true,
@@ -198,7 +198,6 @@ module.exports = {
                 };
             }
             else {
-                let id = where._id.toString();
                 File.findOne(where, $.wrap(function (file) {
                     if (file) {
                         $.sendStatus(code.MOVED_TEMPORARILY, {
@@ -207,13 +206,13 @@ module.exports = {
                         });
                     }
                     else {
-                        $.sendStatus(code.NOT_FOUND)
+                        $.sendStatus(code.NOT_FOUND);
                     }
                 }));
             }
         }
         else {
-            let where = {};
+            const where = {};
             if ($.has('owner_id')) {
                 where.owner = $.get('owner_id');
             }
@@ -225,7 +224,7 @@ module.exports = {
             }
             return {
                 query: where
-            }
+            };
         }
     },
 

@@ -2,5 +2,5 @@
 
 rm -r .vagrant
 rm -r app
-rm -r test/node_modules
+rm client/lib
 rm -r node_modules

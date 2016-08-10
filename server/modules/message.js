@@ -1,14 +1,14 @@
 'use strict';
 
-var _ = require('underscore');
-var code = require(__dirname + '/../../client/code.json');
-var mongoose = require('mongoose');
-var ObjectID = require('mongodb').ObjectID;
-var utils = require('../utils');
+const _ = require('underscore');
+const code = require(__dirname + '/../../client/code.json');
+const mongoose = require('mongoose');
+const ObjectID = require('mongodb').ObjectID;
+const utils = require('../utils');
 
-var T = mongoose.Schema.Types;
+const T = mongoose.Schema.Types;
 
-var MessageType = {
+const MessageType = {
     DIALOG: 'dialog',
     WALL: 'wall',
     PHOTO: 'photo',
@@ -17,7 +17,7 @@ var MessageType = {
     CHAT: 'chat'
 };
 
-var _schema = {
+const _schema = {
     _id: utils.idType('Message'),
 
     type: {
@@ -69,7 +69,7 @@ var _schema = {
         {
             type: T.ObjectId,
             ref: 'User',
-            "default": null
+            'default': null
         }
     ],
 
@@ -77,7 +77,7 @@ var _schema = {
         {
             type: T.ObjectId,
             ref: 'User',
-            "default": null
+            'default': null
         }
     ],
 
@@ -90,14 +90,14 @@ var _schema = {
         {
             type: T.ObjectId,
             ref: 'File',
-            "default": null
+            'default': null
         }
     ],
 
     time: {
         type: Date,
         required: true,
-        "default": Date.now,
+        'default': Date.now,
         index: {
             unique: false
         }
@@ -105,7 +105,7 @@ var _schema = {
 
     unread: {
         type: Number,
-        "default": 1,
+        'default': 1,
         index: {
             unique: false,
             partialFilterExpression: {unread: 1}
@@ -122,7 +122,7 @@ var _schema = {
     parent: {
         type: T.ObjectId,
         ref: 'Message',
-        "default": null
+        'default': null
     }
 };
 
@@ -138,254 +138,6 @@ schema.Message.statics.fields = {
     }
 };
 
-module.exports = {
-    _meta: {
-        schema: _schema
-    },
-
-    read, dialogs, chats,
-
-    GET: function ($) {
-        if ($.has('id') && !$.has('type')) {
-            return {
-                single: true,
-                query: {
-                    _id: $.get('id')
-                }
-            }
-        }
-        const ANDs = [];
-        var permission;
-        if ($.has('type')) {
-            ANDs.push({type: $.get('type')})
-        }
-        const me = $.user._id;
-        switch ($.get('type', true)) {
-            case Message.Type.DIALOG:
-                if (!$.has('id') && $.isAdmin) {
-                    break;
-                }
-                var id = $.get('id');
-                ANDs.push({
-                    $or: [{
-                        source: me,
-                        target: id
-                    }, {
-                        source: id,
-                        target: me
-                    }]
-                });
-                if ($.has('since')) {
-                    ANDs.push({
-                        time: {$gte: new Date($.get('since')).toISOString()}
-                    });
-                }
-                break;
-
-            case Message.Type.WALL:
-                if (!$.has('owner_id') && $.isAdmin) {
-                    break;
-                }
-                var owner_id = $.get('owner_id', me);
-                if (!owner_id.equals(me)) {
-                    permission = {
-                        collection: 'user',
-                        deny: {
-                            _id: owner_id,
-                            deny: me
-                        }
-                    };
-                }
-                ANDs.push({owner: owner_id});
-                if ($.has('attitude')) {
-                    let attitude = $.get('attitude');
-                    if (attitude) {
-                        ANDs.push(utils.associate(attitude, me));
-                    }
-                    else {
-                        ANDs.push({'like': {$ne: me}});
-                        ANDs.push({'hate': {$ne: me}});
-                    }
-                }
-                break;
-
-            case Message.Type.COMMENT:
-                ANDs.push({
-                    parent: $.get('id')
-                });
-                break;
-
-            case Message.Type.CHAT:
-                ANDs.push({
-                    chat: $.get('id')
-                });
-                break;
-
-            case 'feed':
-                ANDs.push({
-                    type: Message.Type.WALL,
-                    owner: {$in: $.user.follow.map(id => ObjectID(id))}
-                });
-                break;
-
-            default:
-                if ('admin' != $.user.type) {
-                    return code.BAD_REQUEST;
-                }
-        }
-
-        const aggregate = [];
-        if (ANDs.length > 0) {
-            aggregate.push({
-                $match: {
-                    $and: ANDs
-                }
-            });
-        }
-
-        const lookups = {
-            user: User.fields.project,
-            message: $.select([], Message.fields.select.user, true)
-            // file: $.select([], File.fields.select.user, true)
-        };
-
-        var project = $.select([], Message.fields.select.user, true);
-        _.each(lookups, function (_project, lookup) {
-            $.get(lookup, []).forEach(function (name) {
-                aggregate.push({
-                    $lookup: {
-                        'as': name,
-                        localField: name,
-                        from: lookup,
-                        foreignField: '_id'
-                    }
-                });
-
-                if ('file' !== name) {
-                    aggregate.push({
-                        $unwind: {
-                            path: '$' + name
-                        }
-                    });
-                }
-                project[name] = _project;
-            });
-        });
-        if (!_.isEmpty(project)) {
-            aggregate.push({
-                $project: project
-            });
-        }
-        if (_.isEmpty(permission)) {
-            return {query: aggregate};
-        }
-        return [
-            permission,
-            {
-                limit: true,
-                query: aggregate
-            }
-        ];
-    },
-
-    POST: function ($) {
-        var message = $.allowFields(Message.fields.select.user);
-        message.source = $.user._id;
-        var targets;
-        ['target', 'owner', 'source', 'parent', 'chat'].forEach(function (name) {
-            var value = message[name];
-            if (value) {
-                if (_.isEmpty(value)) {
-                    $.invalid(name);
-                }
-                if (value.attributes) {
-                    value = value.attributes;
-                }
-                message[name] = value._id ? value._id : value;
-            }
-        });
-
-        if (!message.chat) {
-            targets = [];
-            ['target', 'owner'].forEach(function (name) {
-                var id = message[name];
-                if (id) {
-                    targets.push(id)
-                }
-            });
-        }
-        targets = _.uniq(targets);
-        function post(allow, targets) {
-            if (allow) {
-                if (message.files instanceof Array) {
-                    message.files = message.files.map(file => ObjectID(file._id ? file._id : file))
-                }
-                message = new Message(message);
-                message.save($.wrap(function () {
-                    message = message.toObject();
-                    if (message.files && !message.files.length) {
-                        delete message.files;
-                    }
-                    switch (message.type) {
-                        case Message.Type.DIALOG:
-                            delete message.like;
-                            delete message.hate;
-                            delete message.parent;
-                            break;
-
-                        case Message.Type.WALL:
-                            delete message.parent;
-                            break;
-                    }
-                    delete message.v;
-                    $.send(message);
-                    if (!$.param('silent', false)) {
-                        targets.forEach(function (id) {
-                            if (!$.user._id.equals(id)) {
-                                $.notifyOne(id, message);
-                            }
-                        });
-                    }
-                }));
-            }
-            else {
-                $.sendStatus(code.FORBIDDEN);
-            }
-        }
-
-        if (0 === targets.length && ($.has('chat') || $.has('parent'))) {
-            if (message.chat) {
-                Chat.findOne({_id: message.chat}, $.wrap(function (chat) {
-                    if (chat) {
-                        targets = chat.follow.concat(chat.admin);
-                        post(targets.find(target => $.user._id.equals(target)));
-                    }
-                    else {
-                        $.sendStatus(code.NOT_FOUND);
-                    }
-                }))
-            }
-            else {
-                post(1);
-            }
-        }
-        else {
-            $.accessUser(targets).then(post);
-        }
-    },
-
-    DELETE: function ($) {
-        if ('admin' === $.user.type) {
-            return Message.remove({
-                _id: $.id
-            });
-        }
-        else {
-            return code.FORBIDDEN;
-        }
-    }
-};
-
 function read($) {
     if ($.has('id') && $.has('unread')) {
         return [
@@ -394,8 +146,8 @@ function read($) {
         ];
     }
     if ($.has('target_id')) {
-        let you = $.param('target_id');
-        let where = {
+        const you = $.param('target_id');
+        const where = {
             unread: 1,
             source: you,
             target: $.user._id
@@ -418,11 +170,11 @@ function read($) {
                 $.send(result);
                 $.notifyOne(you, result);
             }
-        ]
+        ];
     }
     else {
-        let id = $.user._id;
-        let ANDs = [
+        const id = $.user._id;
+        const ANDs = [
             {unread: 1},
             {
                 $or: [
@@ -432,7 +184,7 @@ function read($) {
             }
         ];
         if ($.has('type')) {
-            ANDs.push({type: $.get('type')})
+            ANDs.push({type: $.get('type')});
         }
         return {
             select: true,
@@ -444,8 +196,8 @@ function read($) {
 }
 
 function chats($) {
-    var id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
-    var aggregate = [{
+    const id = 'admin' === $.user.type ? $.get('id', $.user._id) : $.user._id;
+    const aggregate = [{
         $match: {
             chat: {$exists: true}
         }
@@ -479,23 +231,23 @@ function chats($) {
 
     return {
         query: aggregate
-    }
+    };
 }
 
 function dialogs($) {
-    // var id = $.get('id');
+    // const id = $.get('id');
     // if (!$.isAdmin && !id.equals($.user._id)) {
     //     $.invalid('id', 'You can view your dialogs only');
     // }
-    var id = $.user._id;
-    var OR = [
+    const id = $.user._id;
+    const OR = [
         {admin: id},
         {follow: id}
     ];
     return new Promise(function (resolve, reject) {
         Chat.find({$or: OR}).catch(reject).then(function (chats) {
             chats = chats.map(chat => chat._id);
-            var match = [
+            const match = [
                 {
                     $or: [
                         {type: Message.Type.DIALOG},
@@ -519,7 +271,7 @@ function dialogs($) {
             if ($.has('type')) {
                 match.push({type: $.param('type')});
             }
-            var aggregate = [{
+            const aggregate = [{
                 $match: {$and: match}
             }, {
                 $group: {
@@ -582,7 +334,7 @@ function dialogs($) {
                     preserveNullAndEmptyArrays: true
                 }
             }];
-            var project = {
+            const project = {
                 _id: 1,
                 time: 1,
                 count: 1,
@@ -617,7 +369,7 @@ function dialogs($) {
             }
 
             if ($.has('cut')) {
-                var cut = +$.param('cut');
+                const cut = +$.param('cut');
                 if (cut > 0) {
                     project.text = {$substr: ['$text', 0, $.param('cut')]};
                 }
@@ -634,3 +386,251 @@ function dialogs($) {
         });
     });
 }
+
+module.exports = {
+    _meta: {
+        schema: _schema
+    },
+
+    read, dialogs, chats,
+
+    GET: function ($) {
+        if ($.has('id') && !$.has('type')) {
+            return {
+                single: true,
+                query: {
+                    _id: $.get('id')
+                }
+            };
+        }
+        const ANDs = [];
+        let permission;
+        if ($.has('type')) {
+            ANDs.push({type: $.get('type')});
+        }
+        const me = $.user._id;
+        switch ($.get('type', true)) {
+            case Message.Type.DIALOG:
+                if (!$.has('id') && $.isAdmin) {
+                    break;
+                }
+                const id = $.get('id');
+                ANDs.push({
+                    $or: [{
+                        source: me,
+                        target: id
+                    }, {
+                        source: id,
+                        target: me
+                    }]
+                });
+                if ($.has('since')) {
+                    ANDs.push({
+                        time: {$gte: new Date($.get('since')).toISOString()}
+                    });
+                }
+                break;
+
+            case Message.Type.WALL:
+                if (!$.has('owner_id') && $.isAdmin) {
+                    break;
+                }
+                const owner_id = $.get('owner_id', me);
+                if (!owner_id.equals(me)) {
+                    permission = {
+                        collection: 'user',
+                        deny: {
+                            _id: owner_id,
+                            deny: me
+                        }
+                    };
+                }
+                ANDs.push({owner: owner_id});
+                if ($.has('attitude')) {
+                    const attitude = $.get('attitude');
+                    if (attitude) {
+                        ANDs.push(utils.associate(attitude, me));
+                    }
+                    else {
+                        ANDs.push({'like': {$ne: me}});
+                        ANDs.push({'hate': {$ne: me}});
+                    }
+                }
+                break;
+
+            case Message.Type.COMMENT:
+                ANDs.push({
+                    parent: $.get('id')
+                });
+                break;
+
+            case Message.Type.CHAT:
+                ANDs.push({
+                    chat: $.get('id')
+                });
+                break;
+
+            case 'feed':
+                ANDs.push({
+                    type: Message.Type.WALL,
+                    owner: {$in: $.user.follow.map(id => ObjectID(id))}
+                });
+                break;
+
+            default:
+                if ('admin' != $.user.type) {
+                    return code.BAD_REQUEST;
+                }
+        }
+
+        const aggregate = [];
+        if (ANDs.length > 0) {
+            aggregate.push({
+                $match: {
+                    $and: ANDs
+                }
+            });
+        }
+
+        const lookups = {
+            user: User.fields.project,
+            message: $.select([], Message.fields.select.user, true)
+            // file: $.select([], File.fields.select.user, true)
+        };
+
+        const project = $.select([], Message.fields.select.user, true);
+        _.each(lookups, function (_project, lookup) {
+            $.get(lookup, []).forEach(function (name) {
+                aggregate.push({
+                    $lookup: {
+                        'as': name,
+                        localField: name,
+                        from: lookup,
+                        foreignField: '_id'
+                    }
+                });
+
+                if ('file' !== name) {
+                    aggregate.push({
+                        $unwind: {
+                            path: '$' + name
+                        }
+                    });
+                }
+                project[name] = _project;
+            });
+        });
+        if (!_.isEmpty(project)) {
+            aggregate.push({
+                $project: project
+            });
+        }
+        if (_.isEmpty(permission)) {
+            return {query: aggregate};
+        }
+        return [
+            permission,
+            {
+                limit: true,
+                query: aggregate
+            }
+        ];
+    },
+
+    POST: function ($) {
+        const data = $.allowFields(Message.fields.select.user);
+        data.source = $.user._id;
+        let targets;
+        ['target', 'owner', 'source', 'parent', 'chat'].forEach(function (name) {
+            let value = data[name];
+            if (value) {
+                if (_.isEmpty(value)) {
+                    $.invalid(name);
+                }
+                if (value.attributes) {
+                    value = value.attributes;
+                }
+                data[name] = value._id ? value._id : value;
+            }
+        });
+
+        if (!data.chat) {
+            targets = [];
+            ['target', 'owner'].forEach(function (name) {
+                const id = message[name];
+                if (id) {
+                    targets.push(id);
+                }
+            });
+        }
+        targets = _.uniq(targets);
+        function post(allow, targets) {
+            if (allow) {
+                if (data.files instanceof Array) {
+                    data.files = data.files.map(file => ObjectID(file._id ? file._id : file));
+                }
+                const message = new Message(data);
+                message.save($.wrap(function () {
+                    const data = message.toObject();
+                    if (data.files && !data.files.length) {
+                        delete data.files;
+                    }
+                    switch (data.type) {
+                        case Message.Type.DIALOG:
+                            delete data.like;
+                            delete data.hate;
+                            delete data.parent;
+                            break;
+
+                        case Message.Type.WALL:
+                            delete data.parent;
+                            break;
+                    }
+                    delete data.v;
+                    $.send(data);
+                    if (!$.param('silent', false)) {
+                        targets.forEach(function (id) {
+                            if (!$.user._id.equals(id)) {
+                                $.notifyOne(id, data);
+                            }
+                        });
+                    }
+                }));
+            }
+            else {
+                $.sendStatus(code.FORBIDDEN);
+            }
+        }
+
+        if (0 === targets.length && ($.has('chat') || $.has('parent'))) {
+            if (message.chat) {
+                Chat.findOne({_id: message.chat}, $.wrap(function (chat) {
+                    if (chat) {
+                        targets = chat.follow.concat(chat.admin);
+                        post(targets.find(target => $.user._id.equals(target)));
+                    }
+                    else {
+                        $.sendStatus(code.NOT_FOUND);
+                    }
+                }));
+            }
+            else {
+                post(1);
+            }
+        }
+        else {
+            $.accessUser(targets).then(post);
+        }
+    },
+
+    DELETE: function ($) {
+        if ('admin' === $.user.type) {
+            return Message.remove({
+                _id: $.id
+            });
+        }
+        else {
+            return code.FORBIDDEN;
+        }
+    }
+};

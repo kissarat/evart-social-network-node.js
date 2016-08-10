@@ -12,7 +12,7 @@ var _schema = {
     time: {
         type: Date,
         required: true,
-        "default": Date.now
+        'default': Date.now
     },
     owner: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -55,7 +55,7 @@ function load($) {
                                 reject(r.statusCode, {
                                     url: oembed_url,
                                     message: b
-                                })
+                                });
                             }
                             else {
                                 video = new Video(JSON.parse(b));
@@ -76,12 +76,12 @@ module.exports = {
     _meta: {
         schema: _schema
     },
-    
+
     GET: function ($) {
         if ($.has('owner_id')) {
             return Video.find({owner: $.get('owner_id')});
         }
-        else if ($.has('id')){
+        else if ($.has('id')) {
             return load($);
         }
         else {

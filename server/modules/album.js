@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 const utils = require('../utils');
 const mongoose = require('mongoose');
 
@@ -8,7 +8,7 @@ const schema = {
     time: {
         type: Date,
         required: true,
-        "default": Date.now
+        'default': Date.now
     },
 
     owner: {
@@ -64,7 +64,7 @@ module.exports = {
                 owner_id: $.get('owner_id', $.user._id)
             },
             $set: {name: $.param('name')}
-        }
+        };
     },
 
     DELETE: function ($) {

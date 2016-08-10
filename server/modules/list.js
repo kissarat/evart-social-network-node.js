@@ -1,20 +1,31 @@
 'use strict';
-var ObjectID = require('mongodb').ObjectID;
-var _ = require('underscore');
+const _ = require('underscore');
 
 function valid(name) {
     return _.contains(['friend', 'follower', 'follow', 'chat'], name);
 }
 
+function modify(method) {
+    return function ($) {
+        return User.update({_id: $.user._id}, {
+            [method]: {[$.param('name')]: $.param('target_id')}
+        }).then(function (result) {
+            return {
+                success: !!result.nModified
+            };
+        });
+    };
+}
+
 module.exports = {
     GET: function ($) {
-        var name = $.param('name');
+        const name = $.param('name');
         if (!valid(name)) {
             $.invalid(name);
         }
-        var id = $.has('id') ? $.get('id') : $.user._id;
-        var aggregate;
-        var collection;
+        const id = $.has('id') ? $.get('id') : $.user._id;
+        let aggregate;
+        let collection;
         if ('chat' == name) {
             collection = 'chat';
             aggregate = [{
@@ -90,22 +101,9 @@ module.exports = {
         return {
             collection: collection,
             query: aggregate
-        }
-    }
-    ,
+        };
+    },
 
     POST: modify('$addToSet'),
     DELETE: modify('$pull')
 };
-
-function modify(method) {
-    return function ($) {
-        return User.update({_id: $.user._id}, {
-            [method]: {[$.param('name')]: $.param('target_id')}
-        }).then(function (result) {
-            return {
-                success: !!result.nModified
-            }
-        });
-    }
-}

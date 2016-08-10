@@ -1,6 +1,5 @@
-"use strict";
+'use strict';
 
-const ObjectID = require('mongodb').ObjectID;
 const mongoose = require('mongoose');
 const utils = require('../utils');
 const _ = require('underscore');
@@ -11,13 +10,13 @@ const schema = {
     time: {
         type: Date,
         required: true,
-        "default": Date.now
+        'default': Date.now
     },
 
     created: {
         type: Date,
         required: true,
-        "default": Date.now
+        'default': Date.now
     },
 
     name: utils.StringType(3, 128),
@@ -55,8 +54,8 @@ module.exports = {
     },
 
     GET: function ($) {
-        var aggregate;
-        var single = false;
+        let aggregate;
+        let single = false;
         if ($.has('id')) {
             single = true;
             aggregate = [{
@@ -79,7 +78,7 @@ module.exports = {
             }];
         }
         else if ($.has('member_id')) {
-            let id = $.get('member_id');
+            const id = $.get('member_id');
             aggregate = [{
                 $match: {
                     $or: [
@@ -103,11 +102,11 @@ module.exports = {
             single: single,
             collection: 'chat',
             query: aggregate
-        }
+        };
     },
 
     POST: function ($) {
-        var chat = $.allowFields(Chat.fields.update.user);
+        let chat = $.allowFields(Chat.fields.update.user);
         if (!chat.admin) {
             chat.admin = [$.user._id];
         }
@@ -116,7 +115,7 @@ module.exports = {
     },
 
     PUT: function ($) {
-        var name = $.param('name');
+        const name = $.param('name');
         Chat.findOne({_id: $.param('id')}, $.wrap(function (chat) {
             if (_.find(chat.admin, $.user._id, (a, b) => a.equals(b))) {
                 chat.name = name;
@@ -129,7 +128,7 @@ module.exports = {
     },
 
     DELETE: function ($) {
-        var id = $.get('id');
+        const id = $.get('id');
         if ($.isAdmin) {
             Message.remove({chat: id}).exec($.answer);
         }

@@ -1,15 +1,14 @@
 'use strict';
 
-var bandom = require('bandom');
-var mongoose = require('mongoose');
-var ObjectID = require('mongodb').ObjectID;
-var utils = require('../utils');
-var errors = require('../errors');
-var _ = require('underscore');
+const bandom = require('bandom');
+const mongoose = require('mongoose');
+const ObjectID = require('mongodb').ObjectID;
+const utils = require('../utils');
+const _ = require('underscore');
 
-var T = mongoose.Schema.Types;
+const T = mongoose.Schema.Types;
 
-var _schema = {
+const _schema = {
     _id: utils.idType('User'),
 
     phone: {
@@ -36,8 +35,8 @@ var _schema = {
 
     type: {
         type: String,
-        "enum": ['user', 'group', 'admin'],
-        "default": "user",
+        'enum': ['user', 'group', 'admin'],
+        'default': 'user',
         index: {
             unique: false
         }
@@ -45,13 +44,13 @@ var _schema = {
 
     lang: {
         type: String,
-        "enum": ['en', 'ru']
+        'enum': ['en', 'ru']
     },
 
     sex: {
         type: String,
-        "enum": ["male", "female"],
-        "default": "male"
+        'enum': ['male', 'female'],
+        'default': 'male'
     },
 
     avatar: {
@@ -61,7 +60,7 @@ var _schema = {
 
     online: {
         type: Date,
-        "default": Date.now
+        'default': Date.now
     },
 
     background: {
@@ -81,12 +80,12 @@ var _schema = {
 
     created: {
         type: Date,
-        "default": Date.now
+        'default': Date.now
     },
 
     time: {
         type: Date,
-        "default": Date.now
+        'default': Date.now
     },
 
     skype: {
@@ -101,13 +100,13 @@ var _schema = {
 
     country: {
         type: String,
-        "enum": ["AF", "AL", "DZ", "AD", "AO", "AI", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BA", "BW", "BR", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CO", "KM", "CK", "CR", "HR", "CU", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "ET", "FO", "FJ", "FI", "FR", "GF", "PF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HN", "HK", "HU", "IS", "IN", "ID", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KW", "KG", "LV", "LB", "LS", "LR", "LI", "LT", "LU", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "MX", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MP", "NO", "OM", "PK", "PW", "PA", "PG", "PY", "PE", "PH", "PL", "PT", "PR", "QA", "RO", "RU", "RW", "RE", "WS", "SM", "SA", "SN", "RS", "SC", "SL", "SG", "SK", "SI", "SB", "SO", "ZA", "ES", "LK", "SD", "SR", "SJ", "SZ", "SE", "CH", "TJ", "TH", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "UY", "UZ", "VU", "WF", "YE", "ZM", "ZW"],
-        "default": "RU"
+        'enum': ['AF', 'AL', 'DZ', 'AD', 'AO', 'AI', 'AG', 'AR', 'AM', 'AW', 'AU', 'AT', 'AZ', 'BS', 'BH', 'BD', 'BB', 'BY', 'BE', 'BZ', 'BJ', 'BM', 'BT', 'BA', 'BW', 'BR', 'BG', 'BF', 'BI', 'KH', 'CM', 'CA', 'CV', 'KY', 'CF', 'TD', 'CL', 'CN', 'CO', 'KM', 'CK', 'CR', 'HR', 'CU', 'CY', 'CZ', 'DK', 'DJ', 'DM', 'DO', 'EC', 'EG', 'SV', 'GQ', 'ER', 'EE', 'ET', 'FO', 'FJ', 'FI', 'FR', 'GF', 'PF', 'GA', 'GM', 'GE', 'DE', 'GH', 'GI', 'GR', 'GL', 'GD', 'GP', 'GU', 'GT', 'GG', 'GN', 'GW', 'GY', 'HT', 'HN', 'HK', 'HU', 'IS', 'IN', 'ID', 'IQ', 'IE', 'IM', 'IL', 'IT', 'JM', 'JP', 'JE', 'JO', 'KZ', 'KE', 'KI', 'KW', 'KG', 'LV', 'LB', 'LS', 'LR', 'LI', 'LT', 'LU', 'MG', 'MW', 'MY', 'MV', 'ML', 'MT', 'MH', 'MQ', 'MR', 'MU', 'MX', 'MC', 'MN', 'ME', 'MS', 'MA', 'MZ', 'MM', 'NA', 'NR', 'NP', 'NL', 'NC', 'NZ', 'NI', 'NE', 'NG', 'NU', 'NF', 'MP', 'NO', 'OM', 'PK', 'PW', 'PA', 'PG', 'PY', 'PE', 'PH', 'PL', 'PT', 'PR', 'QA', 'RO', 'RU', 'RW', 'RE', 'WS', 'SM', 'SA', 'SN', 'RS', 'SC', 'SL', 'SG', 'SK', 'SI', 'SB', 'SO', 'ZA', 'ES', 'LK', 'SD', 'SR', 'SJ', 'SZ', 'SE', 'CH', 'TJ', 'TH', 'TG', 'TK', 'TO', 'TT', 'TN', 'TR', 'TM', 'TC', 'TV', 'UG', 'UA', 'AE', 'GB', 'UY', 'UZ', 'VU', 'WF', 'YE', 'ZM', 'ZW'],
+        'default': 'RU'
     },
 
     relationship: {
         type: String,
-        "enum": [null, "single", "in", "engaged", "married", "love", "complex", "search"]
+        'enum': [null, 'single', 'in', 'engaged', 'married', 'love', 'complex', 'search']
     },
 
     code: {
@@ -158,7 +157,7 @@ var _schema = {
             ref: 'User'
         }
     ],
-    
+
     agents: [
         {
             type: T.ObjectId,
@@ -167,7 +166,7 @@ var _schema = {
     ]
 };
 
-var _schema_options = utils.merge(config.mongoose.schema.options, {
+const _schema_options = utils.merge(config.mongoose.schema.options, {
     collection: 'user',
     createAt: 'created'
 });
@@ -176,16 +175,16 @@ global.schema.User = new mongoose.Schema(_schema, _schema_options);
 
 schema.User.statics.fields = {
     select: {
-        user: ["online", "domain", "type", "name", "surname", "forename",
-            "city", "city_id", "country", "address", "phone", "avatar", "birthday", "languages",
-            "relationship", "tiles", "lang", "avatar", "background", "admin"]
+        user: ['online', 'domain', 'type', 'name', 'surname', 'forename',
+            'city', 'city_id', 'country', 'address', 'phone', 'avatar', 'birthday', 'languages',
+            'relationship', 'tiles', 'lang', 'avatar', 'background', 'admin']
     },
 
     update: {
-        user: ["online", "name", "surname", "forename", "city", "city_id", "country",
-            "address", "phone", "password", "avatar", "name", "birthday", "languages", "relationship",
-            "lang", "background", "tiles"],
-        group: ["domain", "name", "about", "avatar"],
+        user: ['online', 'name', 'surname', 'forename', 'city', 'city_id', 'country',
+            'address', 'phone', 'password', 'avatar', 'name', 'birthday', 'languages', 'relationship',
+            'lang', 'background', 'tiles'],
+        group: ['domain', 'name', 'about', 'avatar'],
         admin: ['domain', 'type']
     },
 
@@ -205,12 +204,12 @@ schema.User.statics.generateCode = function () {
 };
 
 schema.User.statics.search = function search($) {
-    var ANDs = [];
+    const ANDs = [];
     if ($.has('q')) {
         var ORs = [];
         var q = $.search;
         ['domain', 'surname', 'forename'].forEach(function (param) {
-            var d = {};
+            const d = {};
             d[param] = {
                 $regex: q
             };
@@ -263,7 +262,7 @@ function responseSMS(cb) {
         else {
             cb(result);
         }
-    }
+    };
 }
 
 module.exports = {
@@ -283,7 +282,7 @@ module.exports = {
         var params = ['id', 'domain'];
         var r = {select: $.select(User.fields.select.user)};
         if ($.hasAny(params)) {
-            let object = $.paramsObject(params);
+            const object = $.paramsObject(params);
             r.single = true;
             r.query = object;
             r = [
@@ -327,22 +326,22 @@ module.exports = {
                         resolve({
                             tiles: user.tiles
                         });
-                    })
+                    });
                 });
             }
             else {
-                let changes = {time: Date.now()};
-                let a = ['avatar', 'background'];
+                const changes = {time: Date.now()};
+                const a = ['avatar', 'background'];
                 for (let i = 0; i < a.length; i++) {
-                    let p = a[i];
-                    let p_id = p + '_id';
+                    const p = a[i];
+                    const p_id = p + '_id';
                     if ($.has(p_id)) {
                         changes[p] = $.param(p_id);
                         User.update(where_me, {$set: changes}).then(resolve, reject);
                         return;
                     }
                 }
-                let fields = a.concat(['tile']).join(', ');
+                const fields = a.concat(['tile']).join(', ');
                 reject(code.BAD_REQUEST, {
                     message: `You can update ${fields} only`
                 });
@@ -352,7 +351,7 @@ module.exports = {
 
     DELETE: function ($) {
         if ($.isAdmin) {
-            return User.remove({_id: $.get('id')})
+            return User.remove({_id: $.get('id')});
         }
     },
 
@@ -375,7 +374,7 @@ module.exports = {
         ];
         User.aggregate(ag).exec($.wrap(function (users) {
             $.send(users);
-        }))
+        }));
     },
 
     informer: function ($) {
@@ -395,7 +394,7 @@ module.exports = {
                     return {
                         type: 'group',
                         _id: {$in: bundle.follows}
-                    }
+                    };
                 }
             },
             followers: {
@@ -436,7 +435,7 @@ module.exports = {
         var queries = [];
         var select = $.select();
         if (_.contains(select, 'friends')) {
-            select.push('followers')
+            select.push('followers');
         }
         if (_.intersection(select, ['groups', 'followers']).length > 0) {
             select.push('follows');
@@ -464,9 +463,9 @@ module.exports = {
                 }
             }
             ['follows', 'followers', 'friends', 'groups'].forEach(function (name) {
-               if (bundle[name] instanceof Array) {
-                   bundle[name] = bundle[name].length;
-               }
+                if (bundle[name] instanceof Array) {
+                    bundle[name] = bundle[name].length;
+                }
             });
             $.send(bundle);
         });
@@ -505,7 +504,7 @@ module.exports = {
                     Agent.findOneAndUpdate(conditions, changes, $.wrap(function (result) {
                         if (result) {
                             result.user = user;
-                            $.send(Agent.extract(result))
+                            $.send(Agent.extract(result));
                         }
                         else {
                             $.sendStatus(code.NOT_FOUND);
@@ -522,11 +521,11 @@ module.exports = {
     },
 
     logout: function ($) {
-        var conditions = {auth: $.req.auth};
-        var changes = {$unset: {user: 1}};
+        const conditions = {auth: $.req.auth};
+        const changes = {$unset: {user: 1}};
         Agent.findOneAndUpdate(conditions, changes, $.wrap(function (result) {
             if (result) {
-                $.send(Agent.extract(result))
+                $.send(Agent.extract(result));
             }
             else {
                 $.sendStatus(code.NOT_FOUND);
@@ -535,12 +534,11 @@ module.exports = {
     },
 
     info: function ($) {
-        var conditions = {
+        const conditions = {
             auth: $.req.auth
         };
         Agent.findOne(conditions).populate('user').exec($.wrap(function (agent) {
-            var result;
-            result = {
+            const result = {
                 found: false
             };
             if (agent) {
@@ -557,8 +555,9 @@ module.exports = {
     },
 
     status: function ($) {
-        var status = $.param('status');
-        status = status.trim().replace(/\s+/g, ' ');
+        const status = $.param('status')
+            .replace(/\s+/g, ' ')
+            .trim();
         return User.update({
             _id: $.id
         }, {
@@ -569,8 +568,8 @@ module.exports = {
     },
 
     exists: function ($) {
-        var conditions = {};
-        var keys = ['domain', 'phone', 'email'];
+        const conditions = {};
+        const keys = ['domain', 'phone', 'email'];
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
             if ($.has(key)) {
@@ -623,7 +622,7 @@ module.exports = {
     code: function ($) {
         if ($.isAdmin) {
             return Agent.find({code: {$exists: true}}, {user: 1, agent: 1})
-                .populate('user', 'domain')
+                .populate('user', 'domain');
         }
         else if ($.isAuthenticated) {
             $.sendStatus(code.FORBIDDEN, 'User is authorized');
@@ -650,10 +649,10 @@ module.exports = {
             });
             return;
         }
-        var phone = $.param('phone');
+        const phone = $.param('phone');
         User.findOne({phone: phone.replace(/[^\d]/g, '')}).exec($.wrap(function (user) {
             var result = {
-              auth: $.agent.auth
+                auth: $.agent.auth
             };
             if (user) {
                 if (Date.now() > user.time.getTime() + config.sms.interval * 1000) {
@@ -664,8 +663,8 @@ module.exports = {
                         result.expires = new Date(user.time.getTime() + config.sms.interval * 1000).toISOString();
                         user.save($.wrap(function () {
                             $.send(result);
-                        }))
-                    })))
+                        }));
+                    })));
                 }
                 else {
                     result.status = 'SENDING';
@@ -677,7 +676,7 @@ module.exports = {
             else {
                 $.sendStatus(code.NOT_FOUND);
             }
-        }))
+        }));
     },
 
     password: function ($) {
@@ -690,7 +689,7 @@ module.exports = {
                 invalid: {
                     [name]: 'invalid'
                 }
-            })
+            });
         }
 
         User.findOne({_id: id}, {hash: 1, code: 1}).exec($.wrap(function (user) {
@@ -720,6 +719,6 @@ module.exports = {
             else {
                 $.sendStatus(code.NOT_FOUND);
             }
-        }))
+        }));
     }
 };

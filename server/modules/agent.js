@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var client = require('../client.json');
 var mongoose = require('mongoose');
@@ -16,7 +16,7 @@ global.schema.Agent = new mongoose.Schema({
             unique: true
         },
         trim: true,
-        "default": function () {
+        'default': function () {
             return bandom.lettersDigits(40);
         }
     },
@@ -24,7 +24,7 @@ global.schema.Agent = new mongoose.Schema({
     start: {
         type: Date,
         required: true,
-        "default": Date.now,
+        'default': Date.now,
         min: new Date('2016-07-01'),
         max: new Date('2020-01-01')
     },
@@ -32,7 +32,7 @@ global.schema.Agent = new mongoose.Schema({
     time: {
         type: Date,
         required: true,
-        "default": Date.now,
+        'default': Date.now,
         min: new Date('2016-07-01'),
         max: new Date('2020-01-01')
     },
@@ -193,8 +193,8 @@ module.exports = {
                     till: till,
                     ip: $.agent.ip
                 });
-            }))
-        }))
+            }));
+        }));
     },
 
     stat: function ($) {
@@ -237,7 +237,7 @@ module.exports = {
     sockets: {
         GET: function ($) {
             if ($.isAdmin) {
-                let sockets = {};
+                const sockets = {};
                 _.each($.server.webSocketServer.subscribers, function(subscriber, user_id) {
                     if (_.isEmpty(subscriber)) {
                         console.error('No sockets found', user_id);
@@ -269,7 +269,7 @@ module.exports = {
                 $.send({
                     sockets: sockets,
                     users: users
-                })
+                });
             }
             else {
                 return code.FORBIDDEN;

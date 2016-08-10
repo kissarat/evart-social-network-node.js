@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
 
-mkdir -p static/id
-mkdir static/md5
-mkdir -p server/nginx/log
-chmod 777 server/nginx/log
-npm update
+SOCEX=/usr/local/site/socex
+cd $SOCEX
+
+if [ ! -x static ]; then
+    mkdir -p static/md5
+    mkdir static/id
+fi
+
+if [ ! -x server/nginx/log ]; then
+    mkdir -p server/nginx/log
+    chmod 777 server/nginx/log
+fi
+
+if [ ! -x client/lib ]; then
+    mkdir node_modules
+    ln -s $SOCEX/node_modules client/lib
+    npm update
+fi
+
 npm run build

@@ -1,14 +1,7 @@
 'use strict';
 
-const chai = require('chai');
-const faker = require('faker/locale/ru');
-const _ = require('lodash');
-const bandom = require('bandom');
-const qs = require('querystring');
-const expect = chai.expect;
-const assert = chai.assert;
-
 describe('follow', function () {
+    return;
     targets.forEach(function (target) {
         it('add ' + user.domain + ' ' + target.domain, function (done) {
             chai.request(server)

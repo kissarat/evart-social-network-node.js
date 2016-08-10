@@ -1,13 +1,5 @@
 'use strict';
 
-const chai = require('chai');
-const faker = require('faker/locale/ru');
-const _ = require('lodash');
-const bandom = require('bandom');
-const qs = require('querystring');
-const expect = chai.expect;
-const assert = chai.assert;
-
 describe('registration', function () {
     const domain = 'user_' + bandom.inc(2);
     var user = {
@@ -22,31 +14,26 @@ describe('registration', function () {
     };
 
     it('agent for user ' + domain, function (done) {
-        chai.request(server)
-            .post('/api/agent')
-            .set('Accept', 'application/json')
-            .send({
-                agent: {
-                    client: {
-                        name: 'test'
-                    },
-                    os: {
-                        name: process.platform
-                    }
+        const data = {
+            agent: {
+                client: {
+                    name: 'test'
+                },
+                os: {
+                    name: process.platform
                 }
-            })
-            .end(function (err, res) {
-                res.shoud.to.have.status(200);
-                const data = JSON.parse(res.text);
-                expect(data).to.have.all.keys(
-                    ['success', '_id', 'auth', 'config', 'headers', 'ip', 'spend']);
-                assert(true === data.success, 'success: false');
-                expect(data._id).to.match(ObjectIDRegex);
-                expect(data.auth).to.match(/\w{40}/);
-                user.cookies.cid = data._id;
-                user.cookies.auth = data.auth;
-                done(err);
-            })
+            }
+        };
+        lviv.post('/api/agent', data).then(function (res) {
+            assert.equal(res.statusCode, code.OK);
+            assert(res.data.success);
+            assert.equal(res.data.headers['content-type'], 'application/json');
+            assert(Agent.validate(res.data));
+            user.cookies.cid = res.data._id;
+            user.cookies.auth = res.data.auth;
+            done();
+        })
+            .catch(done);
     });
 
     it('user ' + domain, function (done) {

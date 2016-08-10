@@ -1,14 +1,5 @@
 'use strict';
 
-const request = require('supertest');
-const chai = require('chai');
-const faker = require('faker/locale/ru');
-const _ = require('lodash');
-const bandom = require('bandom');
-const qs = require('querystring');
-const expect = chai.expect;
-const assert = chai.assert;
-
 global.chats = [];
 var users;
 

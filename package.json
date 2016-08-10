@@ -15,6 +15,7 @@
     "test": "test"
   },
   "dependencies": {
+    "backbone": "^1.*",
     "backbone.marionette": "git+https://github.com/marionettejs/backbone.marionette.git#v3.0.0-pre.4",
     "backbone.paginator": "^2.*",
     "backbone.stickit": "^0.*",
@@ -28,6 +29,7 @@
     "fs.extra": "^1.*",
     "gulp": "^3.*",
     "jquery": "^3.*",
+    "jquery-ui": "^1.*",
     "jquery-ui-bundle": "^1.*",
     "jsdom": "^9.*",
     "lodash": "^4.*",
@@ -42,6 +44,7 @@
     "request": "^2.*",
     "twilio": "^2.*",
     "underscore": "^1.*",
+    "validator": "^5.*",
     "ws": "^1.*"
   },
   "devDependencies": {
@@ -50,7 +53,11 @@
     "lviv": "^0.*",
     "mocha": "^3.*",
     "nodemon": "^1.*",
-    "syntax-error": "^1.*"
+    "syntax-error": "^1.*",
+
+    "codecov": "^1.*",
+    "eslint": "^3.*",
+    "istanbul": "^0.*"
   },
   "repository": {
     "type": "git",

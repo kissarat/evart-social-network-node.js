@@ -8,7 +8,6 @@ var fs = require('fs');
 var http = require('http');
 var mongoose = require('mongoose');
 var mongodb = require('mongodb');
-var utils = require('./utils');
 var twilio = require('twilio');
 
 global.config = require('./config.json');
@@ -18,7 +17,6 @@ global.constants = require('../client/js/data.js');
 var web = require('./labiak/web');
 var socket = require('./labiak/socket');
 var code = require('./code');
-var errors = require('./errors');
 
 process.chdir(__dirname);
 
@@ -41,7 +39,7 @@ function cleanupSocket() {
                 fs.unlinkSync(filename);
             }
             cleanupSocket();
-        })
+        });
     }
 }
 
