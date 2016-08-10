@@ -1,6 +1,7 @@
 'use strict';
 const dbname = 'socex-test';
 const dropDatabase = true;
+const parallel = true;
 
 require('../server/server');
 const qs = require('querystring');
@@ -14,7 +15,7 @@ function test(name) {
 }
 
 global.cookies = function cookies(user) {
-    return qs.stringify(user.cookies || user.agent, '; ');
+    return qs.stringify(user.auth ? user : user.cookies || user.agent, '; ');
 };
 
 _.each(_, function (fn, name) {
@@ -63,14 +64,14 @@ global.queries = {
             size = 15
         }
         return [
-            {
-                $lookup: {
-                    as: 'chat',
-                    localField: 'chat',
-                    from: 'chat',
-                    foreignField: 'admin'
-                }
-            },
+            // {
+            //     $lookup: {
+            //         as: 'chat',
+            //         localField: 'chat',
+            //         from: 'chat',
+            //         foreignField: 'admin'
+            //     }
+            // },
             {
                 $lookup: {
                     as: 'chat',
@@ -79,9 +80,9 @@ global.queries = {
                     foreignField: 'follow'
                 }
             },
-            {
-                $unwind: '$chat'
-            },
+            // {
+            //     $unwind: '$chat'
+            // },
             {
                 $sample: {
                     size: size
@@ -105,18 +106,19 @@ global.queries = {
 };
 
 function queue(done, tasks, executor) {
-    if (tasks.length > 0) {
-        executor(tasks.pop(), function (err) {
-            if (err) {
+    if (parallel) {
+        const count = tasks.length;
+        let i = 0;
+        let done2 = function(err) {
+            if (err || i++ < count) {
                 done(err);
+                done = Function();
             }
-            else {
-                queue(done, tasks, executor);
-            }
-        })
-    }
-    else {
-        done();
+        };
+
+        tasks.forEach(function (task) {
+            setTimeout(executor, Math.random() * count * 5, task, done2);
+        });
     }
 }
 
@@ -144,6 +146,21 @@ global.loadTest = function (collections, taskGenerator, executor) {
     };
 };
 
+
+global.loop = function (cb, array, executor) {
+    var i = array.length;
+    function iterate(err) {
+        if (err || i-- <= 0) {
+            cb(err);
+        }
+        else {
+            executor(array[i], iterate);
+        }
+    }
+    iterate();
+};
+
+/*
 global.loadTestUsers = function (executor) {
     return loadTest(
         {user: queries.user()},
@@ -158,6 +175,7 @@ global.loadTestUsers = function (executor) {
             })
         });
 };
+*/
 
 before(function (done) {
     config.mongo.uri = "mongodb:///var/run/mongodb-27017.sock/" + dbname;

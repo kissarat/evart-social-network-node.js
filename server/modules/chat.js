@@ -118,6 +118,21 @@ module.exports = {
         }));
     },
 
+    PATCH: function ($) {
+        const name = $.param('name');
+        const changes = {
+            ['add' === $.param('action') ? '$addToSet' : '$pull']: {
+                ['follow' === $.param('name') ? 'follow' : 'admin']: $.param('user_id')
+            }
+        };
+        return Chat.findOneAndUpdate({
+            _id: $.param('id'),
+            admin: $.user._id
+        }, changes, {
+            new: true
+        });
+    },
+
     DELETE: function ($) {
         const id = $.get('id');
         if ($.isAdmin) {

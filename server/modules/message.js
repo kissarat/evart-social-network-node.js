@@ -127,7 +127,7 @@ schema.Message.statics.Type = MessageType;
 schema.Message.statics.fields = {
     select: {
         user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files',
-            'video', 'videos', 'text', 'repost', 'parent']
+            'video', 'videos', 'text', 'repost', 'parent', 'chat']
     }
 };
 
@@ -550,7 +550,7 @@ module.exports = {
         if (!data.chat) {
             targets = [];
             ['target', 'owner'].forEach(function (name) {
-                const id = message[name];
+                const id = data[name];
                 if (id) {
                     targets.push(id);
                 }
@@ -591,16 +591,22 @@ module.exports = {
                 }));
             }
             else {
-                $.sendStatus(code.FORBIDDEN);
+                $.send(code.FORBIDDEN, {
+                    data: $.body
+                });
             }
         }
 
         if (0 === targets.length && ($.has('chat') || $.has('parent'))) {
-            if (message.chat) {
-                Chat.findOne({_id: message.chat}, $.wrap(function (chat) {
+            if (data.chat) {
+                Chat.findOne({_id: data.chat}, {follow: 1, admin: 1}, $.wrap(function (chat) {
                     if (chat) {
-                        targets = chat.follow.concat(chat.admin);
-                        post(targets.find(target => $.user._id.equals(target)));
+                        const targets = chat.admin.concat(chat.follow);
+                        // console.log($.user._id, targets);
+                        post(
+                            targets.find(id => id.equals($.user._id)),
+                            targets
+                        );
                     }
                     else {
                         $.sendStatus(code.NOT_FOUND);
@@ -608,7 +614,7 @@ module.exports = {
                 }));
             }
             else {
-                post(1);
+                post(1, targets);
             }
         }
         else {
