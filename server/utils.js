@@ -95,11 +95,6 @@ function idType(name) {
     };
 }
 
-function idTime() {
-    var now = process.hrtime();
-    return Math.round((start_second + now[0]) * 1000000 + now[1] / 1000);
-}
-
 function StringType(max, min) {
     return {
         type: String,
@@ -111,24 +106,24 @@ function StringType(max, min) {
                 value = value.replace(/[\s\xA0]/g, ' ');
             }
             if (!value) {
-                value = null
+                value = null;
             }
             return value;
         }
-    }
+    };
 }
 
 function hash(data) {
     var algorithm = crypto.createHash('sha256');
     data += config.salt;
     algorithm.update(data);
-    return algorithm.digest('base64')
+    return algorithm.digest('base64');
 }
 
 function s(array) {
     return array.map(function (o) {
         return o.toString();
-    })
+    });
 }
 
 function subscribe(prefix, source, target, proto) {
@@ -149,7 +144,7 @@ function subscribe(prefix, source, target, proto) {
             name = name.replace(prefix, '');
             source.on(name, function () {
                 handler.apply(target, arguments);
-            })
+            });
         }
     }
 }
@@ -175,11 +170,11 @@ function receive(readable, call) {
                 resolve(call(data));
             }
             else {
-                resolve(data)
+                resolve(data);
             }
         });
-        readable.on('error', reject)
-    })
+        readable.on('error', reject);
+    });
 }
 
 function equals(a, b) {
@@ -189,7 +184,7 @@ function equals(a, b) {
 function associate(key, value) {
     var object = {};
     object[key] = value;
-    return object
+    return object;
 }
 
 function dumpQuery(q, tab) {

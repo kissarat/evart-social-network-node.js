@@ -1,22 +1,22 @@
 'use strict';
 
-var start = Date.now();
+const start = Date.now();
 
 require('colors');
-var _ = require('underscore');
-var fs = require('fs');
-var http = require('http');
-var mongoose = require('mongoose');
-var mongodb = require('mongodb');
-var twilio = require('twilio');
+const _ = require('underscore');
+const fs = require('fs');
+const http = require('http');
+const mongoose = require('mongoose');
+const mongodb = require('mongodb');
+const twilio = require('twilio');
 
 global.config = require('./config.json');
 global.config.client = require('./client.json');
 global.code = require('../client/code.json');
 global.constants = require('../client/js/data.js');
-var web = require('./labiak/web');
-var socket = require('./labiak/socket');
-var code = require('./code');
+const web = require('./labiak/web');
+const socket = require('./labiak/socket');
+const code = require('./code');
 
 process.chdir(__dirname);
 
@@ -28,11 +28,11 @@ process.argv.forEach(function (arg) {
     }
 });
 
-var modules = {};
-var socketFileNames = [config.file];
+const modules = {};
+const socketFileNames = [config.file];
 
 function cleanupSocket() {
-    var filename = socketFileNames.pop();
+    const filename = socketFileNames.pop();
     if (filename) {
         fs.access(filename, function (err) {
             if (!err) {
@@ -48,9 +48,9 @@ cleanupSocket();
 global.schema = {};
 
 fs.readdirSync(__dirname + '/modules').forEach(function (file) {
-    var match = /^(\w+)\.js$/.exec(file);
+    const match = /^(\w+)\.js$/.exec(file);
     if (match) {
-        let module = match[1];
+        const module = match[1];
         modules[module] = false === config.modules[module]
             ? false
             : require(__dirname + '/modules/' + match[0]);
@@ -58,16 +58,21 @@ fs.readdirSync(__dirname + '/modules').forEach(function (file) {
 });
 
 Object.keys(schema).forEach(function (name) {
-    var current = schema[name];
+    const current = schema[name];
     current.plugin(require('mongoose-unique-validator'));
     global[name] = mongoose.model(name, current);
 });
+
+// @prevent
+// (node:8031) DeprecationWarning: Mongoose: mpromise (mongoose's default promise library) is deprecated,
+// plug in your own promise library instead: http://mongoosejs.com/docs/promises.html
+mongoose.Promise = Promise;
 
 class Server extends require('events') {
     start() {
         this.start = start;
         fs.access(config.mongo.file, fs.R_OK, (err) => {
-            var url = err ? config.mongo.uri : config.mongo.file;
+            const url = err ? config.mongo.uri : config.mongo.file;
             mongodb.MongoClient.connect(url, config.mongo.options, (err, db) => {
                 this.db = db;
                 this.mongoose = mongoose.connect(url, config.mongo.options);
@@ -85,11 +90,11 @@ class Server extends require('events') {
     address() {
         return {
             port: 45536
-        }
+        };
     }
 
     log(type, message) {
-        var spend = Date.now() - this.start;
+        const spend = Date.now() - this.start;
         console.log(message.blue, spend);
     }
 
@@ -97,15 +102,15 @@ class Server extends require('events') {
         this.log('info', 'MongoDB connection opened');
         this.httpServer = http.createServer((req, res) => {
             try {
-                //var methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
-                let $ = this.createContext({req: req, res: res});
+                //const methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
+                const $ = this.createContext({req: req, res: res});
                 if (config.request.methods.indexOf(req.method) < 0) {
                     $.send(code.METHOD_NOT_ALLOWED, {
                         success: false,
                         error: {
                             message: config.request.methods.join(', ') + ' allowed'
                         }
-                    })
+                    });
                 }
                 else if ('/agent' === req.url.original) {
                     $.serve();
@@ -134,7 +139,7 @@ class Server extends require('events') {
     onHttpListening() {
         this.log('info', 'HTTP server connection opened');
         fs.chmodSync(config.file, parseInt('777', 8));
-        var server = new socket.WebSocketServer({
+        const server = new socket.WebSocketServer({
             config: config.socket,
             server: this
         });
@@ -143,8 +148,8 @@ class Server extends require('events') {
     }
 
     callModulesMethod(name) {
-        for (var i in modules) {
-            var module = modules[i];
+        for (const i in modules) {
+            const module = modules[i];
             if (module && name in module && module[name] instanceof Function) {
                 module[name](this);
             }
@@ -175,11 +180,11 @@ class Server extends require('events') {
             to: '+' + phone,
             from: '+' + config.sms.phone,
             body: text
-        }, cb)
+        }, cb);
     }
 
     getDescription(user) {
-        var meta = {
+        const meta = {
             api: config.client.api.name,
             v: config.client.api.version
         };
@@ -194,13 +199,13 @@ class Server extends require('events') {
                         module._meta.schema[key] = field;
                     }
                     if (field instanceof Array) {
-                        field = field[0]
+                        field = field[0];
                     }
                     if (field.type) {
                         field.type = field.type.name;
                     }
                     if (field.match) {
-                        field.match = field.match.toString()
+                        field.match = field.match.toString();
                     }
                 });
                 meta.schema[name] = module._meta;

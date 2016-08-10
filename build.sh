@@ -9,8 +9,8 @@ if [ ! -x static ]; then
 fi
 
 if [ ! -x server/nginx/log ]; then
-    mkdir -p server/nginx/log
-    chmod 777 server/nginx/log
+    mkdir -p server/log
+    chmod 777 server/log
 fi
 
 if [ ! -x client/lib ]; then

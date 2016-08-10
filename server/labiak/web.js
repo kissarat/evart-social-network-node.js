@@ -1,22 +1,22 @@
-"use strict";
-var _ = require('underscore');
-var ObjectID = require('mongodb').ObjectID;
-var qs = require('querystring');
-var web_extension = require('./web_extension');
-var mongoose = require('mongoose');
-var url_parse = require('url').parse;
-var utils = require('../utils');
-var errors = require('../errors');
+'use strict';
+
+const _ = require('underscore');
+const ObjectID = require('mongodb').ObjectID;
+const qs = require('querystring');
+const web_extension = require('./web_extension');
+const mongoose = require('mongoose');
+const url_parse = require('url').parse;
+const errors = require('../errors');
 
 class Context {
     constructor(options) {
-        var self = this;
+        const self = this;
         _.extend(this, options);
-        var now = process.hrtime();
-        var req = options.req;
+        const now = process.hrtime();
+        const req = options.req;
         this.start = now[0] * 1000000000 + now[1];
         this.isCache = req.url.indexOf('/api-cache') == 0;
-        var raw_url = req.url.replace(/^\/(api|cache)?\//, '/');
+        const raw_url = req.url.replace(/^\/(api|cache)?\//, '/');
         // console.log('URL', raw_url);
         req.url = this.parseURL(raw_url);
         this.params = req.url.query;
@@ -24,7 +24,7 @@ class Context {
         req.cookies = {};
         if ('string' == typeof req.headers.cookie) {
             req.headers.cookie.split(/;\s+/).forEach(function (item) {
-                var parts = item.split('=');
+                const parts = item.split('=');
                 req.cookies[parts[0].trim()] = parts[1].trim();
             });
         }
@@ -38,13 +38,13 @@ class Context {
         }
 
         if (req.cookies.last) {
-            let last = parseInt(req.cookies.last);
+            const last = parseInt(req.cookies.last);
             if (!isNaN(last)) {
                 req.last = new Date(last);
             }
         }
 
-        var since = req.headers['if-modified-since'];
+        let since = req.headers['if-modified-since'];
         if (since) {
             since = new Date(since);
             if (isNaN(since)) {
@@ -55,7 +55,7 @@ class Context {
             }
         }
 
-        var geo = req.headers.geo || this.param('geo', false);
+        const geo = req.headers.geo || this.param('geo', false);
         if (geo) {
             try {
                 req.geo = JSON.parse(geo);
@@ -76,13 +76,13 @@ class Context {
         if (!value) {
             value = 'invalid';
         }
-        var obj = {};
+        const obj = {};
         obj[name] = value;
         throw new errors.BadRequest(obj);
     }
 
     wrap(call) {
-        var self = this;
+        const self = this;
         return function (err, result) {
             if (err) {
                 if (err instanceof mongoose.Error.ValidationError) {
@@ -99,14 +99,14 @@ class Context {
             else {
                 call(result);
             }
-        }
+        };
     }
 
     wrapArray(cb) {
-        var self = this;
+        const self = this;
         return self.wrap(function (reader) {
-            reader.toArray(self.wrap(cb))
-        })
+            reader.toArray(self.wrap(cb));
+        });
     }
 
     answer(err, result) {
@@ -159,7 +159,7 @@ class Context {
 
     _param(object, name, defaultValue) {
         if (name in object) {
-            var value = object[name];
+            let value = object[name];
             if (name.length >= 2 && (name.indexOf('id') === name.length - 2) && 'string' === typeof value) {
                 if (!/[\da-f]{24}/i.test(value)) {
                     this.invalid(name, 'ObjectID');
@@ -172,7 +172,7 @@ class Context {
             return value;
         }
         if (undefined !== defaultValue) {
-            return defaultValue
+            return defaultValue;
         }
         this.invalid(name, 'required');
     }
@@ -190,9 +190,9 @@ class Context {
     }
 
     has(name, isGet) {
-        var params = isGet ? this.req.url.query : this.params;
+        const params = isGet ? this.req.url.query : this.params;
         if (name in params) {
-            var value = params[name];
+            const value = params[name];
             if (value instanceof Array) {
                 return value.length > 0;
             }
@@ -202,7 +202,7 @@ class Context {
     }
 
     hasAny(array) {
-        for (var i = 0; i < array.length; i++) {
+        for (let i = 0; i < array.length; i++) {
             if (this.has(array[i])) {
                 return true;
             }
@@ -211,16 +211,16 @@ class Context {
     }
 
     paramsObject(array) {
-        var params = {};
-        for (var i = 0; i < array.length; i++) {
-            var name = array[i];
+        const params = {};
+        for (let i = 0; i < array.length; i++) {
+            const name = array[i];
             if (this.has(name)) {
                 params[name] = this.param(name);
             }
         }
         if (params.id) {
             params._id = params.id;
-            delete params.id
+            delete params.id;
         }
         return params;
     }
@@ -233,22 +233,18 @@ class Context {
     }
 
     merge() {
-        var o = {};
-        for (var i = 0; i < arguments.length; i++) {
-            var a = arguments[i];
-            for (var j in a) {
+        const o = {};
+        for (let i = 0; i < arguments.length; i++) {
+            const a = arguments[i];
+            for (const j in a) {
                 o[j] = a[j];
             }
         }
         return o;
     }
 
-    validate(object) {
-        return true; // schema_validator.validate(object, old_schema);
-    }
-
     getUserAgent() {
-        var agent = {
+        const agent = {
             ip: this.req.connection.remoteAddress
         };
         if (this.req.headers['user-agent']) {
@@ -261,7 +257,7 @@ class Context {
     }
 
     setCookie(name, value, age, path) {
-        var cookie = name + '=' + value;
+        let cookie = name + '=' + value;
         cookie += '; path=' + (path || '/');
         if (age) {
             if (true === age) {
@@ -289,9 +285,9 @@ class Context {
     }
 
     allowFields(user_fields) {
-        var data = {};
-        for (var key in this.body) {
-            let allow = this.isAdmin || user_fields.indexOf(key) >= 0;
+        const data = {};
+        for (const key in this.body) {
+            const allow = this.isAdmin || user_fields.indexOf(key) >= 0;
             if (allow) {
                 data[key] = this.body[key];
             }
@@ -300,15 +296,15 @@ class Context {
     }
 
     get spend() {
-        var now = process.hrtime();
+        let now = process.hrtime();
         now = now[0] * 1000000000 + now[1];
         return (now - this.start) / 1000000;
     }
 
     send() {
-        var self = this;
-        var object;
-        var status = code.OK;
+        const self = this;
+        let object;
+        let status = code.OK;
         if (1 == arguments.length) {
             object = arguments[0];
         }
@@ -334,13 +330,13 @@ class Context {
             }
 
             let data = JSON.stringify(object);
-            let jsonp = config.client.jsonp.enabled && this.get('callback', false);
-            let headers = jsonp
-                ? {
+            const jsonp = config.client.jsonp.enabled && this.get('callback', false);
+            const headers = jsonp ? {
                 'content-type': 'application/javascript; charset=utf-8',
                 'access-control-allow-origin': '*'
-            }
-                : {'content-type': 'application/json; charset=utf-8'};
+            } : {
+                'content-type': 'application/json; charset=utf-8'
+            };
             headers['X-Powered-By'] = 'PHP/7.0';
             headers.author = 'Taras Labiak <kissarat@gmail.com>';
             if (this.res.cookies instanceof Array) {
@@ -361,7 +357,7 @@ class Context {
         }
 
         if (config.request.log && 'GET' != this.req.method) {
-            var record = {
+            const record = {
                 client_id: this.req.client_id,
                 route: this.req.url.route.length > 1 ? this.req.url.route : this.req.url.route[0],
                 method: this.req.method,
@@ -385,7 +381,7 @@ class Context {
     }
 
     authorize(cb) {
-        var self = this;
+        const self = this;
 
         function agent_not_found() {
             self.send(code.UNAUTHORIZED, {
@@ -442,7 +438,7 @@ class Context {
     }
 
     get skip() {
-        var value = 0;
+        let value = 0;
         if (this.has('skip')) {
             value = this.get('skip');
             if (value < 0) {
@@ -457,7 +453,7 @@ class Context {
     }
 
     get limit() {
-        var value = 96;
+        let value = 96;
         if (this.has('limit')) {
             value = this.get('limit');
             if (value > 100000 || value <= 0) {
@@ -469,20 +465,20 @@ class Context {
 
     get order() {
         if (this.has('sort') && this.get('sort')) {
-            var sort = this.get('sort').split('.');
-            var _order = {};
+            const sort = this.get('sort').split('.');
+            const _order = {};
             if (this.has('order')) {
                 _order[sort] = 'a' == this.get('order')[0] ? 1 : -1;
             }
             else {
                 sort.forEach(function (field) {
-                    var direction = 1;
+                    let direction = 1;
                     if ('-' == field[0]) {
                         field = field.slice(1);
                         direction = -1;
                     }
                     _order[field] = direction;
-                })
+                });
             }
             return _order;
         }
@@ -491,7 +487,7 @@ class Context {
 
     get search() {
         if (this.has('q')) {
-            var q = this.get('q');
+            let q = this.get('q');
             q = q ? q.toString().trim().replace(/[\+\s]+/g, '.*').toLowerCase() : '';
             return q ? new RegExp(`.*${q}.*`, 'i') : false;
         }
@@ -503,9 +499,9 @@ class Context {
             array = [];
         }
         if (this.has('select')) {
-            let param = this.get('select').split('.').sort();
+            const param = this.get('select').split('.').sort();
             if (allow) {
-                let allowed_fields = [];
+                const allowed_fields = [];
                 allow.forEach(function (field) {
                     if (param.indexOf(field) >= 0) {
                         allowed_fields.push(field);
@@ -520,7 +516,7 @@ class Context {
         array.push('time');
         array = _.uniq(array);
         if (objectify) {
-            let object = {};
+            const object = {};
             array.forEach(function (name) {
                 name = 'boolean' === typeof objectify ? name : objectify + '.' + name;
                 object[name] = 1;
@@ -537,7 +533,7 @@ class Context {
     }
 
     get bodySize() {
-        var size = this.req.headers ? this.req.headers['content-length'] : 0;
+        const size = this.req.headers ? this.req.headers['content-length'] : 0;
         return size > 0 ? size : 0;
     }
 
@@ -552,7 +548,7 @@ class Context {
     }
 
     get isUpdate() {
-        var m = this.req.method;
+        const m = this.req.method;
         return 'POST' === m || 'PUT' === m || 'PATCH' === m;
     }
 
@@ -565,12 +561,12 @@ class Context {
     }
 
     parseURL(url) {
-        var a = url_parse(url);
+        const a = url_parse(url);
         a.original = url;
         if (a.query) {
             a.query = qs.parse(a.query);
-            for (var i in a.query) {
-                var value = a.query[i];
+            for (const i in a.query) {
+                const value = a.query[i];
                 if (!value) {
                     delete a.query[i];
                 }
@@ -591,9 +587,9 @@ class Context {
     }
 
     inArray(name, array) {
-        var value = this.param(name);
+        const value = this.param(name);
         if (array.indexOf(value) < 0) {
-            this.invalid(name, 'Must be in ' + array.join(', '))
+            this.invalid(name, 'Must be in ' + array.join(', '));
         }
         return value;
     }

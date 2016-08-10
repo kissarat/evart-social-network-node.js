@@ -1,10 +1,33 @@
-"use strict";
+'use strict';
 
-var _ = require('underscore');
-var ws = require('ws');
-var utils = require('../utils');
-var EventEmitter = require('events');
-var ObjectID = require('mongodb').ObjectID;
+const _ = require('underscore');
+const ws = require('ws');
+const EventEmitter = require('events');
+const ObjectID = require('mongodb').ObjectID;
+
+class WebSocket {
+    constructor(options) {
+        _.extend(this, options);
+    }
+
+    send(message) {
+        this.socket.send(JSON.stringify(message));
+    }
+
+    close(message) {
+        const isOpen = this.socket.OPEN === this.socket.readyState;
+        if (!message) {
+            message = {
+                code: code.OK,
+                status: 'OK'
+            };
+        }
+        if (isOpen) {
+            this.socket.close(message.code, JSON.stringify(message));
+        }
+        return isOpen;
+    }
+}
 
 class WebSocketServer extends EventEmitter {
     constructor(options) {
@@ -16,7 +39,7 @@ class WebSocketServer extends EventEmitter {
     }
 
     onConnection(socket) {
-        var $ = this.server.createContext({
+        const $ = this.server.createContext({
             type: 'websocket',
             socket: new WebSocket({
                 // server: this.server,
@@ -37,8 +60,8 @@ class WebSocketServer extends EventEmitter {
     }
 
     subscribe($) {
-        let user_id = $.user._id.toString();
-        let agent_id = $.agent._id.toString();
+        const user_id = $.user._id.toString();
+        const agent_id = $.agent._id.toString();
         let subscriber = this.getSubscribers(user_id);
         if (!subscriber) {
             this.subscribers[user_id] = subscriber = {};
@@ -90,10 +113,10 @@ class WebSocketServer extends EventEmitter {
         if (agent_id instanceof ObjectID) {
             agent_id = agent_id.toString();
         }
-        var subscribers = this.getSubscribers(user_id);
+        const subscribers = this.getSubscribers(user_id);
         if ('string' === typeof agent_id) {
             if (subscribers) {
-                let subscriber = subscribers[agent_id];
+                const subscriber = subscribers[agent_id];
                 if (subscriber) {
                     subscriber.close(message);
                     delete subscribers[agent_id];
@@ -116,32 +139,8 @@ class WebSocketServer extends EventEmitter {
 
     notifyOne(user_id, message) {
         _.each(this.getSubscribers(user_id.toString()), function (context) {
-            context.socket.send(message)
+            context.socket.send(message);
         });
-    }
-}
-
-class WebSocket {
-    constructor(options) {
-        _.extend(this, options);
-    }
-
-    send(message) {
-        this.socket.send(JSON.stringify(message));
-    }
-
-    close(message) {
-        var isOpen = this.socket.OPEN === this.socket.readyState;
-        if (!message) {
-            message = {
-                code: code.OK,
-                status: 'OK'
-            }
-        }
-        if (isOpen) {
-            this.socket.close(message.code, JSON.stringify(message));
-        }
-        return isOpen;
     }
 }
 

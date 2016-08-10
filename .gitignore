@@ -1,7 +1,8 @@
 .DS_Store
-.vagrant/
 .idea/
+.vagrant/
 app/
 node_modules/
-static/
 npm-debug.log
+server/log/
+static/

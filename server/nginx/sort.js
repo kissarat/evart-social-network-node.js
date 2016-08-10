@@ -1,4 +1,6 @@
-"use strict";
+'use strict';
+
+//@TODO Review
 
 var stdin = process.openStdin();
 

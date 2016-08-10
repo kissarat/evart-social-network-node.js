@@ -1,15 +1,15 @@
 'use strict';
 
-var qs = require('querystring');
-var utils = require('../utils');
-var errors = require('../errors');
-var mongoose = require('mongoose');
-var ObjectID = require('mongodb').ObjectID;
-var _ = require('underscore');
+const qs = require('querystring');
+const utils = require('../utils');
+const errors = require('../errors');
+const mongoose = require('mongoose');
+const ObjectID = require('mongodb').ObjectID;
+const _ = require('underscore');
 
 module.exports = {
     processTask: function (task, bundle) {
-        var collection = this.collection(task.collection);
+        const collection = this.collection(task.collection);
         task.isUpdate = task.$set || task.$unset;
         if (true === task.select) {
             task.select = this.select(false, false, true);
@@ -22,7 +22,7 @@ module.exports = {
         }
         if (task.isUpdate) {
             if (!task.$set) {
-                task.$set = {}
+                task.$set = {};
             }
             task.$set.time = new Date();
             return collection.update(task.query, _.pick(task, '$set', '$unset'), task.options);
@@ -34,7 +34,7 @@ module.exports = {
             if (task.select) {
                 task.query.push({$project: task.select});
             }
-            var order = this.order;
+            const order = this.order;
             if (order) {
                 task.query.push({$sort: order});
             }
@@ -58,8 +58,8 @@ module.exports = {
             return this.send(this.server.getDescription(this.user));
         }
 
-        var path = this.req.url.route.slice(0);
-        var last = path[path.length - 1];
+        const path = this.req.url.route.slice(0);
+        const last = path[path.length - 1];
         if (last && /^[a-z0-9]{24}$/.test(last)) {
             this.req.url.query.id = last;
             path.pop();
@@ -68,7 +68,7 @@ module.exports = {
     },
 
     processResult: function (result) {
-        var self = this;
+        const self = this;
         switch (typeof result) {
             case 'object':
                 if (Object === result.constructor) {
@@ -76,14 +76,15 @@ module.exports = {
                         result.limit = true;
                     }
                     result.collection = result.collection || this.req.url.route[0];
-                    let r = this.processTask(result, !config.dev);
+                    const r = this.processTask(result, !config.dev);
                     if ('function' === typeof r.then) {
-                        r.then(function (result) {
+                        r
+                            .then(function (result) {
                                 self.send(result);
-                            },
-                            function (err) {
-                                self.send(code.INTERNAL_SERVER_ERROR, {error: err});
                             })
+                            .catch(function (err) {
+                                self.send(code.INTERNAL_SERVER_ERROR, {error: err});
+                            });
                     }
                     else {
                         r.toArray(function (err, array) {
@@ -107,10 +108,10 @@ module.exports = {
                     }
                 }
                 else if (result instanceof Array) {
-                    let bundle = {};
-                    let tasks = result;
-                    let run = function (result) {
-                        var task = tasks.shift();
+                    const bundle = {};
+                    const tasks = result;
+                    const run = function (result) {
+                        const task = tasks.shift();
                         if ('function' == typeof task) {
                             result = task(result, bundle);
                             if (result) {
@@ -119,14 +120,14 @@ module.exports = {
                         }
                         else if (Object === task.constructor) {
                             task.collection = task.collection || self.req.url.route[0];
-                            let process_task = function (task) {
+                            const process_task = function (task) {
                                 task.collection = task.collection || self.req.url.route[0];
-                                let cursor = self.processTask(task, bundle);
+                                const cursor = self.processTask(task, bundle);
                                 if (task.cursor) {
                                     run(cursor);
                                 }
                                 else {
-                                    let process_result = function (result) {
+                                    const process_result = function (result) {
                                         result = task.single ? result[0] : result;
                                         if (task.pick) {
                                             result = _.pick(result, task.pick);
@@ -155,7 +156,7 @@ module.exports = {
                                     if (cursor.then) {
                                         cursor.then(process_result).catch(function (err) {
                                             self.send(code.INTERNAL_SERVER_ERROR, {error: err});
-                                        })
+                                        });
                                     }
                                     else {
                                         cursor.toArray(self.wrap(process_result));
@@ -163,10 +164,10 @@ module.exports = {
                                 }
                             };
 
-                            var permission = task.allow || task.deny;
+                            const permission = task.allow || task.deny;
                             if (permission) {
                                 self.collection(task.collection).count(permission, self.wrap(function (count) {
-                                    var allow = task.deny || count > 0;
+                                    const allow = task.deny || count > 0;
                                     if (allow) {
                                         process_task(tasks.shift());
                                     }
@@ -175,7 +176,7 @@ module.exports = {
                                             error: permission.error || {
                                                 message: 'Access Deny'
                                             }
-                                        })
+                                        });
                                     }
                                 }));
                             }
@@ -188,7 +189,7 @@ module.exports = {
                 }
                 else if (result instanceof mongoose.Query || result instanceof mongoose.Aggregate) {
                     if ('find' == result.op || result instanceof mongoose.Aggregate) {
-                        let order = this.order;
+                        const order = this.order;
                         if (order) {
                             result.sort(order);
                         }
@@ -209,7 +210,7 @@ module.exports = {
                             }
                             if (r) {
                                 if ('GET' !== self.req.method) {
-                                    let success = [
+                                    const success = [
                                         code.OK,
                                         code.CREATED,
                                         code.ACCEPTED
@@ -241,7 +242,7 @@ module.exports = {
                                 }
                             }
                             else {
-                                let error = {
+                                const error = {
                                     class: r.constructor.name,
                                     message: r.toString()
                                 };
@@ -257,7 +258,7 @@ module.exports = {
                                 }
                                 self.send(code.INTERNAL_SERVER_ERROR, {
                                     error: error
-                                })
+                                });
                             }
                         });
                 }
@@ -287,7 +288,7 @@ module.exports = {
     },
 
     walk: function (object, path) {
-        var route = path.shift() || this.req.method;
+        const route = path.shift() || this.req.method;
         if ('_' === route[0]) {
             this.sendStatus(code.NOT_FOUND);
         }
@@ -311,13 +312,13 @@ module.exports = {
     },
 
     exec: function (action) {
-        var canAnonymous = /^.(agent|user)/.test(this.req.url.original);
+        const canAnonymous = /^.(agent|user)/.test(this.req.url.original);
 
         if (this.isAuthenticated || canAnonymous || this.isCache) {
-            let size = this.bodySize;
+            const size = this.bodySize;
             if (this.isUpdate && 'content-type' in this.req.headers && size > 0) {
-                let mime_name = this.req.headers['content-type'].split(';')[0];
-                let mime = constants.mimes[mime_name];
+                const mime_name = this.req.headers['content-type'].split(';')[0];
+                const mime = constants.mimes[mime_name];
                 if (mime) {
                     if (size > mime.size) {
                         this.sendStatus(code.REQUEST_TOO_LONG, {
@@ -354,7 +355,7 @@ module.exports = {
                 console.error('INVALID_URLENCODED', data);
                 this.send(code.BAD_REQUEST, {
                     error: ex.getMessage()
-                })
+                });
             }
         }
         else if (this.req.headers['content-type'].indexOf('json') > 0 || 'test' == this.req.url.route[0]) {
@@ -362,14 +363,14 @@ module.exports = {
                 data = data.toString('utf8');
                 this.body = JSON.parse(data);
                 this.params = utils.merge(this.params, this.body);
-                for (let key in this.params) {
-                    let value = this.params[key];
+                for (const key in this.params) {
+                    const value = this.params[key];
                     if (value.replace && /[<>"']/.test(value)) {
                         this.params[key] = value
                             .replace(/</g, '&lt;')
                             .replace(/>/g, '&gt;')
-                            .replace(/"([^"]+)"/g, '«$1»')
-                            .replace(/"/g, '&quot;')
+                            .replace(/'([^']+)'/g, '«$1»')
+                            .replace(/'/g, '&quot;')
                             .replace(/'/g, '’');
                     }
                 }
@@ -378,7 +379,7 @@ module.exports = {
                 console.error('INVALID_JSON', data);
                 this.send(code.BAD_REQUEST, {
                     error: ex
-                })
+                });
             }
         }
         else {
@@ -388,17 +389,17 @@ module.exports = {
     },
 
     runAction: function (action) {
-        var self = this;
+        const self = this;
         if (this.isStatic) {
             console.log('\t' + this.req.method + ' ' + this.req.url.original);
             if (this.body) {
                 console.log(this.body);
             }
         }
-        var module = this.module;
-        var _action;
+        const module = this.module;
+        let _action;
         if (module._before) {
-            var promise = module._before(this);
+            const promise = module._before(this);
             if ('Promise' === promise.constructor.name) {
                 _action = function () {
                     promise.then(function (allow) {
@@ -421,8 +422,8 @@ module.exports = {
                             else {
                                 self.send(code.INTERNAL_SERVER_ERROR, err);
                             }
-                        })
-                }
+                        });
+                };
             }
             else if (promise) {
                 _action = function () {
@@ -455,7 +456,7 @@ module.exports = {
                     this.send(ex.code, ex.data);
                 }
                 else {
-                    var error = {
+                    const error = {
                         message: ex.message
                     };
                     if (ex.code) {
@@ -486,7 +487,7 @@ module.exports = {
             else {
                 this.collection('user').count(where, function (err, count) {
                     if (err) {
-                        reject(err)
+                        reject(err);
                     }
                     else {
                         resolve(count);
@@ -499,12 +500,12 @@ module.exports = {
     canManage: function (user_id) {
         return new Promise((resolve, reject) => {
             if (this.isAuthenticated) {
-                let id = this.user._id;
+                const id = this.user._id;
                 if (user_id.equals(id)) {
                     resolve(1);
                 }
                 else {
-                    let where = {
+                    const where = {
                         $and: [
                             {_id: user_id},
                             {
@@ -520,7 +521,7 @@ module.exports = {
                             reject(err);
                         }
                         else {
-                            resolve(count)
+                            resolve(count);
                         }
                     });
                 }

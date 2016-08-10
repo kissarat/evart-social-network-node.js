@@ -2,10 +2,10 @@
 
 set -e
 
-SERVER=/home/ubuntu/www/socex/server
+SERVER=/usr/local/socex/server
 NAME=socex
 PID=/run/$NAME.pid
-LOG=/var/log/socex
+LOG=/usr/local/socex/server/log
 
 start()
 {
@@ -13,12 +13,12 @@ start()
     then
         mkdir $LOG
     fi
-    /usr/local/bin/forever start  --pidFile $PID $SERVER/server.js -o $LOG/output.log -e $LOG/error.log
+    forever start --pidFile $PID $SERVER/server.js -o $LOG/service-output.log -e $LOG/service-error.log
 }
 
 stop()
 {
-    /usr/local/bin/forever stop  --pidFile $PID $SERVER/server.js
+    forever stop  --pidFile $PID $SERVER/server.js
 }
 
 
