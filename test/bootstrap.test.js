@@ -34,7 +34,10 @@ _.each(validator, function (fn, name) {
 });
 
 global.queries = {
-    user: function (size = 5) {
+    user: function (size) {
+        if (!size) {
+            size = 5
+        }
         return [
             {
                 $lookup: {
@@ -55,7 +58,10 @@ global.queries = {
         ]
     },
 
-    chat: function (size = 15) {
+    chat: function (size) {
+        if (!size) {
+            size = 15
+        }
         return [
             {
                 $lookup: {
@@ -84,7 +90,10 @@ global.queries = {
         ]
     },
 
-    sample: function (size = 5) {
+    sample: function (size) {
+        if (!size) {
+            size = 5
+        }
         return [
             {
                 $sample: {
