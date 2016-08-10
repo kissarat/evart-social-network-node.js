@@ -4,6 +4,7 @@
 * MongoDB 3.2 (используеться повсюду $lookup)
 ## Установка
 Работает на Mac OS X (рабочая ОС), Debian, FreeBSD. Весь процесс установки можно прочитать в vagrant.sh .
+В Vagrant не запускаеться из-за проблем с vboxsf .
 Должен быть распакован в папку /usr/local/site/socex .
   Для Debian надо заменить /etc/nginx/nginx.conf файлом server/nginx/nginx.conf и /etc/mongod.conf
   файлом server/mongodb/mongod.conf
