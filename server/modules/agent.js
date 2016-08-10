@@ -1,10 +1,10 @@
 'use strict';
 
-var client = require('../client.json');
-var mongoose = require('mongoose');
-var bandom = require('bandom');
-var utils = require('../utils');
-var _ = require('underscore');
+const client = require('../client.json');
+const mongoose = require('mongoose');
+const randomstring = require('randomstring');
+const utils = require('../utils');
+const _ = require('underscore');
 
 global.schema.Agent = new mongoose.Schema({
     _id: utils.idType('Agent'),
@@ -12,28 +12,22 @@ global.schema.Agent = new mongoose.Schema({
         type: String,
         required: true,
         match: /^\w{40}$/,
+        // minlength: 10,
+        // maxlength: 90,
         index: {
             unique: true
         },
         trim: true,
         'default': function () {
-            return bandom.lettersDigits(40);
+            return randomstring.generate({
+                length: 40,
+                charset: 'alphanumeric'
+            });
         }
     },
 
     start: CreationDateType,
     time: CreationDateType,
-
-    about: {
-        os: {
-            name: utils.StringType(32),
-            version: Number,
-            device: utils.StringType(32),
-            vendor: utils.StringType(32)
-        },
-        name: utils.StringType(32),
-        version: Number
-    },
 
     code: {
         type: String,
@@ -53,17 +47,20 @@ global.schema.Agent = new mongoose.Schema({
     },
     
     os: {
-        name: utils.StringType(3, 32),
-        device: utils.StringType(3, 64),
-        version: utils.StringType(1, 16)
+        name: utils.StringType(32, 3),
+        device: utils.StringType(64, 3),
+        version: utils.StringType(16, 1)
     },
     
     client: {
-        name: utils.StringType(3, 32),
-        version: utils.StringType(1, 16)
+        name: utils.StringType(32, 3),
+        version: utils.StringType(16, 1)
     },
 
-    ip: utils.StringType()
+    ip: {
+        type: String,
+        match: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+    }
 }, {
     collection: 'agent',
     versionKey: false

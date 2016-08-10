@@ -98,7 +98,7 @@ function idType(name) {
 function StringType(max, min) {
     return {
         type: String,
-        minlength: min || 2,
+        minlength: min || 1,
         maxlength: max || 64,
         trim: true,
         set: function (value) {

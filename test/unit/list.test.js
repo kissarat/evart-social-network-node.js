@@ -1,5 +1,10 @@
 'use strict';
 
+const supertest = require('supertest');
+const bandom = require('bandom');
+const faker = require('faker/locale/ru');
+const _ = require('lodash');
+
 describe('follow', function () {
     return;
     targets.forEach(function (target) {

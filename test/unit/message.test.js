@@ -1,5 +1,10 @@
 'use strict';
 
+const supertest = require('supertest');
+const bandom = require('bandom');
+const faker = require('faker/locale/ru');
+const _ = require('lodash');
+
 global.chats = [];
 var users;
 
@@ -15,7 +20,7 @@ describe('chat', function () {
     };
     it('create ' + chat.name, function (done) {
         const user = bandom.choice(users);
-        request(server).post('/api/chat').send(chat)
+        supertest(server).post('/api/chat').send(chat)
             .set('Cookie', cookies(user))
             .expect(200)
             .end(function (err, res) {

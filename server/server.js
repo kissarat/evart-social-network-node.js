@@ -95,7 +95,7 @@ class Server extends require('events') {
 
     address() {
         return {
-            port: 45536
+            port: 8091
         };
     }
 
@@ -219,10 +219,10 @@ class Server extends require('events') {
                     return _.each(field, normalize);
                 }
                 if (!field.type) {
-                    throw new Error('abc' + field.type);
+                    throw new Error('Unknown type');
                 }
-                if (field.match) {
-                    field.match = field.match.toString();
+                if (field.match instanceof RegExp) {
+                    field.match = field.match.toString().slice(1, -1);
                 }
             }
             if (module._meta && module._meta.schema && ('admin' === user.type ? true : config.meta.schema)) {

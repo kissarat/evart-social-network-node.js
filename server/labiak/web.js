@@ -25,7 +25,12 @@ class Context {
         if ('string' == typeof req.headers.cookie) {
             req.headers.cookie.split(/;\s+/).forEach(function (item) {
                 const parts = item.split('=');
-                req.cookies[parts[0].trim()] = parts[1].trim();
+                if (2 === parts.length) {
+                    req.cookies[parts[0].trim()] = parts[1].trim();
+                }
+                else {
+                    console.error('Unknown cookie ' + item)
+                }
             });
         }
 

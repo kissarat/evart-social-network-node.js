@@ -1,6 +1,6 @@
 'use strict';
 
-const bandom = require('bandom');
+const randomstring = require('randomstring');
 const mongoose = require('mongoose');
 const ObjectID = require('mongodb').ObjectID;
 const utils = require('../utils');
@@ -202,7 +202,10 @@ schema.User.statics.fields = {
 };
 
 schema.User.statics.generateCode = function () {
-    return bandom.digits(6);
+    return randomstring.generate({
+        length: 6,
+        charset: 'numeric'
+    });
 };
 
 schema.User.statics.search = function search($) {
@@ -478,8 +481,8 @@ module.exports = {
         if ($.user) {
             $.send(Agent.extract($.agent));
         } else {
-            var conditions = {hash: utils.hash($.post('password'))};
-            var login = $.post('login').replace(/[\(\)\s]/, '');
+            const conditions = {hash: utils.hash($.post('password'))};
+            let login = $.post('login').replace(/[\(\)\s]/, '');
             if (login.indexOf('@') >= 0) {
                 conditions.email = login;
             }
@@ -494,10 +497,10 @@ module.exports = {
             }
             User.findOne(conditions, $.wrap(function (user) {
                 if (user) {
-                    conditions = {
+                    const conditions = {
                         auth: $.req.auth
                     };
-                    var changes = {
+                    const changes = {
                         $set: {
                             user: user._id,
                             time: Date.now()
