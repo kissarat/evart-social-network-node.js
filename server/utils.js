@@ -98,17 +98,11 @@ function idType(name) {
 function StringType(max, min) {
     return {
         type: String,
-        min: min || 2,
-        max: max || 64,
+        minlength: min || 2,
+        maxlength: max || 64,
         trim: true,
         set: function (value) {
-            if (value) {
-                value = value.replace(/[\s\xA0]/g, ' ');
-            }
-            if (!value) {
-                value = null;
-            }
-            return value;
+            return value ? value.replace(/[\s\xA0]/g, ' ') : null;
         }
     };
 }

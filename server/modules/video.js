@@ -1,35 +1,51 @@
-var request = require('request');
-var utils = require('../utils');
-var mongoose = require('mongoose');
-var qs = require('querystring');
+'use strict';
 
-var _schema = {
+const request = require('request');
+const utils = require('../utils');
+const mongoose = require('mongoose');
+const qs = require('querystring');
+
+const _schema = {
     _id: {
         type: String,
         required: true
         // match: /^[_\-\w+]{3,10}$/
     },
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now
-    },
+
+    created: CreationDateType,
+    time: CreationDateType,
+
     owner: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    author_url: String,
-    provider_name: String,
-    version: Number,
-    provider_url: String,
-    author_name: String,
-    thumbnail_url: String,
-    width: Number,
-    height: Number,
-    title: String,
-    thumbnail_width: Number,
-    thumbnail_height: Number,
-    html: String
+    author_url: utils.StringType(),
+    provider_name: utils.StringType(),
+    version: {
+        type: Number,
+        min: 0
+    },
+    provider_url: utils.StringType(),
+    author_name: utils.StringType(),
+    thumbnail_url: utils.StringType(),
+    width: {
+        type: Number,
+        min: 0
+    },
+    height: {
+        type: Number,
+        min: 0
+    },
+    title: utils.StringType(),
+    thumbnail_width: {
+        type: Number,
+        min: 0
+    },
+    thumbnail_height: {
+        type: Number,
+        min: 0
+    },
+    html: utils.StringType()
 };
 
 global.schema.Video = new mongoose.Schema(_schema, utils.merge(config.mongoose.schema.options, {
@@ -37,8 +53,8 @@ global.schema.Video = new mongoose.Schema(_schema, utils.merge(config.mongoose.s
 }));
 
 function load($) {
-    var id = $.id;
-    var oembed_url = 'https://www.youtube.com/oembed?format=json&url='
+    const id = $.id;
+    const oembed_url = 'https://www.youtube.com/oembed?format=json&url='
         + qs.escape('https://www.youtube.com/watch?v=' + id);
     return new Promise(function (resolve, reject) {
         if (oembed_url) {

@@ -11,23 +11,13 @@ const utils = require('../utils');
 
 const magic = new mmm.Magic(mmm.MAGIC_MIME);
 const md5_dir = static_dir + '/md5';
-
 const ext_regex = /\.(\w+)$/;
 
 const schema = {
     _id: utils.idType('File'),
 
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now
-    },
-
-    created: {
-        type: Date,
-        required: true,
-        'default': Date.now
-    },
+    created: CreationDateType,
+    time: CreationDateType,
 
     owner: {
         type: mongoose.Schema.Types.ObjectId,
@@ -36,11 +26,13 @@ const schema = {
     },
 
     md5: {
-        type: String
+        type: String,
+        match: /^[0-9a-f]{32}$/
     },
 
     mime: {
-        type: String
+        type: String,
+        'enum': Object.keys(constants.mimes)
     },
 
     url: {
@@ -58,7 +50,8 @@ const schema = {
     },
 
     ext: {
-        type: String
+        type: String,
+        match: /^\w{2,6}$/
     },
 
     album: {
@@ -66,8 +59,15 @@ const schema = {
         ref: 'Album'
     },
 
-    size: Number,
-    inode: Number
+    size: {
+        type: Number,
+        min: 0
+    },
+    
+    inode: {
+        type: Number,
+        min: 0
+    }
 };
 
 global.schema.File = new mongoose.Schema(schema, utils.merge(config.mongoose.schema.options, {

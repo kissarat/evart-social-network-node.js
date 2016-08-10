@@ -46,7 +46,7 @@
     "interval": 120
   },
   "meta": {
-    "schema": false
+    "schema": true
   },
   "request": {
     "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],

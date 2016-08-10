@@ -26,7 +26,7 @@ _.each(validator, function (fn, name) {
     if (/^is/.test(name)) {
         assert[name] = function () {
             assert(fn.apply(validator, arguments), name);
-        }
+        };
     }
 });
 
@@ -35,7 +35,7 @@ before(function (done) {
         host: 'localhost',
         port: server.address().port
     });
-    config.mongo.uri = "mongodb:///tmp/mongodb-27017.sock/" + dbname;
+    config.mongo.uri = 'mongodb:///tmp/mongodb-27017.sock/' + dbname;
     server.test = true;
     server.on('start', done);
     server.start();
@@ -47,9 +47,7 @@ test('user');
 
 after(function (done) {
     if (dropDatabase) {
-        server.db.dropDatabase(function (err) {
-            done(err);
-        })
+        server.db.dropDatabase(done);
     }
     else {
         done();

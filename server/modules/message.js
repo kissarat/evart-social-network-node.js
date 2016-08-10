@@ -20,6 +20,8 @@ const MessageType = {
 const _schema = {
     _id: utils.idType('Message'),
 
+    time: CreationDateType,
+
     type: {
         type: String,
         enum: _.values(MessageType),
@@ -93,15 +95,6 @@ const _schema = {
             'default': null
         }
     ],
-
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now,
-        index: {
-            unique: false
-        }
-    },
 
     unread: {
         type: Number,

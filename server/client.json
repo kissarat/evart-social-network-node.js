@@ -40,6 +40,8 @@
     "past": "Thu, 01 Jan 1970 00:00:00 GMT",
     "forever": 1000000000000
   },
+  "birthday": "2016-07-22",
+  "death": "2016-11-07",
   "message": {
     "read": {
       "empty": true,

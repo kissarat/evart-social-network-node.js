@@ -8,6 +8,9 @@ const _ = require('underscore');
 const _schema = {
     _id: utils.idType('User'),
 
+    created: CreationDateType,
+    time: CreationDateType,
+
     type: {
         type: String,
         enum: ['follow'],
@@ -31,12 +34,6 @@ const _schema = {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    },
-
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now
     }
 };
 

@@ -11,6 +11,9 @@ const T = mongoose.Schema.Types;
 const _schema = {
     _id: utils.idType('User'),
 
+    created: CreationDateType,
+    time: CreationDateType,
+
     phone: {
         type: String,
         trim: true,
@@ -78,16 +81,6 @@ const _schema = {
         6: {type: T.ObjectId, ref: 'File', default: ObjectID('050000000000000000000006')}
     },
 
-    created: {
-        type: Date,
-        'default': Date.now
-    },
-
-    time: {
-        type: Date,
-        'default': Date.now
-    },
-
     skype: {
         type: String,
         match: /^[a-zA-Z][a-zA-Z0-9\.,\-_]{5,31}$/
@@ -117,11 +110,20 @@ const _schema = {
     surname: utils.StringType(48),
 
     status: utils.StringType(140),
-    city_id: Number,
+    city_id: {
+        type: Number,
+        min: 0
+    },
     city: utils.StringType(),
     address: utils.StringType(128),
     name: utils.StringType(48),
-    birthday: Date,
+    birthday: {
+        type: Date,
+        required: true,
+        'default': Date.now,
+        min: new Date("2010-01-01"),
+        max: new Date(config.client.death)
+    },
     about: utils.StringType(512),
     css: utils.StringType(512),
 

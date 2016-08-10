@@ -7,17 +7,8 @@ const _ = require('underscore');
 const schema = {
     _id: utils.idType('Chat'),
 
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now
-    },
-
-    created: {
-        type: Date,
-        required: true,
-        'default': Date.now
-    },
+    created: CreationDateType,
+    time: CreationDateType,
 
     name: utils.StringType(3, 128),
 

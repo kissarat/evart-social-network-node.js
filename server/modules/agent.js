@@ -21,21 +21,8 @@ global.schema.Agent = new mongoose.Schema({
         }
     },
 
-    start: {
-        type: Date,
-        required: true,
-        'default': Date.now,
-        min: new Date('2016-07-01'),
-        max: new Date('2020-01-01')
-    },
-
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now,
-        min: new Date('2016-07-01'),
-        max: new Date('2020-01-01')
-    },
+    start: CreationDateType,
+    time: CreationDateType,
 
     about: {
         os: {

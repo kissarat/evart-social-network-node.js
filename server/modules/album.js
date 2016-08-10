@@ -5,11 +5,8 @@ const mongoose = require('mongoose');
 const schema = {
     _id: utils.idType('Album'),
 
-    time: {
-        type: Date,
-        required: true,
-        'default': Date.now
-    },
+    start: CreationDateType,
+    time: CreationDateType,
 
     owner: {
         type: mongoose.Schema.Types.ObjectId,

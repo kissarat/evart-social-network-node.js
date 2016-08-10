@@ -10,6 +10,8 @@ const mongoose = require('mongoose');
 const mongodb = require('mongodb');
 const twilio = require('twilio');
 
+process.chdir(__dirname);
+
 global.config = require('./config.json');
 global.config.client = require('./client.json');
 global.code = require('../client/code.json');
@@ -17,8 +19,15 @@ global.constants = require('../client/js/data.js');
 const web = require('./labiak/web');
 const socket = require('./labiak/socket');
 const code = require('./code');
-
-process.chdir(__dirname);
+const modules = {};
+const socketFileNames = [config.file];
+global.CreationDateType = {
+    type: Date,
+    required: true,
+    'default': Date.now,
+    min: new Date(config.client.birthday),
+    max: new Date(config.client.death)
+};
 
 process.argv.forEach(function (arg) {
     switch (arg) {
@@ -27,9 +36,6 @@ process.argv.forEach(function (arg) {
             break;
     }
 });
-
-const modules = {};
-const socketFileNames = [config.file];
 
 function cleanupSocket() {
     const filename = socketFileNames.pop();
@@ -188,26 +194,39 @@ class Server extends require('events') {
             api: config.client.api.name,
             v: config.client.api.version
         };
+
+        const types = {
+            ObjectID: mongoose.Schema.Types.ObjectId,
+            String: String,
+            Number: Number,
+            Boolean: Boolean,
+            Date: Date
+        };
+
         meta.schema = {};
         _.each(modules, function (module, name) {
+            function normalize(field) {
+                if (field instanceof Array) {
+                    field = field[0];
+                }
+                for(const key in types) {
+                    if (types[key] === field.type) {
+                        field.type = key;
+                        break;
+                    }
+                }
+                if ('string' !== typeof field.type) {
+                    return _.each(field, normalize);
+                }
+                if (!field.type) {
+                    throw new Error('abc' + field.type);
+                }
+                if (field.match) {
+                    field.match = field.match.toString();
+                }
+            }
             if (module._meta && module._meta.schema && ('admin' === user.type ? true : config.meta.schema)) {
-                _.each(module._meta.schema, function (field, key) {
-                    if (!(Object === field.constructor)) {
-                        field = {
-                            type: field
-                        };
-                        module._meta.schema[key] = field;
-                    }
-                    if (field instanceof Array) {
-                        field = field[0];
-                    }
-                    if (field.type) {
-                        field.type = field.type.name;
-                    }
-                    if (field.match) {
-                        field.match = field.match.toString();
-                    }
-                });
+                normalize(module._meta.schema);
                 meta.schema[name] = module._meta;
             }
         });
