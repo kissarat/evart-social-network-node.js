@@ -1,12 +1,12 @@
 {
   "dev": false,
-  "file": "/tmp/socex-api.sock",
+  "file": "/var/run/socex-api.sock",
   "socket": {
-    "port": 8080
+    "port": 7777
   },
   "mongo": {
     "uri": "mongodb://localhost:27017/socex",
-    "file": "mongodb://tmp/mongodb-27017.sock/socex",
+    "file": "mongodb://var/run/mongodb-27017.sock/socex",
     "options": {}
   },
   "mongoose": {

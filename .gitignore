@@ -2,7 +2,12 @@
 .idea/
 .vagrant/
 app/
+client/fonts/
+client/images/
+client/sound/
 node_modules/
 npm-debug.log
 server/log/
+server/mongodb/data/
 static/
+utilities/modules/*.js*

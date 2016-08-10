@@ -4,7 +4,7 @@ set -e
 
 SERVER=/usr/local/socex/server
 NAME=socex
-PID=/run/$NAME.pid
+PID=/var/run/$NAME.pid
 LOG=/usr/local/socex/server/log
 
 start()

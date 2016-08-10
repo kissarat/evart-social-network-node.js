@@ -224,7 +224,9 @@ function Application() {
 
             if (!this._config && this.agent && this.agent.config) {
                 var config = this.agent.config;
-                config.socket.address = config.socket.address.replace('{hostname}', location.hostname);
+                if (config.socket.address) {
+                    config.socket.address = config.socket.address.replace('{hostname}', location.host);
+                }
                 config.peer.iceServers = [];
                 config.peer.stun.split(' ').forEach(function (value) {
                     config.peer.iceServers.push(iceServer('stun:', value));

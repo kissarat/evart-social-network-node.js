@@ -12,7 +12,7 @@ Socket.prototype = {
         if (this.socket && WebSocket.OPEN === this.socket.readyState) {
             return;
         }
-        this.socket = new WebSocket(this.address);
+        this.socket = new WebSocket(App.config.socket.address);
         var self = this;
 
         function connect(timeout) {
@@ -23,7 +23,7 @@ Socket.prototype = {
                         self.pull();
                     }, timeout);
                 }
-            }
+            };
         }
         
         register(this.socket, {
