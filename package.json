@@ -15,6 +15,7 @@
     "test": "test"
   },
   "dependencies": {
+    "async": "^2.0.1",
     "backbone": "^1.*",
     "backbone.marionette": "git+https://github.com/marionettejs/backbone.marionette.git#v3.0.0-pre.4",
     "backbone.paginator": "^2.*",

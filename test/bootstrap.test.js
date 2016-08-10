@@ -1,22 +1,29 @@
 'use strict';
-
 const dbname = 'socex-test';
 const dropDatabase = true;
 
 require('../server/server');
 const qs = require('querystring');
 const _ = require('lodash');
-global.validator = require('validator');
+const async = require('async');
 global.assert = require('assert');
-require('chai').use(require('chai-http'));
+global.validator = require('validator');
 
 function test(name) {
     require(__dirname + `/unit/${name}.test`);
 }
 
 global.cookies = function cookies(user) {
-    return qs.stringify(user.cookies, '; ');
+    return qs.stringify(user.cookies || user.agent, '; ');
 };
+
+_.each(_, function (fn, name) {
+    if (/^is/.test(name)) {
+        assert[name] = function () {
+            assert(fn.apply(validator, arguments), name);
+        };
+    }
+});
 
 _.each(validator, function (fn, name) {
     if (/^is/.test(name)) {
@@ -26,59 +33,148 @@ _.each(validator, function (fn, name) {
     }
 });
 
-/*
-const desc = server.getDescription().schema;
+global.queries = {
+    user: function (size = 5) {
+        return [
+            {
+                $lookup: {
+                    as: 'agent',
+                    localField: '_id',
+                    from: 'agent',
+                    foreignField: 'user'
+                }
+            },
+            {
+                $unwind: '$agent'
+            },
+            {
+                $sample: {
+                    size: size
+                }
+            }
+        ]
+    },
 
-_.each(schema, function (schema, name) {
-   function validate(value, schema, name) {
-       if ('string' === typeof schema.type) {
-           var valid = false;
-           switch (schema.type) {
-               case 'String':
-                   valid = 'string' == typeof value;
-                   if (valid && schema.match) {
-                       valid = new RegExp(schema.match).test(value);
-                   }
-                   break;
+    chat: function (size = 15) {
+        return [
+            {
+                $lookup: {
+                    as: 'chat',
+                    localField: 'chat',
+                    from: 'chat',
+                    foreignField: 'admin'
+                }
+            },
+            {
+                $lookup: {
+                    as: 'chat',
+                    localField: 'chat',
+                    from: 'chat',
+                    foreignField: 'follow'
+                }
+            },
+            {
+                $unwind: '$chat'
+            },
+            {
+                $sample: {
+                    size: size
+                }
+            }
+        ]
+    },
 
-               case 'Number':
-                   valid = 'number' == typeof value;
-                   break;
+    sample: function (size = 5) {
+        return [
+            {
+                $sample: {
+                    size: size
+                }
+            }
+        ]
+    }
+};
 
-               case 'ObjectID':
-                   valid = validator.isMongoId(valid);
-                   break;
+function queue(done, tasks, executor) {
+    if (tasks.length > 0) {
+        executor(tasks.pop(), function (err) {
+            if (err) {
+                done(err);
+            }
+            else {
+                queue(done, tasks, executor);
+            }
+        })
+    }
+    else {
+        done();
+    }
+}
 
-               case 'Boolean':
-                   valid = 'boolean' == typeof value;
-                   break;
+global.loadTest = function (collections, taskGenerator, executor) {
+    return function (done) {
+        const series = [];
+        _.each(collections, function (elem, key) {
+            if ('function' === typeof elem) {
+                series.push(elem);
+            }
+            else {
+                series.push(function (done) {
+                    server.db.collection(key)[elem instanceof Array ? 'aggregate' : 'find'](elem, done);
+                })
+            }
+        });
+        async.series(series, function (err, results) {
+            if (err) {
+                done(err);
+            }
+            else {
+                queue(done, taskGenerator(results), executor);
+            }
+        });
+    };
+};
 
-               case 'Date':
-                   valid = validator.isDate(value);
-                   break;
-           }
-           return valid;
-       }
-       else {
-       }
-   }
-});
-*/
+global.loadTestUsers = function (executor) {
+    return loadTest(
+        {user: queries.user()},
+        function (results) {
+            return results[0].map(function (user) {
+                return {
+                    user: user,
+                    chat: {
+                        name: faker.name.title()
+                    }
+                }
+            })
+        });
+};
 
 before(function (done) {
-    config.mongo.uri = 'mongodb:///var/run/mongodb-27017.sock/' + dbname;
+    config.mongo.uri = "mongodb:///var/run/mongodb-27017.sock/" + dbname;
     server.test = true;
     server.on('start', done);
     server.start();
 });
 
+if (!Array.prototype.includes) {
+    Array.prototype.includes = function (a) {
+        return this.indexOf(a) >= 0;
+    }
+}
+
+Array.prototype.isEmpty = function () {
+    return 0 === this.length;
+};
+
 test('user');
-// test('list');
-// test('message');
+test('message');
 
 after(function (done) {
     if (dropDatabase) {
-        server.db.dropDatabase(done);
+        server.db.dropDatabase(function (err) {
+            done(err);
+        })
     }
     else {
         done();

@@ -1,7 +1,7 @@
 {
   "api": {
     "name": "socex",
-    "version": "16.07.29"
+    "version": "16.08.10"
   },
   "jsonp": {
     "enabled": true,

@@ -10,7 +10,7 @@ const schema = {
     created: CreationDateType,
     time: CreationDateType,
 
-    name: utils.StringType(3, 128),
+    name: utils.StringType(128, 3),
 
     admin: [{
         type: mongoose.Schema.Types.ObjectId,

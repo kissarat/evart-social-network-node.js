@@ -1,15 +1,32 @@
 'use strict';
 
 const supertest = require('supertest');
-const bandom = require('bandom');
+const chai = require('chai');
 const faker = require('faker/locale/ru');
 const _ = require('lodash');
+const bandom = require('bandom');
+const qs = require('querystring');
+const expect = chai.expect;
+const assert = chai.assert;
 
-describe('user', function () {
+const ObjectIDRegex = /[0-9a-f]{24}/;
+
+function post(uri) {
+    return supertest(server)
+        .post('/api/' + uri)
+        .set('Accept', 'application/json')
+}
+
+function sortUsers(users) {
+    return users.sort((a, b) => a.domain.localeCompare(b.domain));
+}
+
+function registration() {
     const domain = 'user_' + bandom.inc(2);
     var user = {
         domain: domain,
-        password: bandom.letters(8),
+        // password: bandom.letters(8),
+        password: '1',
         email: domain + '@yopmail.com',
         phone: _.random(123456789, 1234567890123456).toString(),
         surname: faker.name.firstName(),
@@ -18,53 +35,49 @@ describe('user', function () {
     };
 
     it('agent for user ' + domain, function (done) {
-        supertest(server)
-            .post('/api/agent')
-            .set('Accept', 'application/json')
-            .send({
-                agent: {
-                    client: {
-                        name: 'test'
-                    },
-                    os: {
-                        name: process.platform
-                    }
+        post('agent').send({
+            agent: {
+                client: {
+                    name: 'test'
+                },
+                os: {
+                    name: process.platform
                 }
-            })
+            }
+        })
             .expect(200)
             .end(function (err, res) {
                 const data = JSON.parse(res.text);
-                if (!data.success) {
-                    console.error(data);
-                }
-                assert(data.success);
-                assert.equal(data.headers['content-type'], 'application/json');
-                assert.isMongoId(data._id, 'Invalid ID');
-                assert(/\w{40}/.test(data.auth), 'Invalid auth');
+                expect(data).to.have.all.keys(
+                    ['success', '_id', 'auth', 'config', 'headers', 'ip', 'spend']);
+                assert(true === data.success, 'success: false');
+                expect(data._id).to.match(ObjectIDRegex);
+                expect(data.auth).to.match(/\w{40}/);
                 user.cookies.cid = data._id;
                 user.cookies.auth = data.auth;
                 done(err);
-            });
+                if (err) {
+                    reject(err);
+                }
+            })
     });
 
-    it('signup ' + domain, function (done) {
-        supertest(server)
-            .post('/api/agent')
-            .set('Accept', 'application/json')
-            .set('Cookie', cookies(user))
-            .send(user)
+    it('user ' + domain, function (done) {
+        post('user').send(_.omit(user, 'cookies'))
+            .set('content-type', 'application/json')
+            .set('cookie', cookies(user))
+            .expect(200)
             .end(function (err, res) {
                 var data = JSON.parse(res.text);
-                console.error(data);
                 const registering = _.omit(user, 'phone', 'password', 'cookies');
                 const registeringKeys = Object.keys(registering);
                 const allKeys = registeringKeys.concat(['_id', 'country', 'created', 'time', 'tiles', 'sex']);
                 data = _.pick(data, allKeys);
-                assert.strictEqual(Object.keys(data), data);
-                assert.isMongoId(res.data._id, 'Invalid ID');
+                expect(data).to.have.all.keys(allKeys);
+                expect(data._id).to.match(ObjectIDRegex);
                 user._id = data._id;
-                assert.strictEqual(_.pick(data, registeringKeys), registering);
-                assert.strictEqual(data.tiles, {
+                expect(_.pick(data, registeringKeys)).to.be.deep.equal(registering);
+                expect(data.tiles).to.be.deep.equal({
                     '0': '050000000000000000000000',
                     '1': '050000000000000000000001',
                     '2': '050000000000000000000002',
@@ -72,38 +85,39 @@ describe('user', function () {
                     '4': '050000000000000000000004',
                     '5': '050000000000000000000005',
                     '6': '050000000000000000000006'
-                }, 'Invalid tails');
+                });
                 done(err);
+                if (err) {
+                    reject(err);
+                }
             });
     });
 
     it('login ' + domain, function (done) {
-        supertest(server)
-            .post('/api/agent')
-            .set('Accept', 'application/json')
+        post('user/login').send({
+            login: user.domain,
+            password: user.password
+        })
             .set('Cookie', cookies(user))
-            .send({
-                login: user.domain,
-                password: user.password
-            })
             .expect(200)
             .end(function (err, res) {
                 const data = JSON.parse(res.text);
                 assert(true === data.success, 'success: false');
                 done(err);
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(user);
+                }
             });
     });
+    return user;
+}
 
-    it('logout ' + domain, function (done) {
-        supertest(server)
-            .post('/api/agent')
-            .set('Accept', 'application/json')
-            .set('Cookie', cookies(user))
-            .expect(200)
-            .end(function (err, res) {
-                const data = JSON.parse(res.text);
-                assert(true === data.success, 'success: false');
-                done(err);
-            });
-    });
+const users = [];
+describe('registration', function () {
+    for (var i = 0; i < 4; i++) {
+        users.push(registration());
+    }
 });
