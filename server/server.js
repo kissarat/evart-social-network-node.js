@@ -108,7 +108,6 @@ class Server extends require('events') {
         this.log('info', 'MongoDB connection opened');
         this.httpServer = http.createServer((req, res) => {
             try {
-                //const methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"];
                 const $ = this.createContext({req: req, res: res});
                 if (config.request.methods.indexOf(req.method) < 0) {
                     $.send(code.METHOD_NOT_ALLOWED, {

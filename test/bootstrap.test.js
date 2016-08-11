@@ -36,10 +36,7 @@ _.each(validator, function (fn, name) {
 
 global.queries = {
     user: function (size) {
-        if (!size) {
-            size = 5
-        }
-        return [
+        const array = [
             {
                 $lookup: {
                     as: 'agent',
@@ -50,13 +47,16 @@ global.queries = {
             },
             {
                 $unwind: '$agent'
-            },
-            {
+            }
+        ];
+        if (size) {
+            array.push({
                 $sample: {
                     size: size
                 }
-            }
-        ]
+            });
+        }
+        return array;
     },
 
     chat: function (size) {
@@ -109,7 +109,7 @@ function queue(done, tasks, executor) {
     if (parallel) {
         const count = tasks.length;
         let i = 0;
-        let done2 = function(err) {
+        let done2 = function (err) {
             if (err || i++ < count) {
                 done(err);
                 done = Function();
@@ -149,6 +149,7 @@ global.loadTest = function (collections, taskGenerator, executor) {
 
 global.loop = function (cb, array, executor) {
     var i = array.length;
+
     function iterate(err) {
         if (err || i-- <= 0) {
             cb(err);
@@ -157,25 +158,21 @@ global.loop = function (cb, array, executor) {
             executor(array[i], iterate);
         }
     }
+
     iterate();
 };
 
-/*
+
 global.loadTestUsers = function (executor) {
     return loadTest(
         {user: queries.user()},
         function (results) {
-            return results[0].map(function (user) {
-                return {
-                    user: user,
-                    chat: {
-                        name: faker.name.title()
-                    }
-                }
-            })
-        });
+            return results[0];
+        },
+        executor
+    );
 };
-*/
+
 
 before(function (done) {
     config.mongo.uri = "mongodb:///var/run/mongodb-27017.sock/" + dbname;
@@ -195,6 +192,7 @@ Array.prototype.isEmpty = function () {
 };
 
 test('user');
+test('list');
 test('message');
 
 after(function (done) {
