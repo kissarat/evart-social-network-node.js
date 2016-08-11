@@ -29,7 +29,7 @@ class Context {
                     req.cookies[parts[0].trim()] = parts[1].trim();
                 }
                 else {
-                    console.error('Unknown cookie ' + item)
+                    console.error('Unknown cookie ' + item);
                 }
             });
         }

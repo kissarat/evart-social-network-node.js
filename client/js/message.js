@@ -876,7 +876,7 @@ App.module('Message', function (Message, App) {
         onRender: function () {
             App.Views.perfectScrollbar(this.ui.list);
             if ('chat' == this.model.get('type')) {
-                    this.ui.name.parent().removeClass('hidden');
+                this.ui.name.parent().removeClass('hidden');
                 if (this.model.get('admin').indexOf(App.user._id) >= 0) {
                     this.ui.name.prop('disabled', false);
                 }

@@ -1,7 +1,7 @@
 'use strict';
 const dbname = 'socex-test';
 const dropDatabase = true;
-const parallel = true;
+const parallel = 15;
 
 require('../server/server');
 const qs = require('querystring');
@@ -61,7 +61,7 @@ global.queries = {
 
     chat: function (size) {
         if (!size) {
-            size = 15
+            size = 15;
         }
         return [
             // {
@@ -88,12 +88,12 @@ global.queries = {
                     size: size
                 }
             }
-        ]
+        ];
     },
 
     sample: function (size) {
         if (!size) {
-            size = 5
+            size = 5;
         }
         return [
             {
@@ -101,25 +101,63 @@ global.queries = {
                     size: size
                 }
             }
-        ]
+        ];
     }
 };
 
-function queue(done, tasks, executor) {
-    if (parallel) {
-        const count = tasks.length;
-        let i = 0;
-        let done2 = function (err) {
-            if (err || i++ < count) {
-                done(err);
-                done = Function();
-            }
-        };
+function queue(cb, array, executor) {
+    var i = array.length;
 
-        tasks.forEach(function (task) {
-            setTimeout(executor, Math.random() * count * 5, task, done2);
-        });
+    function iterate(err) {
+        if (err || i-- <= 0) {
+            cb(err);
+        }
+        else {
+            executor(array[i], iterate);
+        }
     }
+
+    iterate();
+}
+
+if (parallel >= 0) {
+    global.loop = function (cb, array, executor) {
+        let i = 0;
+        const count = array.length;
+        const timers = {};
+
+        function done2(err) {
+            i++;
+            if ((i >= count) || err) {
+                cb(err);
+                cb = null;
+                _.each(timers, function (fn, timer) {
+                    clearTimeout(timer);
+                    delete timers[timer];
+                });
+            }
+        }
+
+        array.forEach(function (task) {
+            function fn() {
+                if (cb) {
+                    try {
+                        executor(task, done2);
+                    }
+                    catch (ex) {
+                        cb(ex);
+                        cb = null;
+                    }
+                }
+                delete timers[timer];
+            }
+            var timer = setTimeout(fn, Math.random() * count * parallel);
+            timers[timer] = fn;
+        });
+    };
+}
+else {
+    global.loop = queue;
 }
 
 global.loadTest = function (collections, taskGenerator, executor) {
@@ -132,7 +170,7 @@ global.loadTest = function (collections, taskGenerator, executor) {
             else {
                 series.push(function (done) {
                     server.db.collection(key)[elem instanceof Array ? 'aggregate' : 'find'](elem, done);
-                })
+                });
             }
         });
         async.series(series, function (err, results) {
@@ -146,23 +184,6 @@ global.loadTest = function (collections, taskGenerator, executor) {
     };
 };
 
-
-global.loop = function (cb, array, executor) {
-    var i = array.length;
-
-    function iterate(err) {
-        if (err || i-- <= 0) {
-            cb(err);
-        }
-        else {
-            executor(array[i], iterate);
-        }
-    }
-
-    iterate();
-};
-
-
 global.loadTestUsers = function (executor) {
     return loadTest(
         {user: queries.user()},
@@ -175,7 +196,7 @@ global.loadTestUsers = function (executor) {
 
 
 before(function (done) {
-    config.mongo.uri = "mongodb:///var/run/mongodb-27017.sock/" + dbname;
+    config.mongo.uri = 'mongodb:///var/run/mongodb-27017.sock/' + dbname;
     server.test = true;
     server.on('start', done);
     server.start();
@@ -184,7 +205,7 @@ before(function (done) {
 if (!Array.prototype.includes) {
     Array.prototype.includes = function (a) {
         return this.indexOf(a) >= 0;
-    }
+    };
 }
 
 Array.prototype.isEmpty = function () {
@@ -199,7 +220,7 @@ after(function (done) {
     if (dropDatabase) {
         server.db.dropDatabase(function (err) {
             done(err);
-        })
+        });
     }
     else {
         done();
