@@ -7,6 +7,7 @@ require('../server/server');
 const qs = require('querystring');
 const _ = require('lodash');
 const async = require('async');
+const WebSocket = require('ws');
 global.assert = require('assert');
 global.validator = require('validator');
 
@@ -57,51 +58,6 @@ global.queries = {
             });
         }
         return array;
-    },
-
-    chat: function (size) {
-        if (!size) {
-            size = 15;
-        }
-        return [
-            // {
-            //     $lookup: {
-            //         as: 'chat',
-            //         localField: 'chat',
-            //         from: 'chat',
-            //         foreignField: 'admin'
-            //     }
-            // },
-            {
-                $lookup: {
-                    as: 'chat',
-                    localField: 'chat',
-                    from: 'chat',
-                    foreignField: 'follow'
-                }
-            },
-            // {
-            //     $unwind: '$chat'
-            // },
-            {
-                $sample: {
-                    size: size
-                }
-            }
-        ];
-    },
-
-    sample: function (size) {
-        if (!size) {
-            size = 5;
-        }
-        return [
-            {
-                $sample: {
-                    size: size
-                }
-            }
-        ];
     }
 };
 
@@ -151,6 +107,7 @@ if (parallel >= 0) {
                 }
                 delete timers[timer];
             }
+
             var timer = setTimeout(fn, Math.random() * count * parallel);
             timers[timer] = fn;
         });
@@ -207,7 +164,33 @@ global.loadUsers = function (done, cb) {
         {
             $unwind: '$agent'
         })
-        .then(cb)
+        .then(function (users) {
+            const fn = function fn(err) {
+                if (err) {
+                    done(err);
+                }
+                else {
+                    cb(users);
+                }
+            };
+            loop(fn, users, function (user, done) {
+                const websocket = new WebSocket('ws://localhost:8091/socket', null, {
+                    headers: {
+                        cookie: 'auth=' + user.agent.auth
+                    }
+                });
+                websocket.on('open', function () {
+                    user.websocket = websocket;
+                    done();
+                });
+                websocket.on('error', function (err) {
+                    done(err);
+                });
+                websocket.on('close', function () {
+                    console.warn(`Socket ${user.domain} closed`);
+                });
+            });
+        })
         .catch(done);
 };
 

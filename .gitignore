@@ -5,6 +5,7 @@ app/
 client/fonts/
 client/images/
 client/sound/
+coverage/
 node_modules/
 npm-debug.log
 server/log/

@@ -83,7 +83,7 @@ class WebSocketServer extends EventEmitter {
     onMessage(message) {
         message = JSON.parse(message);
         if (message.target_id) {
-            console.log('SOCKET', message);
+            // console.log('SOCKET', message);
             if (!message.source_id) {
                 message.source_id = this.user._id;
             }

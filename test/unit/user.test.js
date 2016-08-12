@@ -6,6 +6,7 @@ const faker = require('faker/locale/ru');
 const _ = require('lodash');
 const bandom = require('bandom');
 const qs = require('querystring');
+const WebSocket = require('ws');
 const expect = chai.expect;
 const assert = chai.assert;
 
@@ -104,6 +105,48 @@ describe('user', function () {
                     assert(true === data.success, 'success: false');
                     done(err);
                 });
+        });
+    });
+
+    it('WebSocket', function (done) {
+        loadUsers(done, function (users) {
+            users.forEach(function (user) {
+                assert(user.websocket, 'Socket does not exists ' + user.domain);
+                assert(user.websocket.readyState, WebSocket.OPEN, 'Socket not opened ' + user.domain);
+            });
+            const length = _.random(2, users.length * 2);
+            const pairs = [];
+            for (let i = 0; i < length; i++) {
+                pairs.push({
+                    sender: _.sample(users),
+                    receiver: _.sample(users)
+                });
+            }
+            loop(done, pairs, function (pair, done) {
+                const string = bandom.read(_.random(1, 12)).toString('binary');
+                pair.receiver.websocket.once('message', function (data) {
+                    data = JSON.parse(data);
+                    assert(data.target_id, pair.receiver._id);
+                    assert(data.type, 'echo');
+                    assert(data.string, string);
+                    data.target_id = pair.sender._id;
+                    data.type = 'log';
+                    pair.receiver.websocket.send(JSON.stringify(data));
+                });
+                pair.sender.websocket.once('message', function (data) {
+                    data = JSON.parse(data);
+                    assert(data.target_id, pair.sender._id);
+                    assert(data.type, 'log');
+                    assert(data.string, string);
+                    done();
+                });
+                const echo = {
+                    target_id: pair.receiver._id,
+                    type: 'echo',
+                    string: string
+                };
+                pair.sender.websocket.send(JSON.stringify(echo));
+            });
         });
     });
 });
