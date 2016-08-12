@@ -45,13 +45,13 @@ global.schema.Agent = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    
+
     os: {
         name: utils.StringType(32, 3),
         device: utils.StringType(64, 3),
         version: utils.StringType(16, 1)
     },
-    
+
     client: {
         name: utils.StringType(32, 3),
         version: utils.StringType(16, 1)
@@ -221,15 +221,7 @@ module.exports = {
     sockets: {
         GET: function ($) {
             if ($.isAdmin) {
-                const sockets = {};
-                _.each($.server.webSocketServer.subscribers, function(subscriber, user_id) {
-                    if (_.isEmpty(subscriber)) {
-                        console.error('No sockets found', user_id);
-                    }
-                    else {
-                        sockets[_.find(subscriber).user.domain] = Object.keys(subscriber);
-                    }
-                });
+                const sockets = $.server.webSocketServer.getList();
                 $.send({
                     users: _.size(sockets),
                     count: _.size($.server.webSocketServer.subscribers),

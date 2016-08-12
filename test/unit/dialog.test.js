@@ -121,5 +121,5 @@ describe('dialog', function () {
         });
     });
     
-    after(closeSockets(users));
+    // after(closeSockets(users));
 });

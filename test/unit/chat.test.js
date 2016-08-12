@@ -78,6 +78,29 @@ describe('chat', function () {
         });
     });
 
+    function sendMessage(insert, done) {
+        const message = {
+            type: 'chat',
+            chat: insert.chat._id,
+            text: faker.lorem.sentences(35)
+        };
+        supertest(server)
+            .post('/api/message')
+            .set('content-type', 'application/json')
+            .set('cookie', cookies(insert.user))
+            .send(message)
+            .expect(200)
+            .end(function (err, res) {
+                const data = JSON.parse(res.text);
+                assert.isMongoId(data._id);
+                assert.equal(data.type, Message.Type.CHAT);
+                assert.equal(data.chat, message.chat);
+                assert.equal(data.text, message.text);
+                assert.isDate(data.time);
+                done(err);
+            });
+    }
+
     it('message', function (done) {
         const inserts = [];
         chats.forEach(function (chat) {
@@ -86,32 +109,66 @@ describe('chat', function () {
             for (let i = 0; i < length; i++) {
                 inserts.push({
                     user: users[bandom.choice(sources)],
-                    message: {
-                        type: 'chat',
-                        chat: chat._id,
-                        text: faker.lorem.sentences(35)
-                    }
+                    chat: chat
                 });
             }
         });
-        loop(done, _.shuffle(inserts), function (insert, done) {
-            supertest(server)
-                .post('/api/message')
-                .set('content-type', 'application/json')
-                .set('cookie', cookies(insert.user))
-                .send(insert.message)
-                .expect(200)
-                .end(function (err, res) {
-                    const data = JSON.parse(res.text);
-                    assert.isMongoId(data._id);
-                    assert.equal(data.type, Message.Type.CHAT);
-                    assert.equal(data.chat, insert.message.chat);
-                    assert.equal(data.text, insert.message.text);
-                    assert.isDate(data.time);
-                    done(err);
+        loop(done, _.shuffle(inserts), sendMessage);
+    });
+
+    it('WebSocket', function (done) {
+        const sample = bandom.sample(_.values(chats), _.random(1, 4));
+        loop(done, sample, function (chat, done) {
+            function send(user_id) {
+                const sender = users[user_id];
+                console.log('SEND', sender.domain);
+                const receivers = chat.admin.concat(chat.follow);
+                assert.equal(_.uniq(receivers).length, receivers.length, 'Excessive targets');
+                if (receivers.length > 1) {
+                    loop(done, _.shuffle(receivers), function (receiver, done) {
+                        function errorMessage() {
+                            done(new Error(`Message from ${sender.domain} to ${receiver.domain} not received`));
+                        }
+
+                        if (receiver !== user_id) {
+                            receiver = users[receiver];
+                            const timer = setTimeout(errorMessage, 5000);
+                            receiver.websocket.once('message', function (data) {
+                                console.log(data);
+                                clearTimeout(timer);
+                                data = JSON.parse(data);
+                                console.log(data);
+                                done();
+                            });
+                        }
+                        else {
+                            done();
+                        }
+                    });
+                }
+                else {
+                    done();
+                }
+                const insert = {
+                    user: sender,
+                    chat: chat
+                };
+                sendMessage(insert, function (err) {
+                    if (err) {
+                        done(err);
+                    }
+                    else {
+                        console.log(`Message ${sender.domain} send`);
+                    }
                 });
+            }
+
+            send(_.sample(chat.admin));
+            if (chat.follow.length > 0) {
+                send(_.sample(chat.follow));
+            }
         });
     });
 
-    after(closeSockets(users));
+    // after(closeSockets(users));
 });

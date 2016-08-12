@@ -151,6 +151,8 @@ global.loadTestUsers = function (executor) {
     );
 };
 
+const sockets = {};
+
 global.loadUsers = function (done, cb) {
     User.aggregate(
         {
@@ -174,39 +176,50 @@ global.loadUsers = function (done, cb) {
                 }
             };
             loop(fn, users, function (user, done) {
-                const websocket = new WebSocket('ws://localhost:8091/socket', null, {
-                    headers: {
-                        cookie: 'auth=' + user.agent.auth
-                    }
-                });
-                websocket.on('open', function () {
-                    // console.log('open', user._id);
-                    user.websocket = websocket;
-                    done();
-                });
-                websocket.on('error', function (err) {
-                    done(err);
-                });
-                websocket.on('close', function () {
-                    // console.warn(`Socket ${user.domain} closed`);
-                });
+                user._id = user._id.toString();
+                if (sockets[user._id]) {
+                    user.websocket = sockets[user._id];
+                }
+                else {
+                    const websocket = new WebSocket('ws://localhost:8091/socket', null, {
+                        headers: {
+                            cookie: 'auth=' + user.agent.auth
+                        }
+                    });
+                    websocket.on('open', function () {
+                        // console.log('open', user._id);
+                        user.websocket = websocket;
+                        done();
+                    });
+                    websocket.on('error', function (err) {
+                        done(err);
+                    });
+                    websocket.on('message', function (data) {
+                        // console.log(data);
+                    });
+                    websocket.on('close', function () {
+                        console.warn(`Socket ${user.domain} closed`);
+                    });
+                }
             });
         })
         .catch(done);
 };
 
-global.closeSockets = function (users) {
-    return function (done) {
-        // console.log(_.size(users), _.map(users, user => user.domain).join(' '));
-        loop(done, _.values(users), function (user, done) {
-            user.websocket.on('close', function () {
-                done();
-            });
-            user.websocket.close();
-            user.websocket = null;
-        });
-    };
-};
+/*
+ global.closeSockets = function (users) {
+ return function (done) {
+ // console.log(_.size(users), _.map(users, user => user.domain).join(' '));
+ loop(done, _.values(users), function (user, done) {
+ user.websocket.on('close', function () {
+ done();
+ });
+ user.websocket.close();
+ user.websocket = null;
+ });
+ };
+ };
+ */
 
 before(function (done) {
     config.mongo.uri = 'mongodb:///var/run/mongodb-27017.sock/' + dbname;

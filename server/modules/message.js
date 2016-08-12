@@ -153,14 +153,15 @@ function read($) {
             return $.send(result);
         };
 
-        const socketMessage = {
-            type: 'read',
-            dialog_id: target
-        };
         if (isChat) {
             $.findChat(target, function (chat) {
                 if (chat.allow) {
                     chat.targets.forEach(function (peer_id) {
+                        const socketMessage = {
+                            target_id: peer_id,
+                            type: 'read',
+                            dialog_id: target
+                        };
                         $.notifyOne(peer_id, socketMessage);
                     });
                     $.collection('message').update({chat: target}, {$set: {unread: 0}}, $.wrap(resultCallback));
@@ -173,6 +174,11 @@ function read($) {
             });
         }
         else {
+            const socketMessage = {
+                target_id: target,
+                type: 'read',
+                dialog_id: target
+            };
             $.notifyOne(target, socketMessage);
             $.collection('message').update({target: $.user._id, source: target}, {$set: {unread: 0}}, $.wrap(resultCallback));
         }

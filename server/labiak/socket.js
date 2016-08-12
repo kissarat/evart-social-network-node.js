@@ -73,17 +73,30 @@ class WebSocketServer extends EventEmitter {
                 status: 'CONFLICT'
             });
         }
-        // console.log('SUBSCRIPTION', $.user.domain, $.agent._id, Object.keys(subscriber));
         subscriber[agent_id] = $;
         $.socket.socket.on('close', this.onClose.bind($));
         $.socket.socket.on('message', this.onMessage.bind($));
+        console.log('SUBSCRIPTION', $.user.domain, $.agent._id, this.getList());
         return subscriber;
+    }
+
+    getList() {
+        const sockets = {};
+        _.each(this.subscribers, function (subscriber, user_id) {
+            if (_.isEmpty(subscriber)) {
+                console.error('No sockets found', user_id);
+            }
+            else {
+                sockets[_.find(subscriber).user.domain] = Object.keys(subscriber);
+            }
+        });
+        return sockets;
     }
 
     onMessage(message) {
         message = JSON.parse(message);
+        // console.log('SOCKET', message);
         if (message.target_id) {
-            // console.log('SOCKET', message);
             if (!message.source_id) {
                 message.source_id = this.user._id;
             }
@@ -103,42 +116,36 @@ class WebSocketServer extends EventEmitter {
         if (!user_id) {
             throw new Error('Invalid user_id', user_id);
         }
-        return this.subscribers[user_id.toString()];
+        return this.subscribers[user_id];
     }
 
     unsubscribe(user_id, agent_id, message) {
+        console.log('- SUBSCRIPTION', agent_id, message);
+        if (_.isObject(agent_id)) {
+            message = agent_id;
+            agent_id = null;
+        }
+        else if (agent_id instanceof ObjectID) {
+            agent_id = agent_id.toString();
+        }
         if (user_id instanceof ObjectID) {
             user_id = user_id.toString();
         }
-        if (agent_id instanceof ObjectID) {
-            agent_id = agent_id.toString();
-        }
-        const subscribers = this.getSubscribers(user_id);
-        if ('string' === typeof agent_id) {
-            if (subscribers) {
-                const subscriber = subscribers[agent_id];
-                if (subscriber) {
-                    subscriber.close(message);
-                    delete subscribers[agent_id];
-                    if (_.isEmpty(subscribers)) {
-                        delete this.subscribers[user_id];
-                    }
-                    return subscriber;
-                }
-            }
-        }
-        else if ('object' === typeof agent_id) {
-            _.each(subscribers, function (subscriber) {
-                subscriber.close(agent_id);
-            });
-            delete this.subscribers[user_id];
-            return _.isEmpty(subscribers) ? false : subscribers;
+        const userSubscribers = this.getSubscribers(user_id);
+        const subscribers = agent_id ? _.pick(userSubscribers, agent_id) : userSubscribers;
+        _.each(subscribers, function (subscriber, agent_id) {
+            delete userSubscribers[agent_id];
+            subscriber.close(message);
+        });
+        if (_.isEmpty(userSubscribers)) {
+            return delete this.subscribers[user_id];
         }
         return false;
     }
 
     notifyOne(user_id, message) {
-        _.each(this.getSubscribers(user_id.toString()), function (context) {
+        const sockets = this.getSubscribers(user_id.toString());
+        _.each(sockets, function (context) {
             context.socket.send(message);
         });
     }
