@@ -1,6 +1,6 @@
 'use strict';
-const dbname = 'socex-test';
-const dropDatabase = true;
+const dbname = 'socex';
+const dropDatabase = false;
 const parallel = -1;
 
 require('../server/server');
@@ -126,7 +126,7 @@ global.loadTest = function (collections, taskGenerator, executor) {
             }
             else {
                 series.push(function (done) {
-                    server.db.collection(key)[elem instanceof Array ? 'aggregate' : 'find'](elem, done);
+                    server.collection(key)[elem instanceof Array ? 'aggregate' : 'find'](elem, done);
                 });
             }
         });
@@ -181,7 +181,7 @@ global.loadUsers = function (done, cb) {
                 user.subscribe = function (cb) {
                     this.queue.push(cb);
                 };
-                const websocket = new WebSocket('ws://localhost:8091/socket', null, {
+                const websocket = new WebSocket('ws://localhost:7777/socket', null, {
                     headers: {
                         cookie: 'auth=' + user.agent.auth
                     }
@@ -197,7 +197,7 @@ global.loadUsers = function (done, cb) {
                 });
                 websocket.on('message', function (data) {
                     if (user.queue.length > 0) {
-                        const fn = user.queue.shift()(data);
+                        user.queue.shift()(data);
                     }
                 });
                 websocket.on('close', function () {

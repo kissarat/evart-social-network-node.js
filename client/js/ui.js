@@ -1,3 +1,5 @@
+'use strict';
+
 function $tag(name, attributes, children) {
     var tag = document.createElement(name);
     if ('string' === typeof attributes) {
@@ -26,6 +28,14 @@ function $$(selector) {
     return document.querySelector(selector);
 }
 
+function $all(selector) {
+    return document.querySelectorAll(selector);
+}
+
+function $array(selector) {
+    return [].slice.call(document.querySelectorAll(selector));
+}
+
 function $import(selector) {
     return document.importNode(document.querySelector(selector), true).content;
 }
@@ -35,6 +45,63 @@ function $create(selector) {
     root.appendChild($import(selector));
     return root;
 }
+
+const NodeListPrototype = {
+    on: 'addEventListener',
+    off: 'removeEventListener',
+    css: 'setProperty',
+
+    show: function (display) {
+        this.forEach(function (node) {
+            if ('none' === node.style.display) {
+                node.style.removeProperty('display');
+            }
+            else {
+                node.style.display = display || node._display || 'block';
+            }
+        });
+    },
+
+    hide: function () {
+        this.forEach(function (node) {
+            node.style.display = 'none';
+        });
+    },
+
+    attr: function (name, value) {
+        if (value) {
+            this.forEach(function (node) {
+                node.setAttribute(name, value);
+            });
+        }
+        else {
+            return this.map(node => node.getAttribute(name));
+        }
+    }
+};
+
+_.each(NodeListPrototype, function (fn, name) {
+    if ('string' === typeof fn) {
+        NodeListPrototype[name] = function () {
+            const args = arguments;
+            this.forEach(function (node) {
+                node[fn].apply(node, args);
+            });
+            return this;
+        };
+    }
+});
+
+_.setup = function (target, source) {
+    Object.getOwnPropertyNames(source).forEach(function (key) {
+        if (source[key] instanceof Function) {
+            target[key] = source[key];
+        }
+    });
+};
+
+_.setup(NodeListPrototype, Array.prototype);
+_.setup(NodeList.prototype, NodeListPrototype);
 
 _.extend(EventTarget.prototype, {
     register: function (listeners) {

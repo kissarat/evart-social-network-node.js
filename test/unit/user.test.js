@@ -2,7 +2,7 @@
 
 const supertest = require('supertest');
 const chai = require('chai');
-const faker = require('faker/locale/ru');
+const faker = require('faker');
 const _ = require('lodash');
 const bandom = require('bandom');
 const qs = require('querystring');
@@ -19,8 +19,9 @@ function post(uri) {
 }
 
 describe('user', function () {
-    const users = _.range(1, 5).map(function (i) {
-        const domain = 'user' + i;
+    const users = _.range(1, 10).map(function (i) {
+        const name = faker.name.lastName().toLowerCase().replace(/[^\w]/, '');
+        const domain = bandom.micro(name + '_');
         return {
             domain: domain,
             password: '1',
