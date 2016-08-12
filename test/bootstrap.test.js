@@ -180,6 +180,7 @@ global.loadUsers = function (done, cb) {
                     }
                 });
                 websocket.on('open', function () {
+                    // console.log('open', user._id);
                     user.websocket = websocket;
                     done();
                 });
@@ -187,11 +188,24 @@ global.loadUsers = function (done, cb) {
                     done(err);
                 });
                 websocket.on('close', function () {
-                    console.warn(`Socket ${user.domain} closed`);
+                    // console.warn(`Socket ${user.domain} closed`);
                 });
             });
         })
         .catch(done);
+};
+
+global.closeSockets = function (users) {
+    return function (done) {
+        // console.log(_.size(users), _.map(users, user => user.domain).join(' '));
+        loop(done, _.values(users), function (user, done) {
+            user.websocket.on('close', function () {
+                done();
+            });
+            user.websocket.close();
+            user.websocket = null;
+        });
+    };
 };
 
 before(function (done) {

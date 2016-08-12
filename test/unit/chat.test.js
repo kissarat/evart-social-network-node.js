@@ -10,38 +10,36 @@ const _ = require('lodash');
 describe('chat', function () {
     var chats = [];
     var users = {};
-    it('create', loadTest(
-        {user: queries.user()},
-        function (results) {
-            return results[0].map(function (user) {
-                return {
-                    user: user,
-                    chat: {
-                        name: faker.name.title()
-                    }
-                };
+    it('create', function (done) {
+        loadUsers(done, function (_users) {
+            const tasks = _users.map(user => ({
+                user: user,
+                chat: {
+                    name: faker.name.title()
+                }
+            }));
+            loop(done, tasks, function (task, done) {
+                supertest(server)
+                    .post('/api/chat')
+                    .set('content-type', 'application/json')
+                    .set('cookie', cookies(task.user))
+                    .send(task.chat)
+                    .expect(200)
+                    .end(function (err, res) {
+                        const data = JSON.parse(res.text);
+                        assert.isMongoId(data._id);
+                        expect(data.admin).to.include(task.user._id.toString());
+                        assert(data.follow.isEmpty());
+                        _.defaults(task.chat, _.pick(data, ['_id', 'admin', 'follow']));
+                        data.user = task.user;
+                        data.user._id = data.user._id.toString();
+                        users[data.user._id] = data.user;
+                        chats.push(data);
+                        done(err);
+                    });
             });
-        },
-        function (task, done) {
-            supertest(server)
-                .post('/api/chat')
-                .set('content-type', 'application/json')
-                .set('cookie', cookies(task.user))
-                .send(task.chat)
-                .expect(200)
-                .end(function (err, res) {
-                    const data = JSON.parse(res.text);
-                    assert.isMongoId(data._id);
-                    expect(data.admin).to.include(task.user._id.toString());
-                    assert(data.follow.isEmpty());
-                    _.defaults(task.chat, _.pick(data, ['_id', 'admin', 'follow']));
-                    data.user = task.user;
-                    data.user._id = data.user._id.toString();
-                    users[data.user._id] = data.user;
-                    chats.push(data);
-                    done(err);
-                });
-        }));
+        });
+    });
 
     it('follow', function (done) {
         const _chats = chats;
@@ -114,4 +112,6 @@ describe('chat', function () {
                 });
         });
     });
+
+    after(closeSockets(users));
 });

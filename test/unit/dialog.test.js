@@ -120,4 +120,6 @@ describe('dialog', function () {
             });
         });
     });
+    
+    after(closeSockets(users));
 });
