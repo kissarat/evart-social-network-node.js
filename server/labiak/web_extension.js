@@ -463,9 +463,6 @@ module.exports = {
                     if (ex.code) {
                         error.code = ex.code;
                     }
-                    if (config.error.request) {
-                        error.request = this.dumpRequest();
-                    }
                     if (ex.stack && config.error.stack) {
                         error.stack = ex.stack.split(/\s*\n\s*at\s*/).map(function (trace) {
                             return trace.replace(/[\/\w]+socex\/server\//, '/');

@@ -83,9 +83,6 @@ class Context {
         }
         const obj = {};
         obj[name] = value;
-        if (config.error.request) {
-            obj.request = this.dumpRequest();
-        }
         throw new errors.BadRequest(obj);
     }
 
@@ -335,6 +332,10 @@ class Context {
                     object.ip = this.req.headers.ip;
                 }
                 object.spend = this.spend;
+            }
+
+            if (status >= 400 && config.error.request) {
+                object.request = this.dumpRequest();
             }
 
             let data = JSON.stringify(object);
