@@ -83,6 +83,9 @@ class Context {
         }
         const obj = {};
         obj[name] = value;
+        if (config.error.request) {
+            obj.request = this.dumpRequest();
+        }
         throw new errors.BadRequest(obj);
     }
 
@@ -601,6 +604,34 @@ class Context {
 
     get isAdmin() {
         return this.user && 'admin' === this.user.type;
+    }
+
+    dumpRequest() {
+        return {
+            method: this.req.method,
+            params: this.params
+            // headers: this.req.headers
+        };
+    }
+
+    allowMethods() {
+        if (!_.contains(arguments, this.req.method)) {
+            throw new errors.MethodNotAllowed(this.req.method);
+        }
+    }
+
+    findChat(id, done) {
+        const self = this;
+        Chat.findOne({_id: id}, {follow: 1, admin: 1}, this.wrap(function (chat) {
+            if (chat) {
+                chat.targets = chat.admin.concat(chat.follow);
+                chat.allow = chat.targets.find(target => self.user._id.equals(target));
+                done(chat);
+            }
+            else {
+                self.send(code.NOT_FOUND);
+            }
+        }));
     }
 
     close() {

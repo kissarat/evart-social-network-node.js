@@ -17,8 +17,8 @@ function post(uri) {
         .set('Accept', 'application/json');
 }
 
-describe('auth', function () {
-    const users = _.range(1, 30).map(function (i) {
+describe('user', function () {
+    const users = _.range(1, 5).map(function (i) {
         const domain = 'user' + i;
         return {
             domain: domain,

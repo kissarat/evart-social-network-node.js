@@ -8,14 +8,14 @@ const utils = require('../utils');
 
 const T = mongoose.Schema.Types;
 
-const MessageType = {
+const MessageType = Object.freeze({
     DIALOG: 'dialog',
     WALL: 'wall',
     PHOTO: 'photo',
     VIDEO: 'video',
     COMMENT: 'comment',
     CHAT: 'chat'
-};
+});
 
 const _schema = {
     _id: utils.idType('Message'),
@@ -24,7 +24,7 @@ const _schema = {
 
     type: {
         type: String,
-        enum: _.values(MessageType),
+        enum: Object.freeze(_.values(MessageType)),
         index: {
             unique: false
         }
@@ -124,46 +124,58 @@ global.schema.Message = mongoose.Schema(_schema, utils.merge(config.mongoose.sch
 }));
 
 schema.Message.statics.Type = MessageType;
-schema.Message.statics.fields = {
+schema.Message.statics.fields = Object.freeze({
     select: {
         user: ['type', 'source', 'target', 'owner', 'attitude', 'like', 'hate', 'file', 'files',
             'video', 'videos', 'text', 'repost', 'parent', 'chat']
     }
-};
+});
+
 
 function read($) {
+    $.allowMethods('POST');
     if ($.has('id') && $.has('unread')) {
         return [
             {query: {_id: $.param('id')}},
             {$set: {unread: $.param('unread')}}
         ];
     }
-    if ($.has('target_id')) {
-        const you = $.param('target_id');
-        const where = {
-            unread: 1,
-            source: you,
-            target: $.user._id
+    else if ($.has('target_id')) {
+        const target = $.param('target_id');
+        const isChat = 0 === target.toString().indexOf('07');
+
+        const resultCallback = function (result) {
+            result = $.merge(result.result, {
+                success: !!result.result.ok,
+                type: 'read',
+                dialog_id: target
+            });
+            return $.send(result);
         };
-        return [{
-            name: 'messages',
-            query: where,
-            select: ['_id']
-        }, {
-            query: where,
-            $set: {unread: 0}
-        },
-            function (result, bundle) {
-                result = $.merge(result.result, {
-                    success: !!result.result.ok,
-                    type: 'read',
-                    dialog_id: where.source,
-                    ids: _.pluck(bundle.messages, '_id')
-                });
-                $.send(result);
-                $.notifyOne(you, result);
-            }
-        ];
+
+        const socketMessage = {
+            type: 'read',
+            dialog_id: target
+        };
+        if (isChat) {
+            $.findChat(target, function (chat) {
+                if (chat.allow) {
+                    chat.targets.forEach(function (peer_id) {
+                        $.notifyOne(peer_id, socketMessage);
+                    });
+                    $.collection('message').update({chat: target}, {$set: {unread: 0}}, $.wrap(resultCallback));
+                }
+                else {
+                    $.send(code.FORBIDDEN, {
+                        status: 'NOT_MEMBER'
+                    });
+                }
+            });
+        }
+        else {
+            $.notifyOne(target, socketMessage);
+            $.collection('message').update({target: $.user._id, source: target}, {$set: {unread: 0}}, $.wrap(resultCallback));
+        }
     }
     else {
         const id = $.user._id;
@@ -238,7 +250,7 @@ function dialogs($) {
         {follow: id}
     ];
     return new Promise(function (resolve, reject) {
-        Chat.find({$or: OR}).catch(reject).then(function (chats) {
+        Chat.find({$or: OR}).then(function (chats) {
             chats = chats.map(chat => chat._id);
             const match = [
                 {
@@ -376,7 +388,8 @@ function dialogs($) {
                 .aggregate(aggregate)
                 .then(resolve)
                 .catch(reject);
-        });
+        })
+            .catch(reject);
     });
 }
 
@@ -532,6 +545,9 @@ module.exports = {
 
     POST: function ($) {
         const data = $.allowFields(Message.fields.select.user);
+        if (_schema.type.enum.indexOf(data.type) < 0) {
+            $.invalid('type');
+        }
         data.source = $.user._id;
         let targets;
         ['target', 'owner', 'source', 'parent', 'chat'].forEach(function (name) {
@@ -547,9 +563,9 @@ module.exports = {
             }
         });
 
-        if (!data.chat) {
+        if (MessageType.CHAT !== data.type) {
             targets = [];
-            ['target', 'owner'].forEach(function (name) {
+            ['target', 'owner', 'parent'].forEach(function (name) {
                 const id = data[name];
                 if (id) {
                     targets.push(id);
@@ -558,7 +574,15 @@ module.exports = {
         }
         targets = _.uniq(targets);
         function post(allow, targets) {
-            if (allow) {
+            if (targets.length === 0) {
+                $.send(code.INTERNAL_SERVER_ERROR, {
+                    status: 'NO_TARGETS',
+                    error: {
+                        message: 'No targets'
+                    }
+                });
+            }
+            else if (allow) {
                 if (data.files instanceof Array) {
                     data.files = data.files.map(file => ObjectID(file._id ? file._id : file));
                 }
@@ -597,28 +621,20 @@ module.exports = {
             }
         }
 
-        if (0 === targets.length && ($.has('chat') || $.has('parent'))) {
-            if (data.chat) {
-                Chat.findOne({_id: data.chat}, {follow: 1, admin: 1}, $.wrap(function (chat) {
-                    if (chat) {
-                        const targets = chat.admin.concat(chat.follow);
-                        // console.log($.user._id, targets);
-                        post(
-                            targets.find(id => id.equals($.user._id)),
-                            targets
-                        );
-                    }
-                    else {
-                        $.sendStatus(code.NOT_FOUND);
-                    }
-                }));
+        if (0 === targets.length && ['chat', 'comment'].indexOf(data.type) >= 0) {
+            if (MessageType.CHAT === data.type) {
+                $.findChat(data.chat, function (chat) {
+                    post(chat.allow, chat.targets);
+                });
             }
             else {
                 post(1, targets);
             }
         }
         else {
-            $.accessUser(targets).then(post);
+            $.accessUser(targets).then(function (allow) {
+                post(allow, targets);
+            });
         }
     },
 

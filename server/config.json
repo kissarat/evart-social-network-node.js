@@ -53,6 +53,7 @@
     "log": false
   },
   "error": {
+    "request": true,
     "stack": true
   }
 }

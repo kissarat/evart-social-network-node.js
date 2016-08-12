@@ -19,8 +19,8 @@ describe('chat', function () {
                     chat: {
                         name: faker.name.title()
                     }
-                }
-            })
+                };
+            });
         },
         function (task, done) {
             supertest(server)
@@ -39,7 +39,6 @@ describe('chat', function () {
                     data.user._id = data.user._id.toString();
                     users[data.user._id] = data.user;
                     chats.push(data);
-                    // console.log(data);
                     done(err);
                 });
         }));
@@ -78,7 +77,7 @@ describe('chat', function () {
                     changes.chat.follow = data.follow;
                     done(err);
                 });
-        })
+        });
     });
 
     it('message', function (done) {
@@ -90,10 +89,11 @@ describe('chat', function () {
                 inserts.push({
                     user: users[bandom.choice(sources)],
                     message: {
+                        type: 'chat',
                         chat: chat._id,
                         text: faker.lorem.sentences(35)
                     }
-                })
+                });
             }
         });
         loop(done, _.shuffle(inserts), function (insert, done) {
@@ -106,11 +106,12 @@ describe('chat', function () {
                 .end(function (err, res) {
                     const data = JSON.parse(res.text);
                     assert.isMongoId(data._id);
+                    assert.equal(data.type, Message.Type.CHAT);
                     assert.equal(data.chat, insert.message.chat);
                     assert.equal(data.text, insert.message.text);
                     assert.isDate(data.time);
                     done(err);
                 });
-        })
+        });
     });
 });

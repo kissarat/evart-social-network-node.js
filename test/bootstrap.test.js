@@ -1,7 +1,7 @@
 'use strict';
 const dbname = 'socex-test';
 const dropDatabase = true;
-const parallel = 15;
+const parallel = -1;
 
 require('../server/server');
 const qs = require('querystring');
@@ -194,6 +194,22 @@ global.loadTestUsers = function (executor) {
     );
 };
 
+global.loadUsers = function (done, cb) {
+    User.aggregate(
+        {
+            $lookup: {
+                as: 'agent',
+                localField: '_id',
+                from: 'agent',
+                foreignField: 'user'
+            }
+        },
+        {
+            $unwind: '$agent'
+        })
+        .then(cb)
+        .catch(done);
+};
 
 before(function (done) {
     config.mongo.uri = 'mongodb:///var/run/mongodb-27017.sock/' + dbname;
@@ -213,8 +229,12 @@ Array.prototype.isEmpty = function () {
 };
 
 test('user');
+test('chat');
+test('dialog');
 test('list');
-test('message');
+// const tests = ['dialog', 'list', 'chat'];
+// tests.forEach(test);
+// _.shuffle(tests).forEach(test);
 
 after(function (done) {
     if (dropDatabase) {

@@ -21,8 +21,8 @@ describe('follow', function () {
                     };
                     record.user._id = record.user._id.toString();
                     record.follow._id = record.follow._id.toString();
-                    follows.push(record)
-                })
+                    follows.push(record);
+                });
             });
             loop(done, follows, function (record, done) {
                 supertest(server)

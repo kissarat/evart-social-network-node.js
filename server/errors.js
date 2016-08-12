@@ -35,6 +35,14 @@ class Forbidden extends Response {
     }
 }
 
+class MethodNotAllowed extends Response {
+    constructor(method) {
+        super(code.FORBIDDEN, {
+            method: method
+        });
+    }
+}
+
 class EntityTooLarge extends Response {
     constructor(maxLength) {
         super(code.REQUEST_TOO_LONG, {
@@ -43,4 +51,4 @@ class EntityTooLarge extends Response {
     }
 }
 
-module.exports = {Response, BadRequest, Forbidden, EntityTooLarge};
+module.exports = {Response, BadRequest, Forbidden, EntityTooLarge, MethodNotAllowed};
