@@ -18,7 +18,7 @@ describe('dialog', function () {
             _.each(_users, function (user) {
                 user._id = user._id.toString();
                 users[user._id] = user;
-                const length = _.random(0, 100);
+                const length = _.random(0, 20);
                 for (let i = 0; i < length; i++) {
                     tasks.push({
                         user: user,
@@ -120,6 +120,53 @@ describe('dialog', function () {
             });
         });
     });
-    
-    // after(closeSockets(users));
+
+    it('WebSocket', function (done) {
+        var senders = [];
+        var receivers = [];
+        _.each(_.values(users), function (user, i) {
+            if (i % 2) {
+                senders.push(user);
+            }
+            else {
+                receivers.push(user);
+            }
+        });
+        loop(done, _.range(10), function (_1, done) {
+            const sender = _.sample(senders);
+            const receiver = _.sample(receivers);
+
+            var messageSend = false;
+
+            receiver.subscribe(function (data) {
+                if (messageSend) {
+                    const message = JSON.parse(data);
+                    assert.equal(message.type, Message.Type.DIALOG, 'Invalid target');
+                    assert.equal(message.target, receiver._id, 'Invalid target');
+                    assert.equal(message.source, sender._id, 'Invalid source');
+                }
+                done();
+            });
+            
+            supertest(server)
+                .post('/api/message')
+                .set('content-type', 'application/json')
+                .set('cookie', cookies(sender))
+                .send({
+                    user: sender._id,
+                    type: 'dialog',
+                    target: receiver._id,
+                    text: faker.lorem.sentence()
+                })
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) {
+                        done(err);
+                    }
+                    else {
+                        messageSend = true;
+                    }
+                });
+        });
+    });
 });

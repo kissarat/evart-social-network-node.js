@@ -197,7 +197,7 @@ global.loadUsers = function (done, cb) {
                 });
                 websocket.on('message', function (data) {
                     if (user.queue.length > 0) {
-                        user.queue.shift()(data);
+                        const fn = user.queue.shift()(data);
                     }
                 });
                 websocket.on('close', function () {
@@ -207,21 +207,6 @@ global.loadUsers = function (done, cb) {
         })
         .catch(done);
 };
-
-/*
- global.closeSockets = function (users) {
- return function (done) {
- // console.log(_.size(users), _.map(users, user => user.domain).join(' '));
- loop(done, _.values(users), function (user, done) {
- user.websocket.on('close', function () {
- done();
- });
- user.websocket.close();
- user.websocket = null;
- });
- };
- };
- */
 
 before(function (done) {
     config.mongo.uri = 'mongodb:///var/run/mongodb-27017.sock/' + dbname;
