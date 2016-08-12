@@ -180,7 +180,10 @@ function read($) {
                 dialog_id: target
             };
             $.notifyOne(target, socketMessage);
-            $.collection('message').update({target: $.user._id, source: target}, {$set: {unread: 0}}, $.wrap(resultCallback));
+            $.collection('message').update({
+                target: $.user._id,
+                source: target
+            }, {$set: {unread: 0}}, $.wrap(resultCallback));
         }
     }
     else {
@@ -610,14 +613,17 @@ module.exports = {
                             break;
                     }
                     delete data.v;
-                    $.send(data);
                     if (!$.param('silent', false)) {
+                        // console.log(targets.join(' '));
+                        const online = [];
                         targets.forEach(function (id) {
-                            if (!$.user._id.equals(id)) {
-                                $.notifyOne(id, data);
+                            if (!$.user._id.equals(id) && $.notifyOne(id, data)) {
+                                online.push(id);
                             }
                         });
+                        data.online = online;
                     }
+                    $.send(data);
                 }));
             }
             else {

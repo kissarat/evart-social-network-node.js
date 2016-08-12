@@ -36,6 +36,13 @@ class WebSocketServer extends EventEmitter {
         this.socketServer = new ws.Server(this.config);
         this.subscribers = {};
         this.socketServer.on('connection', this.onConnection.bind(this));
+        setInterval(function (subscribers) {
+            _.each(subscribers, function (subscriber, user_id) {
+                if (_.isEmpty(subscriber)) {
+                    delete subscribers[user_id];
+                }
+            });
+        }, 60 * 10, this.subscribers);
     }
 
     onConnection(socket) {
@@ -76,7 +83,7 @@ class WebSocketServer extends EventEmitter {
         subscriber[agent_id] = $;
         $.socket.socket.on('close', this.onClose.bind($));
         $.socket.socket.on('message', this.onMessage.bind($));
-        console.log('SUBSCRIPTION', $.user.domain, $.agent._id, this.getList());
+        // console.log('SUBSCRIPTION', $.user.domain, $.agent._id, this.getList());
         return subscriber;
     }
 
@@ -109,7 +116,7 @@ class WebSocketServer extends EventEmitter {
 
     onClose() {
         this.server.webSocketServer.unsubscribe(this.user._id, this.agent._id);
-        // this.server.log('warn', 'CLOSE WebSocket ' + this.user.domain + ' ' + this.agent._id);
+        this.server.log('warn', 'CLOSE WebSocket ' + this.user.domain + ' ' + this.agent._id);
     }
 
     getSubscribers(user_id) {
@@ -120,7 +127,6 @@ class WebSocketServer extends EventEmitter {
     }
 
     unsubscribe(user_id, agent_id, message) {
-        console.log('- SUBSCRIPTION', agent_id, message);
         if (_.isObject(agent_id)) {
             message = agent_id;
             agent_id = null;
@@ -137,9 +143,10 @@ class WebSocketServer extends EventEmitter {
             delete userSubscribers[agent_id];
             subscriber.close(message);
         });
-        if (_.isEmpty(userSubscribers)) {
-            return delete this.subscribers[user_id];
-        }
+        // console.log('#### SUBSCRIPTION', agent_id, message);
+        // if (_.isEmpty(userSubscribers)) {
+        //     return delete this.subscribers[user_id];
+        // }
         return false;
     }
 
@@ -148,6 +155,7 @@ class WebSocketServer extends EventEmitter {
         _.each(sockets, function (context) {
             context.socket.send(message);
         });
+        return sockets;
     }
 }
 

@@ -177,30 +177,32 @@ global.loadUsers = function (done, cb) {
             };
             loop(fn, users, function (user, done) {
                 user._id = user._id.toString();
-                if (sockets[user._id]) {
-                    user.websocket = sockets[user._id];
-                }
-                else {
-                    const websocket = new WebSocket('ws://localhost:8091/socket', null, {
-                        headers: {
-                            cookie: 'auth=' + user.agent.auth
-                        }
-                    });
-                    websocket.on('open', function () {
-                        // console.log('open', user._id);
-                        user.websocket = websocket;
-                        done();
-                    });
-                    websocket.on('error', function (err) {
-                        done(err);
-                    });
-                    websocket.on('message', function (data) {
-                        // console.log(data);
-                    });
-                    websocket.on('close', function () {
-                        console.warn(`Socket ${user.domain} closed`);
-                    });
-                }
+                user.queue = [];
+                user.subscribe = function (cb) {
+                    this.queue.push(cb);
+                };
+                const websocket = new WebSocket('ws://localhost:8091/socket', null, {
+                    headers: {
+                        cookie: 'auth=' + user.agent.auth
+                    }
+                });
+                websocket.on('open', function () {
+                    // console.log('open', user._id);
+                    user.websocket = websocket;
+                    sockets[user._id] = websocket;
+                    done();
+                });
+                websocket.on('error', function (err) {
+                    done(err);
+                });
+                websocket.on('message', function (data) {
+                    if (user.queue.length > 0) {
+                        user.queue.shift()(data);
+                    }
+                });
+                websocket.on('close', function () {
+                    console.warn(`Socket ${user.domain} closed`);
+                });
             });
         })
         .catch(done);

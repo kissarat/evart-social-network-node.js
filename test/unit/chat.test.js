@@ -96,7 +96,9 @@ describe('chat', function () {
                 assert.equal(data.type, Message.Type.CHAT);
                 assert.equal(data.chat, message.chat);
                 assert.equal(data.text, message.text);
+                assert.isArray(data.online);
                 assert.isDate(data.time);
+                message.online = data.online;
                 done(err);
             });
     }
@@ -104,11 +106,12 @@ describe('chat', function () {
     it('message', function (done) {
         const inserts = [];
         chats.forEach(function (chat) {
-            const sources = chat.admin.concat(chat.follow);
+            const members = chat.admin.concat(chat.follow);
             const length = _.random(0, 10);
+            const sender = users[_.sample(members)];
             for (let i = 0; i < length; i++) {
                 inserts.push({
-                    user: users[bandom.choice(sources)],
+                    user: sender,
                     chat: chat
                 });
             }
@@ -116,57 +119,48 @@ describe('chat', function () {
         loop(done, _.shuffle(inserts), sendMessage);
     });
 
+
     it('WebSocket', function (done) {
         const sample = bandom.sample(_.values(chats), _.random(1, 4));
         loop(done, sample, function (chat, done) {
-            function send(user_id) {
-                const sender = users[user_id];
-                console.log('SEND', sender.domain);
-                const receivers = chat.admin.concat(chat.follow);
-                assert.equal(_.uniq(receivers).length, receivers.length, 'Excessive targets');
-                if (receivers.length > 1) {
-                    loop(done, _.shuffle(receivers), function (receiver, done) {
-                        function errorMessage() {
-                            done(new Error(`Message from ${sender.domain} to ${receiver.domain} not received`));
-                        }
-
-                        if (receiver !== user_id) {
-                            receiver = users[receiver];
-                            const timer = setTimeout(errorMessage, 5000);
-                            receiver.websocket.once('message', function (data) {
-                                console.log(data);
-                                clearTimeout(timer);
-                                data = JSON.parse(data);
-                                console.log(data);
-                                done();
-                            });
-                        }
-                        else {
-                            done();
-                        }
-                    });
-                }
-                else {
-                    done();
-                }
+            const members = chat.admin.concat(chat.follow).map(member => users[member]);
+            assert.equal(_.uniq(members).length, members.length, 'Excessive targets');
+            assert(members.length > 1);
+            const senders = bandom.sample(members, _.random(1, 3));
+            // console.log(members.map(m => m._id).join(' '));
+            loop(done, senders, function send(sender, done) {
                 const insert = {
                     user: sender,
                     chat: chat
                 };
+
+                var messageSend = false;
+
+                loop(done, members, function (member) {
+                    if (member._id === sender._id) {
+                        done();
+                    }
+                    else {
+                        member.subscribe(function (data) {
+                            if (messageSend) {
+                                const message = JSON.parse(data);
+                                assert.isMongoId(message._id);
+                                assert(message.source, sender._id);
+                                done();
+                            }
+                        });
+                    }
+                });
+
                 sendMessage(insert, function (err) {
                     if (err) {
                         done(err);
                     }
                     else {
-                        console.log(`Message ${sender.domain} send`);
+                        messageSend = true;
                     }
                 });
-            }
-
-            send(_.sample(chat.admin));
-            if (chat.follow.length > 0) {
-                send(_.sample(chat.follow));
-            }
+            });
         });
     });
 
