@@ -1195,12 +1195,7 @@ App.module('Message', function (Message, App) {
 
             function widget(model) {
                 var options = {};
-                if (0 === model.id.indexOf('07')) {
-                    options.chat = model;
-                }
-                else {
-                    options.target = model;
-                }
+                options['chat' === model.get('type') ? 'chat' : 'target'] = model;
                 Message.Dialog.widget(self.getRegion('dialog'), options);
             }
 
@@ -1233,17 +1228,20 @@ App.module('Message', function (Message, App) {
     Message.channel.reply('open', function (id) {
         var messenger = Message.getMessenger();
         clearTimeout(messenger.readTimer);
-        
+
         if (id instanceof Backbone.Model) {
             messenger.open(id);
         }
         else if ('string' === typeof id) {
-            $.getJSON('/api/user?domain=' + id, function (user) {
+            var where = {};
+            where[_.isObjectID(id) ? 'id' : 'domain'] = id;
+            App.local.fetchOne('user', where, function (user) {
                 messenger.open(user._id);
-            })
+            });
         }
         else {
-            console.error('Invalid ID');
+            // When /dialogs open
+            console.warn('No ID');
         }
     });
 
