@@ -1,6 +1,6 @@
 'use strict';
-const dbname = 'socex';
-const dropDatabase = false;
+const dbname = 'socex-test';
+const dropDatabase = true;
 const parallel = -1;
 
 require('../server/server');

@@ -19,6 +19,7 @@ App.module('Message', function (Message, App) {
             model.loadRelative()
                 .then(function () {
                     if (!Message.channel.request(type, model)) {
+                        // console.log(model.attributes)
                         Message.notify(model);
                     }
                 });
@@ -57,12 +58,17 @@ App.module('Message', function (Message, App) {
             return this.isNew() ? '/api/message' : '/api/message?id=' + this.get('_id');
         },
 
-        initialize: function () {
+        initialize: function (options) {
             var self = this;
-            resolveRelative(this, Message.Model.relatives);
+            // if (options.load) {
+            //     loadRelative(this, Message.Model.relatives);
+            // }
+            // else {
+                resolveRelative(this, Message.Model.relatives);
+            // }
 
             if (!this.has('time')) {
-                this.set('time', new Date().toISOString())
+                this.set('time', new Date().toISOString());
             }
 
             if (isNaN(this.get('unread'))) {
@@ -168,7 +174,7 @@ App.module('Message', function (Message, App) {
         },
 
         getPeer: function () {
-            return 'chat' === this.get('type') ? this.get('chat') : this.get('peer')
+            return 'chat' === this.get('type') ? this.get('chat') : this.get('peer');
         }
     });
 
@@ -919,21 +925,28 @@ App.module('Message', function (Message, App) {
             return isReceiver;
         },
 
-        read: function (ids) {
+        read: function (response) {
             if (!this.getRegion('list')) {
                 console.warn('list region not found');
                 return;
             }
-            if (ids.ids && ids.success) {
-                ids = ids.ids;
+            if (!response.success) {
+                return;
             }
             var count = 0;
-            this.getCollection().forEach(function (model) {
-                if (ids.indexOf(model.get('_id')) >= 0) {
+            if (response.ids) {
+                this.getCollection().forEach(function (model) {
+                    if (response.ids.indexOf(model.get('_id')) >= 0) {
+                        model.set('unread', 0);
+                        count++;
+                    }
+                });
+            }
+            else {
+                this.getCollection().forEach(function (model) {
                     model.set('unread', 0);
-                    count++;
-                }
-            });
+                });
+            }
             return count;
         }
     }, {
@@ -963,10 +976,10 @@ App.module('Message', function (Message, App) {
             dialog.getRegion('editor').show(editor);
             function read() {
                 var hasUnread = _.some(list.fullCollection.models, function (model) {
-                    return model.get('unread')
+                    return model.get('unread');
                 });
                 if (hasUnread || App.config.message.read.empty) {
-                    $.getJSON('/api/message/read?target_id=' + options.target.id, dialog.read);
+                    $.sendJSON('POST', '/api/message/read', {target_id: options.target.id}, dialog.read);
                 }
             }
 
@@ -999,10 +1012,10 @@ App.module('Message', function (Message, App) {
                     });
                 if (isMicrosoftWindows) {
                     smile.addClass('emoji');
-                    smile.attr('src', App.contentURL('images/smiles/' + info.name + '.png'))
+                    smile.attr('src', App.contentURL('images/smiles/' + info.name + '.png'));
                 }
                 else {
-                    smile.html(info.char)
+                    smile.html(info.char);
                 }
                 self.$el.append(smile);
             });

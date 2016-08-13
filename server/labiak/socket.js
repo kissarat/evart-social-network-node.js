@@ -116,7 +116,7 @@ class WebSocketServer extends EventEmitter {
 
     onClose() {
         this.server.webSocketServer.unsubscribe(this.user._id, this.agent._id);
-        this.server.log('warn', 'CLOSE WebSocket ' + this.user.domain + ' ' + this.agent._id);
+        // this.server.log('warn', 'CLOSE WebSocket ' + this.user.domain + ' ' + this.agent._id);
     }
 
     getSubscribers(user_id) {

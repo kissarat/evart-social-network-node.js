@@ -1,6 +1,6 @@
 'use strict';
 
-var isNode = 'undefined' !== typeof module && module.exports;
+var isNode = ('undefined' !== typeof module) && module.exports;
 if (isNode) {
     global.self = global;
 }

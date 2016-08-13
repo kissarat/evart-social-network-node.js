@@ -6,7 +6,7 @@ self.T = function (text) {
     return text;
 };
 
-self.MessageType = {
+const MessageType = {
     DIALOG: 'dialog',
     WALL: 'wall',
     PHOTO: 'photo',

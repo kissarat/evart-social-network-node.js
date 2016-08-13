@@ -244,10 +244,10 @@ function Application() {
         },
 
         set language(value) {
-            $.cookie('lang', value);
+            this.getCookie('lang', value);
             var lang = _.find(Languages, {iso: value});
             if (lang) {
-                this.cookie('remixlang', lang._id);
+                this.setCookie('remixlang', lang._id);
             }
             document.documentElement.setAttribute('lang', value);
         },
@@ -509,14 +509,14 @@ window.addEventListener('resize', resize);
 addEventListener('unload', function () {
     _.each(App.getView().getRegions(), function (region) {
         region.empty();
-    })
+    });
 });
 
 function resolveRelative(model, map) {
     _.each(map, function (clazz, key) {
         var value = model.get(key);
         if (value) {
-            if (!(value instanceof clazz)) {
+            if (!(value instanceof clazz) && _.isObject(value)) {
                 if (_.is(clazz, Backbone.Collection)) {
                     assert.isArray(value);
                 }
@@ -526,7 +526,7 @@ function resolveRelative(model, map) {
         else if (_.is(clazz, Backbone.Collection)) {
             model.set(key, new clazz())
         }
-    })
+    });
 }
 
 function loadRelative(model, map) {

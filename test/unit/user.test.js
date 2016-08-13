@@ -19,7 +19,7 @@ function post(uri) {
 }
 
 describe('user', function () {
-    const users = _.range(1, 10).map(function (i) {
+    const users = _.range(1, 30).map(function (i) {
         const name = faker.name.lastName().toLowerCase().replace(/[^\w]/, '');
         const domain = bandom.micro(name + '_');
         return {

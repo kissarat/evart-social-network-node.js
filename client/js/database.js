@@ -1,4 +1,5 @@
-"use strict";
+'use strict';
+
 function Database(engine, options) {
     var self = this;
     _.extend(this, options);
@@ -57,8 +58,8 @@ Database.prototype = {
             request.addEventListener('error', function (e) {
                 self.trigger('error', e, event);
                 reject(e);
-            })
-        })
+            });
+        });
     },
 
     find: function (name, where) {
@@ -76,7 +77,7 @@ Database.prototype = {
                 else {
                     resolve(result);
                 }
-            }, reject)
+            }, reject);
         });
     },
 
@@ -97,7 +98,7 @@ Database.prototype = {
 
     api: function (path, params) {
         var xhr = new XMLHttpRequest();
-        xhr.open()
+        xhr.open();
     },
 
     getById: function (name, id, params) {
@@ -123,17 +124,20 @@ Database.prototype = {
                             });
                             break;
                     }
-                    $.getJSON('/api/' + name + '?' + $.param(params))
-                        .error(reject)
-                        .success(function (object) {
+                    $.ajax({
+                        dataType: 'json',
+                        url: '/api/' + name + '?' + $.param(params),
+                        error: reject,
+                        success: function (object) {
                             resolve(object);
                             if (object) {
                                 object._retrived = new Date().toISOString();
                                 self.create(storage_name, object);
                             }
-                        });
+                        }
+                    });
                 }
-            })
+            });
         });
     },
 
@@ -154,13 +158,13 @@ Database.prototype = {
                             self.put(name, object);
                         });
                         resolve(objects);
-                    })
+                    });
                 }
                 else {
                     resolve(objects);
                 }
-            })
-        })
+            });
+        });
     },
 
     fetchOne: function (name, where, params) {
@@ -181,13 +185,13 @@ Database.prototype = {
                         assert.isObjectID(object._id);
                         self.put(name, object);
                         resolve(object);
-                    })
+                    });
                 }
                 else {
                     resolve(objects[0]);
                 }
-            })
-        })
+            });
+        });
     }
 };
 
@@ -201,7 +205,7 @@ Database.IndexedDB = {
         request.addEventListener('upgradeneeded', function (e) {
             self.db = e.target.result;
             self.upgrade(options.schema || {});
-        })
+        });
     },
 
     upgrade: function (schema) {
@@ -283,7 +287,7 @@ Database.LocalStorage = {
         var storage = this.storage(name);
         return new Promise(function (resolve) {
             storage[object._id] = object;
-            resolve(object)
+            resolve(object);
         });
     },
 
@@ -307,7 +311,7 @@ Database.LocalStorage = {
                 value = JSON.stringify(value);
                 localStorage.setItem(self._getStorageName(name), value);
             }
-        })
+        });
     },
 
     destroy: function () {

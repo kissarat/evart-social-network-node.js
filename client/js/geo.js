@@ -24,7 +24,7 @@ App.module('Geo', function (Geo, App) {
     Geo.getCountriesFragment = function (success) {
         Geo.getCountries(function (localized) {
             var fragment = document.createDocumentFragment();
-            localized.forEach(function (country) {
+            localized.items.forEach(function (country) {
                 var c = _.find(countries, {_id: country.cid});
                 if (c) {
                     var option = document.createElement('option');
@@ -182,5 +182,5 @@ App.module('Geo', function (Geo, App) {
             citySearch.getRegion('list').show(new Geo.CityListView({collection: new Backbone.Collection()}));
             return citySearch;
         }
-    })
+    });
 });
