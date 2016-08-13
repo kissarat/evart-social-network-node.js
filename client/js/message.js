@@ -903,7 +903,7 @@ App.module('Message', function (Message, App) {
             var self = this;
 
             function read() {
-                setTimeout(function () {
+                Message.getMessenger().readTimer = setTimeout(function () {
                     self.read(source_id);
                 }, App.config.message.read.delay);
             }
@@ -1222,12 +1222,18 @@ App.module('Message', function (Message, App) {
         }
     });
 
-    Message.channel.reply('open', function (id) {
+    Message.getMessenger = function () {
         var messenger = App.getPlace('main').currentView;
         if (!(messenger instanceof Message.Messenger)) {
             messenger = Message.Messenger.widget(App.getPlace('main'), {});
         }
+        return messenger;
+    };
 
+    Message.channel.reply('open', function (id) {
+        var messenger = Message.getMessenger();
+        clearTimeout(messenger.readTimer);
+        
         if (id instanceof Backbone.Model) {
             messenger.open(id);
         }
