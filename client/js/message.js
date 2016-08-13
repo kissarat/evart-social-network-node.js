@@ -64,7 +64,7 @@ App.module('Message', function (Message, App) {
             //     loadRelative(this, Message.Model.relatives);
             // }
             // else {
-                resolveRelative(this, Message.Model.relatives);
+            resolveRelative(this, Message.Model.relatives);
             // }
 
             if (!this.has('time')) {
@@ -247,7 +247,10 @@ App.module('Message', function (Message, App) {
         },
 
         openDialog: function () {
-            Message.channel.request('open', this.model.getPeer());
+            var id = 'dialog' === this.model.get('type')
+                ? this.model.get('peer').get('domain')
+                : this.model.get('_id');
+            App.navigate('dialog/' + id);
         },
 
         openPeer: function () {
@@ -796,9 +799,10 @@ App.module('Message', function (Message, App) {
     }, {
         widget: function (region, options) {
             var list = new Message.DialogList([], {
-                query: _.merge({
-                    id: App.user._id
-                }, _.pick(options, 'unread', 'cut', 'since'))
+                query: _.merge(
+                    {id: App.user._id},
+                    _.pick(options, 'unread', 'cut', 'since')
+                )
             });
             var listView = new Message.DialogListView({collection: list.fullCollection});
             region.show(listView);
@@ -1220,20 +1224,20 @@ App.module('Message', function (Message, App) {
 
     Message.channel.reply('open', function (id) {
         var messenger = App.getPlace('main').currentView;
-        if (messenger instanceof Message.Messenger) {
-            if (id) {
-                if (_.isObjectID(id) || id instanceof Backbone.Model) {
-                    messenger.open(id);
-                }
-                else {
-                    $.getJSON('/api/user?domain=' + id, function (user) {
-                        messenger.open(user._id);
-                    })
-                }
-            }
+        if (!(messenger instanceof Message.Messenger)) {
+            messenger = Message.Messenger.widget(App.getPlace('main'), {});
+        }
+
+        if (id instanceof Backbone.Model) {
+            messenger.open(id);
+        }
+        else if ('string' === typeof id) {
+            $.getJSON('/api/user?domain=' + id, function (user) {
+                messenger.open(user._id);
+            })
         }
         else {
-            App.navigate('dialog/' + id);
+            console.error('Invalid ID');
         }
     });
 
@@ -1255,7 +1259,6 @@ App.module('Message', function (Message, App) {
             },
 
             dialog: function (id) {
-                Message.Messenger.widget(App.getPlace('main'), {});
                 Message.channel.request('open', id);
             },
 
