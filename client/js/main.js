@@ -1,28 +1,5 @@
 "use strict";
 
-function _sendMessages(n) {
-    for (var i = 0; i < n; i++) {
-        setTimeout(function () {
-            $.sendJSON('POST', '/api/message', {
-                type: 'dialog',
-                target: '01145c9ae906148400be8f72',
-                text: 'A' + i
-            });
-        }, i * 1100);
-    }
-}
-
-_.extend(Element.prototype, {
-    setBackground: function (id) {
-        if (/^[\da-f]{24}$/.test(id)) {
-            id = '/api/file?id=' + id;
-        }
-        if (id) {
-            this.style.backgroundImage = 'url("' + id + '")';
-        }
-    }
-});
-
 addEventListener('keyup', function (e) {
     if ('F7' == e.key) {
         var error_id = localStorage.getItem('_error_last');
@@ -44,48 +21,6 @@ _.extend(Backbone.ChildViewContainer.prototype, {
         this.call(function () {
             self.remove(this);
         })
-    }
-});
-
-jQuery.sendJSON = function (type, url, data, complete) {
-    var options = {
-        type: type,
-        url: url,
-        contentType: 'application/json; charset=UTF-8',
-        dataType: 'json',
-        data: JSON.stringify(data)
-    };
-    if (complete) {
-        options.complete = function (xhr) {
-            var response = xhr.responseJSON;
-            complete(response, xhr);
-        };
-    }
-    return this.ajax(options);
-};
-
-_.extend(jQuery.fn, {
-    serialize: function () {
-        return this[0].serialize();
-    },
-
-    busy: function (state) {
-        return this.toggleClass('busy', state);
-    },
-
-    report: function (name, message, cssClass) {
-        var parent = this.find('[name="' + name + '"]').parent();
-        var helpBlock = parent.find(".help-block");
-        if (helpBlock.length == 0) {
-            helpBlock = parent.parent().find(".help-block");
-        }
-        if ('string' === typeof cssClass) {
-            helpBlock.addClass(cssClass).show().html(message);
-        } else if (false === cssClass) {
-            helpBlock.attr('class', 'help-block').hide().empty();
-        } else {
-            helpBlock.attr('class', 'help-block').show().html(message);
-        }
     }
 });
 
@@ -176,24 +111,6 @@ var ModalRegion = Marionette.Region.extend({
 
     onEmpty: function () {
         this.$el.hide();
-    }
-});
-
-$(document).ajaxError(function (e, xhr) {
-    switch (xhr.status) {
-        case code.UNAUTHORIZED:
-            App.navigate('/login');
-            break;
-        default:
-            var data = xhr.responseJSON;
-            if (data && data.error) {
-                var error = data.error;
-                App.alert('danger', error.message ? error.message : error);
-                if (error.stack) {
-                    error.type = 'server';
-                    App.local.create('_error', error);
-                }
-            }
     }
 });
 
@@ -337,7 +254,8 @@ _.extend(Application.prototype, {
                 options = {};
             }
             var self = this;
-            var query = _.merge(_.clone(this.query), options.query);
+            var query = _.merge(this.queryParams, this.query, options.query);
+            this.queryParams = {};
             Object.keys(_.omit(query, 'loading')).forEach(function (k) {
                 self.queryParams[k] = function () {
                     var value = self.queryModel.get(k);
@@ -471,36 +389,6 @@ function findStyleRules(selector, match) {
     return rules;
 }
 
-function is980() {
-    return innerWidth > 980;
-}
-
-function resize() {
-    if (App.isAuthenticated()) {
-        App.debounce(resize, function () {
-            $('#left, #right').toggleClass('visible', is980());
-        });
-        $('#root > .add, #left, #right')
-            .on('mouseenter', function () {
-                var selector = '#' + this.getAttribute('data-name');
-                clearTimeout(resize._timer);
-                resize._timer = setTimeout(function () {
-                    if (!is980()) {
-                        $(selector).addClass('visible');
-                    }
-                }, 800);
-            })
-            .on('mouseleave', function () {
-                var selector = '#' + this.getAttribute('data-name');
-                clearTimeout(resize._timer);
-                resize._timer = setTimeout(function () {
-                    if (!is980()) {
-                        $(selector).removeClass('visible');
-                    }
-                }, 800);
-            });
-    }
-}
 
 App.on('login', resize);
 

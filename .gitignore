@@ -12,3 +12,4 @@ server/log/
 server/mongodb/data/
 static/
 utilities/modules/*.js*
+test/browser-data/

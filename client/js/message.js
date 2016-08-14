@@ -214,6 +214,27 @@ App.module('Message', function (Message, App) {
         }
     });
 
+    Message.getDialogList = function () {
+        if (!this.dialogList) {
+            var dialogList = new Message.DialogList([], {
+                query: {
+                    id: App.user._id
+                }
+            });
+            // setImmediate(function () {
+            //     dialogList.getFirstPage();
+            // });
+            dialogList.getFirstPage();
+            this.dialogList = dialogList.fullCollection;
+        }
+        this.dialogList.on('add', function (model) {
+            if (model.has('peer')) {
+                App.local.put('user', model.get('peer'));
+            }
+        });
+        return this.dialogList;
+    };
+
     Message.LastMessageView = Marionette.View.extend({
         template: '#view-last-message',
 
@@ -798,15 +819,8 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            var list = new Message.DialogList([], {
-                query: _.merge(
-                    {id: App.user._id},
-                    _.pick(options, 'unread', 'cut', 'since')
-                )
-            });
-            var listView = new Message.DialogListView({collection: list.fullCollection});
+            var listView = new Message.DialogListView({collection: Message.getDialogList(options)});
             region.show(listView);
-            list.getFirstPage();
             return listView;
         }
     });
@@ -903,7 +917,9 @@ App.module('Message', function (Message, App) {
             var self = this;
 
             function read() {
-                Message.getMessenger().readTimer = setTimeout(function () {
+                var list = Message.getDialogList();
+                clearTimeout(list.readTimer);
+                list.readTimer = setTimeout(function () {
                     self.read(source_id);
                 }, App.config.message.read.delay);
             }
@@ -1076,13 +1092,11 @@ App.module('Message', function (Message, App) {
 
         attach: function () {
             var self = this;
-            var owner_id = this.model.get('_id');
+            var id = this.model.get('_id');
             var upload = App.Views.uploadDialog({
                 accept: 'image/jpeg',
                 multiple: true,
-                params: {
-                    owner_id: owner_id
-                }
+                params: {owner_id: id}
             });
             upload.on('response', function (data) {
                 var file = new App.File.Model(data);
@@ -1169,25 +1183,14 @@ App.module('Message', function (Message, App) {
         },
 
         search: function () {
-            this._search();
+            Message.getDialogList().delaySearch();
         },
 
         onRender: function () {
-            this.listenTo(this.getRegion('dialogList'), 'show', this.onShowDialogList);
-            App.Views.perfectScrollbar(this.ui.dialogList);
-        },
-
-        onShowDialogList: function () {
-            var c = this.getRegion('dialogList').currentView.collection;
-            c.on('add', function (model) {
-                if (model.has('peer')) {
-                    App.local.put('user', model.get('peer'));
-                }
-            });
-            var p = c.pageableCollection;
-            this.model = p.queryModel;
-            this._search = p.delaySearch.bind(p);
+            var dialogList = Message.getDialogList();
+            this.model = dialogList.pageableCollection.queryModel;
             this.stickit();
+            App.Views.perfectScrollbar(this.ui.dialogList);
         },
 
         open: function (id) {
@@ -1203,31 +1206,31 @@ App.module('Message', function (Message, App) {
                 widget(id);
             }
             else {
-                App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (user) {
-                    widget(new Message.Model(user));
+                App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (data) {
+                    widget(new Message.Model(data));
                 });
             }
         }
     }, {
         widget: function (region, options) {
-            var messenger = new Message.Messenger();
-            region.show(messenger);
-            var dialogList = new Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
+            if (!region) {
+                region = App.getPlace('main');
+            }
+            if (!options) {
+                options = {};
+            }
+            var messenger = region.currentView;
+            if (!(messenger instanceof Message.Messenger)) {
+                messenger = new Message.Messenger();
+                region.show(messenger);
+            }
+            Message.DialogListView.widget(messenger.getRegion('dialogList'), options);
             return messenger;
         }
     });
 
-    Message.getMessenger = function () {
-        var messenger = App.getPlace('main').currentView;
-        if (!(messenger instanceof Message.Messenger)) {
-            messenger = Message.Messenger.widget(App.getPlace('main'), {});
-        }
-        return messenger;
-    };
-
     Message.channel.reply('open', function (id) {
-        var messenger = Message.getMessenger();
-        clearTimeout(messenger.readTimer);
+        var messenger = Message.Messenger.widget();
 
         if (id instanceof Backbone.Model) {
             messenger.open(id);
@@ -1240,8 +1243,7 @@ App.module('Message', function (Message, App) {
             });
         }
         else {
-            // When /dialogs open
-            console.warn('No ID');
+            console.error('No ID');
         }
     });
 
@@ -1263,7 +1265,12 @@ App.module('Message', function (Message, App) {
             },
 
             dialog: function (id) {
-                Message.channel.request('open', id);
+                if (id) {
+                    Message.channel.request('open', id);
+                }
+                else {
+                    Message.Messenger.widget();
+                }
             },
 
             emoji: function () {

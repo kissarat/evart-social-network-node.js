@@ -122,7 +122,7 @@ function load3_languageLoaded() {
     );
 
     App.start();
-    
+
     if (App.config.service && navigator.serviceWorker) {
         navigator.serviceWorker.register('/service.js', {scope: '/'}).catch(function (e) {
             console.error('The service worker registration error ', e);

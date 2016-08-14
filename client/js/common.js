@@ -222,7 +222,8 @@ _.extend(Service.prototype, {
 
     getCookie: function (name) {
         name = name + '=([^;]+)';
-        return new RegExp(name).exec(document.cookie)[1];
+        var match = new RegExp(name).exec(document.cookie);
+        return match ? match[1] : match;
     },
 
     debug: {

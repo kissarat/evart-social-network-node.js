@@ -174,3 +174,111 @@ _.extend(Element.prototype, {
         return null;
     }
 });
+
+jQuery.sendJSON = function (type, url, data, complete) {
+    var options = {
+        type: type,
+        url: url,
+        contentType: 'application/json; charset=UTF-8',
+        dataType: 'json',
+        data: JSON.stringify(data)
+    };
+    if (complete) {
+        options.complete = function (xhr) {
+            var response = xhr.responseJSON;
+            complete(response, xhr);
+        };
+    }
+    return this.ajax(options);
+};
+
+_.extend(jQuery.fn, {
+    serialize: function () {
+        return this[0].serialize();
+    },
+
+    busy: function (state) {
+        return this.toggleClass('busy', state);
+    },
+
+    report: function (name, message, cssClass) {
+        var parent = this.find('[name="' + name + '"]').parent();
+        var helpBlock = parent.find(".help-block");
+        if (helpBlock.length == 0) {
+            helpBlock = parent.parent().find(".help-block");
+        }
+        if ('string' === typeof cssClass) {
+            helpBlock.addClass(cssClass).show().html(message);
+        } else if (false === cssClass) {
+            helpBlock.attr('class', 'help-block').hide().empty();
+        } else {
+            helpBlock.attr('class', 'help-block').show().html(message);
+        }
+    }
+});
+
+_.extend(Element.prototype, {
+    setBackground: function (id) {
+        if (/^[\da-f]{24}$/.test(id)) {
+            id = '/api/file?id=' + id;
+        }
+        if (id) {
+            this.style.backgroundImage = 'url("' + id + '")';
+        }
+    }
+});
+
+function backHistory() {
+    history.back();
+}
+
+function findStyleRules(selector, match) {
+    if (false !== match) {
+        match = true;
+    }
+    var rules = [];
+    for (var i = 0; i < document.styleSheets.length; i++) {
+        var styleSheet = document.styleSheets[i];
+        for (var j = 0; j < styleSheet.cssRules.length; j++) {
+            var rule = styleSheet.cssRules[j];
+            if (rule.selectorText) {
+                var s = rule.selectorText.trim().replace(/\s+/g, ' ');
+                if (match ? s == selector : s.indexOf(selector)) {
+                    rules.push(rule);
+                }
+            }
+        }
+    }
+    return rules;
+}
+
+function is980() {
+    return innerWidth > 980;
+}
+
+function resize() {
+    if (App.isAuthenticated()) {
+        App.debounce(resize, function () {
+            $('#left, #right').toggleClass('visible', is980());
+        });
+        $('#root > .add, #left, #right')
+            .on('mouseenter', function () {
+                var selector = '#' + this.getAttribute('data-name');
+                clearTimeout(resize._timer);
+                resize._timer = setTimeout(function () {
+                    if (!is980()) {
+                        $(selector).addClass('visible');
+                    }
+                }, 800);
+            })
+            .on('mouseleave', function () {
+                var selector = '#' + this.getAttribute('data-name');
+                clearTimeout(resize._timer);
+                resize._timer = setTimeout(function () {
+                    if (!is980()) {
+                        $(selector).removeClass('visible');
+                    }
+                }, 800);
+            });
+    }
+}
