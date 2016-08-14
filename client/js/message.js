@@ -1183,7 +1183,7 @@ App.module('Message', function (Message, App) {
         },
 
         search: function () {
-            Message.getDialogList().delaySearch();
+            Message.getDialogList().pageableCollection.delaySearch();
         },
 
         onRender: function () {
@@ -1206,9 +1206,24 @@ App.module('Message', function (Message, App) {
                 widget(id);
             }
             else {
-                App.local.getById(id.indexOf('07') === 0 ? 'chat' : 'user', id).then(function (data) {
-                    widget(new Message.Model(data));
-                });
+                var promise;
+                if (id.indexOf('07') === 0) {
+                    promise = App.local.getById('chat', id);
+                }
+                else if (_.isObjectID(id)) {
+                    promise = App.local.getById('user', id);
+                }
+                else if (id) {
+                    promise = App.local.fetchOne('user', {domain: id});
+                }
+                if (promise instanceof Promise) {
+                    promise.then(function (data) {
+                        widget(new Message.Model(data));
+                    });
+                }
+                else {
+                    throw new Error('Invalid ID');
+                }
             }
         }
     }, {
@@ -1232,18 +1247,11 @@ App.module('Message', function (Message, App) {
     Message.channel.reply('open', function (id) {
         var messenger = Message.Messenger.widget();
 
-        if (id instanceof Backbone.Model) {
+        if (id) {
             messenger.open(id);
         }
-        else if ('string' === typeof id) {
-            var where = {};
-            where[_.isObjectID(id) ? 'id' : 'domain'] = id;
-            App.local.fetchOne('user', where, function (user) {
-                messenger.open(user._id);
-            });
-        }
         else {
-            console.error('No ID');
+            throw new Error('Invalid ID');
         }
     });
 
