@@ -25,7 +25,7 @@ Socket.prototype = {
                 }
             };
         }
-        
+
         register(this.socket, {
             message: function (e) {
                 App.debug.push('socket_pull', e.data);
@@ -82,27 +82,41 @@ Socket.prototype = {
     }
 };
 
+if (App.features.notification.available) {
+    Notification.requestPermission(function (permission) {
+        if ('granted' === permission) {
+            App.features.notification.enabled = true;
+        }
+    });
+}
 
-App.notify = function (options) {
-    if (App.features.notification.available) {
-        Notification.requestPermission(function (permission) {
-            if ('granted' === permission) {
-                App.notify = function (options) {
-                    if ('string' === typeof options) {
-                        options = {title: options};
-                    }
-                    var n = new Notification(options.title, options);
-                    if (!isNaN(options.timeout) && options.timeout > 0) {
-                        setTimeout(function () {
-                            n.close();
-                        }, options.timeout);
-                    }
-                };
-                App.notify(options);
-            }
-        });
+
+if (App.features.notification.enabled) {
+    App.notify = function (options) {
+        if ('string' === typeof options) {
+            options = {title: options};
+        }
+        if (!isFirefox) {
+            sound(model.get('sound') ? model.get('sound') : 'notification');
+        }
+        var notification = new Notification(options.title, options);
+        if (!isNaN(options.timeout) && options.timeout > 0) {
+            setTimeout(function () {
+                notification.close();
+            }, options.timeout);
+        }
+        if (options.url) {
+            notification.addEventListener('click', function () {
+                App.navigate(options.url);
+                notification.close();
+            });
+        }
+        return notification;
     }
-};
+}
+else {
+    App.notify = Function();
+}
 
 App.socket = new Socket((self.App && App.config ? App.config : self.defaultConfig).socket);
 
@@ -110,7 +124,7 @@ register(App, {
     login: function () {
         this.socket.pull();
     },
-    
+
     logout: function () {
         this.socket.close();
     }

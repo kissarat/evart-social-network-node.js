@@ -393,6 +393,7 @@ function dialogs($) {
                 }
             }
             aggregate.push({$project: project});
+            aggregate.push({$skip: $.skip});
             aggregate.push({$limit: $.limit});
             Message
                 .aggregate(aggregate)

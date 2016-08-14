@@ -56,10 +56,6 @@ App.module('Views', function (Views, App) {
         }
     });
 
-    Views.bindAndTranslate = function () {
-
-    }
-
     App.Behaviors.Pageable = Marionette.Behavior.extend({
         onAttach: function () {
             var reverse = this.options.reverse;
@@ -67,13 +63,16 @@ App.module('Views', function (Views, App) {
             var el = view.el.findParent(function (current) {
                 return current.classList.contains('scroll');
             });
-            Views.perfectScrollbar(el);
             el.addEventListener('scroll', function (e) {
-                var delta = reverse ? e.target.scrollTop : e.target.scrollHeight - e.target.scrollTop;
-                if (delta < 500) {
+                var delta = reverse
+                    ? e.target.scrollTop
+                    : e.target.scrollHeight - (e.target.scrollTop + $(e.target).height());
+                console.log(delta);
+                if (delta < App.config.scroll.next) {
                     return view.collection.pageableCollection.getNextPage();
                 }
             });
+            Views.perfectScrollbar(el);
         }
     });
 

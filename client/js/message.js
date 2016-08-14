@@ -16,26 +16,12 @@ App.module('Message', function (Message, App) {
     [MessageType.CHAT, MessageType.DIALOG, MessageType.WALL, MessageType.COMMENT].forEach(function (type) {
         App.socket.on(type, function (message) {
             var model = new Message.Model(message);
-            model.loadRelative()
-                .then(function () {
-                    if (!Message.channel.request(type, model)) {
-                        Message.notify(model);
-                        if (MessageType.DIALOG === model.get('type') || MessageType.CHAT === model.get('type')) {
-                            var dialogList = Message.getDialogList();
-                            console.log(model.id);
-                            if (!dialogList.remove(model.id)) {
-                                console.error('Last message not found');
-                            }
-                            var lastMessage = new Message.LastMessage({
-                                _id: model.id,
-                                type: model.get('type'),
-                                text: model.get('text'),
-                                peer: model.get('source')
-                            });
-                            dialogList.add(lastMessage);
-                        }
-                    }
-                });
+            model.loadRelative().then(function () {
+                if (!Message.channel.request(type, model)) {
+                    Message.notify(model);
+                    Message.getDialogList().pageableCollection.replaceMessage(model);
+                }
+            });
         });
     });
 
@@ -49,19 +35,21 @@ App.module('Message', function (Message, App) {
         }
         return model.loadRelative().then(function () {
             var source = model.get('source');
-            // if (!isFirefox) {
-            // sound(model.get('sound') ? model.get('sound') : 'notification');
-            // }
             return App.notify({
-                tag: model.get('_id'),
+                tag: model.id,
                 icon: source.getAvatarURL(),
                 title: source.getName(),
                 body: model.get('text'),
                 timeout: model.get('timeout'),
-                silent: true
+                silent: true,
+                url: 'dialog/' + model.id
             });
         });
     };
+
+    if (window.Notification) {
+
+    }
 
     Message.Model = Backbone.Model.extend({
         cidPrefix: 'msg',
@@ -71,14 +59,9 @@ App.module('Message', function (Message, App) {
             return this.isNew() ? '/api/message' : '/api/message?id=' + this.get('_id');
         },
 
-        initialize: function (options) {
+        initialize: function () {
             var self = this;
-            // if (options.load) {
-            //     loadRelative(this, Message.Model.relatives);
-            // }
-            // else {
             resolveRelative(this, Message.Model.relatives);
-            // }
 
             if (!this.has('time')) {
                 this.set('time', new Date().toISOString());
@@ -153,6 +136,28 @@ App.module('Message', function (Message, App) {
             });
             model.set('files', new App.File.List());
             return model;
+        },
+
+        toLastMessage: function () {
+            var id = MessageType.CHAT === this.get('type')
+                ? this.get('chat').get('_id')
+                : this.get('source').get('_id');
+
+            var lastMessage = new Message.LastMessage({
+                _id: id,
+                type: this.get('type'),
+                text: this.get('text'),
+                source: this.get('source')
+            });
+
+            if (MessageType.CHAT === this.get('type')) {
+                lastMessage.set('chat', this.get('chat'));
+            }
+            else {
+                var source = id === App.user._id ? id : this.get('source');
+                lastMessage.set('peer', source);
+            }
+            return lastMessage;
         }
     }, {
         tableName: 'message'
@@ -179,6 +184,8 @@ App.module('Message', function (Message, App) {
     });
 
     Message.LastMessage = Backbone.Model.extend({
+        idAttribute: '_id',
+
         initialize: function () {
             resolveRelative(this, Message.LastMessage.relatives);
         },
@@ -187,8 +194,12 @@ App.module('Message', function (Message, App) {
             return 'chat' === this.get('type') ? this.get('chat') : this.get('peer');
         },
 
+        getIndex: function () {
+            return new Date(this.get('time')).getTime();
+        },
+
         loadRelative: function () {
-            loadRelative(this, Message.LastMessage.relatives);
+            return loadRelative(this, Message.LastMessage.relatives);
         }
     });
 
@@ -221,9 +232,15 @@ App.module('Message', function (Message, App) {
             q: ''
         },
 
+        initialize: function (options) {
+            App.PageableCollection.prototype.initialize.call(this, options);
+            this.comparator = Message.comparator;
+        },
+
         model: function (attrs, options) {
             return new Message.LastMessage(attrs, options);
         },
+
 
         parseRecords: function (records) {
             records.forEach(function (record) {
@@ -232,6 +249,34 @@ App.module('Message', function (Message, App) {
                 }
             });
             return App.PageableCollection.prototype.parseRecords.call(this, records);
+        },
+
+        replaceMessage: function (message) {
+            var self = this;
+
+            function replace() {
+                var lastMessage = Message.getDialogList().find(function (current) {
+                    return current.id === message.id
+                });
+                if (lastMessage) {
+                    self.remove(lastMessage);
+                }
+                else {
+                    console.log('Message with ID not found');
+                }
+                self.add(message);
+                self.sort();
+            }
+
+            if (MessageType.DIALOG === message.get('type') || MessageType.CHAT === message.get('type')) {
+                if (message instanceof Message.Model) {
+                    message = message.toLastMessage();
+                    message.loadRelative().then(replace);
+                }
+                else {
+                    replace();
+                }
+            }
         }
     });
 
@@ -242,6 +287,7 @@ App.module('Message', function (Message, App) {
                     id: App.user._id
                 }
             });
+            dialogList.comparator = Message.comparator;
             // setImmediate(function () {
             //     dialogList.getFirstPage();
             // });
@@ -288,6 +334,13 @@ App.module('Message', function (Message, App) {
             'class': 'view last-message'
         },
 
+        modelEvents: {
+            'change:unread': function (model, unread) {
+                this.$el.toggleClass('unread', unread);
+                this.ui.unread.html(unread > 1 ? unread : '');
+            }
+        },
+
         openDialog: function () {
             var id = 'dialog' === this.model.get('type')
                 ? this.model.get('peer').get('domain')
@@ -307,15 +360,6 @@ App.module('Message', function (Message, App) {
             ui.peer_name.html(peer.getName());
             if (peer.setupAvatar instanceof Function) {
                 peer.setupAvatar(ui.peer_avatar);
-            }
-            if (this.model.has('unread')) {
-                var unread = this.model.get('unread');
-                if (unread > 0) {
-                    this.$el.addClass('unread');
-                    if (unread > 1) {
-                        this.ui.unread.html(unread);
-                    }
-                }
             }
             if (peer.has('online')) {
                 var online = new Date(peer.get('online')).getTime();
@@ -820,22 +864,19 @@ App.module('Message', function (Message, App) {
     Message.DialogListView = Marionette.CollectionView.extend({
         childView: Message.LastMessageView,
 
-        events: {
-            'scroll': 'scroll'
+        query: {
+            skip: 0,
+            limit: 64
         },
 
-        scroll: function (e) {
-            var delta = e.target.scrollHeight - innerHeight - e.target.scrollTop;
-            if (delta < App.config.scroll.next) {
-                this.animateLoading(this.queryModel);
-                var collection = this.collection.pageableCollection;
-                if (!collection.queryModel.get('loading')) {
-                    collection.getNextPage();
-                }
+        behaviors: {
+            Pageable: {
+                // reverse: true
             }
         },
 
         onRender: function () {
+            this.collection.pageableCollection.queryModel.set('skip', 0);
             this.animateLoading(this.queryModel);
         }
     }, {
@@ -912,10 +953,76 @@ App.module('Message', function (Message, App) {
         },
 
         initialize: function () {
-            this.reply = _.bind(this.reply, this);
-            this.read = _.bind(this.read, this);
+            var self = this;
+
+            this.read = function (response) {
+                if (!self.getRegion('list')) {
+                    console.warn('list region not found');
+                    return;
+                }
+                if ('read' === response.type && !response.success) {
+                    return;
+                }
+                var count = self.getCollection().models.reduce(function (a, _2) {
+                    return a + 1;
+                }, 0);
+                self.getCollection().forEach(function (model) {
+                    var a = response.dialog_id;
+                    var b = model.get('source').id === App.user._id;
+                    if ((a && !b) || (!a && b)) {
+                        model.set('unread', 0);
+                    }
+                });
+                var dialog_id = response.dialog_id || response;
+                var dialog = Message.getDialogList().models.find(function (model) {
+                    return model.id === dialog_id;
+                });
+                if (dialog) {
+                    dialog.set('unread', 0);
+                }
+                else {
+                    console.error('Dialog not found ' + dialog_id);
+                }
+                return count;
+            };
+
+            this.reply = function (model) {
+                function read() {
+                    var list = Message.getDialogList();
+                    clearTimeout(list.readTimer);
+                    list.readTimer = setTimeout(function () {
+                        self.read(source_id);
+                    }, App.config.message.read.delay);
+                }
+
+                var source_id = model.get('source').get('_id');
+                var id = self.getQuery().get('id');
+                var isMine = App.user._id === source_id;
+                var isReceiver = source_id === id || isMine;
+
+                if (isReceiver) {
+                    self.getCollection().add(model);
+                    self.getCollection().sort();
+                    if (!isMine) {
+                        if ('visible' === document.visibilityState) {
+                            read();
+                        }
+                        else {
+                            document.once('visibilitychange', read);
+                        }
+                    }
+                    self.getRegion('list').currentView.scrollLast();
+                }
+                return isReceiver;
+            };
+
             Message.channel.reply('dialog', this.reply);
             Message.channel.reply('read', this.read);
+        },
+
+        onDestroy: function () {
+            Message.channel.stopReplying('read', this.read);
+            Message.channel.stopReplying('dialog', this.reply);
         },
 
         onRender: function () {
@@ -927,69 +1034,6 @@ App.module('Message', function (Message, App) {
                 }
                 this.stickit();
             }
-        },
-
-        onDestroy: function () {
-            Message.channel.stopReplying('read', this.read);
-            Message.channel.stopReplying('dialog', this.reply);
-        },
-
-        reply: function (model) {
-            var self = this;
-
-            function read() {
-                var list = Message.getDialogList();
-                clearTimeout(list.readTimer);
-                list.readTimer = setTimeout(function () {
-                    self.read(source_id);
-                }, App.config.message.read.delay);
-            }
-
-            var source_id = model.get('source').get('_id');
-            var id = this.getQuery().get('id');
-            var isMine = App.user._id === source_id;
-            var isReceiver = source_id === id || isMine;
-
-            if (isReceiver) {
-                this.getCollection().add(model);
-                this.getCollection().sort();
-                if (!isMine) {
-                    if ('visible' === document.visibilityState) {
-                        read();
-                    }
-                    else {
-                        document.once('visibilitychange', read);
-                    }
-                }
-                this.getRegion('list').currentView.scrollLast();
-            }
-            return isReceiver;
-        },
-
-        read: function (response) {
-            if (!this.getRegion('list')) {
-                console.log(this);
-                console.warn('list region not found');
-                return;
-            }
-            if (!response.success) {
-                return;
-            }
-            var count = 0;
-            if (response.ids) {
-                this.getCollection().forEach(function (model) {
-                    if (response.ids.indexOf(model.get('_id')) >= 0) {
-                        model.set('unread', 0);
-                        count++;
-                    }
-                });
-            }
-            else {
-                this.getCollection().forEach(function (model) {
-                    model.set('unread', 0);
-                });
-            }
-            return count;
         }
     }, {
         widget: function (region, options) {
@@ -1159,6 +1203,7 @@ App.module('Message', function (Message, App) {
                         self.ui.editor[0].style.removeProperty('min-height');
                         model.loadRelative().then(function () {
                             Message.channel.request(model.get('type'), model);
+                            Message.getDialogList().pageableCollection.replaceMessage(model);
                             self.model = model.cloneDraft();
                             self.render();
                         });

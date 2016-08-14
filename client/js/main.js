@@ -254,8 +254,8 @@ _.extend(Application.prototype, {
                 options = {};
             }
             var self = this;
-            var query = _.merge(this.queryParams, this.query, options.query);
-            this.queryParams = {};
+            var query = _.merge(this.query, options.query);
+            this.queryParams = Object.create(this.queryParams);
             Object.keys(_.omit(query, 'loading')).forEach(function (k) {
                 self.queryParams[k] = function () {
                     var value = self.queryModel.get(k);
