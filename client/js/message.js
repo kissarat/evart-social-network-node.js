@@ -13,14 +13,27 @@ App.module('Message', function (Message, App) {
 
     Message.channel = Backbone.Radio.channel('message');
 
-    [MessageType.DIALOG, MessageType.WALL, MessageType.COMMENT].forEach(function (type) {
+    [MessageType.CHAT, MessageType.DIALOG, MessageType.WALL, MessageType.COMMENT].forEach(function (type) {
         App.socket.on(type, function (message) {
             var model = new Message.Model(message);
             model.loadRelative()
                 .then(function () {
                     if (!Message.channel.request(type, model)) {
-                        // console.log(model.attributes)
                         Message.notify(model);
+                        if (MessageType.DIALOG === model.get('type') || MessageType.CHAT === model.get('type')) {
+                            var dialogList = Message.getDialogList();
+                            console.log(model.id);
+                            if (!dialogList.remove(model.id)) {
+                                console.error('Last message not found');
+                            }
+                            var lastMessage = new Message.LastMessage({
+                                _id: model.id,
+                                type: model.get('type'),
+                                text: model.get('text'),
+                                peer: model.get('source')
+                            });
+                            dialogList.add(lastMessage);
+                        }
                     }
                 });
         });
@@ -167,16 +180,22 @@ App.module('Message', function (Message, App) {
 
     Message.LastMessage = Backbone.Model.extend({
         initialize: function () {
-            loadRelative(this, {
-                peer: App.User.Model,
-                chat: Message.Chat
-            });
+            resolveRelative(this, Message.LastMessage.relatives);
         },
 
         getPeer: function () {
             return 'chat' === this.get('type') ? this.get('chat') : this.get('peer');
+        },
+
+        loadRelative: function () {
+            loadRelative(this, Message.LastMessage.relatives);
         }
     });
+
+    Message.LastMessage.relatives = {
+        peer: App.User.Model,
+        chat: Message.Chat
+    };
 
     Message.List = App.PageableCollection.extend({
         url: '/api/message',
@@ -198,7 +217,9 @@ App.module('Message', function (Message, App) {
     Message.DialogList = App.PageableCollection.extend({
         url: '/api/message/dialogs',
 
-        query: {},
+        query: {
+            q: ''
+        },
 
         model: function (attrs, options) {
             return new Message.LastMessage(attrs, options);
@@ -847,8 +868,8 @@ App.module('Message', function (Message, App) {
         },
 
         events: {
-            'keyup .editor': 'resize'
-            // 'scroll .scroll': 'scroll'
+            'keyup .editor': 'resize',
+            'scroll .scroll': 'scroll'
         },
 
         bindings: {
@@ -947,6 +968,7 @@ App.module('Message', function (Message, App) {
 
         read: function (response) {
             if (!this.getRegion('list')) {
+                console.log(this);
                 console.warn('list region not found');
                 return;
             }

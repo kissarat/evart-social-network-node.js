@@ -369,13 +369,14 @@ function dialogs($) {
             if ($.has('q')) {
                 let q = $.get('q');
                 if (q = q.trim()) {
+                    q = {$regex: q.replace(/\s+/g, '.*'), $options: 'i'};
                     aggregate.push({
                         $match: {
                             $or: [
-                                {surname: {$regex: q}},
-                                {forename: {$regex: q}},
-                                {domain: {$regex: q}},
-                                {name: {$regex: q}}
+                                {'peer.surname': q},
+                                {'peer.forename': q},
+                                {'peer.domain': q},
+                                {'chat.name': q}
                             ]
                         }
                     });

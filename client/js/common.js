@@ -6,14 +6,14 @@ self.T = function (text) {
     return text;
 };
 
-const MessageType = {
+const MessageType = Object.freeze({
     DIALOG: 'dialog',
     WALL: 'wall',
     PHOTO: 'photo',
     VIDEO: 'video',
     COMMENT: 'comment',
     CHAT: 'chat'
-};
+});
 
 _.mixin({
     merge: function () {
