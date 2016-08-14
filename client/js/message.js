@@ -140,7 +140,7 @@ App.module('Message', function (Message, App) {
 
         toLastMessage: function () {
             var id = MessageType.CHAT === this.get('type')
-                ? this.get('chat').get('_id')
+                ? this.get('chat').id
                 : this.get('source').get('_id');
 
             var lastMessage = new Message.LastMessage({
@@ -163,14 +163,6 @@ App.module('Message', function (Message, App) {
         tableName: 'message'
     });
 
-    Message.Model.relatives = {
-        source: App.User.Model,
-        target: App.User.Model,
-        owner: App.User.Model,
-        parent: Message.Model,
-        files: App.File.List
-    };
-
     Message.Chat = Backbone.Model.extend({
         idAttribute: '_id',
 
@@ -181,7 +173,18 @@ App.module('Message', function (Message, App) {
         getName: function () {
             return this.get('name') || this.id;
         }
+    }, {
+        tableName: 'chat',
     });
+
+    Message.Model.relatives = {
+        source: App.User.Model,
+        target: App.User.Model,
+        owner: App.User.Model,
+        parent: Message.Model,
+        files: App.File.List,
+        chat: Message.Chat
+    };
 
     Message.LastMessage = Backbone.Model.extend({
         idAttribute: '_id',
@@ -241,6 +244,9 @@ App.module('Message', function (Message, App) {
             return new Message.LastMessage(attrs, options);
         },
 
+        getById: function () {
+
+        },
 
         parseRecords: function (records) {
             records.forEach(function (record) {
@@ -295,6 +301,9 @@ App.module('Message', function (Message, App) {
             this.dialogList = dialogList.fullCollection;
         }
         this.dialogList.on('add', function (model) {
+            if (model.has('chat')) {
+                App.local.put('chat', model.get('chat'));
+            }
             if (model.has('peer')) {
                 App.local.put('user', model.get('peer'));
             }
@@ -961,21 +970,22 @@ App.module('Message', function (Message, App) {
                     return;
                 }
                 if ('read' === response.type && !response.success) {
+                    console.error('Read fail', response);
                     return;
                 }
-                var count = self.getCollection().models.reduce(function (a, _2) {
-                    return a + 1;
-                }, 0);
-                self.getCollection().forEach(function (model) {
-                    var a = response.dialog_id;
-                    var b = model.get('source').id === App.user._id;
-                    if ((a && !b) || (!a && b)) {
-                        model.set('unread', 0);
-                    }
-                });
+                var count = 0;
+                if (response.ids) {
+                    count = response.ids.length;
+                    self.getCollection().forEach(function (model) {
+                        if (response.ids.indexOf(model.id) >= 0) {
+                            model.set('unread', 0);
+                        }
+                    });
+                }
                 var dialog_id = response.dialog_id || response;
                 var dialog = Message.getDialogList().models.find(function (model) {
-                    return model.id === dialog_id;
+                    // console.log(dialog_id, model.id);
+                    return dialog_id === model.id;
                 });
                 if (dialog) {
                     dialog.set('unread', 0);
@@ -1037,7 +1047,8 @@ App.module('Message', function (Message, App) {
         }
     }, {
         widget: function (region, options) {
-            var isChat = options.chat;
+            var isChat = 'chat' === options.type;
+            // console.log(isChat, options);
             var model = isChat ? options.chat : options.target;
             model.set('type', isChat ? 'chat' : 'dialog');
             var query = isChat ? {
@@ -1262,10 +1273,11 @@ App.module('Message', function (Message, App) {
 
         open: function (id) {
             var self = this;
+            var isChat = id.indexOf('07') === 0;
 
             function widget(model) {
-                var options = {};
-                options['chat' === model.get('type') ? 'chat' : 'target'] = model;
+                var options = {type: isChat ? 'chat' : 'dialog'};
+                options['chat' === options.type ? 'chat' : 'target'] = model;
                 Message.Dialog.widget(self.getRegion('dialog'), options);
             }
 
@@ -1274,7 +1286,7 @@ App.module('Message', function (Message, App) {
             }
             else {
                 var promise;
-                if (id.indexOf('07') === 0) {
+                if (isChat) {
                     promise = App.local.getById('chat', id);
                 }
                 else if (_.isObjectID(id)) {

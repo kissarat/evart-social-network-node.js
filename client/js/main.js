@@ -431,7 +431,10 @@ function loadRelative(model, map) {
                 else {
                     promises.push(new Promise(function (resolve, reject) {
                         App.local.getById(clazz.tableName, value)
-                            .catch(reject)
+                            .catch(function (err) {
+                                console.error(err);
+                                reject(err);
+                            })
                             .then(function (relative) {
                                 relative = new clazz(relative);
                                 model.set(key, relative);

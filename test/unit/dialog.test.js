@@ -18,7 +18,7 @@ describe('dialog', function () {
             _.each(_users, function (user) {
                 user._id = user._id.toString();
                 users[user._id] = user;
-                const length = _.random(0, 200);
+                const length = _.random(0, 20);
                 for (let i = 0; i < length; i++) {
                     tasks.push({
                         user: user,

@@ -119,51 +119,78 @@ describe('chat', function () {
         loop(done, _.shuffle(inserts), sendMessage);
     });
 
-/*
-    it('WebSocket', function (done) {
-        const sample = bandom.sample(_.values(chats), _.random(1, 4));
-        loop(done, sample, function (chat, done) {
-            const members = chat.admin.concat(chat.follow).map(member => users[member]);
-            assert.equal(_.uniq(members).length, members.length, 'Excessive targets');
-            assert(members.length > 1);
-            const senders = bandom.sample(members, _.random(1, 3));
-            // console.log(members.map(m => m._id).join(' '));
-            loop(done, senders, function send(sender, done) {
-                const insert = {
-                    user: sender,
-                    chat: chat
-                };
-
-                var messageSend = false;
-
-                loop(done, members, function (member, done) {
-                    if (member._id === sender._id) {
-                        done();
-                    }
-                    else {
-                        // member.subscribe(function (data) {
-                        member.websocket.once('message', function (data) {
-                            if (messageSend) {
-                                const message = JSON.parse(data);
-                                assert.isMongoId(message._id);
-                                // console.log(_.pick(message, 'source', 'chat'));
-                                // assert.equal(message.source, sender._id);
-                            }
-                            done();
-                        });
-                    }
-                });
-
-                sendMessage(insert, function (err) {
+    it('dialogs', function (done) {
+        loop(done, _.shuffle(users), function (user, done) {
+            supertest(server)
+                .get('/api/message/dialogs')
+                .set('content-type', 'application/json')
+                .set('cookie', cookies(user))
+                .expect(200)
+                .end(function (err, res) {
+                    const data = JSON.parse(res.text);
+                    assert.isArray(data);
                     if (err) {
                         done(err);
                     }
                     else {
-                        messageSend = true;
+                        loop(done, data, function (dialog, done) {
+                            if (dialog.chat) {
+                                sendMessage({
+                                    user: user,
+                                    chat: dialog.chat
+                                }, done);
+                            }
+                        });
                     }
                 });
-            });
         });
     });
-    */
+
+    /*
+     it('WebSocket', function (done) {
+     const sample = bandom.sample(_.values(chats), _.random(1, 4));
+     loop(done, sample, function (chat, done) {
+     const members = chat.admin.concat(chat.follow).map(member => users[member]);
+     assert.equal(_.uniq(members).length, members.length, 'Excessive targets');
+     assert(members.length > 1);
+     const senders = bandom.sample(members, _.random(1, 3));
+     // console.log(members.map(m => m._id).join(' '));
+     loop(done, senders, function send(sender, done) {
+     const insert = {
+     user: sender,
+     chat: chat
+     };
+
+     var messageSend = false;
+
+     loop(done, members, function (member, done) {
+     if (member._id === sender._id) {
+     done();
+     }
+     else {
+     // member.subscribe(function (data) {
+     member.websocket.once('message', function (data) {
+     if (messageSend) {
+     const message = JSON.parse(data);
+     assert.isMongoId(message._id);
+     // console.log(_.pick(message, 'source', 'chat'));
+     // assert.equal(message.source, sender._id);
+     }
+     done();
+     });
+     }
+     });
+
+     sendMessage(insert, function (err) {
+     if (err) {
+     done(err);
+     }
+     else {
+     messageSend = true;
+     }
+     });
+     });
+     });
+     });
+     */
 });

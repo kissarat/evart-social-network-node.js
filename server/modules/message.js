@@ -143,14 +143,19 @@ function read($) {
     else if ($.has('target_id')) {
         const target = $.param('target_id');
         const isChat = 0 === target.toString().indexOf('07');
+        const where = {};
 
-        const resultCallback = function (result) {
-            result = $.merge(result.result, {
-                success: !!result.result.ok,
-                type: 'read',
-                dialog_id: target
-            });
-            return $.send(result);
+        const update = function () {
+            $.collection('message').find(where, {_id: 1}).toArray($.wrap(function (messages) {
+                $.collection('message').update(where, {$set: {unread: 0}}, $.wrap(function (result) {
+                    $.send($.merge(result.result, {
+                        success: !!result.result.ok,
+                        ids: messages.map(message => message._id),
+                        type: 'read',
+                        dialog_id: target
+                    }));
+                }));
+            }));
         };
 
         if (isChat) {
@@ -164,7 +169,8 @@ function read($) {
                         };
                         $.notifyOne(peer_id, socketMessage);
                     });
-                    $.collection('message').update({chat: target}, {$set: {unread: 0}}, $.wrap(resultCallback));
+                    where.chat = target;
+
                 }
                 else {
                     $.send(code.FORBIDDEN, {
@@ -172,6 +178,7 @@ function read($) {
                     });
                 }
             });
+            update();
         }
         else {
             const socketMessage = {
@@ -180,10 +187,9 @@ function read($) {
                 dialog_id: target
             };
             $.notifyOne(target, socketMessage);
-            $.collection('message').update({
-                target: $.user._id,
-                source: target
-            }, {$set: {unread: 0}}, $.wrap(resultCallback));
+            where.target = $.user._id;
+            where.source = target;
+            update();
         }
     }
     else {

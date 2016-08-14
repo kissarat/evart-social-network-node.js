@@ -67,7 +67,6 @@ App.module('Views', function (Views, App) {
                 var delta = reverse
                     ? e.target.scrollTop
                     : e.target.scrollHeight - (e.target.scrollTop + $(e.target).height());
-                console.log(delta);
                 if (delta < App.config.scroll.next) {
                     return view.collection.pageableCollection.getNextPage();
                 }
