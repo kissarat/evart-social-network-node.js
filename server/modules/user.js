@@ -646,7 +646,7 @@ module.exports = {
         if ('GET' === $.req.method) {
             return code.METHOD_NOT_ALLOWED;
         }
-        else if ($.isAuthenticated()) {
+        else if ($.isAuthenticated) {
             $.send(code.FORBIDDEN, {
                 error: {
                     message: 'User is authenticated'

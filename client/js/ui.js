@@ -76,7 +76,7 @@ const NodeListPrototype = {
         }
         else {
             return this.map(function (node) {
-                node.getAttribute(name);
+                return node.getAttribute(name);
             });
         }
     }
