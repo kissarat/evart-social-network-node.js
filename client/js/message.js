@@ -914,7 +914,8 @@ App.module('Message', function (Message, App) {
         },
 
         ui: {
-            name: '.name input',
+            about: '.about',
+            name: '.about input.name',
             list: '.list',
             editor: '.editor'
         },
@@ -925,7 +926,12 @@ App.module('Message', function (Message, App) {
         },
 
         bindings: {
-            '.name input': 'name'
+            '.about input.name': {
+                observe: 'name',
+                onGet: function (value) {
+                    return value || this.model.getName();
+                }
+            }
         },
 
         modelEvents: {
@@ -1038,13 +1044,10 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            if ('chat' == this.model.get('type')) {
-                this.ui.name.parent().removeClass('hidden');
-                if (this.model.isAdmin()) {
-                    this.ui.name.prop('disabled', false);
-                }
-                this.stickit();
+            if ('chat' === this.model.get('type') && this.model.isAdmin()) {
+                this.ui.name.prop('disabled', false);
             }
+            this.stickit();
             App.Views.perfectScrollbar(this.ui.list);
         }
     }, {
@@ -1265,7 +1268,7 @@ App.module('Message', function (Message, App) {
         search: function () {
             Message.getDialogList().pageableCollection.delaySearch();
         },
-        
+
         createChat: function () {
             $.sendJSON('POST', '/api/chat', {}, function (data) {
                 App.navigate('dialog/' + data._id);
@@ -1305,7 +1308,10 @@ App.module('Message', function (Message, App) {
                 }
                 if (promise instanceof Promise) {
                     promise.then(function (data) {
-                        var modelClass = 'user' === data.type ? Message.User : Message.Chat;
+                        var modelClass = _.isEmpty(data.domain) ? Message.Chat : App.User.Model;
+                        if (modelClass instanceof Message.Chat) {
+                            data.type = 'chat';
+                        }
                         widget(new modelClass(data));
                     });
                 }

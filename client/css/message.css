@@ -1,14 +1,11 @@
 .last-message {
-    align-items: flex-start;
-    border-bottom: 1px solid #dddee0;
-    border-top: 1px solid #f3f3f3;
-    cursor: pointer;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding-bottom: 25px;
-    padding-top: 13px;
-    /*margin: 8px 4px;*/
+    align-items: flex-start;
+    border-bottom: 1px solid #dddee0;
+    cursor: pointer;
+    padding: 8px 10px;
 }
 
 .last-message:hover {
@@ -159,18 +156,6 @@ section.buttons button {
 
 }
 
-#right .last-message {
-    max-width: 100%;
-    padding: 3%;
-    width: 94%;
-}
-
-#left .view.last-message {
-    padding: 3%;
-    width: 94%;
-    max-width: 100%;
-}
-
 .list.scroll.mCustomScrollbar._mCS_2 > div > div {
     margin-bottom: 20px;
 }
@@ -300,10 +285,6 @@ input.form-control, .city > div > input {
     width: 60%;
 }
 
-.wall .avatar {
-    width: 46px;
-}
-
 .layout-dialog .list .message .text a:hover {
     text-decoration: underline;
 }
@@ -335,28 +316,24 @@ input.form-control, .city > div > input {
     margin-left: 5px !important;
 }
 
-.layout-dialog .name input {
+.layout-dialog .about {
+    padding: 8px;
+    display: flex;
+    border-bottom: 1px solid #dddee0;
+}
+
+.layout-dialog .about input.name {
+    flex: 1;
+    font-size: 12pt;
     border: none;
-    width: 100%;
 }
 
-.message.other .name {
-    font-size: 12px;
-    margin-left: 8px;
-    margin-top: 3px;
-    text-align: left;
-}
-
-.message.mine .name {
-    font-size: 12px;
-    margin-right: 8px;
-    margin-top: 3px;
-    text-align: left;
+.layout-dialog .list {
+    flex: 1;
 }
 
 .layout-dialog .list .message.mine {
     flex-direction: row;
-    /*width: 80%;*/
 }
 
 .layout-dialog .list .message.mine .text {
@@ -429,6 +406,20 @@ input.form-control, .city > div > input {
 
 .layout-dialog .bottom {
     min-height: 76px;
+}
+
+.message.other .name {
+    font-size: 12px;
+    margin-left: 8px;
+    margin-top: 3px;
+    text-align: left;
+}
+
+.message.mine .name {
+    font-size: 12px;
+    margin-right: 8px;
+    margin-top: 3px;
+    text-align: left;
 }
 
 .dialog .layout-editor {
@@ -665,16 +656,16 @@ input.form-control, .city > div > input {
     height: 100%;
 }
 
+.last-message .center {
+    flex: 1;
+    text-align: left;
+}
+
 .last-message .center .name {
     color: #656a6e !important;
     font-size: 13px;
     line-height: 1.4;
     margin-top: 0;
-    text-align: left;
-}
-
-.last-message > .center {
-    max-width: 170px;
 }
 
 .search {
@@ -723,4 +714,8 @@ input.form-control, .city > div > input {
     display: inline-block;
     width: 96px;
     height: 96px;
+}
+
+.wall .avatar {
+    width: 46px;
 }
