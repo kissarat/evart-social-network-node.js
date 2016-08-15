@@ -80,8 +80,7 @@ schema.Agent.statics.extract = function extract(agent, headers) {
             type: agent.user.type,
             follow: agent.user.follow,
             admin: agent.user.admin,
-            lang: agent.user.lang,
-            css: agent.user.css
+            lang: agent.user.lang
         };
         if (agent.user.css) {
             result.user.css = agent.user.css;

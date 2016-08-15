@@ -284,3 +284,11 @@ function resize() {
             });
     }
 }
+
+// if (jQuery.ajaxSetup) {
+//     jQuery.ajaxSetup({
+//         beforeSend: function (_1, options) {
+//             options.url += (options.url.indexOf('?') > 0 ? '&v=' : '?v=') + App.config.api.version;
+//         }
+//     });
+// }

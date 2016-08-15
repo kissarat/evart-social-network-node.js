@@ -406,32 +406,6 @@ _.extend(Service.prototype, {
     }
 });
 
-if (self.jQuery && jQuery.ajaxSetup) {
-    jQuery.ajaxSetup({
-        beforeSend: function (_1, options) {
-            // if (self.App && App.user && 'admin' === App.user.type) {
-            //     if (!App.config.admin.cache) {
-            //         options.url = options.url.replace(/^\/cache\//, '/api/');
-            //     }
-            //     if (App.config.admin.prefix) {
-            //         options.url += (options.url.indexOf('?') > 0 ? '&' : '?')
-            //             + App.config.admin.prefix + '=' + Date.now().toString(36);
-            //     }
-            // }
-            // else {
-            //     console.log(options.url, options.type, /^\/api\/(user|message)/.test(options.url));
-            //     if ('GET' === options.type && /^\/api\/(file|user|message)/.test(options.url)) {
-            //         options.url = options.url.replace('/api/', '/cache/');
-            //     }
-            // }
-            if ('localhost' != location.hostname) {
-                options.url = options.url.replace('/api/', '//evart.com/api/');
-            }
-            options.url += (options.url.indexOf('?') > 0 ? '&v=' : '?v=') + App.config.api.version;
-        }
-    });
-}
-
 Service.prototype.Upload = function Upload(options) {
     _.extend(this, Backbone.Events);
     this.initialize(options);

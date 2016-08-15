@@ -31,7 +31,7 @@ App.module('User', function (User, App) {
         }
         else {
             options.domain = id || App.user.domain;
-        }
+        }   
         return options;
     };
 

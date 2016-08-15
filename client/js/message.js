@@ -47,10 +47,6 @@ App.module('Message', function (Message, App) {
         });
     };
 
-    if (window.Notification) {
-
-    }
-
     Message.Model = Backbone.Model.extend({
         cidPrefix: 'msg',
         idAttribute: '_id',
@@ -172,9 +168,16 @@ App.module('Message', function (Message, App) {
 
         getName: function () {
             return this.get('name') || this.id;
+        },
+
+        isAdmin: function (user_id) {
+            if (!user_id) {
+                user_id = App.user._id;
+            }
+            return this.get('admin').indexOf(user_id) >= 0;
         }
     }, {
-        tableName: 'chat',
+        tableName: 'chat'
     });
 
     Message.Model.relatives = {
@@ -563,7 +566,7 @@ App.module('Message', function (Message, App) {
         widget: function (region, options) {
             var query = _.merge({
                 type: MessageType.WALL,
-                owner_id: options.owner.id,
+                owner_id: options.id,
                 user: 'source.owner',
                 file: 'files',
                 select: 'like.hate.files.videos.sex.text.admin',
@@ -900,7 +903,6 @@ App.module('Message', function (Message, App) {
 
     Message.Dialog = Marionette.View.extend({
         template: '#layout-dialog',
-        url: '/api/message',
 
         attributes: {
             'class': 'layout-dialog'
@@ -1036,19 +1038,18 @@ App.module('Message', function (Message, App) {
         },
 
         onRender: function () {
-            App.Views.perfectScrollbar(this.ui.list);
             if ('chat' == this.model.get('type')) {
                 this.ui.name.parent().removeClass('hidden');
-                if (this.model.get('admin').indexOf(App.user._id) >= 0) {
+                if (this.model.isAdmin()) {
                     this.ui.name.prop('disabled', false);
                 }
                 this.stickit();
             }
+            App.Views.perfectScrollbar(this.ui.list);
         }
     }, {
         widget: function (region, options) {
             var isChat = 'chat' === options.type;
-            // console.log(isChat, options);
             var model = isChat ? options.chat : options.target;
             model.set('type', isChat ? 'chat' : 'dialog');
             var query = isChat ? {
@@ -1257,11 +1258,18 @@ App.module('Message', function (Message, App) {
         },
 
         events: {
-            'keyup [type=search]': 'search'
+            'keyup [type=search]': 'search',
+            'click .create-chat': 'createChat'
         },
 
         search: function () {
             Message.getDialogList().pageableCollection.delaySearch();
+        },
+        
+        createChat: function () {
+            $.sendJSON('POST', '/api/chat', {}, function (data) {
+                App.navigate('dialog/' + data._id);
+            });
         },
 
         onRender: function () {
@@ -1297,7 +1305,8 @@ App.module('Message', function (Message, App) {
                 }
                 if (promise instanceof Promise) {
                     promise.then(function (data) {
-                        widget(new Message.Model(data));
+                        var modelClass = 'user' === data.type ? Message.User : Message.Chat;
+                        widget(new modelClass(data));
                     });
                 }
                 else {

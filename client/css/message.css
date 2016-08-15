@@ -677,22 +677,26 @@ input.form-control, .city > div > input {
     max-width: 170px;
 }
 
+.search {
+    display: flex;
+    align-items: center;
+}
+
+.search .fa {
+    display: block;
+    height: 100%;
+    margin: 0;
+    padding: 12px;
+    border: none;
+    cursor: pointer;
+    background-color: #e0e0e0;
+}
+
 .search input {
     background: #eceff4 none repeat scroll 0 0;
     border: 0 none;
-    float: left;
     padding: 10px;
-    width: 85%;
-}
-
-
-
-.search .icon.fa.fa-search {
-    background: #e0e0e0 none repeat scroll 0 0;
-    float: left;
-    padding: 12px 0 11px;
-    width: 15%;
-    cursor: pointer ;
+    flex: 1;
 }
 
 #right .search .icon.fa.fa-search {

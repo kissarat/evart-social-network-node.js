@@ -179,13 +179,13 @@ schema.User.statics.fields = {
     select: {
         user: ['online', 'domain', 'type', 'name', 'surname', 'forename',
             'city', 'city_id', 'country', 'address', 'phone', 'avatar', 'birthday', 'languages',
-            'relationship', 'tiles', 'lang', 'avatar', 'background', 'admin']
+            'relationship', 'tiles', 'lang', 'avatar', 'background', 'admin', 'css']
     },
 
     update: {
         user: ['online', 'name', 'surname', 'forename', 'city', 'city_id', 'country',
             'address', 'phone', 'password', 'avatar', 'name', 'birthday', 'languages', 'relationship',
-            'lang', 'background', 'tiles'],
+            'lang', 'background', 'tiles', 'css'],
         group: ['domain', 'name', 'about', 'avatar'],
         admin: ['domain', 'type']
     },

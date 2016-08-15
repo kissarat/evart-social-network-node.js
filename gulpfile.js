@@ -43,7 +43,7 @@ gulp.task('app', function () {
         .join('\n');
     fs.writeFileSync('app/script.js', string);
     var script = doc.getElementById('script');
-    script.innerHTML = `<script src="${own_cdn}script.js"></script>`;
+    script.innerHTML = `<script src="/script.js"></script>`;
     _.each(doc.querySelectorAll('.include[data-src]'), function (script) {
         script.innerHTML = fs.readFileSync('client' + script.getAttribute('data-src'));
         script.removeAttribute('data-src');
@@ -62,7 +62,7 @@ gulp.task('app', function () {
     var link = doc.createElement('link');
     link.setAttribute('rel', 'stylesheet');
     link.setAttribute('type', 'text/css');
-    link.setAttribute('href', own_cdn + 'style.css');
+    link.setAttribute('href', '/style.css');
     doc.head.appendChild(link);
     var iter = doc.createNodeIterator(doc.documentElement, 128, null, false);
     while (true) {

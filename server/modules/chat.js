@@ -98,6 +98,9 @@ module.exports = {
 
     POST: function ($) {
         let chat = $.allowFields(Chat.fields.update.user);
+        if (!chat.name) {
+            chat.name = 'Chat ' + _.random(1, 100);
+        }
         if (!chat.admin) {
             chat.admin = [$.user._id];
         }
