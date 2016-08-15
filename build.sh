@@ -19,4 +19,9 @@ if [ ! -x client/lib ]; then
     npm update
 fi
 
+if [ ! -x server/mongodb/data ]; then
+    mkdir server/mongodb/data
+    chmod a+w server/mongodb/data
+fi
+
 npm run build

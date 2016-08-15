@@ -1,7 +1,7 @@
 var fs = require('fs');
 var check = require('syntax-error');
 
-var file = __dirname + '/app/script.js';
+var file = __dirname + '/../app/script.js';
 var src = fs.readFileSync(file);
 
 var err = check(src, file);

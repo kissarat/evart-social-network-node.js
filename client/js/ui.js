@@ -75,7 +75,9 @@ const NodeListPrototype = {
             });
         }
         else {
-            return this.map(node => node.getAttribute(name));
+            return this.map(function (node) {
+                node.getAttribute(name);
+            });
         }
     }
 };
